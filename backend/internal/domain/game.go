@@ -54,7 +54,7 @@ func (g *Game) deal() {
 	// Each player gets 3 warrior cards
 	warriorsIdx := 0
 	for _, player := range g.Players {
-		player.Hand = append(player.Hand, warriorCards[warriorsIdx:warriorsIdx+3]...)
+		player.takeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
 		warriorsIdx += 3
 	}
 
@@ -62,12 +62,12 @@ func (g *Game) deal() {
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
 	for _, player := range g.Players {
-		player.Hand = append(player.Hand, deckCards[otherIdx:otherIdx+4]...)
+		player.takeCards(deckCards[otherIdx : otherIdx+3]...)
 		otherIdx += 4
 	}
 
 	deckCards = deckCards[otherIdx:]
-	g.deck = Deck{Cards: deckCards}
+	g.deck = NewDeck(deckCards)
 
 	g.state = StateSettingInitialWarriors
 	g.addToHistory("Set initial warriors: " + g.Players[0].Name + " goes first.")
@@ -90,7 +90,7 @@ func (g *Game) SetInitialWarriors(playerID string, warriorIDs []string) error {
 	}
 
 	for _, id := range warriorIDs {
-		if !player.MoveWarriorToField(id) {
+		if !player.moveWarriorToField(id) {
 			return errors.New("failed to move warrior to field: " + id)
 		}
 	}
@@ -100,7 +100,7 @@ func (g *Game) SetInitialWarriors(playerID string, warriorIDs []string) error {
 	// Check if both players have set their warriors
 	allSet := true
 	for _, p := range g.Players {
-		if len(p.Field) == 0 {
+		if len(p.field) == 0 {
 			allSet = false
 			break
 		}
@@ -119,8 +119,8 @@ func (g *Game) switchTurn() {
 	g.addToHistory("It's now " + g.Players[g.CurrentTurn].Name + "'s turn.")
 }
 
-func (g *Game) WhoIsNext() string {
-	return g.Players[g.CurrentTurn].Name
+func (g *Game) WhoIsNext() *Player {
+	return g.Players[g.CurrentTurn]
 }
 
 func (g *Game) HandleAction(playerID string, action string,
@@ -150,7 +150,7 @@ func (g *Game) drawCard() error {
 		}
 	}
 
-	player.Hand = append(player.Hand, card)
+	player.takeCards(card)
 	log.Println(player.Name + " drew a card: " + card.Name)
 	return nil
 }
@@ -163,5 +163,5 @@ func (g *Game) shuffleDiscardIntoDeck() {
 
 func (g *Game) addToHistory(msg string) {
 	g.history = append(g.history, msg)
-	println(fmt.Sprintf("%s %s", time.Now(), msg))
+	println(fmt.Sprintf("history: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
 }

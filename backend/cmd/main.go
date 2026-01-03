@@ -31,7 +31,7 @@ func main() {
 
 	showCurrentPlayerHand(g)
 
-	println(g.WhoIsNext() + " Insert comma separated the Initial warriors:")
+	println(g.WhoIsNext().Name + " Insert comma separated the Initial warriors:")
 	w1, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Println("Error reading warriors for player1:", err)
@@ -45,7 +45,7 @@ func main() {
 	}
 
 	showCurrentPlayerHand(g)
-	println(g.WhoIsNext() + " Insert comma separated the Initial warriors:")
+	println(g.WhoIsNext().Name + " Insert comma separated the Initial warriors:")
 	w2, err := reader.ReadString('\n')
 	if err != nil {
 		fmt.Println("Error reading warriors for player1:", err)
@@ -59,7 +59,7 @@ func main() {
 	}
 
 	showCurrentPlayerHand(g)
-	println(g.WhoIsNext() + " Draw a card")
+	println(g.WhoIsNext().Name + " Draw a card")
 
 	println("HASTA AQUI LLEGUE")
 
@@ -89,10 +89,13 @@ func main() {
 }
 
 func showCurrentPlayerHand(g *domain.Game) {
-	println("Player " + g.WhoIsNext() + " Cards:")
-	for _, c := range g.Players[g.CurrentTurn].Hand {
-		println(fmt.Sprintf("- %d %s (%s)\n", c.Value, c.Name, c.ID))
+	next := g.WhoIsNext()
+	println("****************************************")
+	println(next.Name + "'s Hand:")
+	for _, c := range next.ShowHand() {
+		println(fmt.Sprintf("- %s", c.String()))
 	}
+	println("****************************************")
 }
 
 // func main() {

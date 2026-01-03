@@ -17,7 +17,7 @@ func (d *Deck) DrawCard() (card, bool) {
 	return card, true
 }
 
-func newDeck(cards []card) Deck {
+func NewDeck(cards []card) Deck {
 	return Deck{Cards: cards}
 }
 

@@ -5,39 +5,47 @@ import "github.com/google/uuid"
 type Player struct {
 	ID     string
 	Name   string
-	Hand   []card
-	Field  []card
-	Castle []card
+	hand   []card
+	field  []card
+	castle []card
 }
 
 func NewPlayer(name string) *Player {
 	return &Player{
 		ID:     uuid.NewString(),
 		Name:   name,
-		Hand:   []card{},
-		Field:  []card{},
-		Castle: []card{},
+		hand:   []card{},
+		field:  []card{},
+		castle: []card{},
 	}
 }
 
-func (p *Player) MoveWarriorToField(cardID string) bool {
-	for i, c := range p.Hand {
+func (p *Player) takeCards(cards ...card) {
+	p.hand = append(p.hand, cards...)
+}
+
+func (p *Player) ShowHand() []card {
+	return p.hand
+}
+
+func (p *Player) moveWarriorToField(cardID string) bool {
+	for i, c := range p.hand {
 		if c.ID == cardID && c.IsWarrior() {
 			// Move card from Hand to Field
-			p.Field = append(p.Field, c)
-			p.Hand = append(p.Hand[:i], p.Hand[i+1:]...)
+			p.field = append(p.field, c)
+			p.hand = append(p.hand[:i], p.hand[i+1:]...)
 			return true
 		}
 	}
 	return false
 }
 
-func (p *Player) MoveCardToCastle(cardID string) bool {
-	for i, c := range p.Hand {
+func (p *Player) moveResourceToCastle(cardID string) bool {
+	for i, c := range p.hand {
 		if c.ID == cardID && c.IsResource() {
 			// Move card from Hand to Castle
-			p.Castle = append(p.Castle, c)
-			p.Hand = append(p.Hand[:i], p.Hand[i+1:]...)
+			p.castle = append(p.castle, c)
+			p.hand = append(p.hand[:i], p.hand[i+1:]...)
 			return true
 		}
 	}
