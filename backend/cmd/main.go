@@ -12,7 +12,7 @@ import (
 
 const (
 	currentHandHeader = "****************************************"
-	newPhaseHeader    = "------------------------------------------------"
+	newPhaseHeader    = "----------------------------------------------------------"
 )
 
 var (
@@ -36,6 +36,10 @@ func main() {
 
 	if err = drawACard(); err != nil {
 		println("Error drawing a card:", err)
+		os.Exit(-1)
+	}
+	if err = performAction(); err != nil {
+		println("Error performing action:", err)
 		os.Exit(-1)
 	}
 
@@ -124,14 +128,21 @@ func showCurrentPlayerHand(player *domain.Player) {
 func drawACard() error {
 
 	next := g.WhoIsNext()
-	printTurnHeader(next.Name, "DRAW A CARD")
-
-	status, err := g.DrawCard(next.Name)
+	card, err := g.DrawCard(next.Name)
 	if err != nil {
 		return fmt.Errorf("error drawing a card for player %s: %w",
 			next.Name, err)
 	}
 
+	msg := fmt.Sprintf("DRAW A CARD: %s", card.String())
+	printTurnHeader(next.Name, msg)
+
+	return nil
+}
+
+func performAction() error {
+	status := g.GetStatusForNextPlayer()
+	println("Board Status for", status.Player)
 	println(status.String())
 	println()
 
@@ -141,7 +152,7 @@ func drawACard() error {
 func printTurnHeader(player string, action string) {
 	println()
 	println(newPhaseHeader)
-	println(fmt.Sprintf("%s's TURN - ACTION: %s", player, action))
+	println(fmt.Sprintf("%s's TURN - %s", player, action))
 	println(newPhaseHeader)
 	println()
 }

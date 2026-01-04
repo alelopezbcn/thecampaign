@@ -7,7 +7,6 @@ import (
 
 type ActionReadyStatus struct {
 	Player      string
-	CardTaken   Card
 	Hand        []Card
 	OwnField    []Card
 	OwnCastle   *Castle
@@ -47,7 +46,5 @@ func (a *ActionReadyStatus) String() string {
 		sb.WriteString("  - " + c.String() + "\n")
 	}
 	sb.WriteString("\n---\n")
-
-	sb.WriteString(fmt.Sprintf("Taken card: %s", a.CardTaken.String()))
 	return sb.String()
 }

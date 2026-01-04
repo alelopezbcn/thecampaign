@@ -140,10 +140,10 @@ func (g *Game) WhoIsEnemy() *Player {
 // 	return nil
 // }
 
-func (g *Game) DrawCard(playerName string) (status ActionReadyStatus, err error) {
+func (g *Game) DrawCard(playerName string) (card Card, err error) {
 	player := g.WhoIsNext()
 	if player.Name != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return card, errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
 	card, ok := g.deck.DrawCard()
@@ -153,13 +153,20 @@ func (g *Game) DrawCard(playerName string) (status ActionReadyStatus, err error)
 
 		card, ok = g.deck.DrawCard()
 		if !ok {
-			return status, errors.New("no cards left to draw")
+			return card, errors.New("no cards left to draw")
 		}
 	}
 
 	player.takeCards(card)
-	status.Player = playerName
-	status.CardTaken = card
+
+	g.addToHistory(player.Name + " drew a Card")
+
+	return card, nil
+}
+
+func (g *Game) GetStatusForNextPlayer() (status ActionReadyStatus) {
+	player := g.WhoIsNext()
+	status.Player = player.Name
 	status.Hand = player.ShowHand()
 	status.OwnField = player.ShowField()
 	status.OwnCastle = player.ShowCastle()
@@ -168,9 +175,7 @@ func (g *Game) DrawCard(playerName string) (status ActionReadyStatus, err error)
 	status.EnemyField = enemy.ShowField()
 	status.EnemyCastle = enemy.ShowCastle()
 
-	g.addToHistory(player.Name + " drew a Card: " + card.String())
-
-	return status, nil
+	return status
 }
 
 func (g *Game) shuffleDiscardPileIntoDeck() {
