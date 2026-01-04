@@ -3,7 +3,6 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"time"
 
@@ -18,8 +17,8 @@ type Game struct {
 	CurrentTurn int
 	state       GameState
 	deck        Deck
-	discardPile []card
-	cemetery    []card
+	discardPile []Card
+	cemetery    []Card
 	history     []string
 }
 
@@ -36,8 +35,8 @@ func NewGame(player1, player2 string) *Game {
 		id:          uuid.NewString(),
 		Players:     []*Player{p1, p2},
 		CurrentTurn: 0,
-		discardPile: []card{},
-		cemetery:    []card{},
+		discardPile: []Card{},
+		cemetery:    []Card{},
 		history:     []string{},
 	}
 
@@ -73,12 +72,12 @@ func (g *Game) deal() {
 	g.addToHistory("Set initial warriors: " + g.Players[0].Name + " goes first.")
 }
 
-func (g *Game) SetInitialWarriors(playerID string, warriorIDs []string) error {
-	if g.Players[g.CurrentTurn].ID != playerID {
-		return errors.New("not your turn")
+func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error {
+	player := g.WhoIsNext()
+	if player.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	player := g.Players[g.CurrentTurn]
 	if g.state != StateSettingInitialWarriors {
 		return errors.New("not in initial warrior setting phase")
 	}
@@ -116,52 +115,71 @@ func (g *Game) SetInitialWarriors(playerID string, warriorIDs []string) error {
 
 func (g *Game) switchTurn() {
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
-	g.addToHistory("It's now " + g.Players[g.CurrentTurn].Name + "'s turn.")
 }
 
 func (g *Game) WhoIsNext() *Player {
 	return g.Players[g.CurrentTurn]
 }
 
-func (g *Game) HandleAction(playerID string, action string,
-	source Card, destination Card) error {
-
-	if g.Players[g.CurrentTurn].ID != playerID {
-		return errors.New("not your turn")
-	}
-
-	switch action {
-	case "take_card":
-	}
-
-	return nil
+func (g *Game) WhoIsEnemy() *Player {
+	return g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
-func (g *Game) drawCard() error {
-	player := g.Players[g.CurrentTurn]
+// func (g *Game) HandleAction(playerName string, action string,
+// 	source Card, destination Card) error {
+// 	player := g.WhoIsNext()
+// 	if player.Name != playerName {
+// 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+// 	}
+//
+//
+// 	switch action {
+// 	case "take_card":
+// 	}
+//
+// 	return nil
+// }
+
+func (g *Game) DrawCard(playerName string) (status ActionReadyStatus, err error) {
+	player := g.WhoIsNext()
+	if player.Name != playerName {
+		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
 	card, ok := g.deck.DrawCard()
 	if !ok {
 		g.addToHistory("Deck is empty, shuffling discard pile into deck")
-		g.shuffleDiscardIntoDeck()
+		g.shuffleDiscardPileIntoDeck()
 
 		card, ok = g.deck.DrawCard()
 		if !ok {
-			return errors.New("no cards left to draw")
+			return status, errors.New("no cards left to draw")
 		}
 	}
 
 	player.takeCards(card)
-	log.Println(player.Name + " drew a card: " + card.Name)
-	return nil
+	status.Player = playerName
+	status.CardTaken = card
+	status.Hand = player.ShowHand()
+	status.OwnField = player.ShowField()
+	status.OwnCastle = player.ShowCastle()
+
+	enemy := g.WhoIsEnemy()
+	status.EnemyField = enemy.ShowField()
+	status.EnemyCastle = enemy.ShowCastle()
+
+	g.addToHistory(player.Name + " drew a Card: " + card.String())
+
+	return status, nil
 }
 
-func (g *Game) shuffleDiscardIntoDeck() {
+func (g *Game) shuffleDiscardPileIntoDeck() {
 	g.deck.Replenish(g.discardPile)
-	g.discardPile = []card{}
+	g.discardPile = []Card{}
 	g.addToHistory("Shuffled discard pile into deck")
 }
 
 func (g *Game) addToHistory(msg string) {
 	g.history = append(g.history, msg)
-	println(fmt.Sprintf("history: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
+	println(fmt.Sprintf("*********: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
 }

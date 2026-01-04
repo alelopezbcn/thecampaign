@@ -10,56 +10,34 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+const (
+	currentHandHeader = "****************************************"
+	newPhaseHeader    = "------------------------------------------------"
+)
+
+var (
+	reader *bufio.Reader
+	g      *domain.Game
+)
+
 func main() {
-	reader := bufio.NewReader(os.Stdin)
-
-	fmt.Println("Insert the name of the player 1:")
-	p1, err := reader.ReadString('\n')
+	reader = bufio.NewReader(os.Stdin)
+	var err error
+	g, err = startGame()
 	if err != nil {
-		fmt.Println("Error reading player1:", err)
+		println("Error starting game:", err)
 		os.Exit(-1)
 	}
 
-	fmt.Println("Insert the name of the player 2:")
-	p2, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Error reading player2:", err)
+	if err = setInitialWarriors(); err != nil {
+		println("Error setting initial warriors:", err)
 		os.Exit(-1)
 	}
 
-	g := domain.NewGame(strings.TrimSpace(p1), strings.TrimSpace(p2))
-
-	showCurrentPlayerHand(g)
-
-	println(g.WhoIsNext().Name + " Insert comma separated the Initial warriors:")
-	w1, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Error reading warriors for player1:", err)
+	if err = drawACard(); err != nil {
+		println("Error drawing a card:", err)
 		os.Exit(-1)
 	}
-	warriors1 := strings.Split(strings.TrimSpace(w1), ",")
-	err = g.SetInitialWarriors(g.Players[g.CurrentTurn].ID, warriors1)
-	if err != nil {
-		fmt.Println("Error setting initial warriors for player1:", err)
-		os.Exit(-1)
-	}
-
-	showCurrentPlayerHand(g)
-	println(g.WhoIsNext().Name + " Insert comma separated the Initial warriors:")
-	w2, err := reader.ReadString('\n')
-	if err != nil {
-		fmt.Println("Error reading warriors for player1:", err)
-		os.Exit(-1)
-	}
-	warriors2 := strings.Split(strings.TrimSpace(w2), ",")
-	err = g.SetInitialWarriors(g.Players[g.CurrentTurn].ID, warriors2)
-	if err != nil {
-		fmt.Println("Error setting initial warriors for player1:", err)
-		os.Exit(-1)
-	}
-
-	showCurrentPlayerHand(g)
-	println(g.WhoIsNext().Name + " Draw a card")
 
 	println("HASTA AQUI LLEGUE")
 
@@ -88,14 +66,84 @@ func main() {
 	// }
 }
 
-func showCurrentPlayerHand(g *domain.Game) {
-	next := g.WhoIsNext()
-	println("****************************************")
-	println(next.Name + "'s Hand:")
-	for _, c := range next.ShowHand() {
-		println(fmt.Sprintf("- %s", c.String()))
+func startGame() (*domain.Game, error) {
+	fmt.Println("Insert the name of the player 1:")
+	p1, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, fmt.Errorf("error reading player1: %w", err)
 	}
-	println("****************************************")
+
+	fmt.Println("Insert the name of the player 2:")
+	p2, err := reader.ReadString('\n')
+	if err != nil {
+		return nil, fmt.Errorf("error reading player2: %w", err)
+	}
+
+	p1 = strings.TrimSpace(p1)
+	p2 = strings.TrimSpace(p2)
+
+	g := domain.NewGame(p1, p2)
+
+	return g, nil
+}
+
+func setInitialWarriors() error {
+	for i := 0; i < 2; i++ {
+		next := g.WhoIsNext()
+		printTurnHeader(next.Name, "SET INITIAL WARRIORS")
+		showCurrentPlayerHand(next)
+
+		println(next.Name + " Insert comma separated the Initial warriors:")
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading warriors for player %s: %w",
+				next.Name, err)
+		}
+		warriors := strings.Split(strings.TrimSpace(w), ",")
+		err = g.SetInitialWarriors(next.Name, warriors)
+		if err != nil {
+			return fmt.Errorf("error setting initial warriors for player %s: %w",
+				next.Name, err)
+		}
+	}
+
+	return nil
+}
+
+func showCurrentPlayerHand(player *domain.Player) {
+
+	println(currentHandHeader)
+	println(player.Name + "'s Hand:")
+	for _, c := range player.ShowHand() {
+		println(fmt.Sprintf("  - %s", c.String()))
+	}
+	println(currentHandHeader)
+	println()
+}
+
+func drawACard() error {
+
+	next := g.WhoIsNext()
+	printTurnHeader(next.Name, "DRAW A CARD")
+
+	status, err := g.DrawCard(next.Name)
+	if err != nil {
+		return fmt.Errorf("error drawing a card for player %s: %w",
+			next.Name, err)
+	}
+
+	println(status.String())
+	println()
+
+	return nil
+}
+
+func printTurnHeader(player string, action string) {
+	println()
+	println(newPhaseHeader)
+	println(fmt.Sprintf("%s's TURN - ACTION: %s", player, action))
+	println(newPhaseHeader)
+	println()
 }
 
 // func main() {
