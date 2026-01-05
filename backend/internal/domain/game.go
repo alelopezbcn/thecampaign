@@ -17,8 +17,8 @@ type Game struct {
 	CurrentTurn int
 	state       GameState
 	deck        Deck
-	discardPile []Card
-	cemetery    []Card
+	discardPile []iCard
+	cemetery    []iCard
 	history     []string
 }
 
@@ -35,10 +35,12 @@ func NewGame(player1, player2 string) *Game {
 		id:          uuid.NewString(),
 		Players:     []*Player{p1, p2},
 		CurrentTurn: 0,
-		discardPile: []Card{},
-		cemetery:    []Card{},
+		discardPile: []iCard{},
+		cemetery:    []iCard{},
 		history:     []string{},
 	}
+
+	g.addToHistory(fmt.Sprintf("Game created between %s and %s", p1.Name, p2.Name))
 
 	g.deal()
 
@@ -48,7 +50,7 @@ func NewGame(player1, player2 string) *Game {
 func (g *Game) deal() {
 	g.addToHistory("Dealing Cards")
 
-	warriorCards := shuffle(WarriorsCards())
+	warriorCards := shuffle(warriorsCards())
 
 	// Each player gets 3 warrior cards
 	warriorsIdx := 0
@@ -57,7 +59,7 @@ func (g *Game) deal() {
 		warriorsIdx += 3
 	}
 
-	deckCards := append(warriorCards[warriorsIdx:], OtherButWarriorsCards()...)
+	deckCards := append(warriorCards[warriorsIdx:], otherButWarriorsCards()...)
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
 	for _, player := range g.Players {
@@ -69,11 +71,10 @@ func (g *Game) deal() {
 	g.deck = NewDeck(deckCards)
 
 	g.state = StateSettingInitialWarriors
-	g.addToHistory("Set initial warriors: " + g.Players[0].Name + " goes first.")
 }
 
 func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error {
-	player := g.WhoIsNext()
+	player, _ := g.WhoIsNext()
 	if player.Name != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
@@ -117,8 +118,9 @@ func (g *Game) switchTurn() {
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }
 
-func (g *Game) WhoIsNext() *Player {
-	return g.Players[g.CurrentTurn]
+func (g *Game) WhoIsNext() (next *Player, enemy *Player) {
+	return g.Players[g.CurrentTurn],
+		g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
 func (g *Game) WhoIsEnemy() *Player {
@@ -126,7 +128,7 @@ func (g *Game) WhoIsEnemy() *Player {
 }
 
 // func (g *Game) HandleAction(playerName string, action string,
-// 	source Card, destination Card) error {
+// 	source iCard, destination iCard) error {
 // 	player := g.WhoIsNext()
 // 	if player.Name != playerName {
 // 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
@@ -140,8 +142,8 @@ func (g *Game) WhoIsEnemy() *Player {
 // 	return nil
 // }
 
-func (g *Game) DrawCard(playerName string) (card Card, err error) {
-	player := g.WhoIsNext()
+func (g *Game) DrawCard(playerName string) (card iCard, err error) {
+	player, _ := g.WhoIsNext()
 	if player.Name != playerName {
 		return card, errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
@@ -164,23 +166,54 @@ func (g *Game) DrawCard(playerName string) (card Card, err error) {
 	return card, nil
 }
 
-func (g *Game) GetStatusForNextPlayer() (status ActionReadyStatus) {
-	player := g.WhoIsNext()
+func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
+	player, enemy := g.WhoIsNext()
 	status.Player = player.Name
 	status.Hand = player.ShowHand()
 	status.OwnField = player.ShowField()
 	status.OwnCastle = player.ShowCastle()
 
-	enemy := g.WhoIsEnemy()
 	status.EnemyField = enemy.ShowField()
 	status.EnemyCastle = enemy.ShowCastle()
 
 	return status
 }
 
+func (g *Game) Attack(playerName, warrior, target, weapon string) error {
+	next, enemy := g.WhoIsNext()
+	if next.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	warriorCard, ok := next.GetCardFromField(warrior)
+	if !ok {
+		return errors.New("warrior card not in field: " + warrior)
+	}
+
+	targetCard, ok := enemy.GetCardFromField(target)
+	if !ok {
+		return errors.New("target card not in enemy field: " + target)
+	}
+
+	weaponCard, ok := next.GetCardFromHand(weapon)
+	if !ok {
+		return errors.New("weapon card not in hand: " + weapon)
+	}
+
+	if err := next.Attack(warriorCard, targetCard, weaponCard); err != nil {
+		return fmt.Errorf("attack action failed: %w", err)
+	}
+
+	g.addToHistory(fmt.Sprintf("%s attacked %s using %s",
+		warriorCard.String(), targetCard.String(), weaponCard.String()))
+
+	return nil
+
+}
+
 func (g *Game) shuffleDiscardPileIntoDeck() {
 	g.deck.Replenish(g.discardPile)
-	g.discardPile = []Card{}
+	g.discardPile = []iCard{}
 	g.addToHistory("Shuffled discard pile into deck")
 }
 

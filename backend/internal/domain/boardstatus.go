@@ -5,16 +5,16 @@ import (
 	"strings"
 )
 
-type ActionReadyStatus struct {
+type BoardStatus struct {
 	Player      string
-	Hand        []Card
-	OwnField    []Card
+	Hand        []iCard
+	OwnField    []iCard
 	OwnCastle   *Castle
-	EnemyField  []Card
+	EnemyField  []iCard
 	EnemyCastle *Castle
 }
 
-func (a *ActionReadyStatus) String() string {
+func (a *BoardStatus) String() string {
 	sb := strings.Builder{}
 
 	if a.EnemyCastle == nil {

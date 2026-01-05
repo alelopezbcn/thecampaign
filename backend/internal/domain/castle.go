@@ -3,29 +3,34 @@ package domain
 import "fmt"
 
 type Castle struct {
-	cards []Card
+	cards []iCard
 }
 
-func NewCastle(card Card) (*Castle, error) {
-	if card.Value != 1 {
-		return nil, fmt.Errorf("invalid card for constructing the castle")
+func NewCastle(card iCard) (*Castle, error) {
+	switch c := card.(type) {
+	case *arrowCard, *poisonCard, *swordCard:
+		if c.GetValue() != 1 {
+			return nil, fmt.Errorf("invalid card for constructing the castle")
+		}
+	default:
+		return nil, fmt.Errorf("invalid card type for constructing the castle")
 	}
 
 	return &Castle{
-		cards: []Card{},
+		cards: []iCard{},
 	}, nil
 }
 
 func (c *Castle) Value() int {
 	total := 0
 	for _, card := range c.cards {
-		total += card.Value
+		total += card.GetValue()
 	}
 
 	return total
 }
 
-func (c *Castle) AddResource(card Card) error {
+func (c *Castle) AddResource(card iCard) error {
 	if !card.IsResource() {
 		return fmt.Errorf("card is not resource")
 	}
