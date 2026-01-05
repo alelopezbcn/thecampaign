@@ -16,7 +16,7 @@ const (
 type card struct {
 	ID         string
 	Name       string
-	Value      int
+	Value      float32
 	AffectedBy []iCard
 }
 
@@ -24,16 +24,17 @@ func (c *card) GetID() string {
 	return c.ID
 }
 
-func (c *card) GetValue() int {
+func (c *card) GetValue() float32 {
 	return c.Value
 }
 
 type iCard interface {
 	GetID() string
-	GetValue() int
+	GetValue() float32
 	IsWarrior() bool
 	IsResource() bool
 	Attack(target, weapon iCard) error
+	ReceiveDamage(amount float32)
 	String() string
 }
 
@@ -58,13 +59,36 @@ func (k *knightCard) IsResource() bool {
 	return false
 }
 func (k *knightCard) Attack(target, weapon iCard) error {
+	switch target.(type) {
+	case *knightCard, *archerCard, *mageCard, *dragonCard, *specialMoveCard:
+		break
+	default:
+		return fmt.Errorf("target cannot be attacked")
+	}
+
+	_, ok := weapon.(*swordCard)
+	if !ok {
+		return errors.New("knight can only attack with sword")
+	}
+
+	multiplier := float32(0.5)
+	if _, ok := target.(*archerCard); ok {
+		multiplier = 1
+	}
+
+	damage := weapon.GetValue() * multiplier
+	target.ReceiveDamage(damage)
+
 	return nil
+}
+func (k *knightCard) ReceiveDamage(amount float32) {
+	k.Value -= amount
 }
 func (k *knightCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", k.Name, k.ID))
 	if k.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %d", k.Value))
+		sb.WriteString(fmt.Sprintf(" - Value: %.1f", k.Value))
 	}
 	if k.AffectedBy != nil && len(k.AffectedBy) > 0 {
 		for _, card := range k.AffectedBy {
@@ -95,13 +119,36 @@ func (a *archerCard) IsResource() bool {
 	return false
 }
 func (a *archerCard) Attack(target, weapon iCard) error {
+	switch target.(type) {
+	case *knightCard, *archerCard, *mageCard, *dragonCard, *specialMoveCard:
+		break
+	default:
+		return fmt.Errorf("target cannot be attacked")
+	}
+
+	_, ok := weapon.(*archerCard)
+	if !ok {
+		return errors.New("archer can only attack with arrow")
+	}
+
+	multiplier := float32(0.5)
+	if _, ok := target.(*mageCard); ok {
+		multiplier = 1
+	}
+
+	damage := weapon.GetValue() * multiplier
+	target.ReceiveDamage(damage)
+
 	return nil
+}
+func (a *archerCard) ReceiveDamage(amount float32) {
+	a.Value -= amount
 }
 func (a *archerCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", a.Name, a.ID))
 	if a.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %d", a.Value))
+		sb.WriteString(fmt.Sprintf(" - Value: %.1f", a.Value))
 	}
 	if a.AffectedBy != nil && len(a.AffectedBy) > 0 {
 		for _, card := range a.AffectedBy {
@@ -132,13 +179,36 @@ func (m *mageCard) IsResource() bool {
 	return false
 }
 func (m *mageCard) Attack(target, weapon iCard) error {
-	return errors.New("not implemented")
+	switch target.(type) {
+	case *knightCard, *archerCard, *mageCard, *dragonCard, *specialMoveCard:
+		break
+	default:
+		return fmt.Errorf("target cannot be attacked")
+	}
+
+	_, ok := weapon.(*poisonCard)
+	if !ok {
+		return errors.New("mage can only attack with poison")
+	}
+
+	multiplier := float32(0.5)
+	if _, ok := target.(*knightCard); ok {
+		multiplier = 1
+	}
+
+	damage := weapon.GetValue() * multiplier
+	target.ReceiveDamage(damage)
+
+	return nil
+}
+func (m *mageCard) ReceiveDamage(amount float32) {
+	m.Value -= amount
 }
 func (m *mageCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", m.Name, m.ID))
 	if m.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %d", m.Value))
+		sb.WriteString(fmt.Sprintf(" - Value: %.1f", m.Value))
 	}
 	if m.AffectedBy != nil && len(m.AffectedBy) > 0 {
 		for _, card := range m.AffectedBy {
@@ -152,7 +222,7 @@ type swordCard struct {
 	card
 }
 
-func newSwordCard(id string, value int) *swordCard {
+func newSwordCard(id string, value float32) *swordCard {
 	return &swordCard{
 		card: card{
 			ID:         id,
@@ -171,15 +241,18 @@ func (s *swordCard) IsResource() bool {
 func (s *swordCard) Attack(_, _ iCard) error {
 	return errors.New("swords can perform attack")
 }
+func (s *swordCard) ReceiveDamage(_ float32) {
+	return
+}
 func (s *swordCard) String() string {
-	return fmt.Sprintf("%d %s (%s)", s.Value, s.Name, s.ID)
+	return fmt.Sprintf("%.0f %s (%s)", s.Value, s.Name, s.ID)
 }
 
 type arrowCard struct {
 	card
 }
 
-func newArrowCard(id string, value int) *arrowCard {
+func newArrowCard(id string, value float32) *arrowCard {
 	return &arrowCard{
 		card: card{
 			ID:         id,
@@ -198,15 +271,18 @@ func (a *arrowCard) IsResource() bool {
 func (a *arrowCard) Attack(_, _ iCard) error {
 	return errors.New("arrow can perform attack")
 }
+func (a *arrowCard) ReceiveDamage(_ float32) {
+	return
+}
 func (a *arrowCard) String() string {
-	return fmt.Sprintf("%d %s (%s)", a.Value, a.Name, a.ID)
+	return fmt.Sprintf("%.0f %s (%s)", a.Value, a.Name, a.ID)
 }
 
 type poisonCard struct {
 	card
 }
 
-func newPoisonCard(id string, value int) *poisonCard {
+func newPoisonCard(id string, value float32) *poisonCard {
 	{
 		return &poisonCard{
 			card: card{
@@ -227,8 +303,11 @@ func (p *poisonCard) IsResource() bool {
 func (p *poisonCard) Attack(_, _ iCard) error {
 	return errors.New("poison can perform attack")
 }
+func (p *poisonCard) ReceiveDamage(_ float32) {
+	return
+}
 func (p *poisonCard) String() string {
-	return fmt.Sprintf("%d %s (%s)", p.Value, p.Name, p.ID)
+	return fmt.Sprintf("%.0f %s (%s)", p.Value, p.Name, p.ID)
 }
 
 type dragonCard struct {
@@ -254,11 +333,14 @@ func (d *dragonCard) IsResource() bool {
 func (d *dragonCard) Attack(target, weapon iCard) error {
 	return errors.New("dragon attack not implemented yet")
 }
+func (d *dragonCard) ReceiveDamage(amount float32) {
+	d.Value -= amount
+}
 func (d *dragonCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", d.Name, d.ID))
 	if d.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %d", d.Value))
+		sb.WriteString(fmt.Sprintf(" - Value: %.1f", d.Value))
 	}
 	if d.AffectedBy != nil && len(d.AffectedBy) > 0 {
 		for _, card := range d.AffectedBy {
@@ -291,11 +373,14 @@ func (s *specialMoveCard) IsResource() bool {
 func (s *specialMoveCard) Attack(_, _ iCard) error {
 	return errors.New("special move attack not implemented yet")
 }
+func (s *specialMoveCard) ReceiveDamage(amount float32) {
+	s.Value -= amount
+}
 func (s *specialMoveCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", s.Name, s.ID))
 	if s.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %d", s.Value))
+		sb.WriteString(fmt.Sprintf(" - Value: %.1f", s.Value))
 	}
 	if s.AffectedBy != nil && len(s.AffectedBy) > 0 {
 		for _, card := range s.AffectedBy {
@@ -326,6 +411,9 @@ func (s *spyCard) IsResource() bool {
 func (s *spyCard) Attack(_, _ iCard) error {
 	return errors.New("spy cannot attack")
 }
+func (s *spyCard) ReceiveDamage(_ float32) {
+	return
+}
 func (s *spyCard) String() string {
 	return fmt.Sprintf("%s (%s)", s.Name, s.ID)
 }
@@ -351,6 +439,9 @@ func (t *thiefCard) IsResource() bool {
 func (t *thiefCard) Attack(_, _ iCard) error {
 	return errors.New("thief cannot attack")
 }
+func (t *thiefCard) ReceiveDamage(_ float32) {
+	return
+}
 func (t *thiefCard) String() string {
 	return fmt.Sprintf("%s (%s)", t.Name, t.ID)
 }
@@ -359,7 +450,7 @@ type goldCard struct {
 	card
 }
 
-func newGoldCard(id string, value int) *goldCard {
+func newGoldCard(id string, value float32) *goldCard {
 	return &goldCard{
 		card: card{
 			ID:    id,
@@ -377,8 +468,11 @@ func (g *goldCard) IsResource() bool {
 func (g *goldCard) Attack(_, _ iCard) error {
 	return errors.New("money cannot attack")
 }
+func (g *goldCard) ReceiveDamage(_ float32) {
+	return
+}
 func (g *goldCard) String() string {
-	return fmt.Sprintf("%d %s (%s)", g.Value, g.Name, g.ID)
+	return fmt.Sprintf("%.0f %s (%s)", g.Value, g.Name, g.ID)
 }
 
 type catapultCard struct {
@@ -401,6 +495,9 @@ func (c *catapultCard) IsResource() bool {
 }
 func (c *catapultCard) Attack(target, weapon iCard) error {
 	return errors.New("catapult attack not implemented yet")
+}
+func (c *catapultCard) ReceiveDamage(_ float32) {
+	return
 }
 func (c *catapultCard) String() string {
 	return fmt.Sprintf("%s (%s)", c.Name, c.ID)

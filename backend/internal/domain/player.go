@@ -92,12 +92,27 @@ func (p *Player) moveResourceToCastle(cardID string) bool {
 	return false
 }
 
-func (p *Player) Attack(warriorCard iCard, targetCard iCard, weaponCard iCard) {
-	// check if player has Dragon, then can attack
+func (p *Player) Attack(warriorCard iCard, targetCard iCard,
+	weaponCard iCard) error {
 
-	// attack with warriorCard on targetCard using weaponCard
-	if err := warriorCard.Attack(targetCard, weaponCard); err != nil {
-		return fmt.Errorf("attack failed: %w", err)
+	// check if player has Dragon, then can attack
+	for _, c := range p.field {
+		if dragon, ok := c.(*dragonCard); ok {
+			return dragon.Attack(targetCard, weaponCard)
+		}
+	}
+	if !warriorCard.IsWarrior() {
+		return fmt.Errorf("the attacking card is not a warrior")
 	}
 
+	switch c := warriorCard.(type) {
+	case *knightCard, *archerCard, *mageCard:
+		if err := c.Attack(targetCard, weaponCard); err != nil {
+			return err
+		}
+	default:
+		return fmt.Errorf("card not a warrior")
+	}
+
+	return nil
 }

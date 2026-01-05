@@ -181,7 +181,7 @@ func performAction() error {
 	case 1:
 		ok = false
 		for !ok {
-			print("Select the attack, the warrior and the target: ")
+			print("Select the warrior, the target and the weapon: ")
 			w, err := reader.ReadString('\n')
 			if err != nil {
 				return fmt.Errorf("error reading attack: %w", err)

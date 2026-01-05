@@ -24,7 +24,7 @@ func NewCastle(card iCard) (*Castle, error) {
 func (c *Castle) Value() int {
 	total := 0
 	for _, card := range c.cards {
-		total += card.GetValue()
+		total += int(card.GetValue())
 	}
 
 	return total
