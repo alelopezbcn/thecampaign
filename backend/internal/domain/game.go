@@ -37,8 +37,8 @@ func NewGame(player1, player2 string) *Game {
 		history:     []string{},
 	}
 
-	p1 := NewPlayer(playersArr[0], g)
-	p2 := NewPlayer(playersArr[1], g)
+	p1 := NewPlayer(playersArr[0], g, g)
+	p2 := NewPlayer(playersArr[1], g, g)
 	g.Players = []*Player{p1, p2}
 
 	g.addToHistory(fmt.Sprintf("Game created between %s and %s", p1.Name, p2.Name))
@@ -75,7 +75,7 @@ func (g *Game) deal() {
 }
 
 func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error {
-	player, _ := g.WhoIsNext()
+	player, _ := g.WhoIsCurrent()
 	if player.Name != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
@@ -101,7 +101,7 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 	// Check if both players have set their warriors
 	allSet := true
 	for _, p := range g.Players {
-		if len(p.field) == 0 {
+		if len(p.field.showCards()) == 0 {
 			allSet = false
 			break
 		}
@@ -119,7 +119,7 @@ func (g *Game) switchTurn() {
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }
 
-func (g *Game) WhoIsNext() (next *Player, enemy *Player) {
+func (g *Game) WhoIsCurrent() (current *Player, enemy *Player) {
 	return g.Players[g.CurrentTurn],
 		g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
@@ -129,7 +129,7 @@ func (g *Game) WhoIsEnemy() *Player {
 }
 
 func (g *Game) DrawCard(playerName string) (card iCard, err error) {
-	player, _ := g.WhoIsNext()
+	player, _ := g.WhoIsCurrent()
 	if player.Name != playerName {
 		return card, errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
@@ -159,7 +159,7 @@ func (g *Game) DrawCard(playerName string) (card iCard, err error) {
 }
 
 func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
-	player, enemy := g.WhoIsNext()
+	player, enemy := g.WhoIsCurrent()
 	status.Player = player.Name
 	status.Hand = player.ShowHand()
 	status.OwnField = player.ShowField()
@@ -172,7 +172,7 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 }
 
 func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
-	next, enemy := g.WhoIsNext()
+	next, enemy := g.WhoIsCurrent()
 	if next.Name != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
@@ -219,7 +219,7 @@ func (g *Game) addToHistory(msg string) {
 }
 
 func (g *Game) EndTurn(player string) error {
-	next, _ := g.WhoIsNext()
+	next, _ := g.WhoIsCurrent()
 	if next.Name != player {
 		return errors.New(fmt.Sprintf("%s not your turn", player))
 	}
@@ -244,4 +244,10 @@ func (g *Game) OnWarriorDead(player *Player, card iCard) {
 	player.removeCardFromField(card)
 	g.cemetery = append(g.cemetery, card)
 	g.addToHistory("Warrior died and moved to cemetery: " + card.String())
+}
+
+func (g *Game) OnGameEnded(reason string) {
+	g.state = StateGameEnded
+	current, _ := g.WhoIsCurrent()
+	g.addToHistory(fmt.Sprintf("%s wins: %s", current.Name, reason))
 }

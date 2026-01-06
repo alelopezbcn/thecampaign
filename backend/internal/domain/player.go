@@ -2,23 +2,24 @@ package domain
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Player struct {
 	Name             string
 	hand             *hand
-	field            []iCard
+	field            *field
 	castle           *Castle
 	cardUsedObserver CardUsedObserver
 }
 
 func NewPlayer(name string,
-	cardUsedObserver CardUsedObserver) *Player {
+	cardUsedObserver CardUsedObserver,
+	gameEndedObserver GameEndedObserver) *Player {
 	return &Player{
 		Name:             name,
 		hand:             newHand(),
-		field:            []iCard{},
+		field:            newField(gameEndedObserver),
+		castle:           newCastle(gameEndedObserver),
 		cardUsedObserver: cardUsedObserver,
 	}
 }
@@ -41,7 +42,7 @@ func (p *Player) ShowHand() []iCard {
 }
 
 func (p *Player) ShowField() []iCard {
-	return p.field
+	return p.field.showCards()
 }
 
 func (p *Player) ShowCastle() *Castle {
@@ -53,13 +54,7 @@ func (p *Player) GetCardFromHand(cardID string) (iCard, bool) {
 }
 
 func (p *Player) GetCardFromField(cardID string) (iCard, bool) {
-	for _, c := range p.field {
-		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
-			return c, true
-		}
-	}
-
-	return nil, false
+	return p.field.getCard(cardID)
 }
 
 func (p *Player) moveCardToField(cardID string) error {
@@ -75,7 +70,7 @@ func (p *Player) moveCardToField(cardID string) error {
 		return fmt.Errorf("only warrior or dragon cards can be moved to field")
 	}
 
-	p.field = append(p.field, c)
+	p.field.addCards(c)
 	p.removeCardFromHand(c)
 
 	return nil
@@ -92,7 +87,7 @@ func (p *Player) moveResourceToCastle(cardID string) error {
 		return fmt.Errorf("card with ID %s is not a resource", cardID)
 	}
 
-	if p.castle == nil {
+	if !p.castle.isConstructed {
 		return fmt.Errorf("castle not constructed")
 	}
 
@@ -134,12 +129,5 @@ func (p *Player) removeCardFromHand(card iCard) bool {
 }
 
 func (p *Player) removeCardFromField(card iCard) bool {
-	for i, c := range p.field {
-		if c.GetID() == card.GetID() {
-			p.field = append(p.field[:i], p.field[i+1:]...)
-			return true
-		}
-	}
-
-	return false
+	return p.field.removeCard(card)
 }

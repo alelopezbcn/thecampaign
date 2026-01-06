@@ -109,21 +109,21 @@ func setInitialWarriors() error {
 	for i := 0; i < 2; i++ {
 		ok := false
 		for !ok {
-			next, _ := g.WhoIsNext()
-			printTurnHeader(next.Name, "SET INITIAL WARRIORS")
-			showCurrentPlayerHand(next)
+			current, _ := g.WhoIsCurrent()
+			printTurnHeader(current.Name, "SET INITIAL WARRIORS")
+			showCurrentPlayerHand(current)
 
-			print(next.Name + " Insert the Initial warriors: ")
+			print(current.Name + " Insert the Initial warriors: ")
 			w, err := reader.ReadString('\n')
 			if err != nil {
 				return fmt.Errorf("error reading warriors for player %s: %w",
-					next.Name, err)
+					current.Name, err)
 			}
 			warriors := strings.Split(strings.TrimSpace(w), ",")
-			err = g.SetInitialWarriors(next.Name, warriors)
+			err = g.SetInitialWarriors(current.Name, warriors)
 			if err != nil {
 				println(fmt.Sprintf("error setting initial warriors for player %s: %s",
-					next.Name, err.Error()))
+					current.Name, err.Error()))
 				continue
 			}
 			ok = true
@@ -144,21 +144,21 @@ func showCurrentPlayerHand(player *domain.Player) {
 }
 
 func drawACard() error {
-	next, _ := g.WhoIsNext()
-	card, err := g.DrawCard(next.Name)
+	current, _ := g.WhoIsCurrent()
+	card, err := g.DrawCard(current.Name)
 	if err != nil {
 		if errors.Is(err, domain.ErrHandLimitExceeded) {
 			msg := "DRAW A CARD: player can't take more cards"
-			printTurnHeader(next.Name, msg)
+			printTurnHeader(current.Name, msg)
 			return nil
 		}
 
 		return fmt.Errorf("error drawing a card for player %s: %w",
-			next.Name, err)
+			current.Name, err)
 	}
 
 	msg := fmt.Sprintf("DRAW A CARD: %s", card.String())
-	printTurnHeader(next.Name, msg)
+	printTurnHeader(current.Name, msg)
 
 	return nil
 }

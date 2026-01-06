@@ -14,7 +14,9 @@ type hand struct {
 }
 
 func newHand() *hand {
-	return &hand{}
+	return &hand{
+		cards: []iCard{},
+	}
 }
 
 func (h *hand) addCards(cards ...iCard) error {

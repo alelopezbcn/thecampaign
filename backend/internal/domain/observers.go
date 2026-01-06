@@ -7,3 +7,7 @@ type CardUsedObserver interface {
 type WarriorDeadObserver interface {
 	OnWarriorDead(player *Player, card iCard)
 }
+
+type GameEndedObserver interface {
+	OnGameEnded(reason string)
+}
