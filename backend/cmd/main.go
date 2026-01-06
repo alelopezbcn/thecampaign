@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -35,15 +36,19 @@ func main() {
 		os.Exit(-1)
 	}
 
-	if err = drawACard(); err != nil {
-		println("Error drawing a card:", err)
-		os.Exit(-1)
-	}
-	if err = performAction(); err != nil {
-		println("Error performing action:", err)
-		os.Exit(-1)
-	}
+	gameEnded := false
+	for !gameEnded {
+		if err = drawACard(); err != nil {
+			println("Error drawing a card:", err)
+			os.Exit(-1)
+		}
 
+		if err = playTurn(); err != nil {
+			println("Error performing action:", err)
+			os.Exit(-1)
+		}
+		gameEnded = g.IsGameEnded()
+	}
 	println("HASTA AQUI LLEGUE")
 
 	// for {
@@ -72,49 +77,56 @@ func main() {
 }
 
 func startGame() (*domain.Game, error) {
-	fmt.Print("Insert the name of the player 1: ")
-	p1, err := reader.ReadString('\n')
-	if err != nil {
-		return nil, fmt.Errorf("error reading player1: %w", err)
-	}
-	p1 = strings.TrimSpace(p1)
-	var p2 string
+	// fmt.Print("Insert the name of the player 1: ")
+	// p1, err := reader.ReadString('\n')
+	// if err != nil {
+	// 	return nil, fmt.Errorf("error reading player1: %w", err)
+	// }
+	// p1 = strings.TrimSpace(p1)
+	// var p2 string
+	//
+	// ok := false
+	// for !ok {
+	// 	fmt.Print("Insert the name of the player 2: ")
+	// 	p2, err = reader.ReadString('\n')
+	// 	if err != nil {
+	// 		return nil, fmt.Errorf("error reading player2: %w", err)
+	// 	}
+	// 	p2 = strings.TrimSpace(p2)
+	// 	if p2 == p1 {
+	// 		fmt.Println("Player 2 name must be different from Player 1 name.")
+	// 		continue
+	// 	}
+	// 	ok = true
+	// }
 
-	ok := false
-	for !ok {
-		fmt.Print("Insert the name of the player 2: ")
-		p2, err = reader.ReadString('\n')
-		if err != nil {
-			return nil, fmt.Errorf("error reading player2: %w", err)
-		}
-		p2 = strings.TrimSpace(p2)
-		if p2 == p1 {
-			fmt.Println("Player 2 name must be different from Player 1 name.")
-			continue
-		}
-		ok = true
-	}
-
+	p1 := "Alelo"
+	p2 := "Matuelo"
 	return domain.NewGame(p1, p2), nil
 }
 
 func setInitialWarriors() error {
 	for i := 0; i < 2; i++ {
-		next, _ := g.WhoIsNext()
-		printTurnHeader(next.Name, "SET INITIAL WARRIORS")
-		showCurrentPlayerHand(next)
+		ok := false
+		for !ok {
+			next, _ := g.WhoIsNext()
+			printTurnHeader(next.Name, "SET INITIAL WARRIORS")
+			showCurrentPlayerHand(next)
 
-		print(next.Name + " Insert the Initial warriors: ")
-		w, err := reader.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("error reading warriors for player %s: %w",
-				next.Name, err)
-		}
-		warriors := strings.Split(strings.TrimSpace(w), ",")
-		err = g.SetInitialWarriors(next.Name, warriors)
-		if err != nil {
-			return fmt.Errorf("error setting initial warriors for player %s: %w",
-				next.Name, err)
+			print(next.Name + " Insert the Initial warriors: ")
+			w, err := reader.ReadString('\n')
+			if err != nil {
+				return fmt.Errorf("error reading warriors for player %s: %w",
+					next.Name, err)
+			}
+			warriors := strings.Split(strings.TrimSpace(w), ",")
+			err = g.SetInitialWarriors(next.Name, warriors)
+			if err != nil {
+				println(fmt.Sprintf("error setting initial warriors for player %s: %s",
+					next.Name, err.Error()))
+				continue
+			}
+			ok = true
 		}
 	}
 
@@ -135,6 +147,12 @@ func drawACard() error {
 	next, _ := g.WhoIsNext()
 	card, err := g.DrawCard(next.Name)
 	if err != nil {
+		if errors.Is(err, domain.ErrHandLimitExceeded) {
+			msg := "DRAW A CARD: player can't take more cards"
+			printTurnHeader(next.Name, msg)
+			return nil
+		}
+
 		return fmt.Errorf("error drawing a card for player %s: %w",
 			next.Name, err)
 	}
@@ -145,68 +163,105 @@ func drawACard() error {
 	return nil
 }
 
-func performAction() error {
-	status := g.GetStatusForNextPlayer()
-	println("Board Status for", status.Player)
-	println(status.String())
-	println()
+func playTurn() error {
+	actionsPerformed := map[int]bool{}
+	actionsPending := 8
 
-	println("Available Actions:")
-	println("  1. Attack")
-	println("  2. Spy / Steal")
-	println("  3. Buy")
-	println("  4. Construct")
-	println("  5. Trade")
-	println("  6. Play Warrior")
-	print("Select an action: ")
+	var status domain.BoardStatus
 
-	ok := false
-	opt := 0
-	for !ok {
-		actionInput, err := reader.ReadString('\n')
-		if err != nil {
-			return fmt.Errorf("error reading action input: %w", err)
+	for actionsPending > 0 {
+		status = g.GetStatusForNextPlayer()
+		println("\nBoard Status for", status.Player)
+		println()
+		println(status.String())
+
+		println("Available Actions:")
+		hasAttacked, ok := actionsPerformed[1]
+		if !ok || !hasAttacked {
+			println("  1. Attack")
 		}
-
-		opt, err = strconv.Atoi(strings.TrimSpace(actionInput))
-		if err != nil || opt < 1 || opt > 6 {
-			println("Invalid action. Please select a valid option.")
-			continue
+		hasSpied, ok := actionsPerformed[2]
+		if !ok || !hasSpied {
+			println("  2. Spy")
 		}
-		ok = true
-	}
+		hasStolen, ok := actionsPerformed[3]
+		if !ok || !hasStolen {
+			println("  3. Steal")
+		}
+		hasBought, ok := actionsPerformed[4]
+		if !ok || !hasBought {
+			println("  4. Buy")
+		}
+		hasConstructed, ok := actionsPerformed[5]
+		if !ok || !hasConstructed {
+			println("  5. Construct")
+		}
+		hasTraded, ok := actionsPerformed[6]
+		if !ok || !hasTraded {
+			println("  6. Trade")
+		}
+		hasPlayedWarrior, ok := actionsPerformed[7]
+		if !ok || !hasPlayedWarrior {
+			println("  7. Play warrior")
+		}
+		println("  8. Pass")
+		print("Select an action: ")
 
-	println("You selected action:", opt)
-	switch opt {
-	case 1:
-		ok = false
-		for !ok {
-			print("Select the warrior, the target and the weapon: ")
-			w, err := reader.ReadString('\n')
+		okOpt := false
+		opt := 0
+		for !okOpt {
+			actionInput, err := reader.ReadString('\n')
 			if err != nil {
-				return fmt.Errorf("error reading attack: %w", err)
+				return fmt.Errorf("error reading action input: %w", err)
 			}
-			cards := strings.Split(strings.TrimSpace(w), ",")
-			if len(cards) != 3 {
-				println("Invalid input. Please provide attack, warrior and target.")
+
+			opt, err = strconv.Atoi(strings.TrimSpace(actionInput))
+			if err != nil || opt < 1 || opt > 8 {
+				println("Invalid action. Please select a valid option.")
 				continue
 			}
 
-			err = g.Attack(status.Player, cards[0], cards[1], cards[2])
-			if err != nil {
-				println("Error performing attack:", err)
+			_, alreadyDone := actionsPerformed[opt]
+			if alreadyDone && opt != 8 {
+				println("Action already performed this turn. Please select another action.")
 				continue
 			}
-			ok = true
+
+			okOpt = true
+		}
+
+		switch opt {
+		case 1:
+			ok = false
+			for !ok {
+				print("Select the warrior, the target and the weapon: ")
+				w, err := reader.ReadString('\n')
+				if err != nil {
+					return fmt.Errorf("error reading attack: %w", err)
+				}
+				cards := strings.Split(strings.TrimSpace(w), ",")
+				if len(cards) != 3 {
+					println("Invalid input. Please provide attack, warrior and target.")
+					continue
+				}
+
+				err = g.Attack(status.Player, cards[0], cards[1], cards[2])
+				if err != nil {
+					println("Error performing attack:", err)
+					continue
+				}
+				ok = true
+			}
+			actionsPerformed[1] = true
+			actionsPending--
+		case 8:
+			actionsPending = 0
+		default:
+			println("Action not yet implemented.")
 		}
 	}
-	// Here you would call the appropriate method on g to perform the action
-	// For example:
-	// err = g.PerformAction(status.Player, opt, ...)
-	// if err != nil {
-	//     println("Error performing action:", err)
-	//     continue
-	// }
+
+	_ = g.EndTurn(status.Player)
 
 	return nil
 }

@@ -2,20 +2,31 @@ package domain
 
 import "fmt"
 
-func warriorsCards() (warriors []iCard) {
+func warriorsCards(o WarriorDeadObserver) (warriors []iCard) {
 	warriors = make([]iCard, 0, 15)
 	for i := 1; i < 6; i++ {
-		warriors = append(warriors, newKnightCard(fmt.Sprintf("k%d", i)))
-		warriors = append(warriors, newArcherCard(fmt.Sprintf("a%d", i)))
-		warriors = append(warriors, newMageCard(fmt.Sprintf("m%d", i)))
+		k := newKnightCard(fmt.Sprintf("k%d", i))
+		k.AddObserver(o)
+		warriors = append(warriors, k)
+
+		a := newArcherCard(fmt.Sprintf("a%d", i))
+		a.AddObserver(o)
+		warriors = append(warriors, a)
+
+		m := newMageCard(fmt.Sprintf("m%d", i))
+		m.AddObserver(o)
+		warriors = append(warriors, m)
 	}
 
 	return warriors
 }
 
-func otherButWarriorsCards() (cards []iCard) {
+func otherButWarriorsCards(o WarriorDeadObserver) (cards []iCard) {
+	d := newDragonCard("d")
+	d.AddObserver(o)
+
 	cards = []iCard{
-		newDragonCard("d"),
+		d,
 		newSpecialMoveCard("s1"),
 		newSpecialMoveCard("s2"),
 		newSpecialMoveCard("s3"),
@@ -26,15 +37,14 @@ func otherButWarriorsCards() (cards []iCard) {
 	}
 
 	for i := 1; i < 10; i++ {
-		f := float32(i)
-		cards = append(cards, newGoldCard(fmt.Sprintf("goA%d", i), f))
-		cards = append(cards, newGoldCard(fmt.Sprintf("goB%d", i), f))
-		cards = append(cards, newSwordCard(fmt.Sprintf("swA%d", i), f))
-		cards = append(cards, newSwordCard(fmt.Sprintf("swB%d", i), f))
-		cards = append(cards, newArrowCard(fmt.Sprintf("arA%d", i), f))
-		cards = append(cards, newArrowCard(fmt.Sprintf("arB%d", i), f))
-		cards = append(cards, newPoisonCard(fmt.Sprintf("poA%d", i), f))
-		cards = append(cards, newPoisonCard(fmt.Sprintf("poB%d", i), f))
+		cards = append(cards, newGoldCard(fmt.Sprintf("goA%d", i), i))
+		cards = append(cards, newGoldCard(fmt.Sprintf("goB%d", i), i))
+		cards = append(cards, newSwordCard(fmt.Sprintf("swA%d", i), i))
+		cards = append(cards, newSwordCard(fmt.Sprintf("swB%d", i), i))
+		cards = append(cards, newArrowCard(fmt.Sprintf("arA%d", i), i))
+		cards = append(cards, newArrowCard(fmt.Sprintf("arB%d", i), i))
+		cards = append(cards, newPoisonCard(fmt.Sprintf("poA%d", i), i))
+		cards = append(cards, newPoisonCard(fmt.Sprintf("poB%d", i), i))
 	}
 
 	return shuffle(cards)

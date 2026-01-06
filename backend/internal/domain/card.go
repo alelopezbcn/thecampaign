@@ -7,286 +7,258 @@ import (
 )
 
 const (
-	WarriorHealth     = 10
+	WarriorHealth     = 2
 	DragonHealth      = 20
 	MaxHandSize       = 7
 	SpecialMoveHealth = 10
 )
 
+type iCard interface {
+	GetID() string
+	GetValue() int
+	SetPlayer(player *Player)
+	String() string
+	AddObserver(o WarriorDeadObserver)
+}
+
 type card struct {
 	ID         string
 	Name       string
-	Value      float32
+	Value      int
 	AffectedBy []iCard
+	Player     *Player
+	Observer   WarriorDeadObserver
 }
 
 func (c *card) GetID() string {
 	return c.ID
 }
 
-func (c *card) GetValue() float32 {
+func (c *card) GetValue() int {
 	return c.Value
 }
 
-type iCard interface {
-	GetID() string
-	GetValue() float32
-	IsWarrior() bool
-	IsResource() bool
+func (c *card) SetPlayer(player *Player) {
+	c.Player = player
+}
+
+func (c *card) AddObserver(o WarriorDeadObserver) {
+	c.Observer = o
+}
+
+type attacker interface {
 	Attack(target, weapon iCard) error
-	ReceiveDamage(amount float32)
-	String() string
+}
+
+type attackable interface {
+	ReceiveDamage(amount int)
+}
+
+type weapon interface {
+	iCard
+	CanAttack()
+}
+
+type resource interface {
+	iCard
+	CanBuy()
+}
+
+type warrior interface {
+	iCard
+	attacker
+	attackable
+}
+
+type warriorCard struct {
+	card
+}
+
+func (w *warriorCard) ReceiveDamage(amount int) {
+	w.Value -= amount
+	if w.Value <= 0 && w.Observer != nil {
+		w.Observer.OnWarriorDead(w.Player, w)
+	}
+}
+func (w *warriorCard) String() string {
+	sb := strings.Builder{}
+	sb.WriteString(fmt.Sprintf("%s (%s)", w.Name, w.ID))
+	if w.Value > 0 {
+		sb.WriteString(fmt.Sprintf(" - Value: %d", w.Value))
+	}
+	if w.AffectedBy != nil && len(w.AffectedBy) > 0 {
+		for _, card := range w.AffectedBy {
+			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
+		}
+	}
+	return sb.String()
 }
 
 type knightCard struct {
-	card
+	warriorCard
 }
 
 func newKnightCard(id string) *knightCard {
 	return &knightCard{
-		card: card{
-			ID:         id,
-			Name:       "Knight",
-			Value:      WarriorHealth,
-			AffectedBy: []iCard{},
+		warriorCard: warriorCard{
+			card: card{
+				ID:         strings.ToUpper(id),
+				Name:       "Knight",
+				Value:      WarriorHealth,
+				AffectedBy: []iCard{},
+			},
 		},
 	}
 }
-func (k *knightCard) IsWarrior() bool {
-	return true
-}
-func (k *knightCard) IsResource() bool {
-	return false
-}
-func (k *knightCard) Attack(target, weapon iCard) error {
-	switch target.(type) {
-	case *knightCard, *archerCard, *mageCard, *dragonCard, *specialMoveCard:
-		break
-	default:
+func (k *knightCard) Attack(targetCard, weaponCard iCard) error {
+
+	if _, ok := targetCard.(attackable); !ok {
 		return fmt.Errorf("target cannot be attacked")
 	}
-
-	_, ok := weapon.(*swordCard)
+	if _, ok := weaponCard.(weapon); !ok {
+		return fmt.Errorf("card is not a weapon")
+	}
+	_, ok := weaponCard.(*swordCard)
 	if !ok {
 		return errors.New("knight can only attack with sword")
 	}
 
-	multiplier := float32(0.5)
-	if _, ok := target.(*archerCard); ok {
-		multiplier = 1
+	multiplier := 1
+	if _, ok := targetCard.(*archerCard); ok {
+		multiplier = 2
 	}
 
-	damage := weapon.GetValue() * multiplier
-	target.ReceiveDamage(damage)
+	damage := weaponCard.GetValue() * multiplier
+	targetCard.(attackable).ReceiveDamage(damage)
 
 	return nil
 }
-func (k *knightCard) ReceiveDamage(amount float32) {
-	k.Value -= amount
-}
-func (k *knightCard) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%s (%s)", k.Name, k.ID))
-	if k.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %.1f", k.Value))
-	}
-	if k.AffectedBy != nil && len(k.AffectedBy) > 0 {
-		for _, card := range k.AffectedBy {
-			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
-		}
-	}
-	return sb.String()
-}
 
 type archerCard struct {
-	card
+	warriorCard
 }
 
 func newArcherCard(id string) *archerCard {
 	return &archerCard{
-		card: card{
-			ID:         id,
-			Name:       "Archer",
-			Value:      WarriorHealth,
-			AffectedBy: []iCard{},
+		warriorCard: warriorCard{
+			card: card{
+				ID:         strings.ToUpper(id),
+				Name:       "Archer",
+				Value:      WarriorHealth,
+				AffectedBy: []iCard{},
+			},
 		},
 	}
 }
-func (a *archerCard) IsWarrior() bool {
-	return true
-}
-func (a *archerCard) IsResource() bool {
-	return false
-}
-func (a *archerCard) Attack(target, weapon iCard) error {
-	switch target.(type) {
-	case *knightCard, *archerCard, *mageCard, *dragonCard, *specialMoveCard:
-		break
-	default:
+func (a *archerCard) Attack(targetCard, weaponCard iCard) error {
+	if _, ok := targetCard.(attackable); !ok {
 		return fmt.Errorf("target cannot be attacked")
 	}
-
-	_, ok := weapon.(*archerCard)
+	if _, ok := weaponCard.(weapon); !ok {
+		return fmt.Errorf("card is not a weapon")
+	}
+	_, ok := weaponCard.(*arrowCard)
 	if !ok {
 		return errors.New("archer can only attack with arrow")
 	}
 
-	multiplier := float32(0.5)
-	if _, ok := target.(*mageCard); ok {
-		multiplier = 1
+	multiplier := 1
+	if _, ok := targetCard.(*mageCard); ok {
+		multiplier = 2
 	}
 
-	damage := weapon.GetValue() * multiplier
-	target.ReceiveDamage(damage)
+	damage := weaponCard.GetValue() * multiplier
+	targetCard.(attackable).ReceiveDamage(damage)
 
 	return nil
 }
-func (a *archerCard) ReceiveDamage(amount float32) {
-	a.Value -= amount
-}
-func (a *archerCard) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%s (%s)", a.Name, a.ID))
-	if a.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %.1f", a.Value))
-	}
-	if a.AffectedBy != nil && len(a.AffectedBy) > 0 {
-		for _, card := range a.AffectedBy {
-			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
-		}
-	}
-	return sb.String()
-}
 
 type mageCard struct {
-	card
+	warriorCard
 }
 
 func newMageCard(id string) *mageCard {
 	return &mageCard{
-		card: card{
-			ID:         id,
-			Name:       "Mage",
-			Value:      WarriorHealth,
-			AffectedBy: []iCard{},
+		warriorCard: warriorCard{
+			card: card{
+				ID:         strings.ToUpper(id),
+				Name:       "Mage",
+				Value:      WarriorHealth,
+				AffectedBy: []iCard{},
+			},
 		},
 	}
 }
-func (m *mageCard) IsWarrior() bool {
-	return true
-}
-func (m *mageCard) IsResource() bool {
-	return false
-}
-func (m *mageCard) Attack(target, weapon iCard) error {
-	switch target.(type) {
-	case *knightCard, *archerCard, *mageCard, *dragonCard, *specialMoveCard:
-		break
-	default:
+func (m *mageCard) Attack(targetCard, weaponCard iCard) error {
+	if _, ok := targetCard.(attackable); !ok {
 		return fmt.Errorf("target cannot be attacked")
 	}
-
-	_, ok := weapon.(*poisonCard)
+	if _, ok := weaponCard.(weapon); !ok {
+		return fmt.Errorf("card is not a weapon")
+	}
+	_, ok := weaponCard.(*poisonCard)
 	if !ok {
 		return errors.New("mage can only attack with poison")
 	}
 
-	multiplier := float32(0.5)
-	if _, ok := target.(*knightCard); ok {
-		multiplier = 1
+	multiplier := 1
+	if _, ok := targetCard.(*knightCard); ok {
+		multiplier = 2
 	}
 
-	damage := weapon.GetValue() * multiplier
-	target.ReceiveDamage(damage)
+	damage := weaponCard.GetValue() * multiplier
+	targetCard.(attackable).ReceiveDamage(damage)
 
 	return nil
-}
-func (m *mageCard) ReceiveDamage(amount float32) {
-	m.Value -= amount
-}
-func (m *mageCard) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%s (%s)", m.Name, m.ID))
-	if m.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %.1f", m.Value))
-	}
-	if m.AffectedBy != nil && len(m.AffectedBy) > 0 {
-		for _, card := range m.AffectedBy {
-			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
-		}
-	}
-	return sb.String()
 }
 
 type swordCard struct {
 	card
 }
 
-func newSwordCard(id string, value float32) *swordCard {
+func newSwordCard(id string, value int) *swordCard {
 	return &swordCard{
 		card: card{
-			ID:         id,
+			ID:         strings.ToUpper(id),
 			Name:       "Sword",
 			Value:      value,
 			AffectedBy: []iCard{},
 		},
 	}
 }
-func (s *swordCard) IsWarrior() bool {
-	return false
-}
-func (s *swordCard) IsResource() bool {
-	return false
-}
-func (s *swordCard) Attack(_, _ iCard) error {
-	return errors.New("swords can perform attack")
-}
-func (s *swordCard) ReceiveDamage(_ float32) {
-	return
-}
+func (s *swordCard) CanAttack() {}
 func (s *swordCard) String() string {
-	return fmt.Sprintf("%.0f %s (%s)", s.Value, s.Name, s.ID)
+	return fmt.Sprintf("%d %s (%s)", s.Value, s.Name, s.ID)
 }
 
 type arrowCard struct {
 	card
 }
 
-func newArrowCard(id string, value float32) *arrowCard {
+func newArrowCard(id string, value int) *arrowCard {
 	return &arrowCard{
 		card: card{
-			ID:         id,
+			ID:         strings.ToUpper(id),
 			Name:       "Arrow",
 			Value:      value,
 			AffectedBy: []iCard{},
 		},
 	}
 }
-func (a *arrowCard) IsWarrior() bool {
-	return false
-}
-func (a *arrowCard) IsResource() bool {
-	return false
-}
-func (a *arrowCard) Attack(_, _ iCard) error {
-	return errors.New("arrow can perform attack")
-}
-func (a *arrowCard) ReceiveDamage(_ float32) {
-	return
-}
+func (a *arrowCard) CanAttack() {}
 func (a *arrowCard) String() string {
-	return fmt.Sprintf("%.0f %s (%s)", a.Value, a.Name, a.ID)
+	return fmt.Sprintf("%d %s (%s)", a.Value, a.Name, a.ID)
 }
 
 type poisonCard struct {
 	card
 }
 
-func newPoisonCard(id string, value float32) *poisonCard {
+func newPoisonCard(id string, value int) *poisonCard {
 	{
 		return &poisonCard{
 			card: card{
-				ID:         id,
+				ID:         strings.ToUpper(id),
 				Name:       "Poison",
 				Value:      value,
 				AffectedBy: []iCard{},
@@ -294,60 +266,29 @@ func newPoisonCard(id string, value float32) *poisonCard {
 		}
 	}
 }
-func (p *poisonCard) IsWarrior() bool {
-	return false
-}
-func (p *poisonCard) IsResource() bool {
-	return false
-}
-func (p *poisonCard) Attack(_, _ iCard) error {
-	return errors.New("poison can perform attack")
-}
-func (p *poisonCard) ReceiveDamage(_ float32) {
-	return
-}
+func (p *poisonCard) CanAttack() {}
 func (p *poisonCard) String() string {
-	return fmt.Sprintf("%.0f %s (%s)", p.Value, p.Name, p.ID)
+	return fmt.Sprintf("%d %s (%s)", p.Value, p.Name, p.ID)
 }
 
 type dragonCard struct {
-	card
+	warriorCard
 }
 
 func newDragonCard(id string) *dragonCard {
 	return &dragonCard{
-		card: card{
-			ID:         id,
-			Name:       "Dragon",
-			Value:      DragonHealth,
-			AffectedBy: []iCard{},
+		warriorCard: warriorCard{
+			card: card{
+				ID:         strings.ToUpper(id),
+				Name:       "Dragon",
+				Value:      DragonHealth,
+				AffectedBy: []iCard{},
+			},
 		},
 	}
 }
-func (d *dragonCard) IsWarrior() bool {
-	return false
-}
-func (d *dragonCard) IsResource() bool {
-	return false
-}
-func (d *dragonCard) Attack(target, weapon iCard) error {
+func (d *dragonCard) Attack(targetCard, weaponCard iCard) error {
 	return errors.New("dragon attack not implemented yet")
-}
-func (d *dragonCard) ReceiveDamage(amount float32) {
-	d.Value -= amount
-}
-func (d *dragonCard) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%s (%s)", d.Name, d.ID))
-	if d.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %.1f", d.Value))
-	}
-	if d.AffectedBy != nil && len(d.AffectedBy) > 0 {
-		for _, card := range d.AffectedBy {
-			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
-		}
-	}
-	return sb.String()
 }
 
 type specialMoveCard struct {
@@ -357,30 +298,24 @@ type specialMoveCard struct {
 func newSpecialMoveCard(id string) *specialMoveCard {
 	return &specialMoveCard{
 		card: card{
-			ID:         id,
+			ID:         strings.ToUpper(id),
 			Name:       "Special Move",
 			Value:      SpecialMoveHealth,
 			AffectedBy: []iCard{},
 		},
 	}
 }
-func (s *specialMoveCard) IsWarrior() bool {
-	return false
-}
-func (s *specialMoveCard) IsResource() bool {
-	return false
-}
 func (s *specialMoveCard) Attack(_, _ iCard) error {
 	return errors.New("special move attack not implemented yet")
 }
-func (s *specialMoveCard) ReceiveDamage(amount float32) {
+func (s *specialMoveCard) ReceiveDamage(amount int) {
 	s.Value -= amount
 }
 func (s *specialMoveCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", s.Name, s.ID))
 	if s.Value > 0 {
-		sb.WriteString(fmt.Sprintf(" - Value: %.1f", s.Value))
+		sb.WriteString(fmt.Sprintf(" - Value: %d", s.Value))
 	}
 	if s.AffectedBy != nil && len(s.AffectedBy) > 0 {
 		for _, card := range s.AffectedBy {
@@ -397,22 +332,10 @@ type spyCard struct {
 func newSpyCard(id string) *spyCard {
 	return &spyCard{
 		card: card{
-			ID:   id,
+			ID:   strings.ToUpper(id),
 			Name: "Spy",
 		},
 	}
-}
-func (s *spyCard) IsWarrior() bool {
-	return false
-}
-func (s *spyCard) IsResource() bool {
-	return false
-}
-func (s *spyCard) Attack(_, _ iCard) error {
-	return errors.New("spy cannot attack")
-}
-func (s *spyCard) ReceiveDamage(_ float32) {
-	return
 }
 func (s *spyCard) String() string {
 	return fmt.Sprintf("%s (%s)", s.Name, s.ID)
@@ -425,22 +348,10 @@ type thiefCard struct {
 func newThiefCard(id string) *thiefCard {
 	return &thiefCard{
 		card: card{
-			ID:   id,
+			ID:   strings.ToUpper(id),
 			Name: "Thief",
 		},
 	}
-}
-func (t *thiefCard) IsWarrior() bool {
-	return false
-}
-func (t *thiefCard) IsResource() bool {
-	return false
-}
-func (t *thiefCard) Attack(_, _ iCard) error {
-	return errors.New("thief cannot attack")
-}
-func (t *thiefCard) ReceiveDamage(_ float32) {
-	return
 }
 func (t *thiefCard) String() string {
 	return fmt.Sprintf("%s (%s)", t.Name, t.ID)
@@ -450,29 +361,18 @@ type goldCard struct {
 	card
 }
 
-func newGoldCard(id string, value float32) *goldCard {
+func newGoldCard(id string, value int) *goldCard {
 	return &goldCard{
 		card: card{
-			ID:    id,
+			ID:    strings.ToUpper(id),
 			Name:  "Gold Coin",
 			Value: value,
 		},
 	}
 }
-func (g *goldCard) IsWarrior() bool {
-	return false
-}
-func (g *goldCard) IsResource() bool {
-	return true
-}
-func (g *goldCard) Attack(_, _ iCard) error {
-	return errors.New("money cannot attack")
-}
-func (g *goldCard) ReceiveDamage(_ float32) {
-	return
-}
+func (g *goldCard) CanBuy() {}
 func (g *goldCard) String() string {
-	return fmt.Sprintf("%.0f %s (%s)", g.Value, g.Name, g.ID)
+	return fmt.Sprintf("%d %s (%s)", g.Value, g.Name, g.ID)
 }
 
 type catapultCard struct {
@@ -482,22 +382,13 @@ type catapultCard struct {
 func newCatapultCard(id string) *catapultCard {
 	return &catapultCard{
 		card: card{
-			ID:   id,
+			ID:   strings.ToUpper(id),
 			Name: "Catapult",
 		},
 	}
 }
-func (c *catapultCard) IsWarrior() bool {
-	return false
-}
-func (c *catapultCard) IsResource() bool {
-	return false
-}
-func (c *catapultCard) Attack(target, weapon iCard) error {
+func (c *catapultCard) Attack(targetCard Castle) error {
 	return errors.New("catapult attack not implemented yet")
-}
-func (c *catapultCard) ReceiveDamage(_ float32) {
-	return
 }
 func (c *catapultCard) String() string {
 	return fmt.Sprintf("%s (%s)", c.Name, c.ID)

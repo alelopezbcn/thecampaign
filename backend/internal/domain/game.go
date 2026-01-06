@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,17 +29,17 @@ func NewGame(player1, player2 string) *Game {
 		playersArr[i], playersArr[j] = playersArr[j], playersArr[i]
 	})
 
-	p1 := NewPlayer(playersArr[0])
-	p2 := NewPlayer(playersArr[1])
-
 	g := &Game{
 		id:          uuid.NewString(),
-		Players:     []*Player{p1, p2},
 		CurrentTurn: 0,
 		discardPile: []iCard{},
 		cemetery:    []iCard{},
 		history:     []string{},
 	}
+
+	p1 := NewPlayer(playersArr[0], g)
+	p2 := NewPlayer(playersArr[1], g)
+	g.Players = []*Player{p1, p2}
 
 	g.addToHistory(fmt.Sprintf("Game created between %s and %s", p1.Name, p2.Name))
 
@@ -50,7 +51,7 @@ func NewGame(player1, player2 string) *Game {
 func (g *Game) deal() {
 	g.addToHistory("Dealing Cards")
 
-	warriorCards := shuffle(warriorsCards())
+	warriorCards := shuffle(warriorsCards(g))
 
 	// Each player gets 3 warrior cards
 	warriorsIdx := 0
@@ -59,7 +60,7 @@ func (g *Game) deal() {
 		warriorsIdx += 3
 	}
 
-	deckCards := append(warriorCards[warriorsIdx:], otherButWarriorsCards()...)
+	deckCards := append(warriorCards[warriorsIdx:], otherButWarriorsCards(g)...)
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
 	for _, player := range g.Players {
@@ -90,8 +91,8 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 	}
 
 	for _, id := range warriorIDs {
-		if !player.moveWarriorToField(id) {
-			return errors.New("failed to move warrior to field: " + id)
+		if err := player.moveCardToField(strings.TrimSpace(id)); err != nil {
+			return err
 		}
 	}
 	g.addToHistory(player.Name + " has set their initial warriors.")
@@ -127,25 +128,16 @@ func (g *Game) WhoIsEnemy() *Player {
 	return g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
-// func (g *Game) HandleAction(playerName string, action string,
-// 	source iCard, destination iCard) error {
-// 	player := g.WhoIsNext()
-// 	if player.Name != playerName {
-// 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
-// 	}
-//
-//
-// 	switch action {
-// 	case "take_card":
-// 	}
-//
-// 	return nil
-// }
-
 func (g *Game) DrawCard(playerName string) (card iCard, err error) {
 	player, _ := g.WhoIsNext()
 	if player.Name != playerName {
 		return card, errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	if !player.hand.canAddCards(1) {
+		g.addToHistory(player.Name + " exceeded max number of cards in hand.")
+
+		return nil, ErrHandLimitExceeded
 	}
 
 	card, ok := g.deck.DrawCard()
@@ -179,25 +171,25 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 	return status
 }
 
-func (g *Game) Attack(playerName, warrior, target, weapon string) error {
+func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
 	next, enemy := g.WhoIsNext()
 	if next.Name != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	warriorCard, ok := next.GetCardFromField(warrior)
+	warriorCard, ok := next.GetCardFromField(warriorID)
 	if !ok {
-		return errors.New("warrior card not in field: " + warrior)
+		return errors.New("warrior card not in field: " + warriorID)
 	}
 
-	targetCard, ok := enemy.GetCardFromField(target)
+	targetCard, ok := enemy.GetCardFromField(targetID)
 	if !ok {
-		return errors.New("target card not in enemy field: " + target)
+		return errors.New("target card not in enemy field: " + targetID)
 	}
 
-	weaponCard, ok := next.GetCardFromHand(weapon)
+	weaponCard, ok := next.GetCardFromHand(weaponID)
 	if !ok {
-		return errors.New("weapon card not in hand: " + weapon)
+		return errors.New("weapon card not in hand: " + weaponID)
 	}
 
 	if err := next.Attack(warriorCard, targetCard, weaponCard); err != nil {
@@ -218,6 +210,38 @@ func (g *Game) shuffleDiscardPileIntoDeck() {
 }
 
 func (g *Game) addToHistory(msg string) {
+	if len(msg) == 0 {
+		return
+	}
+
 	g.history = append(g.history, msg)
 	println(fmt.Sprintf("*********: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
+}
+
+func (g *Game) EndTurn(player string) error {
+	next, _ := g.WhoIsNext()
+	if next.Name != player {
+		return errors.New(fmt.Sprintf("%s not your turn", player))
+	}
+
+	g.addToHistory(player + " ended their turn")
+	g.switchTurn()
+
+	return nil
+}
+
+func (g *Game) IsGameEnded() bool {
+	return g.state == StateGameEnded
+}
+
+func (g *Game) OnCardUsed(player *Player, card iCard) {
+	player.removeCardFromHand(card)
+	g.discardPile = append(g.discardPile, card)
+	g.addToHistory("Card moved to discard pile: " + card.String())
+}
+
+func (g *Game) OnWarriorDead(player *Player, card iCard) {
+	player.removeCardFromField(card)
+	g.cemetery = append(g.cemetery, card)
+	g.addToHistory("Warrior died and moved to cemetery: " + card.String())
 }

@@ -45,6 +45,6 @@ func (a *BoardStatus) String() string {
 	for _, c := range a.Hand {
 		sb.WriteString("  - " + c.String() + "\n")
 	}
-	sb.WriteString("\n---\n")
+	sb.WriteString("\n---")
 	return sb.String()
 }
