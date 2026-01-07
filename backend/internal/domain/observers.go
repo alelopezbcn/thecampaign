@@ -8,6 +8,6 @@ type WarriorDeadObserver interface {
 	OnWarriorDead(player *Player, card iCard)
 }
 
-type GameEndedObserver interface {
-	OnGameEnded(reason string)
+type CastleCompletionObserver interface {
+	OnCastleCompletion(p *Player)
 }

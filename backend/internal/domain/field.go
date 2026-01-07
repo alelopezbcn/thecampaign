@@ -6,10 +6,10 @@ import (
 
 type field struct {
 	cards             []iCard
-	gameEndedObserver GameEndedObserver
+	gameEndedObserver CastleCompletionObserver
 }
 
-func newField(o GameEndedObserver) *field {
+func newField(o CastleCompletionObserver) *field {
 	return &field{
 		cards:             []iCard{},
 		gameEndedObserver: o,

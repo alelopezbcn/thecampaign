@@ -289,6 +289,23 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 }
 
+func (g *Game) Construct(playerName, cardID string) error {
+	current, _ := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	if err := current.Construct(cardID); err != nil {
+		return fmt.Errorf("constructing card failed: %w", err)
+	}
+
+	g.addToHistory(fmt.Sprintf("%s constructed castle with card %s",
+		current.Name, cardID))
+
+	return nil
+
+}
+
 func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name != playerName {
@@ -301,7 +318,7 @@ func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
 	}
 
 	g.OnCardUsed(current, s)
-	
+
 	switch option {
 	case 1:
 		// Reveal top 5 cards from deck
@@ -396,8 +413,7 @@ func (g *Game) OnWarriorDead(player *Player, card iCard) {
 		len(g.cemetery), card.String()))
 }
 
-func (g *Game) OnGameEnded(reason string) {
+func (g *Game) OnCastleCompletion(p *Player) {
 	g.state = StateGameEnded
-	current, _ := g.WhoIsCurrent()
-	g.addToHistory(fmt.Sprintf("%s wins: %s", current.Name, reason))
+	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name))
 }

@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	WarriorHealth     = 10
-	DragonHealth      = 20
-	MaxHandSize       = 7
-	SpecialMoveHealth = 10
+	WarriorHealth       = 10
+	DragonHealth        = 20
+	MaxHandSize         = 7
+	SpecialMPowerHealth = 10
 )
 
 type iCard interface {
@@ -298,27 +298,27 @@ func (d *dragonCard) Attack(targetCard, weaponCard iCard) error {
 	return errors.New("dragon attack not implemented yet")
 }
 
-type specialMoveCard struct {
+type specialPowerCard struct {
 	card
 }
 
-func newSpecialMoveCard(id string) *specialMoveCard {
-	return &specialMoveCard{
+func newSpecialPowerCard(id string) *specialPowerCard {
+	return &specialPowerCard{
 		card: card{
 			ID:         strings.ToUpper(id),
-			Name:       "Special Move",
-			Value:      SpecialMoveHealth,
+			Name:       "Special Power",
+			Value:      SpecialMPowerHealth,
 			affectedBy: []iCard{},
 		},
 	}
 }
-func (s *specialMoveCard) Attack(_, _ iCard) error {
-	return errors.New("special move attack not implemented yet")
+func (s *specialPowerCard) Attack(_, _ iCard) error {
+	return errors.New("special power attack not implemented yet")
 }
-func (s *specialMoveCard) ReceiveDamage(amount int) {
+func (s *specialPowerCard) ReceiveDamage(amount int) {
 	s.Value -= amount
 }
-func (s *specialMoveCard) String() string {
+func (s *specialPowerCard) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", s.Name, s.ID))
 	if s.Value > 0 {

@@ -261,6 +261,12 @@ func playTurn() error {
 			}
 			actionsPerformed[buyAction] = true
 			actionsPending--
+		case constructAction:
+			if err := construct(status.Player); err != nil {
+				return err
+			}
+			actionsPerformed[constructAction] = true
+			actionsPending--
 		case tradeAction:
 			if err := trade(status.Player); err != nil {
 				return err
@@ -325,6 +331,26 @@ func buy(player string) error {
 		err = g.Buy(player, resourceID)
 		if err != nil {
 			println("Error buying:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func construct(player string) error {
+	ok := false
+	print("Select the resource for constructing: ")
+	for !ok {
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading resource: %w", err)
+		}
+		resourceID := strings.TrimSpace(w)
+
+		err = g.Construct(player, resourceID)
+		if err != nil {
+			println("Error constructing:", err.Error())
 			continue
 		}
 		ok = true

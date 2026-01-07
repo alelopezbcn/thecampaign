@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -14,14 +15,16 @@ type Player struct {
 
 func NewPlayer(name string,
 	cardUsedObserver CardUsedObserver,
-	gameEndedObserver GameEndedObserver) *Player {
-	return &Player{
+	gameEndedObserver CastleCompletionObserver) *Player {
+	p := &Player{
 		Name:             name,
 		hand:             newHand(),
 		field:            newField(gameEndedObserver),
-		castle:           newCastle(gameEndedObserver),
 		cardUsedObserver: cardUsedObserver,
 	}
+	p.castle = newCastle(p, gameEndedObserver)
+
+	return p
 }
 
 func (p *Player) takeCards(cards ...iCard) bool {
@@ -99,30 +102,6 @@ func (p *Player) moveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *Player) moveResourceToCastle(cardID string) error {
-	c, ok := p.GetCardFromHand(cardID)
-	if !ok {
-		return fmt.Errorf("card with ID %s not found in hand", cardID)
-	}
-
-	res, ok := c.(resource)
-	if !ok {
-		return fmt.Errorf("card with ID %s is not a resource", cardID)
-	}
-
-	if !p.castle.isConstructed {
-		return fmt.Errorf("castle not constructed")
-	}
-
-	if err := p.castle.AddResource(res); err != nil {
-		return err
-	}
-
-	p.removeCardFromHand(c)
-
-	return nil
-}
-
 func (p *Player) Attack(warriorCard iCard, targetCard iCard,
 	weaponCard iCard) error {
 
@@ -189,4 +168,19 @@ func (p *Player) HasSpy() bool {
 		}
 	}
 	return false
+}
+
+func (p *Player) Construct(cardID string) error {
+	resourceCard, ok := p.GetCardFromHand(cardID)
+	if !ok {
+		return errors.New("card not in hand: " + cardID)
+	}
+
+	if err := p.castle.Construct(resourceCard); err != nil {
+		return err
+	}
+
+	p.removeCardFromHand(resourceCard)
+
+	return nil
 }
