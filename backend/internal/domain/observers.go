@@ -1,7 +1,7 @@
 package domain
 
 type CardUsedObserver interface {
-	OnCardUsed(player *Player, card iCard)
+	OnCardMovedToPile(player *Player, card iCard)
 }
 
 type WarriorDeadObserver interface {

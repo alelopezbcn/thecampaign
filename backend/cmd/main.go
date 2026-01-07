@@ -13,16 +13,18 @@ import (
 )
 
 const (
-	currentHandHeader = "****************************************"
-	newPhaseHeader    = "----------------------------------------------------------"
-	attackAction      = 1
-	spyAction         = 2
-	stealAction       = 3
-	buyAction         = 4
-	constructAction   = 5
-	tradeAction       = 6
-	moveWarriorAction = 7
-	passAction        = 8
+	currentHandHeader  = "****************************************"
+	newPhaseHeader     = "----------------------------------------------------------"
+	attackAction       = 1
+	spyAction          = 2
+	stealAction        = 3
+	buyAction          = 4
+	constructAction    = 5
+	tradeAction        = 6
+	moveWarriorAction  = 7
+	catapultAction     = 8
+	specialPowerAction = 9
+	passAction         = 10
 )
 
 var (
@@ -171,7 +173,7 @@ func drawACard() error {
 
 func playTurn() error {
 	actionsPerformed := map[int]bool{}
-	actionsPending := 8
+	actionsPending := 10
 
 	var status domain.BoardStatus
 
@@ -210,6 +212,14 @@ func playTurn() error {
 		if !ok || !hasMovedWarrior {
 			println(fmt.Sprintf("  %d. Move Warrior to Field", moveWarriorAction))
 		}
+		hasCatapult, ok := actionsPerformed[catapultAction]
+		if !ok || !hasCatapult {
+			println(fmt.Sprintf("  %d. Catapult", catapultAction))
+		}
+		hasUsedSpecialPower, ok := actionsPerformed[specialPowerAction]
+		if !ok || !hasUsedSpecialPower {
+			println(fmt.Sprintf("  %d. Use Special Power", specialPowerAction))
+		}
 		println(fmt.Sprintf("  %d. Pass Turn", passAction))
 		print("Select an action: ")
 
@@ -222,7 +232,7 @@ func playTurn() error {
 			}
 
 			opt, err = strconv.Atoi(strings.TrimSpace(actionInput))
-			if err != nil || opt < 1 || opt > 8 {
+			if err != nil || opt < 1 || opt > 10 {
 				println("Invalid action. Please select a valid option.")
 				continue
 			}
@@ -279,6 +289,13 @@ func playTurn() error {
 				return err
 			}
 			actionsPerformed[moveWarriorAction] = true
+			actionsPending--
+		case catapultAction:
+			err := catapult(status)
+			if err != nil {
+				return err
+			}
+			actionsPerformed[catapultAction] = true
 			actionsPending--
 		case passAction:
 			actionsPending = 0
@@ -401,6 +418,32 @@ func moveWarrior(player string) error {
 		err = g.MoveWarriorToField(player, warriorID)
 		if err != nil {
 			println("Error moving warrior to field:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func catapult(status domain.BoardStatus) error {
+	ok := false
+	print(fmt.Sprintf("The enemy's castle has %d resource cards. Choose one: ",
+		status.ResourceCardsInEnemyCastle))
+
+	for !ok {
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading resource: %w", err)
+		}
+		position, err := strconv.Atoi(strings.TrimSpace(w))
+		if err != nil || position < 1 || position > status.CardsInEnemyHand {
+			println("Invalid position. Please select a valid option.")
+			continue
+		}
+
+		err = g.Catapult(status.Player, position)
+		if err != nil {
+			println("Error stealing:", err.Error())
 			continue
 		}
 		ok = true

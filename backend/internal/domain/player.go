@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 )
 
 type Player struct {
@@ -131,7 +132,7 @@ func (p *Player) removeCardFromField(card iCard) bool {
 	return p.field.removeCard(card)
 }
 
-func (p *Player) GetThief() iCard {
+func (p *Player) GetThief() *thiefCard {
 	for _, c := range p.hand.showCards() {
 		if t, ok := c.(*thiefCard); ok {
 			return t
@@ -140,10 +141,19 @@ func (p *Player) GetThief() iCard {
 	return nil
 }
 
-func (p *Player) GetSpy() iCard {
+func (p *Player) GetSpy() *spyCard {
 	for _, c := range p.hand.showCards() {
 		if s, ok := c.(*spyCard); ok {
 			return s
+		}
+	}
+	return nil
+}
+
+func (p *Player) GetCatapult() *catapultCard {
+	for _, c := range p.hand.showCards() {
+		if t, ok := c.(*catapultCard); ok {
+			return t
 		}
 	}
 	return nil
@@ -155,10 +165,19 @@ func (p *Player) Stolen(position int) (iCard, error) {
 		return nil, fmt.Errorf("invalid position %d for stealing card", position)
 	}
 
-	card := cards[position-1]
-	p.removeCardFromHand(card)
+	// Create a copy of c.resources and shuffle it
+	copied := make([]iCard, len(cards))
+	copy(copied, cards)
+	// Shuffle copied slice
+	for i := range copied {
+		j := i + rand.Intn(len(copied)-i)
+		copied[i], copied[j] = copied[j], copied[i]
+	}
 
-	return card, nil
+	c := copied[position-1]
+	p.removeCardFromHand(c)
+
+	return c, nil
 }
 
 func (p *Player) HasSpy() bool {

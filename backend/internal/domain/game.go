@@ -174,6 +174,7 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 	status.EnemyField = enemy.ShowField()
 	status.EnemyCastle = enemy.ShowCastle()
 	status.CardsInEnemyHand = enemy.CardsInHand()
+	status.ResourceCardsInEnemyCastle = enemy.ShowCastle().ResourceCards()
 
 	return status
 }
@@ -275,7 +276,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 		return errors.New("cannot buy with gold card of value 1")
 	}
 
-	g.OnCardUsed(current, resourceCard)
+	g.OnCardMovedToPile(current, resourceCard)
 
 	cardsToBuy := val / 2
 	if err := g.DrawCards(playerName, cardsToBuy); err != nil {
@@ -317,7 +318,7 @@ func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
 		return nil, errors.New("player does not have a spy to use")
 	}
 
-	g.OnCardUsed(current, s)
+	g.OnCardMovedToPile(current, s)
 
 	switch option {
 	case 1:
@@ -352,10 +353,35 @@ func (g *Game) Steal(playerName string, cardPosition int) error {
 		return fmt.Errorf("stealing card failed: %w", err)
 	}
 
-	g.OnCardUsed(current, t)
+	g.OnCardMovedToPile(current, t)
 	current.takeCards(stolenCard)
 
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
+		current.Name, enemy.Name))
+
+	return nil
+
+}
+
+func (g *Game) Catapult(playerName string, cardPosition int) error {
+	current, enemy := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	t := current.GetCatapult()
+	if t == nil {
+		return errors.New("player does not have a catapult to attack")
+	}
+
+	stolenGold, err := t.Attack(enemy.castle, cardPosition)
+	if err != nil {
+		return fmt.Errorf("attacking castle failed: %w", err)
+	}
+
+	g.OnCardMovedToPile(current, stolenGold)
+
+	g.addToHistory(fmt.Sprintf("%s used catapult to steal gold from %s's castle",
 		current.Name, enemy.Name))
 
 	return nil
@@ -393,7 +419,7 @@ func (g *Game) IsGameEnded() bool {
 	return g.state == StateGameEnded
 }
 
-func (g *Game) OnCardUsed(player *Player, card iCard) {
+func (g *Game) OnCardMovedToPile(player *Player, card iCard) {
 	player.removeCardFromHand(card)
 	g.discardPile = append(g.discardPile, card)
 	g.addToHistory(fmt.Sprintf("Card moved to discard pile (%d): %s",

@@ -1,6 +1,9 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
+	"math/rand"
+)
 
 const MaxCastleResources = 25
 
@@ -71,6 +74,40 @@ func (c *Castle) addResource(card iCard) error {
 	return nil
 }
 
+func (c *Castle) ResourceCards() int {
+	return len(c.resources)
+}
+
 func (c *Castle) String() string {
-	return fmt.Sprintf("Castle: %v Gold coins", c.Value())
+	return fmt.Sprintf("Castle: %v Gold coins (%d cards)",
+		c.Value(), c.ResourceCards())
+}
+
+func (c *Castle) RemoveGold(position int) (*goldCard, error) {
+	if len(c.resources) == 0 {
+		return nil, fmt.Errorf("no resource cards to remove from castle")
+	}
+
+	if position < 1 || position > len(c.resources) {
+		return nil, fmt.Errorf("invalid position %d for removing a resource from castle", position)
+	}
+
+	// Create a copy of c.resources and shuffle it
+	copied := make([]*goldCard, len(c.resources))
+	copy(copied, c.resources)
+	// Shuffle copied slice
+	for i := range copied {
+		j := i + rand.Intn(len(copied)-i)
+		copied[i], copied[j] = copied[j], copied[i]
+	}
+
+	removedCard := copied[position-1]
+	for i, r := range c.resources {
+		if r.GetID() == removedCard.GetID() {
+			c.resources = append(c.resources[:i], c.resources[i+1:]...)
+			return r, nil
+		}
+	}
+
+	return nil, fmt.Errorf("failed to remove resource card from castle")
 }

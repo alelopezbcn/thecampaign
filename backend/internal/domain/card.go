@@ -7,9 +7,8 @@ import (
 )
 
 const (
-	WarriorHealth       = 10
+	WarriorHealth       = 20
 	DragonHealth        = 20
-	MaxHandSize         = 7
 	SpecialMPowerHealth = 10
 )
 
@@ -219,6 +218,53 @@ func (m *mageCard) Attack(targetCard, weaponCard iCard) error {
 	return nil
 }
 
+type dragonCard struct {
+	warriorCard
+}
+
+func newDragonCard(id string) *dragonCard {
+	return &dragonCard{
+		warriorCard: warriorCard{
+			card: card{
+				ID:         strings.ToUpper(id),
+				Name:       "Dragon",
+				Value:      DragonHealth,
+				affectedBy: []iCard{},
+			},
+		},
+	}
+}
+func (d *dragonCard) Attack(targetCard, weaponCard iCard) error {
+	if _, ok := targetCard.(attackable); !ok {
+		return fmt.Errorf("target cannot be attacked")
+	}
+	if _, ok := weaponCard.(weapon); !ok {
+		return fmt.Errorf("card is not a weapon")
+	}
+
+	multiplier := 1
+
+	switch weaponCard.(type) {
+	case *swordCard:
+		if _, ok := targetCard.(*archerCard); ok {
+			multiplier = 2
+		}
+	case *arrowCard:
+		if _, ok := targetCard.(*mageCard); ok {
+			multiplier = 2
+		}
+	case *poisonCard:
+		if _, ok := targetCard.(*knightCard); ok {
+			multiplier = 2
+		}
+	}
+
+	damage := weaponCard.GetValue() * multiplier
+	targetCard.(attackable).ReceiveDamage(damage, weaponCard)
+
+	return nil
+}
+
 type swordCard struct {
 	card
 }
@@ -276,26 +322,6 @@ func newPoisonCard(id string, value int) *poisonCard {
 func (p *poisonCard) CanAttack() {}
 func (p *poisonCard) String() string {
 	return fmt.Sprintf("%d %s (%s)", p.Value, p.Name, p.ID)
-}
-
-type dragonCard struct {
-	warriorCard
-}
-
-func newDragonCard(id string) *dragonCard {
-	return &dragonCard{
-		warriorCard: warriorCard{
-			card: card{
-				ID:         strings.ToUpper(id),
-				Name:       "Dragon",
-				Value:      DragonHealth,
-				affectedBy: []iCard{},
-			},
-		},
-	}
-}
-func (d *dragonCard) Attack(targetCard, weaponCard iCard) error {
-	return errors.New("dragon attack not implemented yet")
 }
 
 type specialPowerCard struct {
@@ -394,8 +420,13 @@ func newCatapultCard(id string) *catapultCard {
 		},
 	}
 }
-func (c *catapultCard) Attack(targetCard Castle) error {
-	return errors.New("catapult attack not implemented yet")
+func (c *catapultCard) Attack(castle *Castle, position int) (*goldCard, error) {
+	gold, err := castle.RemoveGold(position)
+	if err != nil {
+		return nil, err
+	}
+
+	return gold, nil
 }
 func (c *catapultCard) String() string {
 	return fmt.Sprintf("%s (%s)", c.Name, c.ID)
