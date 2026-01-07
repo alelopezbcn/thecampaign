@@ -6,12 +6,13 @@ import (
 )
 
 type BoardStatus struct {
-	Player      string
-	Hand        []iCard
-	OwnField    []iCard
-	OwnCastle   *Castle
-	EnemyField  []iCard
-	EnemyCastle *Castle
+	Player           string
+	Hand             []iCard
+	OwnField         []iCard
+	OwnCastle        *Castle
+	EnemyField       []iCard
+	EnemyCastle      *Castle
+	CardsInEnemyHand int
 }
 
 func (a *BoardStatus) String() string {

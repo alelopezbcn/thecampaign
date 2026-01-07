@@ -60,6 +60,10 @@ func (p *Player) ShowHand() []iCard {
 	return p.hand.showCards()
 }
 
+func (p *Player) CardsInHand() int {
+	return len(p.hand.showCards())
+}
+
 func (p *Player) ShowField() []iCard {
 	return p.field.showCards()
 }
@@ -146,4 +150,34 @@ func (p *Player) removeCardFromHand(card iCard) bool {
 
 func (p *Player) removeCardFromField(card iCard) bool {
 	return p.field.removeCard(card)
+}
+
+func (p *Player) GetThief() iCard {
+	for _, c := range p.hand.showCards() {
+		if t, ok := c.(*thiefCard); ok {
+			return t
+		}
+	}
+	return nil
+}
+
+func (p *Player) Stolen(position int) (iCard, error) {
+	cards := p.hand.showCards()
+	if position < 1 || position > len(cards) {
+		return nil, fmt.Errorf("invalid position %d for stealing card", position)
+	}
+
+	card := cards[position-1]
+	p.removeCardFromHand(card)
+
+	return card, nil
+}
+
+func (p *Player) HasSpy() bool {
+	for _, c := range p.hand.showCards() {
+		if _, ok := c.(*spyCard); ok {
+			return true
+		}
+	}
+	return false
 }

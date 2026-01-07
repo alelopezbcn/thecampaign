@@ -173,6 +173,7 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 
 	status.EnemyField = enemy.ShowField()
 	status.EnemyCastle = enemy.ShowCastle()
+	status.CardsInEnemyHand = enemy.CardsInHand()
 
 	return status
 }
@@ -283,6 +284,32 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 	g.addToHistory(fmt.Sprintf("%s bought %d card(s) using %s",
 		current.Name, cardsToBuy, resourceCard.String()))
+
+	return nil
+
+}
+
+func (g *Game) Steal(playerName string, cardPosition int) error {
+	current, enemy := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	t := current.GetThief()
+	if t == nil {
+		return errors.New("player does not have a thief to steal with")
+	}
+
+	stolenCard, err := enemy.Stolen(cardPosition)
+	if err != nil {
+		return fmt.Errorf("stealing card failed: %w", err)
+	}
+
+	g.OnCardUsed(current, t)
+	current.takeCards(stolenCard)
+
+	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
+		current.Name, enemy.Name))
 
 	return nil
 

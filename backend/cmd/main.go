@@ -182,32 +182,32 @@ func playTurn() error {
 		println(status.String())
 
 		println("Available Actions:")
-		hasAttacked, ok := actionsPerformed[1]
+		hasAttacked, ok := actionsPerformed[attackAction]
 		if !ok || !hasAttacked {
 			println(fmt.Sprintf("  %d. Attack", attackAction))
 		}
-		hasSpied, ok := actionsPerformed[2]
+		hasSpied, ok := actionsPerformed[spyAction]
 		if !ok || !hasSpied {
 			println(fmt.Sprintf("  %d. Spy", spyAction))
 		}
-		hasStolen, ok := actionsPerformed[3]
+		hasStolen, ok := actionsPerformed[stealAction]
 		if !ok || !hasStolen {
 			println(fmt.Sprintf("  %d. Steal", stealAction))
 		}
-		hasBought, ok := actionsPerformed[4]
+		hasBought, ok := actionsPerformed[buyAction]
 		if !ok || !hasBought {
 			println(fmt.Sprintf("  %d. Buy", buyAction))
 		}
-		hasConstructed, ok := actionsPerformed[5]
+		hasConstructed, ok := actionsPerformed[constructAction]
 		if !ok || !hasConstructed {
 			println(fmt.Sprintf("  %d. Construct", constructAction))
 		}
-		hasTraded, ok := actionsPerformed[6]
+		hasTraded, ok := actionsPerformed[tradeAction]
 		if !ok || !hasTraded {
 			println(fmt.Sprintf("  %d. Trade", tradeAction))
 		}
-		hasPlayedWarrior, ok := actionsPerformed[7]
-		if !ok || !hasPlayedWarrior {
+		hasMovedWarrior, ok := actionsPerformed[moveWarriorAction]
+		if !ok || !hasMovedWarrior {
 			println(fmt.Sprintf("  %d. Move Warrior to Field", moveWarriorAction))
 		}
 		println(fmt.Sprintf("  %d. Pass Turn", passAction))
@@ -228,7 +228,7 @@ func playTurn() error {
 			}
 
 			_, alreadyDone := actionsPerformed[opt]
-			if alreadyDone && opt != 8 {
+			if alreadyDone && opt != passAction {
 				println("Action already performed this turn. Please select another action.")
 				continue
 			}
@@ -238,25 +238,31 @@ func playTurn() error {
 
 		switch opt {
 		case attackAction:
-			if err := attack(ok, status.Player); err != nil {
+			if err := attack(status.Player); err != nil {
 				return err
 			}
 			actionsPerformed[attackAction] = true
 			actionsPending--
+		case stealAction:
+			if err := steal(status); err != nil {
+				return err
+			}
+			actionsPerformed[stealAction] = true
+			actionsPending--
 		case buyAction:
-			if err := buy(ok, status.Player); err != nil {
+			if err := buy(status.Player); err != nil {
 				return err
 			}
 			actionsPerformed[buyAction] = true
 			actionsPending--
 		case tradeAction:
-			if err := trade(ok, status.Player); err != nil {
+			if err := trade(status.Player); err != nil {
 				return err
 			}
 			actionsPerformed[tradeAction] = true
 			actionsPending--
 		case moveWarriorAction:
-			err := moveWarrior(ok, status.Player)
+			err := moveWarrior(status.Player)
 			if err != nil {
 				return err
 			}
@@ -274,8 +280,34 @@ func playTurn() error {
 	return nil
 }
 
-func buy(ok bool, player string) error {
-	ok = false
+func steal(status domain.BoardStatus) error {
+	ok := false
+	for !ok {
+		print(fmt.Sprintf("The enemy has %d cards in hand. Choose one: ",
+			status.CardsInEnemyHand))
+
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading resource: %w", err)
+		}
+		position, err := strconv.Atoi(strings.TrimSpace(w))
+		if err != nil || position < 1 || position > status.CardsInEnemyHand {
+			println("Invalid position. Please select a valid option.")
+			continue
+		}
+
+		err = g.Steal(status.Player, position)
+		if err != nil {
+			println("Error stealing:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func buy(player string) error {
+	ok := false
 	for !ok {
 		print("Select the resource for buying: ")
 		w, err := reader.ReadString('\n')
@@ -294,8 +326,8 @@ func buy(ok bool, player string) error {
 	return nil
 }
 
-func moveWarrior(ok bool, player string) error {
-	ok = false
+func moveWarrior(player string) error {
+	ok := false
 	for !ok {
 		print("Select the warrior to move to field: ")
 		w, err := reader.ReadString('\n')
@@ -314,8 +346,8 @@ func moveWarrior(ok bool, player string) error {
 	return nil
 }
 
-func trade(ok bool, player string) error {
-	ok = false
+func trade(player string) error {
+	ok := false
 	for !ok {
 		print("Select the cards (3) to trade (comma separated): ")
 		w, err := reader.ReadString('\n')
@@ -334,8 +366,8 @@ func trade(ok bool, player string) error {
 	return nil
 }
 
-func attack(ok bool, playerName string) error {
-	ok = false
+func attack(playerName string) error {
+	ok := false
 	for !ok {
 		print("Select the warrior, the target and the weapon: ")
 		w, err := reader.ReadString('\n')
