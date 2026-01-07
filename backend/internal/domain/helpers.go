@@ -37,14 +37,14 @@ func otherButWarriorsCards(o WarriorDeadObserver) (cards []iCard) {
 	}
 
 	for i := 1; i < 10; i++ {
-		cards = append(cards, newGoldCard(fmt.Sprintf("goA%d", i), i))
-		cards = append(cards, newGoldCard(fmt.Sprintf("goB%d", i), i))
-		cards = append(cards, newSwordCard(fmt.Sprintf("swA%d", i), i))
-		cards = append(cards, newSwordCard(fmt.Sprintf("swB%d", i), i))
-		cards = append(cards, newArrowCard(fmt.Sprintf("arA%d", i), i))
-		cards = append(cards, newArrowCard(fmt.Sprintf("arB%d", i), i))
-		cards = append(cards, newPoisonCard(fmt.Sprintf("poA%d", i), i))
-		cards = append(cards, newPoisonCard(fmt.Sprintf("poB%d", i), i))
+		cards = append(cards, newGoldCard(fmt.Sprintf("g%d", i), i))
+		// cards = append(cards, newGoldCard(fmt.Sprintf("gB%d", i), i))
+		cards = append(cards, newSwordCard(fmt.Sprintf("e%d", i), i))
+		// cards = append(cards, newSwordCard(fmt.Sprintf("eB%d", i), i))
+		cards = append(cards, newArrowCard(fmt.Sprintf("f%d", i), i))
+		// cards = append(cards, newArrowCard(fmt.Sprintf("arB%d", i), i))
+		cards = append(cards, newPoisonCard(fmt.Sprintf("p%d", i), i))
+		// cards = append(cards, newPoisonCard(fmt.Sprintf("poB%d", i), i))
 	}
 
 	return shuffle(cards)

@@ -15,6 +15,14 @@ import (
 const (
 	currentHandHeader = "****************************************"
 	newPhaseHeader    = "----------------------------------------------------------"
+	attackAction      = 1
+	spyAction         = 2
+	stealAction       = 3
+	buyAction         = 4
+	constructAction   = 5
+	tradeAction       = 6
+	moveWarriorAction = 7
+	passAction        = 8
 )
 
 var (
@@ -27,24 +35,24 @@ func main() {
 	var err error
 	g, err = startGame()
 	if err != nil {
-		println("Error starting game:", err)
+		println("Error starting game:", err.Error())
 		os.Exit(-1)
 	}
 
 	if err = setInitialWarriors(); err != nil {
-		println("Error setting initial warriors:", err)
+		println("Error setting initial warriors:", err.Error())
 		os.Exit(-1)
 	}
 
 	gameEnded := false
 	for !gameEnded {
 		if err = drawACard(); err != nil {
-			println("Error drawing a card:", err)
+			println("Error drawing a card:", err.Error())
 			os.Exit(-1)
 		}
 
 		if err = playTurn(); err != nil {
-			println("Error performing action:", err)
+			println("Error performing action:", err.Error())
 			os.Exit(-1)
 		}
 		gameEnded = g.IsGameEnded()
@@ -145,8 +153,7 @@ func showCurrentPlayerHand(player *domain.Player) {
 
 func drawACard() error {
 	current, _ := g.WhoIsCurrent()
-	card, err := g.DrawCard(current.Name)
-	if err != nil {
+	if err := g.DrawCards(current.Name, 1); err != nil {
 		if errors.Is(err, domain.ErrHandLimitExceeded) {
 			msg := "DRAW A CARD: player can't take more cards"
 			printTurnHeader(current.Name, msg)
@@ -157,8 +164,7 @@ func drawACard() error {
 			current.Name, err)
 	}
 
-	msg := fmt.Sprintf("DRAW A CARD: %s", card.String())
-	printTurnHeader(current.Name, msg)
+	printTurnHeader(current.Name, "DRAW A CARD")
 
 	return nil
 }
@@ -178,33 +184,33 @@ func playTurn() error {
 		println("Available Actions:")
 		hasAttacked, ok := actionsPerformed[1]
 		if !ok || !hasAttacked {
-			println("  1. Attack")
+			println(fmt.Sprintf("  %d. Attack", attackAction))
 		}
 		hasSpied, ok := actionsPerformed[2]
 		if !ok || !hasSpied {
-			println("  2. Spy")
+			println(fmt.Sprintf("  %d. Spy", spyAction))
 		}
 		hasStolen, ok := actionsPerformed[3]
 		if !ok || !hasStolen {
-			println("  3. Steal")
+			println(fmt.Sprintf("  %d. Steal", stealAction))
 		}
 		hasBought, ok := actionsPerformed[4]
 		if !ok || !hasBought {
-			println("  4. Buy")
+			println(fmt.Sprintf("  %d. Buy", buyAction))
 		}
 		hasConstructed, ok := actionsPerformed[5]
 		if !ok || !hasConstructed {
-			println("  5. Construct")
+			println(fmt.Sprintf("  %d. Construct", constructAction))
 		}
 		hasTraded, ok := actionsPerformed[6]
 		if !ok || !hasTraded {
-			println("  6. Trade")
+			println(fmt.Sprintf("  %d. Trade", tradeAction))
 		}
 		hasPlayedWarrior, ok := actionsPerformed[7]
 		if !ok || !hasPlayedWarrior {
-			println("  7. Play warrior")
+			println(fmt.Sprintf("  %d. Move Warrior to Field", moveWarriorAction))
 		}
-		println("  8. Pass")
+		println(fmt.Sprintf("  %d. Pass Turn", passAction))
 		print("Select an action: ")
 
 		okOpt := false
@@ -231,30 +237,32 @@ func playTurn() error {
 		}
 
 		switch opt {
-		case 1:
-			ok = false
-			for !ok {
-				print("Select the warrior, the target and the weapon: ")
-				w, err := reader.ReadString('\n')
-				if err != nil {
-					return fmt.Errorf("error reading attack: %w", err)
-				}
-				cards := strings.Split(strings.TrimSpace(w), ",")
-				if len(cards) != 3 {
-					println("Invalid input. Please provide attack, warrior and target.")
-					continue
-				}
-
-				err = g.Attack(status.Player, cards[0], cards[1], cards[2])
-				if err != nil {
-					println("Error performing attack:", err)
-					continue
-				}
-				ok = true
+		case attackAction:
+			if err := attack(ok, status.Player); err != nil {
+				return err
 			}
-			actionsPerformed[1] = true
+			actionsPerformed[attackAction] = true
 			actionsPending--
-		case 8:
+		case buyAction:
+			if err := buy(ok, status.Player); err != nil {
+				return err
+			}
+			actionsPerformed[buyAction] = true
+			actionsPending--
+		case tradeAction:
+			if err := trade(ok, status.Player); err != nil {
+				return err
+			}
+			actionsPerformed[tradeAction] = true
+			actionsPending--
+		case moveWarriorAction:
+			err := moveWarrior(ok, status.Player)
+			if err != nil {
+				return err
+			}
+			actionsPerformed[moveWarriorAction] = true
+			actionsPending--
+		case passAction:
 			actionsPending = 0
 		default:
 			println("Action not yet implemented.")
@@ -263,6 +271,90 @@ func playTurn() error {
 
 	_ = g.EndTurn(status.Player)
 
+	return nil
+}
+
+func buy(ok bool, player string) error {
+	ok = false
+	for !ok {
+		print("Select the resource for buying: ")
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading resource: %w", err)
+		}
+		resourceID := strings.TrimSpace(w)
+
+		err = g.Buy(player, resourceID)
+		if err != nil {
+			println("Error buying:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func moveWarrior(ok bool, player string) error {
+	ok = false
+	for !ok {
+		print("Select the warrior to move to field: ")
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading move warrior: %w", err)
+		}
+		warriorID := strings.TrimSpace(w)
+
+		err = g.MoveWarriorToField(player, warriorID)
+		if err != nil {
+			println("Error moving warrior to field:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func trade(ok bool, player string) error {
+	ok = false
+	for !ok {
+		print("Select the cards (3) to trade (comma separated): ")
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading trade cards: %w", err)
+		}
+		cardIDs := strings.Split(strings.TrimSpace(w), ",")
+
+		err = g.Trade(player, cardIDs)
+		if err != nil {
+			println("Error performing trade:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func attack(ok bool, playerName string) error {
+	ok = false
+	for !ok {
+		print("Select the warrior, the target and the weapon: ")
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading attack: %w", err)
+		}
+		cards := strings.Split(strings.TrimSpace(w), ",")
+		if len(cards) != 3 {
+			println("Invalid input. Please provide attack, warrior and target.")
+			continue
+		}
+
+		err = g.Attack(playerName, cards[0], cards[1], cards[2])
+		if err != nil {
+			println("Error performing attack:", err.Error())
+			continue
+		}
+		ok = true
+	}
 	return nil
 }
 
@@ -277,7 +369,7 @@ func printTurnHeader(player string, action string) {
 // func main() {
 // 	db, err := sql.Open("sqlite3", "./test.db")
 // 	if err != nil {
-// 		log.Fatal(err)
+// 		log.Fatal(err.Error())
 // 	}
 // 	defer db.Close()
 // 	sqlStmt := `
@@ -288,7 +380,7 @@ func printTurnHeader(player string, action string) {
 //     `
 // 	_, err = db.Exec(sqlStmt)
 // 	if err != nil {
-// 		log.Fatal(err)
+// 		log.Fatal(err.Error())
 // 	}
 // 	log.Println("Table 'users' created successfully")
 // }

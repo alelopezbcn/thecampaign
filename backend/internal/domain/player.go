@@ -37,6 +37,25 @@ func (p *Player) takeCards(cards ...iCard) bool {
 	return true
 }
 
+func (p *Player) giveCards(cardIDs ...string) ([]iCard, error) {
+	cards := make([]iCard, 0, len(cardIDs))
+
+	for _, cardID := range cardIDs {
+		c, ok := p.GetCardFromHand(cardID)
+		if !ok {
+			return nil, fmt.Errorf("card with ID %s not found in hand", cardID)
+		}
+
+		cards = append(cards, c)
+	}
+
+	for _, c := range cards {
+		p.removeCardFromHand(c)
+	}
+
+	return cards, nil
+}
+
 func (p *Player) ShowHand() []iCard {
 	return p.hand.showCards()
 }
@@ -96,6 +115,7 @@ func (p *Player) moveResourceToCastle(cardID string) error {
 	}
 
 	p.removeCardFromHand(c)
+
 	return nil
 }
 
@@ -115,10 +135,6 @@ func (p *Player) Attack(warriorCard iCard, targetCard iCard,
 	err := a.Attack(targetCard, weaponCard)
 	if err != nil {
 		return fmt.Errorf("attack failed: %w", err)
-	}
-
-	if p.cardUsedObserver != nil {
-		p.cardUsedObserver.OnCardUsed(p, weaponCard)
 	}
 
 	return nil

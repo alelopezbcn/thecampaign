@@ -17,7 +17,7 @@ type BoardStatus struct {
 func (a *BoardStatus) String() string {
 	sb := strings.Builder{}
 
-	if a.EnemyCastle == nil {
+	if !a.EnemyCastle.isConstructed {
 		sb.WriteString("Enemy's castle: not constructed \n")
 	} else {
 		sb.WriteString(fmt.Sprintf("Enemy's castle: %s \n", a.EnemyCastle.String()))
@@ -27,24 +27,24 @@ func (a *BoardStatus) String() string {
 	for _, c := range a.EnemyField {
 		sb.WriteString("  - " + c.String() + "\n")
 	}
-	sb.WriteString("---\n")
+	sb.WriteString("--------\n")
 
 	sb.WriteString("Your field: \n")
 	for _, c := range a.OwnField {
 		sb.WriteString("  - " + c.String() + "\n")
 	}
 
-	if a.OwnCastle == nil {
+	if !a.OwnCastle.isConstructed {
 		sb.WriteString("Your castle: not constructed \n")
 	} else {
 		sb.WriteString(fmt.Sprintf("Your castle: %s \n", a.OwnCastle.String()))
 	}
-	sb.WriteString("---\n")
+	sb.WriteString("--------\n")
 
 	sb.WriteString("Your hand: \n")
 	for _, c := range a.Hand {
 		sb.WriteString("  - " + c.String() + "\n")
 	}
-	sb.WriteString("\n---")
+	sb.WriteString("\n--------")
 	return sb.String()
 }

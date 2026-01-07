@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	WarriorHealth     = 2
+	WarriorHealth     = 10
 	DragonHealth      = 20
 	MaxHandSize       = 7
 	SpecialMoveHealth = 10
@@ -18,6 +18,7 @@ type iCard interface {
 	GetValue() int
 	SetPlayer(player *Player)
 	String() string
+	AffectedBy() []iCard
 	AddObserver(o WarriorDeadObserver)
 }
 
@@ -25,7 +26,7 @@ type card struct {
 	ID         string
 	Name       string
 	Value      int
-	AffectedBy []iCard
+	affectedBy []iCard
 	Player     *Player
 	Observer   WarriorDeadObserver
 }
@@ -41,6 +42,9 @@ func (c *card) GetValue() int {
 func (c *card) SetPlayer(player *Player) {
 	c.Player = player
 }
+func (c *card) AffectedBy() []iCard {
+	return c.affectedBy
+}
 
 func (c *card) AddObserver(o WarriorDeadObserver) {
 	c.Observer = o
@@ -51,7 +55,7 @@ type attacker interface {
 }
 
 type attackable interface {
-	ReceiveDamage(amount int)
+	ReceiveDamage(amount int, weapon iCard)
 }
 
 type weapon interface {
@@ -74,10 +78,13 @@ type warriorCard struct {
 	card
 }
 
-func (w *warriorCard) ReceiveDamage(amount int) {
+func (w *warriorCard) ReceiveDamage(amount int, weapon iCard) {
 	w.Value -= amount
-	if w.Value <= 0 && w.Observer != nil {
+	w.affectedBy = append(w.affectedBy, weapon)
+
+	if w.Value <= 0 {
 		w.Observer.OnWarriorDead(w.Player, w)
+
 	}
 }
 func (w *warriorCard) String() string {
@@ -86,9 +93,9 @@ func (w *warriorCard) String() string {
 	if w.Value > 0 {
 		sb.WriteString(fmt.Sprintf(" - Value: %d", w.Value))
 	}
-	if w.AffectedBy != nil && len(w.AffectedBy) > 0 {
-		for _, card := range w.AffectedBy {
-			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
+	if w.affectedBy != nil && len(w.affectedBy) > 0 {
+		for _, card := range w.affectedBy {
+			sb.WriteString(fmt.Sprintf("\n     * %s", card.String()))
 		}
 	}
 	return sb.String()
@@ -105,7 +112,7 @@ func newKnightCard(id string) *knightCard {
 				ID:         strings.ToUpper(id),
 				Name:       "Knight",
 				Value:      WarriorHealth,
-				AffectedBy: []iCard{},
+				affectedBy: []iCard{},
 			},
 		},
 	}
@@ -129,7 +136,7 @@ func (k *knightCard) Attack(targetCard, weaponCard iCard) error {
 	}
 
 	damage := weaponCard.GetValue() * multiplier
-	targetCard.(attackable).ReceiveDamage(damage)
+	targetCard.(attackable).ReceiveDamage(damage, weaponCard)
 
 	return nil
 }
@@ -145,7 +152,7 @@ func newArcherCard(id string) *archerCard {
 				ID:         strings.ToUpper(id),
 				Name:       "Archer",
 				Value:      WarriorHealth,
-				AffectedBy: []iCard{},
+				affectedBy: []iCard{},
 			},
 		},
 	}
@@ -168,7 +175,7 @@ func (a *archerCard) Attack(targetCard, weaponCard iCard) error {
 	}
 
 	damage := weaponCard.GetValue() * multiplier
-	targetCard.(attackable).ReceiveDamage(damage)
+	targetCard.(attackable).ReceiveDamage(damage, weaponCard)
 
 	return nil
 }
@@ -184,7 +191,7 @@ func newMageCard(id string) *mageCard {
 				ID:         strings.ToUpper(id),
 				Name:       "Mage",
 				Value:      WarriorHealth,
-				AffectedBy: []iCard{},
+				affectedBy: []iCard{},
 			},
 		},
 	}
@@ -207,7 +214,7 @@ func (m *mageCard) Attack(targetCard, weaponCard iCard) error {
 	}
 
 	damage := weaponCard.GetValue() * multiplier
-	targetCard.(attackable).ReceiveDamage(damage)
+	targetCard.(attackable).ReceiveDamage(damage, weaponCard)
 
 	return nil
 }
@@ -222,7 +229,7 @@ func newSwordCard(id string, value int) *swordCard {
 			ID:         strings.ToUpper(id),
 			Name:       "Sword",
 			Value:      value,
-			AffectedBy: []iCard{},
+			affectedBy: []iCard{},
 		},
 	}
 }
@@ -241,7 +248,7 @@ func newArrowCard(id string, value int) *arrowCard {
 			ID:         strings.ToUpper(id),
 			Name:       "Arrow",
 			Value:      value,
-			AffectedBy: []iCard{},
+			affectedBy: []iCard{},
 		},
 	}
 }
@@ -261,7 +268,7 @@ func newPoisonCard(id string, value int) *poisonCard {
 				ID:         strings.ToUpper(id),
 				Name:       "Poison",
 				Value:      value,
-				AffectedBy: []iCard{},
+				affectedBy: []iCard{},
 			},
 		}
 	}
@@ -282,7 +289,7 @@ func newDragonCard(id string) *dragonCard {
 				ID:         strings.ToUpper(id),
 				Name:       "Dragon",
 				Value:      DragonHealth,
-				AffectedBy: []iCard{},
+				affectedBy: []iCard{},
 			},
 		},
 	}
@@ -301,7 +308,7 @@ func newSpecialMoveCard(id string) *specialMoveCard {
 			ID:         strings.ToUpper(id),
 			Name:       "Special Move",
 			Value:      SpecialMoveHealth,
-			AffectedBy: []iCard{},
+			affectedBy: []iCard{},
 		},
 	}
 }
@@ -317,8 +324,8 @@ func (s *specialMoveCard) String() string {
 	if s.Value > 0 {
 		sb.WriteString(fmt.Sprintf(" - Value: %d", s.Value))
 	}
-	if s.AffectedBy != nil && len(s.AffectedBy) > 0 {
-		for _, card := range s.AffectedBy {
+	if s.affectedBy != nil && len(s.affectedBy) > 0 {
+		for _, card := range s.affectedBy {
 			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
 		}
 	}

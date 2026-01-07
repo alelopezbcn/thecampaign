@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"log"
 	"math/rand"
 	"strings"
 	"time"
@@ -128,34 +129,39 @@ func (g *Game) WhoIsEnemy() *Player {
 	return g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
-func (g *Game) DrawCard(playerName string) (card iCard, err error) {
+func (g *Game) DrawCards(playerName string, count int) (err error) {
 	player, _ := g.WhoIsCurrent()
 	if player.Name != playerName {
-		return card, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	if !player.hand.canAddCards(1) {
+	if !player.hand.canAddCards(count) {
 		g.addToHistory(player.Name + " exceeded max number of cards in hand.")
 
-		return nil, ErrHandLimitExceeded
+		return ErrHandLimitExceeded
 	}
 
-	card, ok := g.deck.DrawCard()
-	if !ok {
-		g.addToHistory("Deck is empty, shuffling discard pile into deck")
-		g.shuffleDiscardPileIntoDeck()
-
-		card, ok = g.deck.DrawCard()
+	cards := make([]iCard, 0, count)
+	for i := 0; i < count; i++ {
+		c, ok := g.deck.DrawCard()
 		if !ok {
-			return card, errors.New("no cards left to draw")
+			g.addToHistory("Deck is empty, shuffling discard pile into deck")
+			g.shuffleDiscardPileIntoDeck()
+
+			c, ok = g.deck.DrawCard()
+			if !ok {
+				return errors.New("no cards left to draw")
+			}
 		}
+
+		cards = append(cards, c)
 	}
 
-	player.takeCards(card)
+	player.takeCards(cards...)
 
-	g.addToHistory(player.Name + " drew a Card")
+	g.addToHistory(fmt.Sprintf("%s drew %d card(s).", player.Name, count))
 
-	return card, nil
+	return nil
 }
 
 func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
@@ -172,12 +178,12 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 }
 
 func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
-	next, enemy := g.WhoIsCurrent()
-	if next.Name != playerName {
+	current, enemy := g.WhoIsCurrent()
+	if current.Name != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	warriorCard, ok := next.GetCardFromField(warriorID)
+	warriorCard, ok := current.GetCardFromField(warriorID)
 	if !ok {
 		return errors.New("warrior card not in field: " + warriorID)
 	}
@@ -187,17 +193,96 @@ func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
 		return errors.New("target card not in enemy field: " + targetID)
 	}
 
-	weaponCard, ok := next.GetCardFromHand(weaponID)
+	weaponCard, ok := current.GetCardFromHand(weaponID)
 	if !ok {
 		return errors.New("weapon card not in hand: " + weaponID)
 	}
 
-	if err := next.Attack(warriorCard, targetCard, weaponCard); err != nil {
+	if err := current.Attack(warriorCard, targetCard, weaponCard); err != nil {
 		return fmt.Errorf("attack action failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s attacked %s using %s",
-		warriorCard.String(), targetCard.String(), weaponCard.String()))
+	g.addToHistory(fmt.Sprintf("%s\nattacked\n%s",
+		warriorCard.String(), targetCard.String()))
+
+	return nil
+
+}
+
+func (g *Game) MoveWarriorToField(playerName, warriorID string) error {
+	current, _ := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	err := current.moveCardToField(warriorID)
+	if err != nil {
+		return fmt.Errorf("moving warrior to field failed: %w", err)
+	}
+
+	g.addToHistory(fmt.Sprintf("%s moved warrior %s to field",
+		current.Name, warriorID))
+
+	return nil
+}
+
+func (g *Game) Trade(playerName string, cardIDs []string) error {
+	current, _ := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	if len(cardIDs) != 3 {
+		return errors.New("must trade exactly 3 cards")
+	}
+
+	cards, err := current.giveCards(cardIDs...)
+	if err != nil {
+		return fmt.Errorf("giving cards for trade failed: %w", err)
+	}
+	for _, c := range cards {
+		g.discardPile = append(g.discardPile, c)
+	}
+
+	if err := g.DrawCards(playerName, 1); err != nil {
+		return fmt.Errorf("drawing card for trading failed: %w", err)
+	}
+
+	g.addToHistory(fmt.Sprintf("%s traded cards %v",
+		current.Name, cardIDs))
+
+	return nil
+}
+
+func (g *Game) Buy(playerName, cardID string) error {
+	current, _ := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	resourceCard, ok := current.GetCardFromHand(cardID)
+	if !ok {
+		return errors.New("resource card not in hand: " + cardID)
+	}
+
+	if _, ok := resourceCard.(*goldCard); !ok {
+		return errors.New("only gold cards can be used to buy")
+	}
+
+	val := resourceCard.GetValue()
+	if val == 1 {
+		return errors.New("cannot buy with gold card of value 1")
+	}
+
+	g.OnCardUsed(current, resourceCard)
+
+	cardsToBuy := val / 2
+	if err := g.DrawCards(playerName, cardsToBuy); err != nil {
+		return fmt.Errorf("drawing card for buying failed: %w", err)
+	}
+
+	g.addToHistory(fmt.Sprintf("%s bought %d card(s) using %s",
+		current.Name, cardsToBuy, resourceCard.String()))
 
 	return nil
 
@@ -215,7 +300,7 @@ func (g *Game) addToHistory(msg string) {
 	}
 
 	g.history = append(g.history, msg)
-	println(fmt.Sprintf("*********: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
+	log.Print(fmt.Sprintf("***********: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
 }
 
 func (g *Game) EndTurn(player string) error {
@@ -237,13 +322,21 @@ func (g *Game) IsGameEnded() bool {
 func (g *Game) OnCardUsed(player *Player, card iCard) {
 	player.removeCardFromHand(card)
 	g.discardPile = append(g.discardPile, card)
-	g.addToHistory("Card moved to discard pile: " + card.String())
+	g.addToHistory(fmt.Sprintf("Card moved to discard pile (%d): %s",
+		len(g.discardPile), card.String()))
 }
 
 func (g *Game) OnWarriorDead(player *Player, card iCard) {
 	player.removeCardFromField(card)
+	for _, c := range card.AffectedBy() {
+		g.discardPile = append(g.discardPile, c)
+	}
+	g.addToHistory(fmt.Sprintf("Warrior's affecting cards (%d) moved to discard pile (%d)",
+		len(card.AffectedBy()), len(g.discardPile)))
+
 	g.cemetery = append(g.cemetery, card)
-	g.addToHistory("Warrior died and moved to cemetery: " + card.String())
+	g.addToHistory(fmt.Sprintf("Warrior died and moved to cemetery (%d): %s",
+		len(g.cemetery), card.String()))
 }
 
 func (g *Game) OnGameEnded(reason string) {
