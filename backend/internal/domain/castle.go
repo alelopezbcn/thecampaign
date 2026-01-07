@@ -10,14 +10,14 @@ const MaxCastleResources = 25
 type Castle struct {
 	isConstructed            bool
 	initialCard              iCard
-	resources                []*goldCard
+	resources                []resource
 	castleCompletionObserver CastleCompletionObserver
 	player                   *Player
 }
 
 func newCastle(p *Player, o CastleCompletionObserver) *Castle {
 	return &Castle{
-		resources:                []*goldCard{},
+		resources:                []resource{},
 		player:                   p,
 		castleCompletionObserver: o,
 	}
@@ -26,7 +26,7 @@ func newCastle(p *Player, o CastleCompletionObserver) *Castle {
 func (c *Castle) Construct(card iCard) error {
 	if !c.isConstructed {
 		switch valuableCard := card.(type) {
-		case weapon, *goldCard:
+		case weapon, resource:
 			if valuableCard.GetValue() != 1 {
 				return fmt.Errorf("invalid card for constructing the castle")
 			}
@@ -61,7 +61,7 @@ func (c *Castle) Value() int {
 }
 
 func (c *Castle) addResource(card iCard) error {
-	gold, ok := card.(*goldCard)
+	gold, ok := card.(resource)
 	if !ok {
 		return fmt.Errorf("card is not gold")
 	}
@@ -83,7 +83,7 @@ func (c *Castle) String() string {
 		c.Value(), c.ResourceCards())
 }
 
-func (c *Castle) RemoveGold(position int) (*goldCard, error) {
+func (c *Castle) RemoveGold(position int) (resource, error) {
 	if len(c.resources) == 0 {
 		return nil, fmt.Errorf("no resource cards to remove from castle")
 	}
@@ -93,7 +93,7 @@ func (c *Castle) RemoveGold(position int) (*goldCard, error) {
 	}
 
 	// Create a copy of c.resources and shuffle it
-	copied := make([]*goldCard, len(c.resources))
+	copied := make([]resource, len(c.resources))
 	copy(copied, c.resources)
 	// Shuffle copied slice
 	for i := range copied {

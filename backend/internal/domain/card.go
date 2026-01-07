@@ -104,7 +104,7 @@ type knightCard struct {
 	warriorCard
 }
 
-func newKnightCard(id string) *knightCard {
+func newKnightCard(id string) warrior {
 	return &knightCard{
 		warriorCard: warriorCard{
 			card: card{
@@ -144,7 +144,7 @@ type archerCard struct {
 	warriorCard
 }
 
-func newArcherCard(id string) *archerCard {
+func newArcherCard(id string) warrior {
 	return &archerCard{
 		warriorCard: warriorCard{
 			card: card{
@@ -183,7 +183,7 @@ type mageCard struct {
 	warriorCard
 }
 
-func newMageCard(id string) *mageCard {
+func newMageCard(id string) warrior {
 	return &mageCard{
 		warriorCard: warriorCard{
 			card: card{
@@ -222,7 +222,7 @@ type dragonCard struct {
 	warriorCard
 }
 
-func newDragonCard(id string) *dragonCard {
+func newDragonCard(id string) warrior {
 	return &dragonCard{
 		warriorCard: warriorCard{
 			card: card{
@@ -269,7 +269,7 @@ type swordCard struct {
 	card
 }
 
-func newSwordCard(id string, value int) *swordCard {
+func newSwordCard(id string, value int) weapon {
 	return &swordCard{
 		card: card{
 			ID:         strings.ToUpper(id),
@@ -288,7 +288,7 @@ type arrowCard struct {
 	card
 }
 
-func newArrowCard(id string, value int) *arrowCard {
+func newArrowCard(id string, value int) weapon {
 	return &arrowCard{
 		card: card{
 			ID:         strings.ToUpper(id),
@@ -307,7 +307,7 @@ type poisonCard struct {
 	card
 }
 
-func newPoisonCard(id string, value int) *poisonCard {
+func newPoisonCard(id string, value int) weapon {
 	{
 		return &poisonCard{
 			card: card{
@@ -362,7 +362,7 @@ type spyCard struct {
 	card
 }
 
-func newSpyCard(id string) *spyCard {
+func newSpyCard(id string) iCard {
 	return &spyCard{
 		card: card{
 			ID:   strings.ToUpper(id),
@@ -378,7 +378,7 @@ type thiefCard struct {
 	card
 }
 
-func newThiefCard(id string) *thiefCard {
+func newThiefCard(id string) iCard {
 	return &thiefCard{
 		card: card{
 			ID:   strings.ToUpper(id),
@@ -394,7 +394,7 @@ type goldCard struct {
 	card
 }
 
-func newGoldCard(id string, value int) *goldCard {
+func newGoldCard(id string, value int) resource {
 	return &goldCard{
 		card: card{
 			ID:    strings.ToUpper(id),
@@ -420,7 +420,7 @@ func newCatapultCard(id string) *catapultCard {
 		},
 	}
 }
-func (c *catapultCard) Attack(castle *Castle, position int) (*goldCard, error) {
+func (c *catapultCard) Attack(castle *Castle, position int) (resource, error) {
 	gold, err := castle.RemoveGold(position)
 	if err != nil {
 		return nil, err

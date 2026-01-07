@@ -267,7 +267,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 		return errors.New("resource card not in hand: " + cardID)
 	}
 
-	if _, ok := resourceCard.(*goldCard); !ok {
+	if _, ok := resourceCard.(resource); !ok {
 		return errors.New("only gold cards can be used to buy")
 	}
 
