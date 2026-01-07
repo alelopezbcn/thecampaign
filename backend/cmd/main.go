@@ -243,6 +243,12 @@ func playTurn() error {
 			}
 			actionsPerformed[attackAction] = true
 			actionsPending--
+		case spyAction:
+			if err := spy(status.Player); err != nil {
+				return err
+			}
+			actionsPerformed[spyAction] = true
+			actionsPending--
 		case stealAction:
 			if err := steal(status); err != nil {
 				return err
@@ -282,10 +288,10 @@ func playTurn() error {
 
 func steal(status domain.BoardStatus) error {
 	ok := false
-	for !ok {
-		print(fmt.Sprintf("The enemy has %d cards in hand. Choose one: ",
-			status.CardsInEnemyHand))
+	print(fmt.Sprintf("The enemy has %d cards in hand. Choose one: ",
+		status.CardsInEnemyHand))
 
+	for !ok {
 		w, err := reader.ReadString('\n')
 		if err != nil {
 			return fmt.Errorf("error reading resource: %w", err)
@@ -308,8 +314,8 @@ func steal(status domain.BoardStatus) error {
 
 func buy(player string) error {
 	ok := false
+	print("Select the resource for buying: ")
 	for !ok {
-		print("Select the resource for buying: ")
 		w, err := reader.ReadString('\n')
 		if err != nil {
 			return fmt.Errorf("error reading resource: %w", err)
@@ -320,6 +326,36 @@ func buy(player string) error {
 		if err != nil {
 			println("Error buying:", err.Error())
 			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
+func spy(player string) error {
+	ok := false
+	println("1- Spy next 5 cards from the deck")
+	println("2- Spy enemy's cards")
+	for !ok {
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading resource: %w", err)
+		}
+		opt, err := strconv.Atoi(strings.TrimSpace(w))
+		if err != nil || opt < 1 || opt > 2 {
+			println("Please select a valid option.")
+			continue
+		}
+
+		cards, err := g.Spy(player, opt)
+		if err != nil {
+			println("Error buying:", err.Error())
+			continue
+		}
+
+		println("Spied Cards:")
+		for _, c := range cards {
+			println(fmt.Sprintf("  - %s", c.String()))
 		}
 		ok = true
 	}

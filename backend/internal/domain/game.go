@@ -289,6 +289,36 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 }
 
+func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
+	current, enemy := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return nil, errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	s := current.GetSpy()
+	if s == nil {
+		return nil, errors.New("player does not have a spy to use")
+	}
+
+	g.OnCardUsed(current, s)
+	
+	switch option {
+	case 1:
+		// Reveal top 5 cards from deck
+		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", current.Name))
+
+		return g.deck.Reveal(5), nil
+	case 2:
+		// Reveal enemy's cards
+		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
+			current.Name, enemy.Name))
+
+		return enemy.ShowHand(), nil
+	default:
+		return nil, errors.New("invalid spy option")
+	}
+}
+
 func (g *Game) Steal(playerName string, cardPosition int) error {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name != playerName {

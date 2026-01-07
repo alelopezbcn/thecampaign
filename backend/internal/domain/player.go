@@ -161,6 +161,15 @@ func (p *Player) GetThief() iCard {
 	return nil
 }
 
+func (p *Player) GetSpy() iCard {
+	for _, c := range p.hand.showCards() {
+		if s, ok := c.(*spyCard); ok {
+			return s
+		}
+	}
+	return nil
+}
+
 func (p *Player) Stolen(position int) (iCard, error) {
 	cards := p.hand.showCards()
 	if position < 1 || position > len(cards) {

@@ -25,6 +25,13 @@ func (d *Deck) Replenish(discardPile []iCard) {
 	d.Cards = shuffle(discardPile)
 }
 
+func (d *Deck) Reveal(n int) []iCard {
+	if n > len(d.Cards) {
+		n = len(d.Cards)
+	}
+	return d.Cards[:n]
+}
+
 func shuffle(cards []iCard) []iCard {
 	if len(cards) == 0 {
 		return cards
