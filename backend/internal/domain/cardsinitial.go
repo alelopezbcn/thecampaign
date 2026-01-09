@@ -2,44 +2,30 @@ package domain
 
 import "fmt"
 
-func warriorsCards(o WarriorDeadObserver) (warriors []iCard) {
-	warriors = make([]iCard, 0, 15)
+func warriorsCards(o WarriorDeadObserver) (warriors []Card) {
+	warriors = make([]Card, 0, 15)
 	for i := 1; i < 6; i++ {
 		k := newKnightCard(fmt.Sprintf("k%d", i))
-		k.AddObserver(o)
+		k.AddWarriorDeadObserver(o)
 		warriors = append(warriors, k)
 
 		a := newArcherCard(fmt.Sprintf("a%d", i))
-		a.AddObserver(o)
+		a.AddWarriorDeadObserver(o)
 		warriors = append(warriors, a)
 
 		m := newMageCard(fmt.Sprintf("m%d", i))
-		m.AddObserver(o)
+		m.AddWarriorDeadObserver(o)
 		warriors = append(warriors, m)
 	}
 
 	return warriors
 }
 
-func otherButWarriorsCards(o WarriorDeadObserver) (cards []iCard) {
+func otherButWarriorsCards(o WarriorDeadObserver) (cards []Card) {
 	d := newDragonCard("d")
-	d.AddObserver(o)
+	d.AddWarriorDeadObserver(o)
 
-	cards = []iCard{
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
-		d,
+	cards = []Card{
 		d,
 		newSpecialPowerCard("s1"),
 		newSpecialPowerCard("s2"),

@@ -7,10 +7,10 @@ import (
 
 type BoardStatus struct {
 	Player                     string
-	Hand                       []iCard
-	OwnField                   []iCard
+	Hand                       []Card
+	OwnField                   []Card
 	OwnCastle                  *Castle
-	EnemyField                 []iCard
+	EnemyField                 []Card
 	EnemyCastle                *Castle
 	CardsInEnemyHand           int
 	ResourceCardsInEnemyCastle int

@@ -9,25 +9,29 @@ const MaxCastleResources = 25
 
 type Castle struct {
 	isConstructed            bool
-	initialCard              iCard
-	resources                []resource
+	initialCard              Card
+	resources                []Resource
 	castleCompletionObserver CastleCompletionObserver
 	player                   *Player
 }
 
 func newCastle(p *Player, o CastleCompletionObserver) *Castle {
 	return &Castle{
-		resources:                []resource{},
+		resources:                []Resource{},
 		player:                   p,
 		castleCompletionObserver: o,
 	}
 }
 
-func (c *Castle) Construct(card iCard) error {
+func (c *Castle) Construct(card Card) error {
 	if !c.isConstructed {
 		switch valuableCard := card.(type) {
-		case weapon, resource:
-			if valuableCard.GetValue() != 1 {
+		case Weapon:
+			if valuableCard.DamageAmount() != 1 {
+				return fmt.Errorf("invalid card for constructing the castle")
+			}
+		case Resource:
+			if valuableCard.Value() != 1 {
 				return fmt.Errorf("invalid card for constructing the castle")
 			}
 		default:
@@ -54,16 +58,16 @@ func (c *Castle) IsConstructed() bool {
 func (c *Castle) Value() int {
 	total := 0
 	for _, card := range c.resources {
-		total += card.GetValue()
+		total += card.Value()
 	}
 
 	return total
 }
 
-func (c *Castle) addResource(card iCard) error {
-	gold, ok := card.(resource)
+func (c *Castle) addResource(card Card) error {
+	gold, ok := card.(Resource)
 	if !ok {
-		return fmt.Errorf("card is not gold")
+		return fmt.Errorf("cardBase is not gold")
 	}
 
 	c.resources = append(c.resources, gold)
@@ -83,17 +87,17 @@ func (c *Castle) String() string {
 		c.Value(), c.ResourceCards())
 }
 
-func (c *Castle) RemoveGold(position int) (resource, error) {
+func (c *Castle) RemoveGold(position int) (Resource, error) {
 	if len(c.resources) == 0 {
-		return nil, fmt.Errorf("no resource cards to remove from castle")
+		return nil, fmt.Errorf("no Resource cards to remove from castle")
 	}
 
 	if position < 1 || position > len(c.resources) {
-		return nil, fmt.Errorf("invalid position %d for removing a resource from castle", position)
+		return nil, fmt.Errorf("invalid position %d for removing a Resource from castle", position)
 	}
 
 	// Create a copy of c.resources and shuffle it
-	copied := make([]resource, len(c.resources))
+	copied := make([]Resource, len(c.resources))
 	copy(copied, c.resources)
 	// Shuffle copied slice
 	for i := range copied {
@@ -109,5 +113,5 @@ func (c *Castle) RemoveGold(position int) (resource, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("failed to remove resource card from castle")
+	return nil, fmt.Errorf("failed to remove Resource cardBase from castle")
 }

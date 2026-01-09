@@ -10,16 +10,16 @@ const maxCardsInHand = 7
 var ErrHandLimitExceeded = errors.New("hand limit exceeded")
 
 type hand struct {
-	cards []iCard
+	cards []Card
 }
 
 func newHand() *hand {
 	return &hand{
-		cards: []iCard{},
+		cards: []Card{},
 	}
 }
 
-func (h *hand) addCards(cards ...iCard) error {
+func (h *hand) addCards(cards ...Card) error {
 	if len(h.cards)+len(cards) > maxCardsInHand {
 		return ErrHandLimitExceeded
 	}
@@ -29,11 +29,11 @@ func (h *hand) addCards(cards ...iCard) error {
 	return nil
 }
 
-func (h *hand) showCards() []iCard {
+func (h *hand) showCards() []Card {
 	return h.cards
 }
 
-func (h *hand) getCard(cardID string) (iCard, bool) {
+func (h *hand) getCard(cardID string) (Card, bool) {
 	for _, c := range h.cards {
 		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
 			return c, true
@@ -43,7 +43,7 @@ func (h *hand) getCard(cardID string) (iCard, bool) {
 	return nil, false
 }
 
-func (h *hand) removeCard(card iCard) bool {
+func (h *hand) removeCard(card Card) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)

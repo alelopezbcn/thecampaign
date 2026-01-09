@@ -5,26 +5,26 @@ import (
 )
 
 type field struct {
-	cards             []iCard
+	cards             []Card
 	gameEndedObserver CastleCompletionObserver
 }
 
 func newField(o CastleCompletionObserver) *field {
 	return &field{
-		cards:             []iCard{},
+		cards:             []Card{},
 		gameEndedObserver: o,
 	}
 }
 
-func (h *field) addCards(cards ...iCard) {
+func (h *field) addCards(cards ...Card) {
 	h.cards = append(h.cards, cards...)
 }
 
-func (h *field) showCards() []iCard {
+func (h *field) showCards() []Card {
 	return h.cards
 }
 
-func (h *field) getCard(cardID string) (iCard, bool) {
+func (h *field) getCard(cardID string) (Card, bool) {
 	for _, c := range h.cards {
 		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
 			return c, true
@@ -34,7 +34,7 @@ func (h *field) getCard(cardID string) (iCard, bool) {
 	return nil, false
 }
 
-func (h *field) removeCard(card iCard) bool {
+func (h *field) removeCard(card Card) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)

@@ -5,10 +5,10 @@ import (
 )
 
 type Deck struct {
-	Cards []iCard
+	Cards []Card
 }
 
-func (d *Deck) DrawCard() (iCard, bool) {
+func (d *Deck) DrawCard() (Card, bool) {
 	if len(d.Cards) == 0 {
 		return nil, false
 	}
@@ -17,22 +17,22 @@ func (d *Deck) DrawCard() (iCard, bool) {
 	return c, true
 }
 
-func NewDeck(cards []iCard) Deck {
+func NewDeck(cards []Card) Deck {
 	return Deck{Cards: cards}
 }
 
-func (d *Deck) Replenish(discardPile []iCard) {
+func (d *Deck) Replenish(discardPile []Card) {
 	d.Cards = shuffle(discardPile)
 }
 
-func (d *Deck) Reveal(n int) []iCard {
+func (d *Deck) Reveal(n int) []Card {
 	if n > len(d.Cards) {
 		n = len(d.Cards)
 	}
 	return d.Cards[:n]
 }
 
-func shuffle(cards []iCard) []iCard {
+func shuffle(cards []Card) []Card {
 	if len(cards) == 0 {
 		return cards
 	}

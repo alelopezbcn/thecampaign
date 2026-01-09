@@ -19,8 +19,8 @@ type Game struct {
 	CurrentTurn int
 	state       GameState
 	deck        Deck
-	discardPile []iCard
-	cemetery    []iCard
+	discardPile []Card
+	cemetery    []Card
 	history     []string
 }
 
@@ -33,8 +33,8 @@ func NewGame(player1, player2 string) *Game {
 	g := &Game{
 		id:          uuid.NewString(),
 		CurrentTurn: 0,
-		discardPile: []iCard{},
-		cemetery:    []iCard{},
+		discardPile: []Card{},
+		cemetery:    []Card{},
 		history:     []string{},
 	}
 
@@ -54,7 +54,7 @@ func (g *Game) deal() {
 
 	warriorCards := shuffle(warriorsCards(g))
 
-	// Each player gets 3 warrior cards
+	// Each player gets 3 Warrior cards
 	warriorsIdx := 0
 	for _, player := range g.Players {
 		player.takeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
@@ -141,7 +141,7 @@ func (g *Game) DrawCards(playerName string, count int) (err error) {
 		return ErrHandLimitExceeded
 	}
 
-	cards := make([]iCard, 0, count)
+	cards := make([]Card, 0, count)
 	for i := 0; i < count; i++ {
 		c, ok := g.deck.DrawCard()
 		if !ok {
@@ -208,7 +208,6 @@ func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
 		warriorCard.String(), targetCard.String()))
 
 	return nil
-
 }
 
 func (g *Game) MoveWarriorToField(playerName, warriorID string) error {
@@ -264,16 +263,17 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 	resourceCard, ok := current.GetCardFromHand(cardID)
 	if !ok {
-		return errors.New("resource card not in hand: " + cardID)
+		return errors.New("Resource cardBase not in hand: " + cardID)
 	}
 
-	if _, ok := resourceCard.(resource); !ok {
+	r, ok := resourceCard.(Resource)
+	if !ok {
 		return errors.New("only gold cards can be used to buy")
 	}
 
-	val := resourceCard.GetValue()
+	val := r.Value()
 	if val == 1 {
-		return errors.New("cannot buy with gold card of value 1")
+		return errors.New("cannot buy with gold cardBase of value 1")
 	}
 
 	g.OnCardMovedToPile(current, resourceCard)
@@ -290,6 +290,37 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 }
 
+func (g *Game) SpecialPower(playerName, warriorID, targetID, weaponID string) error {
+	current, enemy := g.WhoIsCurrent()
+	if current.Name != playerName {
+		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	warriorCard, ok := current.GetCardFromField(warriorID)
+	if !ok {
+		return errors.New("Warrior cardBase not in field: " + warriorID)
+	}
+
+	targetCard, ok := enemy.GetCardFromField(targetID)
+	if !ok {
+		return errors.New("target cardBase not in enemy field: " + targetID)
+	}
+
+	weaponCard, ok := current.GetCardFromHand(weaponID)
+	if !ok {
+		return errors.New("Weapon cardBase not in hand: " + weaponID)
+	}
+
+	if err := current.UseSpecialPower(warriorCard, targetCard, weaponCard); err != nil {
+		return fmt.Errorf("special power action failed: %w", err)
+	}
+
+	g.addToHistory(fmt.Sprintf("%s\nattacked\n%s",
+		warriorCard.String(), targetCard.String()))
+
+	return nil
+}
+
 func (g *Game) Construct(playerName, cardID string) error {
 	current, _ := g.WhoIsCurrent()
 	if current.Name != playerName {
@@ -297,17 +328,17 @@ func (g *Game) Construct(playerName, cardID string) error {
 	}
 
 	if err := current.Construct(cardID); err != nil {
-		return fmt.Errorf("constructing card failed: %w", err)
+		return fmt.Errorf("constructing cardBase failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s constructed castle with card %s",
+	g.addToHistory(fmt.Sprintf("%s constructed castle with cardBase %s",
 		current.Name, cardID))
 
 	return nil
 
 }
 
-func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
+func (g *Game) Spy(playerName string, option int) ([]Card, error) {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name != playerName {
 		return nil, errors.New(fmt.Sprintf("%s not your turn", playerName))
@@ -315,7 +346,7 @@ func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
 
 	s := current.GetSpy()
 	if s == nil {
-		return nil, errors.New("player does not have a spy to use")
+		return nil, errors.New("player does not have a Spy to use")
 	}
 
 	g.OnCardMovedToPile(current, s)
@@ -333,7 +364,7 @@ func (g *Game) Spy(playerName string, option int) ([]iCard, error) {
 
 		return enemy.ShowHand(), nil
 	default:
-		return nil, errors.New("invalid spy option")
+		return nil, errors.New("invalid Spy option")
 	}
 }
 
@@ -350,13 +381,13 @@ func (g *Game) Steal(playerName string, cardPosition int) error {
 
 	stolenCard, err := enemy.Stolen(cardPosition)
 	if err != nil {
-		return fmt.Errorf("stealing card failed: %w", err)
+		return fmt.Errorf("stealing cardBase failed: %w", err)
 	}
 
 	g.OnCardMovedToPile(current, t)
 	current.takeCards(stolenCard)
 
-	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
+	g.addToHistory(fmt.Sprintf("%s stole a cardBase from %s",
 		current.Name, enemy.Name))
 
 	return nil
@@ -390,7 +421,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) error {
 
 func (g *Game) shuffleDiscardPileIntoDeck() {
 	g.deck.Replenish(g.discardPile)
-	g.discardPile = []iCard{}
+	g.discardPile = []Card{}
 	g.addToHistory("Shuffled discard pile into deck")
 }
 
@@ -419,27 +450,31 @@ func (g *Game) IsGameEnded() bool {
 	return g.state == StateGameEnded
 }
 
-func (g *Game) OnCardMovedToPile(player *Player, card iCard) {
+func (g *Game) OnCardMovedToPile(player *Player, card Card) {
 	player.removeCardFromHand(card)
 	g.discardPile = append(g.discardPile, card)
 	g.addToHistory(fmt.Sprintf("Card moved to discard pile (%d): %s",
 		len(g.discardPile), card.String()))
 }
 
-func (g *Game) OnWarriorDead(player *Player, card iCard) {
-	player.removeCardFromField(card)
-	for _, c := range card.AffectedBy() {
+func (g *Game) OnWarriorDead(player *Player, warrior Warrior) {
+	player.removeCardFromField(warrior)
+	for _, c := range warrior.AttackedBy() {
 		g.discardPile = append(g.discardPile, c)
 	}
 	g.addToHistory(fmt.Sprintf("Warrior's affecting cards (%d) moved to discard pile (%d)",
-		len(card.AffectedBy()), len(g.discardPile)))
+		len(warrior.AttackedBy()), len(g.discardPile)))
 
-	g.cemetery = append(g.cemetery, card)
+	g.cemetery = append(g.cemetery, warrior)
 	g.addToHistory(fmt.Sprintf("Warrior died and moved to cemetery (%d): %s",
-		len(g.cemetery), card.String()))
+		len(g.cemetery), warrior.String()))
 }
 
 func (g *Game) OnCastleCompletion(p *Player) {
 	g.state = StateGameEnded
 	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name))
+}
+
+func (g *Game) OnMessage(msg string) {
+	g.addToHistory(msg)
 }

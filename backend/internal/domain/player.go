@@ -7,28 +7,28 @@ import (
 )
 
 type Player struct {
-	Name             string
-	hand             *hand
-	field            *field
-	castle           *Castle
-	cardUsedObserver CardUsedObserver
+	Name                    string
+	hand                    *hand
+	field                   *field
+	castle                  *Castle
+	cardMovedToPileObserver CardMovedToPileObserver
 }
 
 func NewPlayer(name string,
-	cardUsedObserver CardUsedObserver,
+	cardMovedToPileObserver CardMovedToPileObserver,
 	gameEndedObserver CastleCompletionObserver) *Player {
 	p := &Player{
-		Name:             name,
-		hand:             newHand(),
-		field:            newField(gameEndedObserver),
-		cardUsedObserver: cardUsedObserver,
+		Name:                    name,
+		hand:                    newHand(),
+		field:                   newField(gameEndedObserver),
+		cardMovedToPileObserver: cardMovedToPileObserver,
 	}
 	p.castle = newCastle(p, gameEndedObserver)
 
 	return p
 }
 
-func (p *Player) takeCards(cards ...iCard) bool {
+func (p *Player) takeCards(cards ...Card) bool {
 	if !p.hand.canAddCards(len(cards)) {
 		return false
 	}
@@ -41,13 +41,13 @@ func (p *Player) takeCards(cards ...iCard) bool {
 	return true
 }
 
-func (p *Player) giveCards(cardIDs ...string) ([]iCard, error) {
-	cards := make([]iCard, 0, len(cardIDs))
+func (p *Player) giveCards(cardIDs ...string) ([]Card, error) {
+	cards := make([]Card, 0, len(cardIDs))
 
 	for _, cardID := range cardIDs {
 		c, ok := p.GetCardFromHand(cardID)
 		if !ok {
-			return nil, fmt.Errorf("card with ID %s not found in hand", cardID)
+			return nil, fmt.Errorf("cardBase with ID %s not found in hand", cardID)
 		}
 
 		cards = append(cards, c)
@@ -60,7 +60,7 @@ func (p *Player) giveCards(cardIDs ...string) ([]iCard, error) {
 	return cards, nil
 }
 
-func (p *Player) ShowHand() []iCard {
+func (p *Player) ShowHand() []Card {
 	return p.hand.showCards()
 }
 
@@ -68,7 +68,7 @@ func (p *Player) CardsInHand() int {
 	return len(p.hand.showCards())
 }
 
-func (p *Player) ShowField() []iCard {
+func (p *Player) ShowField() []Card {
 	return p.field.showCards()
 }
 
@@ -76,25 +76,25 @@ func (p *Player) ShowCastle() *Castle {
 	return p.castle
 }
 
-func (p *Player) GetCardFromHand(cardID string) (iCard, bool) {
+func (p *Player) GetCardFromHand(cardID string) (Card, bool) {
 	return p.hand.getCard(cardID)
 }
 
-func (p *Player) GetCardFromField(cardID string) (iCard, bool) {
+func (p *Player) GetCardFromField(cardID string) (Card, bool) {
 	return p.field.getCard(cardID)
 }
 
 func (p *Player) moveCardToField(cardID string) error {
 	c, ok := p.GetCardFromHand(cardID)
 	if !ok {
-		return fmt.Errorf("card with ID %s not found in hand", cardID)
+		return fmt.Errorf("cardBase with ID %s not found in hand", cardID)
 	}
 
 	switch c.(type) {
-	case warrior, *dragonCard:
+	case Warrior, *dragonCard:
 		break
 	default:
-		return fmt.Errorf("only warrior or dragon cards can be moved to field")
+		return fmt.Errorf("only Warrior or dragon cards can be moved to field")
 	}
 
 	p.field.addCards(c)
@@ -103,20 +103,23 @@ func (p *Player) moveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *Player) Attack(warriorCard iCard, targetCard iCard,
-	weaponCard iCard) error {
+func (p *Player) Attack(warriorCard Card, targetCard Card,
+	weaponCard Card) error {
 
-	d, ok := warriorCard.(*dragonCard)
-	if ok {
-		return d.Attack(targetCard, weaponCard)
-	}
-
-	a, ok := warriorCard.(attacker)
+	warrior, ok := warriorCard.(Warrior)
 	if !ok {
-		return fmt.Errorf("the attacking card cannot attack")
+		return fmt.Errorf("the attacking cardBase is not a Warrior")
+	}
+	target, ok := targetCard.(Attackable)
+	if !ok {
+		return fmt.Errorf("the target cardBase cannot be attacked")
+	}
+	weapon, ok := weaponCard.(Weapon)
+	if !ok {
+		return fmt.Errorf("the Weapon cardBase is not a Weapon")
 	}
 
-	err := a.Attack(targetCard, weaponCard)
+	err := warrior.Attack(target, weapon)
 	if err != nil {
 		return fmt.Errorf("attack failed: %w", err)
 	}
@@ -124,11 +127,35 @@ func (p *Player) Attack(warriorCard iCard, targetCard iCard,
 	return nil
 }
 
-func (p *Player) removeCardFromHand(card iCard) bool {
+func (p *Player) UseSpecialPower(warriorCard Card, targetCard Card,
+	specialPowerCard Card) error {
+
+	s, ok := specialPowerCard.(SpecialPower)
+	if !ok {
+		return fmt.Errorf("the cardBase is not a Special Power")
+	}
+	w, ok := warriorCard.(Warrior)
+	if !ok {
+		return fmt.Errorf("the attacking cardBase is not a Warrior")
+	}
+	t, ok := targetCard.(Attackable)
+	if !ok {
+		return fmt.Errorf("the target cardBase cannot be attacked")
+	}
+
+	err := s.Use(w, t)
+	if err != nil {
+		return fmt.Errorf("special power failed: %w", err)
+	}
+
+	return nil
+}
+
+func (p *Player) removeCardFromHand(card Card) bool {
 	return p.hand.removeCard(card)
 }
 
-func (p *Player) removeCardFromField(card iCard) bool {
+func (p *Player) removeCardFromField(card Card) bool {
 	return p.field.removeCard(card)
 }
 
@@ -159,14 +186,14 @@ func (p *Player) GetCatapult() *catapultCard {
 	return nil
 }
 
-func (p *Player) Stolen(position int) (iCard, error) {
+func (p *Player) Stolen(position int) (Card, error) {
 	cards := p.hand.showCards()
 	if position < 1 || position > len(cards) {
-		return nil, fmt.Errorf("invalid position %d for stealing card", position)
+		return nil, fmt.Errorf("invalid position %d for stealing cardBase", position)
 	}
 
 	// Create a copy of c.resources and shuffle it
-	copied := make([]iCard, len(cards))
+	copied := make([]Card, len(cards))
 	copy(copied, cards)
 	// Shuffle copied slice
 	for i := range copied {
@@ -192,7 +219,7 @@ func (p *Player) HasSpy() bool {
 func (p *Player) Construct(cardID string) error {
 	resourceCard, ok := p.GetCardFromHand(cardID)
 	if !ok {
-		return errors.New("card not in hand: " + cardID)
+		return errors.New("cardBase not in hand: " + cardID)
 	}
 
 	if err := p.castle.Construct(resourceCard); err != nil {
