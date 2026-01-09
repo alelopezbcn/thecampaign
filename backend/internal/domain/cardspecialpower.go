@@ -11,7 +11,8 @@ const SpecialPowerDamage = 10
 type SpecialPower interface {
 	Card
 	Attackable
-	Use(warriorCard Warrior, targetCard Attackable) error
+	Use(usedBy Warrior, target Warrior) error
+	Destroyed()
 }
 type specialPowerCard struct {
 	cardBase
@@ -34,41 +35,39 @@ func newSpecialPowerCard(id string) SpecialPower {
 		},
 	}
 }
-func (s *specialPowerCard) Use(w Warrior, t Attackable) error {
-	if _, ok := w.(*dragonCard); ok {
+func (s *specialPowerCard) Use(usedBy Warrior, target Warrior) error {
+	if _, ok := usedBy.(*dragonCard); ok {
 		return errors.New("special power action not allowed to be used by Dragon")
 	}
 
-	if warriorTarget, ok := t.(Warrior); ok {
-		switch warriorTarget.(type) {
-		case *knightCard:
-			warriorTarget.ProtectedBy(s)
-		case *archerCard:
-			warriorTarget.InstantKill()
-		case *mageCard:
-			warriorTarget.Heal()
-		case *dragonCard:
-			warriorTarget.ReceiveDamage(s, 1)
-		default:
-			return errors.New("special power action not allowed for this Warrior type")
-		}
+	switch usedBy.(type) {
+	case *knightCard:
+		target.ProtectedBy(s)
+	case *archerCard:
+		target.InstantKill()
+	case *mageCard:
+		target.Heal()
+	case *dragonCard:
+		target.ReceiveDamage(s, 1)
+	default:
+		return errors.New("special power action not allowed for this Warrior type")
 	}
 
-	// TOOO: seguir por aca
-
 	return nil
+}
+func (s *specialPowerCard) Destroyed() {
+	for _, a := range s.attackedBy {
+		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
+	}
+	s.attackedBy = []Weapon{}
+	s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s)
 }
 func (s *specialPowerCard) ReceiveDamage(w Weapon, _ int) (isDefeated bool) {
 	s.health -= w.DamageAmount()
 	s.attackedBy = append(s.attackedBy, w)
 
 	if s.health <= 0 {
-		for _, a := range s.attackedBy {
-			a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
-		}
-		s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s)
-		s.attackedBy = []Weapon{}
-
+		s.Destroyed()
 		return true
 	}
 

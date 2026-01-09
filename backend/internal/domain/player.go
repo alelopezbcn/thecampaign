@@ -29,8 +29,8 @@ type Player interface {
 
 type player struct {
 	name                           string
-	hand                           *hand
-	field                          *field
+	hand                           Hand
+	field                          Field
 	castle                         Castle
 	cardMovedToPileObserver        CardMovedToPileObserver
 	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver
@@ -38,17 +38,18 @@ type player struct {
 
 func NewPlayer(name string,
 	cardMovedToPileObserver CardMovedToPileObserver,
-	warriorMovedToCemetery WarriorMovedToCemeteryObserver,
-	gameEndedObserver CastleCompletionObserver,
+	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver,
+	castleCompletionObserver CastleCompletionObserver,
+	fieldWithoutWarriorsObserver FieldWithoutWarriorsObserver,
 ) Player {
 	p := &player{
 		name:                           name,
 		hand:                           newHand(),
-		field:                          newField(gameEndedObserver),
+		field:                          newField(fieldWithoutWarriorsObserver),
 		cardMovedToPileObserver:        cardMovedToPileObserver,
-		warriorMovedToCemeteryObserver: warriorMovedToCemetery,
+		warriorMovedToCemeteryObserver: warriorMovedToCemeteryObserver,
 	}
-	p.castle = newCastle(p, gameEndedObserver)
+	p.castle = newCastle(p, castleCompletionObserver)
 
 	return p
 }
@@ -58,11 +59,11 @@ func (p *player) Name() string {
 }
 
 func (p *player) CanTakeCards(count int) bool {
-	return p.hand.canAddCards(count)
+	return p.hand.CanAddCards(count)
 }
 
 func (p *player) TakeCards(cards ...Card) bool {
-	if !p.hand.canAddCards(len(cards)) {
+	if !p.hand.CanAddCards(len(cards)) {
 		return false
 	}
 
@@ -72,7 +73,7 @@ func (p *player) TakeCards(cards ...Card) bool {
 			w.AddWarriorDeadObserver(p)
 		}
 	}
-	_ = p.hand.addCards(cards...)
+	_ = p.hand.AddCards(cards...)
 
 	return true
 }
@@ -97,19 +98,19 @@ func (p *player) GiveCards(cardIDs ...string) ([]Card, error) {
 }
 
 func (p *player) CardsInHand() int {
-	return len(p.hand.showCards())
+	return len(p.hand.ShowCards())
 }
 
 func (p *player) ShowHand() []Card {
-	return p.hand.showCards()
+	return p.hand.ShowCards()
 }
 
 func (p *player) ShowField() []Card {
-	return p.field.showCards()
+	return p.field.ShowCards()
 }
 
 func (p *player) CardStolenFromHand(position int) (Card, error) {
-	cards := p.hand.showCards()
+	cards := p.hand.ShowCards()
 	if position < 1 || position > len(cards) {
 		return nil, fmt.Errorf("invalid position %d for stealing cardBase", position)
 	}
@@ -130,11 +131,11 @@ func (p *player) CardStolenFromHand(position int) (Card, error) {
 }
 
 func (p *player) GetCardFromHand(cardID string) (Card, bool) {
-	return p.hand.getCard(cardID)
+	return p.hand.GetCard(cardID)
 }
 
 func (p *player) GetCardFromField(cardID string) (Card, bool) {
-	return p.field.getCard(cardID)
+	return p.field.GetCard(cardID)
 }
 
 func (p *player) MoveCardToField(cardID string) error {
@@ -147,7 +148,7 @@ func (p *player) MoveCardToField(cardID string) error {
 		return fmt.Errorf("only Warrior or dragon cards can be moved to field")
 	}
 
-	p.field.addCards(c)
+	p.field.AddCards(c)
 	p.removeCardFromHand(c)
 
 	return nil
@@ -177,20 +178,20 @@ func (p *player) Attack(warriorCard Card, targetCard Card,
 	return nil
 }
 
-func (p *player) UseSpecialPower(warriorCard Card, targetCard Card,
+func (p *player) UseSpecialPower(usedBy Card, usedOn Card,
 	specialPowerCard Card) error {
 
 	s, ok := specialPowerCard.(SpecialPower)
 	if !ok {
-		return fmt.Errorf("the cardBase is not a Special Power")
+		return fmt.Errorf("the card is not a special power")
 	}
-	w, ok := warriorCard.(Warrior)
+	w, ok := usedBy.(Warrior)
 	if !ok {
-		return fmt.Errorf("the attacking cardBase is not a Warrior")
+		return fmt.Errorf("the attacking card is not a warrior")
 	}
-	t, ok := targetCard.(Attackable)
+	t, ok := usedOn.(Warrior)
 	if !ok {
-		return fmt.Errorf("the target cardBase cannot be attacked")
+		return fmt.Errorf("the target card is not a warrior")
 	}
 
 	err := s.Use(w, t)
@@ -202,15 +203,11 @@ func (p *player) UseSpecialPower(warriorCard Card, targetCard Card,
 }
 
 func (p *player) removeCardFromHand(card Card) bool {
-	return p.hand.removeCard(card)
-}
-
-func (p *player) removeCardFromField(card Card) bool {
-	return p.field.removeCard(card)
+	return p.hand.RemoveCard(card)
 }
 
 func (p *player) Thief() Thief {
-	for _, c := range p.hand.showCards() {
+	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(Thief); ok {
 			return t
 		}
@@ -219,7 +216,7 @@ func (p *player) Thief() Thief {
 }
 
 func (p *player) Spy() Spy {
-	for _, c := range p.hand.showCards() {
+	for _, c := range p.hand.ShowCards() {
 		if s, ok := c.(Spy); ok {
 			return s
 		}
@@ -228,7 +225,7 @@ func (p *player) Spy() Spy {
 }
 
 func (p *player) Catapult() Catapult {
-	for _, c := range p.hand.showCards() {
+	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(Catapult); ok {
 			return t
 		}
@@ -256,7 +253,7 @@ func (p *player) Construct(cardID string) error {
 }
 
 func (p *player) OnCardToBeDiscarded(card Card) {
-	if !p.removeCardFromHand(card) || !p.removeCardFromField(card) {
+	if !p.removeCardFromHand(card) || !p.field.RemoveCard(card) {
 		panic("card not found in player")
 	}
 
@@ -264,7 +261,7 @@ func (p *player) OnCardToBeDiscarded(card Card) {
 }
 
 func (p *player) OnWarriorDead(warrior Warrior) {
-	if !p.removeCardFromField(warrior) {
+	if !p.field.RemoveCard(warrior) {
 		panic("warrior not found in player field")
 	}
 	p.warriorMovedToCemeteryObserver.OnWarriorMovedToCemetery(warrior)

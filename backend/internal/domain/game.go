@@ -38,8 +38,8 @@ func NewGame(player1, player2 string) *Game {
 		history:     []string{},
 	}
 
-	p1 := NewPlayer(playersArr[0], g, g, g)
-	p2 := NewPlayer(playersArr[1], g, g, g)
+	p1 := NewPlayer(playersArr[0], g, g, g, g)
+	p2 := NewPlayer(playersArr[1], g, g, g, g)
 	g.Players = []Player{p1, p2}
 
 	g.addToHistory(fmt.Sprintf("Game created between %s and %s",
@@ -472,6 +472,11 @@ func (g *Game) OnWarriorMovedToCemetery(warrior Warrior) {
 func (g *Game) OnCastleCompletion(p Player) {
 	g.state = StateGameEnded
 	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name()))
+}
+
+func (g *Game) OnFieldWithoutWarriors(p Player) {
+	g.state = StateGameEnded
+	g.addToHistory(fmt.Sprintf("%s loses: No more warriors in field", p.Name()))
 }
 
 func (g *Game) OnMessage(msg string) {

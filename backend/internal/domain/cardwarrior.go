@@ -72,13 +72,16 @@ func (w *warriorCardBase) Heal() {
 	w.attackedBy = []Weapon{}
 }
 func (w *warriorCardBase) InstantKill() {
+	if w.protectedBy != nil {
+		w.protectedBy.Destroyed()
+		return
+	}
 	w.dead()
 }
 func (w *warriorCardBase) dead() {
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
-
 	w.attackedBy = []Weapon{}
 	w.WarriorDeadObserver.OnWarriorDead(w)
 }

@@ -20,6 +20,10 @@ type CastleCompletionObserver interface {
 	OnCastleCompletion(p Player)
 }
 
+type FieldWithoutWarriorsObserver interface {
+	OnFieldWithoutWarriors(p Player)
+}
+
 type MessageObserver interface {
 	OnMessage(msg string)
 }

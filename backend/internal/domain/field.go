@@ -4,27 +4,34 @@ import (
 	"strings"
 )
 
-type field struct {
-	cards             []Card
-	gameEndedObserver CastleCompletionObserver
+type Field interface {
+	ShowCards() []Card
+	GetCard(cardID string) (Card, bool)
+	AddCards(cards ...Card)
+	RemoveCard(card Card) bool
 }
 
-func newField(o CastleCompletionObserver) *field {
+type field struct {
+	cards             []Card
+	gameEndedObserver FieldWithoutWarriorsObserver
+}
+
+func newField(o FieldWithoutWarriorsObserver) Field {
 	return &field{
 		cards:             []Card{},
 		gameEndedObserver: o,
 	}
 }
 
-func (h *field) addCards(cards ...Card) {
+func (h *field) AddCards(cards ...Card) {
 	h.cards = append(h.cards, cards...)
 }
 
-func (h *field) showCards() []Card {
+func (h *field) ShowCards() []Card {
 	return h.cards
 }
 
-func (h *field) getCard(cardID string) (Card, bool) {
+func (h *field) GetCard(cardID string) (Card, bool) {
 	for _, c := range h.cards {
 		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
 			return c, true
@@ -34,7 +41,7 @@ func (h *field) getCard(cardID string) (Card, bool) {
 	return nil, false
 }
 
-func (h *field) removeCard(card Card) bool {
+func (h *field) RemoveCard(card Card) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)
