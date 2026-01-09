@@ -169,12 +169,12 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 	status.Player = player.Name
 	status.Hand = player.ShowHand()
 	status.OwnField = player.ShowField()
-	status.OwnCastle = player.ShowCastle()
+	status.OwnCastle = player.Castle()
 
 	status.EnemyField = enemy.ShowField()
-	status.EnemyCastle = enemy.ShowCastle()
+	status.EnemyCastle = enemy.Castle()
 	status.CardsInEnemyHand = enemy.CardsInHand()
-	status.ResourceCardsInEnemyCastle = enemy.ShowCastle().ResourceCards()
+	status.ResourceCardsInEnemyCastle = enemy.Castle().ResourceCards()
 
 	return status
 }

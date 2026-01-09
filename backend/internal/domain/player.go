@@ -10,7 +10,7 @@ type Player struct {
 	Name                    string
 	hand                    *hand
 	field                   *field
-	castle                  *Castle
+	castle                  Castle
 	cardMovedToPileObserver CardMovedToPileObserver
 }
 
@@ -72,7 +72,7 @@ func (p *Player) ShowField() []Card {
 	return p.field.showCards()
 }
 
-func (p *Player) ShowCastle() *Castle {
+func (p *Player) Castle() Castle {
 	return p.castle
 }
 

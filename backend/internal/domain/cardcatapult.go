@@ -7,7 +7,7 @@ import (
 
 type Catapult interface {
 	Card
-	Attack(castle *Castle, position int) (Resource, error)
+	Attack(castle Castle, position int) (Resource, error)
 }
 
 type catapultCard struct {
@@ -22,7 +22,7 @@ func newCatapultCard(id string) Catapult {
 		},
 	}
 }
-func (c *catapultCard) Attack(castle *Castle, position int) (Resource, error) {
+func (c *catapultCard) Attack(castle Castle, position int) (Resource, error) {
 	gold, err := castle.RemoveGold(position)
 	if err != nil {
 		return nil, err

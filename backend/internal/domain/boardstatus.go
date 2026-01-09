@@ -9,9 +9,9 @@ type BoardStatus struct {
 	Player                     string
 	Hand                       []Card
 	OwnField                   []Card
-	OwnCastle                  *Castle
+	OwnCastle                  Castle
 	EnemyField                 []Card
-	EnemyCastle                *Castle
+	EnemyCastle                Castle
 	CardsInEnemyHand           int
 	ResourceCardsInEnemyCastle int
 }
@@ -19,7 +19,7 @@ type BoardStatus struct {
 func (a *BoardStatus) String() string {
 	sb := strings.Builder{}
 
-	if !a.EnemyCastle.isConstructed {
+	if !a.EnemyCastle.IsConstructed() {
 		sb.WriteString("Enemy's castle: not constructed \n")
 	} else {
 		sb.WriteString(fmt.Sprintf("Enemy's castle: %s \n", a.EnemyCastle.String()))
@@ -36,7 +36,7 @@ func (a *BoardStatus) String() string {
 		sb.WriteString("  - " + c.String() + "\n")
 	}
 
-	if !a.OwnCastle.isConstructed {
+	if !a.OwnCastle.IsConstructed() {
 		sb.WriteString("Your castle: not constructed \n")
 	} else {
 		sb.WriteString(fmt.Sprintf("Your castle: %s \n", a.OwnCastle.String()))
