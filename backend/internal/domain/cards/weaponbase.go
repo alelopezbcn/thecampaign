@@ -1,9 +1,15 @@
 package cards
 
-type weaponCardBase struct {
+type weaponBase struct {
 	damageAmount int
 }
 
-func (s *weaponCardBase) DamageAmount() int {
+func newWeaponBase(damageAmount int) *weaponBase {
+	return &weaponBase{
+		damageAmount: damageAmount,
+	}
+}
+
+func (s *weaponBase) DamageAmount() int {
 	return s.damageAmount
 }

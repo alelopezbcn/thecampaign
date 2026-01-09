@@ -2,15 +2,22 @@ package cards
 
 import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
 
-type attackableCardBase struct {
+type attackableBase struct {
 	health     int
 	attackedBy []ports.Weapon
 }
 
-func (a *attackableCardBase) Health() int {
+func newAttackableBase(health int) *attackableBase {
+	return &attackableBase{
+		health:     health,
+		attackedBy: []ports.Weapon{},
+	}
+}
+
+func (a *attackableBase) Health() int {
 	return a.health
 }
 
-func (a *attackableCardBase) AttackedBy() []ports.Weapon {
+func (a *attackableBase) AttackedBy() []ports.Weapon {
 	return a.attackedBy
 }

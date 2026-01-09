@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/google/uuid"
 )
@@ -54,7 +55,7 @@ func NewGame(player1, player2 string) *Game {
 func (g *Game) deal() {
 	g.addToHistory("Dealing Cards")
 
-	warriorCards := shuffle(warriorsCards())
+	warriorCards := shuffle(cards.WarriorsCards())
 
 	// Each player gets 3 Warrior cards
 	warriorsIdx := 0
@@ -63,7 +64,7 @@ func (g *Game) deal() {
 		warriorsIdx += 3
 	}
 
-	deckCards := append(warriorCards[warriorsIdx:], otherButWarriorsCards()...)
+	deckCards := append(warriorCards[warriorsIdx:], cards.RestCards()...)
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
 	for _, p := range g.Players {

@@ -2,24 +2,20 @@ package cards
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type catapultCard struct {
-	cardBase
+type catapult struct {
+	*cardBase
 }
 
 func NewCatapultCard(id string) ports.Catapult {
-	return &catapultCard{
-		cardBase: cardBase{
-			id:   strings.ToUpper(id),
-			name: "Catapult",
-		},
+	return &catapult{
+		cardBase: newCardBase(id, "Catapult"),
 	}
 }
-func (c *catapultCard) Attack(castle ports.Castle, position int) (ports.Resource, error) {
+func (c *catapult) Attack(castle ports.Castle, position int) (ports.Resource, error) {
 	gold, err := castle.RemoveGold(position)
 	if err != nil {
 		return nil, err
@@ -27,6 +23,6 @@ func (c *catapultCard) Attack(castle ports.Castle, position int) (ports.Resource
 
 	return gold, nil
 }
-func (c *catapultCard) String() string {
+func (c *catapult) String() string {
 	return fmt.Sprintf("%s (%s)", c.name, c.id)
 }

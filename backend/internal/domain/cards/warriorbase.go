@@ -8,26 +8,25 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type warriorCardBase struct {
-	cardBase
-	attackableCardBase
+type warriorBase struct {
+	*cardBase
+	*attackableBase
 	protectedBy         ports.SpecialPower
 	WarriorDeadObserver ports.WarriorDeadObserver
 }
 
-func newWarriorCardBase(cardBase cardBase, attackableCardBase attackableCardBase,
-) warriorCardBase {
-
-	return warriorCardBase{
-		cardBase:           cardBase,
-		attackableCardBase: attackableCardBase,
+func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
+) *warriorBase {
+	return &warriorBase{
+		cardBase:       cardBase,
+		attackableBase: attackableCardBase,
 	}
 }
 
-func (w *warriorCardBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
+func (w *warriorBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
-func (w *warriorCardBase) ReceiveDamage(weaponCard ports.Weapon, multiplier int) (isDefeated bool) {
+func (w *warriorBase) ReceiveDamage(weaponCard ports.Weapon, multiplier int) (isDefeated bool) {
 	if w.protectedBy != nil {
 		if w.protectedBy.ReceiveDamage(weaponCard, 1) {
 			w.protectedBy = nil
@@ -46,7 +45,7 @@ func (w *warriorCardBase) ReceiveDamage(weaponCard ports.Weapon, multiplier int)
 
 	return false
 }
-func (w *warriorCardBase) String() string {
+func (w *warriorBase) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", w.name, w.id))
 	if w.health > 0 {
@@ -59,27 +58,27 @@ func (w *warriorCardBase) String() string {
 	}
 	return sb.String()
 }
-func (w *warriorCardBase) Attack(_ ports.Attackable, _ ports.Weapon) error {
+func (w *warriorBase) Attack(_ ports.Attackable, _ ports.Weapon) error {
 	return errors.New("should be implemented by concrete warrior types")
 }
-func (w *warriorCardBase) ProtectedBy(powerCard ports.SpecialPower) {
+func (w *warriorBase) ProtectedBy(powerCard ports.SpecialPower) {
 	w.protectedBy = powerCard
 }
-func (w *warriorCardBase) Heal() {
+func (w *warriorBase) Heal() {
 	w.health = WarriorHealth
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
 	w.attackedBy = []ports.Weapon{}
 }
-func (w *warriorCardBase) InstantKill() {
+func (w *warriorBase) InstantKill() {
 	if w.protectedBy != nil {
 		w.protectedBy.Destroyed()
 		return
 	}
 	w.dead()
 }
-func (w *warriorCardBase) dead() {
+func (w *warriorBase) dead() {
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}

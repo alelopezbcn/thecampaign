@@ -10,40 +10,32 @@ import (
 
 const SpecialPowerDamage = 10
 
-type specialPowerCard struct {
-	cardBase
-	attackableCardBase
-	weaponCardBase
+type specialPower struct {
+	*cardBase
+	*attackableBase
+	*weaponBase
 }
 
-func NewSpecialPowerCard(id string) ports.SpecialPower {
-	return &specialPowerCard{
-		cardBase: cardBase{
-			id:   strings.ToUpper(id),
-			name: "Special Power",
-		},
-		attackableCardBase: attackableCardBase{
-			health:     SpecialPowerHealth,
-			attackedBy: []ports.Weapon{},
-		},
-		weaponCardBase: weaponCardBase{
-			damageAmount: SpecialPowerDamage,
-		},
+func NewSpecialPower(id string) ports.SpecialPower {
+	return &specialPower{
+		cardBase:       newCardBase(id, "Special Power"),
+		attackableBase: newAttackableBase(SpecialPowerHealth),
+		weaponBase:     newWeaponBase(SpecialPowerDamage),
 	}
 }
-func (s *specialPowerCard) Use(usedBy ports.Warrior, target ports.Warrior) error {
-	if _, ok := usedBy.(*dragonCard); ok {
+func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
+	if _, ok := usedBy.(*dragon); ok {
 		return errors.New("special power action not allowed to be used by Dragon")
 	}
 
 	switch usedBy.(type) {
-	case *knightCard:
+	case *knight:
 		target.ProtectedBy(s)
-	case *archerCard:
+	case *archer:
 		target.InstantKill()
-	case *mageCard:
+	case *mage:
 		target.Heal()
-	case *dragonCard:
+	case *dragon:
 		target.ReceiveDamage(s, 1)
 	default:
 		return errors.New("special power action not allowed for this warrior type")
@@ -51,14 +43,14 @@ func (s *specialPowerCard) Use(usedBy ports.Warrior, target ports.Warrior) error
 
 	return nil
 }
-func (s *specialPowerCard) Destroyed() {
+func (s *specialPower) Destroyed() {
 	for _, a := range s.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
 	s.attackedBy = []ports.Weapon{}
 	s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s)
 }
-func (s *specialPowerCard) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool) {
+func (s *specialPower) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool) {
 	s.health -= w.DamageAmount()
 	s.attackedBy = append(s.attackedBy, w)
 
@@ -69,7 +61,7 @@ func (s *specialPowerCard) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool
 
 	return false
 }
-func (s *specialPowerCard) String() string {
+func (s *specialPower) String() string {
 	sb := strings.Builder{}
 	sb.WriteString(fmt.Sprintf("%s (%s)", s.name, s.id))
 	if s.health > 0 {

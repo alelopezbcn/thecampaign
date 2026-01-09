@@ -2,69 +2,53 @@ package cards
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type swordCard struct {
-	cardBase
-	weaponCardBase
+type sword struct {
+	*cardBase
+	*weaponBase
 }
 
-func NewSwordCard(id string, damageAmount int) ports.Weapon {
-	return &swordCard{
-		cardBase: cardBase{
-			id:   strings.ToUpper(id),
-			name: "Sword",
-		},
-		weaponCardBase: weaponCardBase{
-			damageAmount: damageAmount,
-		},
+func NewSword(id string, damageAmount int) ports.Weapon {
+	return &sword{
+		cardBase:   newCardBase(id, "Sword"),
+		weaponBase: newWeaponBase(damageAmount),
 	}
 }
-func (s *swordCard) String() string {
+func (s *sword) String() string {
 	return fmt.Sprintf("%d %s (%s)", s.damageAmount, s.name, s.id)
 }
 
-type arrowCard struct {
-	cardBase
-	weaponCardBase
+type arrow struct {
+	*cardBase
+	*weaponBase
 }
 
-func NewArrowCard(id string, damageAmount int) ports.Weapon {
-	return &arrowCard{
-		cardBase: cardBase{
-			id:   strings.ToUpper(id),
-			name: "Arrow",
-		},
-		weaponCardBase: weaponCardBase{
-			damageAmount: damageAmount,
-		},
+func NewArrow(id string, damageAmount int) ports.Weapon {
+	return &arrow{
+		cardBase:   newCardBase(id, "Arrow"),
+		weaponBase: newWeaponBase(damageAmount),
 	}
 }
-func (a *arrowCard) String() string {
+func (a *arrow) String() string {
 	return fmt.Sprintf("%d %s (%s)", a.damageAmount, a.name, a.id)
 }
 
-type poisonCard struct {
-	cardBase
-	weaponCardBase
+type poison struct {
+	*cardBase
+	*weaponBase
 }
 
-func NewPoisonCard(id string, damageAmount int) ports.Weapon {
+func NewPoison(id string, damageAmount int) ports.Weapon {
 	{
-		return &poisonCard{
-			cardBase: cardBase{
-				id:   strings.ToUpper(id),
-				name: "Poison",
-			},
-			weaponCardBase: weaponCardBase{
-				damageAmount: damageAmount,
-			},
+		return &poison{
+			cardBase:   newCardBase(id, "Poison"),
+			weaponBase: newWeaponBase(damageAmount),
 		}
 	}
 }
-func (p *poisonCard) String() string {
+func (p *poison) String() string {
 	return fmt.Sprintf("%d %s (%s)", p.damageAmount, p.name, p.id)
 }

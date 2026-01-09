@@ -8,11 +8,11 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// Helper to create a warriorCardBase with mocks
+// Helper to create a warriorBase with mocks
 func newTestWarriorBase(ctrl *gomock.Controller) (
-	*warriorCardBase, *mocks.MockSpecialPower, *mocks.MockWarriorDeadObserver) {
+	*warriorBase, *mocks.MockSpecialPower, *mocks.MockWarriorDeadObserver) {
 
-	w := &warriorCardBase{}
+	w := &warriorBase{}
 	sp := mocks.NewMockSpecialPower(ctrl)
 	obs := mocks.NewMockWarriorDeadObserver(ctrl)
 	w.AddWarriorDeadObserver(obs)

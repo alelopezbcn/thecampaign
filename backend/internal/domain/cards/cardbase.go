@@ -1,6 +1,10 @@
 package cards
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+import (
+	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 const (
 	WarriorHealth      = 20
@@ -14,6 +18,13 @@ type cardBase struct {
 	player                    ports.Player
 	cardToBeDiscardedObserver ports.CardToBeDiscardedObserver
 	messageObserver           ports.MessageObserver
+}
+
+func newCardBase(id string, name string) *cardBase {
+	return &cardBase{
+		id:   strings.ToUpper(id),
+		name: name,
+	}
 }
 
 func (c *cardBase) GetID() string {

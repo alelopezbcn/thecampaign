@@ -2,30 +2,23 @@ package cards
 
 import (
 	"errors"
-	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type knightCard struct {
-	warriorCardBase
+type knight struct {
+	*warriorBase
 }
 
-func NewKnightCard(id string) ports.Warrior {
-	return &knightCard{
-		warriorCardBase: newWarriorCardBase(
-			cardBase{
-				id:   strings.ToUpper(id),
-				name: "Knight",
-			},
-			attackableCardBase{
-				health:     WarriorHealth,
-				attackedBy: []ports.Weapon{},
-			},
+func NewKnight(id string) ports.Warrior {
+	return &knight{
+		warriorBase: newWarriorBase(
+			newCardBase(id, "Knight"),
+			newAttackableBase(WarriorHealth),
 		),
 	}
 }
-func (k *knightCard) Attack(t ports.Attackable, w ports.Weapon) error {
+func (k *knight) Attack(t ports.Attackable, w ports.Weapon) error {
 	if t == nil {
 		return errors.New("target cannot be nil")
 	}
@@ -33,13 +26,13 @@ func (k *knightCard) Attack(t ports.Attackable, w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	_, ok := w.(*swordCard)
+	_, ok := w.(*sword)
 	if !ok {
 		return errors.New("knight can only attack with sword")
 	}
 
 	multiplier := 1
-	if _, ok = t.(*archerCard); ok {
+	if _, ok = t.(*archer); ok {
 		multiplier = 2
 	}
 
@@ -48,25 +41,19 @@ func (k *knightCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	return nil
 }
 
-type archerCard struct {
-	warriorCardBase
+type archer struct {
+	*warriorBase
 }
 
-func NewArcherCard(id string) ports.Warrior {
-	return &archerCard{
-		warriorCardBase: newWarriorCardBase(
-			cardBase{
-				id:   strings.ToUpper(id),
-				name: "Archer",
-			},
-			attackableCardBase{
-				health:     WarriorHealth,
-				attackedBy: []ports.Weapon{},
-			},
+func NewArcher(id string) ports.Warrior {
+	return &archer{
+		warriorBase: newWarriorBase(
+			newCardBase(id, "Archer"),
+			newAttackableBase(WarriorHealth),
 		),
 	}
 }
-func (a *archerCard) Attack(t ports.Attackable, w ports.Weapon) error {
+func (a *archer) Attack(t ports.Attackable, w ports.Weapon) error {
 	if t == nil {
 		return errors.New("target cannot be nil")
 	}
@@ -74,13 +61,13 @@ func (a *archerCard) Attack(t ports.Attackable, w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	_, ok := w.(*arrowCard)
+	_, ok := w.(*arrow)
 	if !ok {
 		return errors.New("archer can only attack with arrow")
 	}
 
 	multiplier := 1
-	if _, ok = t.(*mageCard); ok {
+	if _, ok = t.(*mage); ok {
 		multiplier = 2
 	}
 
@@ -89,25 +76,19 @@ func (a *archerCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	return nil
 }
 
-type mageCard struct {
-	warriorCardBase
+type mage struct {
+	*warriorBase
 }
 
-func NewMageCard(id string) ports.Warrior {
-	return &mageCard{
-		warriorCardBase: newWarriorCardBase(
-			cardBase{
-				id:   strings.ToUpper(id),
-				name: "Mage",
-			},
-			attackableCardBase{
-				health:     WarriorHealth,
-				attackedBy: []ports.Weapon{},
-			},
+func NewMage(id string) ports.Warrior {
+	return &mage{
+		warriorBase: newWarriorBase(
+			newCardBase(id, "Mage"),
+			newAttackableBase(WarriorHealth),
 		),
 	}
 }
-func (m *mageCard) Attack(t ports.Attackable, w ports.Weapon) error {
+func (m *mage) Attack(t ports.Attackable, w ports.Weapon) error {
 	if t == nil {
 		return errors.New("target cannot be nil")
 	}
@@ -115,13 +96,13 @@ func (m *mageCard) Attack(t ports.Attackable, w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	_, ok := w.(*poisonCard)
+	_, ok := w.(*poison)
 	if !ok {
 		return errors.New("mage can only attack with poison")
 	}
 
 	multiplier := 1
-	if _, ok = t.(*knightCard); ok {
+	if _, ok = t.(*knight); ok {
 		multiplier = 2
 	}
 
@@ -130,25 +111,19 @@ func (m *mageCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	return nil
 }
 
-type dragonCard struct {
-	warriorCardBase
+type dragon struct {
+	*warriorBase
 }
 
-func NewDragonCard(id string) ports.Warrior {
-	return &dragonCard{
-		warriorCardBase: newWarriorCardBase(
-			cardBase{
-				id:   strings.ToUpper(id),
-				name: "Dragon",
-			},
-			attackableCardBase{
-				health:     DragonHealth,
-				attackedBy: []ports.Weapon{},
-			},
+func NewDragon(id string) ports.Warrior {
+	return &dragon{
+		warriorBase: newWarriorBase(
+			newCardBase(id, "Dragon"),
+			newAttackableBase(DragonHealth),
 		),
 	}
 }
-func (d *dragonCard) Attack(t ports.Attackable, w ports.Weapon) error {
+func (d *dragon) Attack(t ports.Attackable, w ports.Weapon) error {
 	if t == nil {
 		return errors.New("target cannot be nil")
 	}
@@ -159,16 +134,16 @@ func (d *dragonCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	multiplier := 1
 
 	switch w.(type) {
-	case *swordCard:
-		if _, ok := t.(*archerCard); ok {
+	case *sword:
+		if _, ok := t.(*archer); ok {
 			multiplier = 2
 		}
-	case *arrowCard:
-		if _, ok := t.(*mageCard); ok {
+	case *arrow:
+		if _, ok := t.(*mage); ok {
 			multiplier = 2
 		}
-	case *poisonCard:
-		if _, ok := t.(*knightCard); ok {
+	case *poison:
+		if _, ok := t.(*knight); ok {
 			multiplier = 2
 		}
 	}
