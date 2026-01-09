@@ -3,43 +3,36 @@ package domain
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
 const MaxCastleResources = 25
 
-type Castle interface {
-	Construct(card Card) error
-	IsConstructed() bool
-	Value() int
-	ResourceCards() int
-	RemoveGold(position int) (Resource, error)
-	String() string
-}
-
 type castle struct {
 	isConstructed            bool
-	initialCard              Card
-	resources                []Resource
-	castleCompletionObserver CastleCompletionObserver
-	player                   Player
+	initialCard              ports.Card
+	resources                []ports.Resource
+	castleCompletionObserver ports.CastleCompletionObserver
+	player                   ports.Player
 }
 
-func newCastle(p Player, o CastleCompletionObserver) Castle {
+func newCastle(p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
 	return &castle{
-		resources:                []Resource{},
+		resources:                []ports.Resource{},
 		player:                   p,
 		castleCompletionObserver: o,
 	}
 }
 
-func (c *castle) Construct(card Card) error {
+func (c *castle) Construct(card ports.Card) error {
 	if !c.isConstructed {
 		switch valuableCard := card.(type) {
-		case Weapon:
+		case ports.Weapon:
 			if valuableCard.DamageAmount() != 1 {
 				return fmt.Errorf("invalid card for constructing the castle")
 			}
-		case Resource:
+		case ports.Resource:
 			if valuableCard.Value() != 1 {
 				return fmt.Errorf("invalid card for constructing the castle")
 			}
@@ -77,7 +70,7 @@ func (c *castle) ResourceCards() int {
 	return len(c.resources)
 }
 
-func (c *castle) RemoveGold(position int) (Resource, error) {
+func (c *castle) RemoveGold(position int) (ports.Resource, error) {
 	if len(c.resources) == 0 {
 		return nil, fmt.Errorf("no Resource cards to remove from castle")
 	}
@@ -87,7 +80,7 @@ func (c *castle) RemoveGold(position int) (Resource, error) {
 	}
 
 	// Create a copy of c.resources and shuffle it
-	copied := make([]Resource, len(c.resources))
+	copied := make([]ports.Resource, len(c.resources))
 	copy(copied, c.resources)
 	// Shuffle copied slice
 	for i := range copied {
@@ -111,8 +104,8 @@ func (c *castle) String() string {
 		c.Value(), c.ResourceCards())
 }
 
-func (c *castle) addResource(card Card) error {
-	gold, ok := card.(Resource)
+func (c *castle) addResource(card ports.Card) error {
+	gold, ok := card.(ports.Resource)
 	if !ok {
 		return fmt.Errorf("cardBase is not gold")
 	}

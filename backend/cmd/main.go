@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -143,7 +144,7 @@ func setInitialWarriors() error {
 	return nil
 }
 
-func showCurrentPlayerHand(player domain.Player) {
+func showCurrentPlayerHand(player ports.Player) {
 	println(currentHandHeader)
 	println(player.Name() + "'s Hand:")
 	for _, c := range player.ShowHand() {
@@ -210,7 +211,7 @@ func playTurn() error {
 		}
 		hasMovedWarrior, ok := actionsPerformed[moveWarriorAction]
 		if !ok || !hasMovedWarrior {
-			println(fmt.Sprintf("  %d. Move Warrior to Field", moveWarriorAction))
+			println(fmt.Sprintf("  %d. Move warrior to Field", moveWarriorAction))
 		}
 		hasCatapult, ok := actionsPerformed[catapultAction]
 		if !ok || !hasCatapult {

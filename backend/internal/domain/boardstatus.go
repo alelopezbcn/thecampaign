@@ -3,15 +3,17 @@ package domain
 import (
 	"fmt"
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
 type BoardStatus struct {
 	Player                     string
-	Hand                       []Card
-	OwnField                   []Card
-	OwnCastle                  Castle
-	EnemyField                 []Card
-	EnemyCastle                Castle
+	Hand                       []ports.Card
+	OwnField                   []ports.Card
+	OwnCastle                  ports.Castle
+	EnemyField                 []ports.Card
+	EnemyCastle                ports.Castle
 	CardsInEnemyHand           int
 	ResourceCardsInEnemyCastle int
 }

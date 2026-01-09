@@ -1,19 +1,17 @@
-package domain
+package cards
 
 import (
 	"fmt"
 	"strings"
-)
 
-type Thief interface {
-	Card
-}
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 type thiefCard struct {
 	cardBase
 }
 
-func newThiefCard(id string) Thief {
+func NewThiefCard(id string) ports.Thief {
 	return &thiefCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),

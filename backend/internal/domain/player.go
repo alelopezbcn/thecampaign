@@ -4,48 +4,29 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-)
 
-type Player interface {
-	Name() string
-	TakeCards(cards ...Card) bool
-	MoveCardToField(cardID string) error
-	GiveCards(cardIDs ...string) ([]Card, error)
-	ShowHand() []Card
-	ShowField() []Card
-	CanTakeCards(count int) bool
-	CardsInHand() int
-	GetCardFromHand(cardID string) (Card, bool)
-	GetCardFromField(cardID string) (Card, bool)
-	Attack(warriorCard Card, targetCard Card, weaponCard Card) error
-	UseSpecialPower(warriorCard Card, targetCard Card, specialPowerCard Card) error
-	CardStolenFromHand(position int) (Card, error)
-	Construct(cardID string) error
-	Thief() Thief
-	Spy() Spy
-	Catapult() Catapult
-	Castle() Castle
-}
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 type player struct {
 	name                           string
-	hand                           Hand
-	field                          Field
-	castle                         Castle
-	cardMovedToPileObserver        CardMovedToPileObserver
-	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver
+	hand                           ports.Hand
+	field                          ports.Field
+	castle                         ports.Castle
+	cardMovedToPileObserver        ports.CardMovedToPileObserver
+	warriorMovedToCemeteryObserver ports.WarriorMovedToCemeteryObserver
 }
 
 func NewPlayer(name string,
-	cardMovedToPileObserver CardMovedToPileObserver,
-	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver,
-	castleCompletionObserver CastleCompletionObserver,
-	fieldWithoutWarriorsObserver FieldWithoutWarriorsObserver,
-) Player {
+	cardMovedToPileObserver ports.CardMovedToPileObserver,
+	warriorMovedToCemeteryObserver ports.WarriorMovedToCemeteryObserver,
+	castleCompletionObserver ports.CastleCompletionObserver,
+	fieldWithoutWarriorsObserver ports.FieldWithoutWarriorsObserver,
+) ports.Player {
 	p := &player{
 		name:                           name,
-		hand:                           newHand(),
-		field:                          newField(fieldWithoutWarriorsObserver),
+		hand:                           NewHand(),
+		field:                          NewField(fieldWithoutWarriorsObserver),
 		cardMovedToPileObserver:        cardMovedToPileObserver,
 		warriorMovedToCemeteryObserver: warriorMovedToCemeteryObserver,
 	}
@@ -62,14 +43,14 @@ func (p *player) CanTakeCards(count int) bool {
 	return p.hand.CanAddCards(count)
 }
 
-func (p *player) TakeCards(cards ...Card) bool {
+func (p *player) TakeCards(cards ...ports.Card) bool {
 	if !p.hand.CanAddCards(len(cards)) {
 		return false
 	}
 
 	for _, c := range cards {
 		c.AssignedToPlayer(p)
-		if w, ok := c.(Warrior); ok {
+		if w, ok := c.(ports.Warrior); ok {
 			w.AddWarriorDeadObserver(p)
 		}
 	}
@@ -78,8 +59,8 @@ func (p *player) TakeCards(cards ...Card) bool {
 	return true
 }
 
-func (p *player) GiveCards(cardIDs ...string) ([]Card, error) {
-	cards := make([]Card, 0, len(cardIDs))
+func (p *player) GiveCards(cardIDs ...string) ([]ports.Card, error) {
+	cards := make([]ports.Card, 0, len(cardIDs))
 
 	for _, cardID := range cardIDs {
 		c, ok := p.GetCardFromHand(cardID)
@@ -101,22 +82,22 @@ func (p *player) CardsInHand() int {
 	return len(p.hand.ShowCards())
 }
 
-func (p *player) ShowHand() []Card {
+func (p *player) ShowHand() []ports.Card {
 	return p.hand.ShowCards()
 }
 
-func (p *player) ShowField() []Card {
+func (p *player) ShowField() []ports.Card {
 	return p.field.ShowCards()
 }
 
-func (p *player) CardStolenFromHand(position int) (Card, error) {
+func (p *player) CardStolenFromHand(position int) (ports.Card, error) {
 	cards := p.hand.ShowCards()
 	if position < 1 || position > len(cards) {
 		return nil, fmt.Errorf("invalid position %d for stealing cardBase", position)
 	}
 
 	// Create a copy of c.resources and shuffle it
-	copied := make([]Card, len(cards))
+	copied := make([]ports.Card, len(cards))
 	copy(copied, cards)
 	// Shuffle copied slice
 	for i := range copied {
@@ -130,22 +111,22 @@ func (p *player) CardStolenFromHand(position int) (Card, error) {
 	return c, nil
 }
 
-func (p *player) GetCardFromHand(cardID string) (Card, bool) {
+func (p *player) GetCardFromHand(cardID string) (ports.Card, bool) {
 	return p.hand.GetCard(cardID)
 }
 
-func (p *player) GetCardFromField(cardID string) (Card, bool) {
+func (p *player) GetCardFromField(cardID string) (ports.Card, bool) {
 	return p.field.GetCard(cardID)
 }
 
 func (p *player) MoveCardToField(cardID string) error {
 	c, ok := p.GetCardFromHand(cardID)
 	if !ok {
-		return fmt.Errorf("cardBase with ID %s not found in hand", cardID)
+		return fmt.Errorf("card with ID %s not found in hand", cardID)
 	}
 
-	if _, ok = c.(Warrior); !ok {
-		return fmt.Errorf("only Warrior or dragon cards can be moved to field")
+	if _, ok = c.(ports.Warrior); !ok {
+		return fmt.Errorf("onlywarrior or dragon cards can be moved to field")
 	}
 
 	p.field.AddCards(c)
@@ -154,20 +135,20 @@ func (p *player) MoveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *player) Attack(warriorCard Card, targetCard Card,
-	weaponCard Card) error {
+func (p *player) Attack(warriorCard ports.Card, targetCard ports.Card,
+	weaponCard ports.Card) error {
 
-	warrior, ok := warriorCard.(Warrior)
+	warrior, ok := warriorCard.(ports.Warrior)
 	if !ok {
-		return fmt.Errorf("the attacking cardBase is not a Warrior")
+		return fmt.Errorf("the attacking cardBase is not a warrior")
 	}
-	target, ok := targetCard.(Attackable)
+	target, ok := targetCard.(ports.Attackable)
 	if !ok {
 		return fmt.Errorf("the target cardBase cannot be attacked")
 	}
-	weapon, ok := weaponCard.(Weapon)
+	weapon, ok := weaponCard.(ports.Weapon)
 	if !ok {
-		return fmt.Errorf("the Weapon cardBase is not a Weapon")
+		return fmt.Errorf("the card is not a weapon")
 	}
 
 	err := warrior.Attack(target, weapon)
@@ -178,18 +159,18 @@ func (p *player) Attack(warriorCard Card, targetCard Card,
 	return nil
 }
 
-func (p *player) UseSpecialPower(usedBy Card, usedOn Card,
-	specialPowerCard Card) error {
+func (p *player) UseSpecialPower(usedBy ports.Card, usedOn ports.Card,
+	specialPowerCard ports.Card) error {
 
-	s, ok := specialPowerCard.(SpecialPower)
+	s, ok := specialPowerCard.(ports.SpecialPower)
 	if !ok {
 		return fmt.Errorf("the card is not a special power")
 	}
-	w, ok := usedBy.(Warrior)
+	w, ok := usedBy.(ports.Warrior)
 	if !ok {
 		return fmt.Errorf("the attacking card is not a warrior")
 	}
-	t, ok := usedOn.(Warrior)
+	t, ok := usedOn.(ports.Warrior)
 	if !ok {
 		return fmt.Errorf("the target card is not a warrior")
 	}
@@ -202,38 +183,38 @@ func (p *player) UseSpecialPower(usedBy Card, usedOn Card,
 	return nil
 }
 
-func (p *player) removeCardFromHand(card Card) bool {
+func (p *player) removeCardFromHand(card ports.Card) bool {
 	return p.hand.RemoveCard(card)
 }
 
-func (p *player) Thief() Thief {
+func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
-		if t, ok := c.(Thief); ok {
+		if t, ok := c.(ports.Thief); ok {
 			return t
 		}
 	}
 	return nil
 }
 
-func (p *player) Spy() Spy {
+func (p *player) Spy() ports.Spy {
 	for _, c := range p.hand.ShowCards() {
-		if s, ok := c.(Spy); ok {
+		if s, ok := c.(ports.Spy); ok {
 			return s
 		}
 	}
 	return nil
 }
 
-func (p *player) Catapult() Catapult {
+func (p *player) Catapult() ports.Catapult {
 	for _, c := range p.hand.ShowCards() {
-		if t, ok := c.(Catapult); ok {
+		if t, ok := c.(ports.Catapult); ok {
 			return t
 		}
 	}
 	return nil
 }
 
-func (p *player) Castle() Castle {
+func (p *player) Castle() ports.Castle {
 	return p.castle
 }
 
@@ -252,7 +233,7 @@ func (p *player) Construct(cardID string) error {
 	return nil
 }
 
-func (p *player) OnCardToBeDiscarded(card Card) {
+func (p *player) OnCardToBeDiscarded(card ports.Card) {
 	if !p.removeCardFromHand(card) || !p.field.RemoveCard(card) {
 		panic("card not found in player")
 	}
@@ -260,7 +241,7 @@ func (p *player) OnCardToBeDiscarded(card Card) {
 	p.cardMovedToPileObserver.OnCardMovedToPile(card)
 }
 
-func (p *player) OnWarriorDead(warrior Warrior) {
+func (p *player) OnWarriorDead(warrior ports.Warrior) {
 	if !p.field.RemoveCard(warrior) {
 		panic("warrior not found in player field")
 	}

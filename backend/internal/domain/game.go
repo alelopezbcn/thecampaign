@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/google/uuid"
 )
 
@@ -15,12 +16,12 @@ type Games []Game
 
 type Game struct {
 	id          string
-	Players     []Player
+	Players     []ports.Player
 	CurrentTurn int
 	state       GameState
-	deck        Deck
-	discardPile []Card
-	cemetery    []Card
+	deck        ports.Deck
+	discardPile []ports.Card
+	cemetery    []ports.Card
 	history     []string
 }
 
@@ -33,14 +34,14 @@ func NewGame(player1, player2 string) *Game {
 	g := &Game{
 		id:          uuid.NewString(),
 		CurrentTurn: 0,
-		discardPile: []Card{},
-		cemetery:    []Card{},
+		discardPile: []ports.Card{},
+		cemetery:    []ports.Card{},
 		history:     []string{},
 	}
 
 	p1 := NewPlayer(playersArr[0], g, g, g, g)
 	p2 := NewPlayer(playersArr[1], g, g, g, g)
-	g.Players = []Player{p1, p2}
+	g.Players = []ports.Player{p1, p2}
 
 	g.addToHistory(fmt.Sprintf("Game created between %s and %s",
 		p1.Name(), p2.Name()))
@@ -121,12 +122,12 @@ func (g *Game) switchTurn() {
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }
 
-func (g *Game) WhoIsCurrent() (current Player, enemy Player) {
+func (g *Game) WhoIsCurrent() (current ports.Player, enemy ports.Player) {
 	return g.Players[g.CurrentTurn],
 		g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
-func (g *Game) WhoIsEnemy() Player {
+func (g *Game) WhoIsEnemy() ports.Player {
 	return g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
@@ -142,11 +143,11 @@ func (g *Game) DrawCards(playerName string, count int) (err error) {
 		return ErrHandLimitExceeded
 	}
 
-	cards := make([]Card, 0, count)
+	cards := make([]ports.Card, 0, count)
 	for i := 0; i < count; i++ {
 		c, ok := g.deck.DrawCard()
 		if !ok {
-			g.addToHistory("Deck is empty, shuffling discard pile into deck")
+			g.addToHistory("deck is empty, shuffling discard pile into deck")
 			g.shuffleDiscardPileIntoDeck()
 
 			c, ok = g.deck.DrawCard()
@@ -267,7 +268,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 		return errors.New("Resource cardBase not in hand: " + cardID)
 	}
 
-	r, ok := resourceCard.(Resource)
+	r, ok := resourceCard.(ports.Resource)
 	if !ok {
 		return errors.New("only gold cards can be used to buy")
 	}
@@ -299,7 +300,7 @@ func (g *Game) SpecialPower(playerName, warriorID, targetID, weaponID string) er
 
 	warriorCard, ok := current.GetCardFromField(warriorID)
 	if !ok {
-		return errors.New("Warrior cardBase not in field: " + warriorID)
+		return errors.New("warrior cardBase not in field: " + warriorID)
 	}
 
 	targetCard, ok := enemy.GetCardFromField(targetID)
@@ -309,7 +310,7 @@ func (g *Game) SpecialPower(playerName, warriorID, targetID, weaponID string) er
 
 	weaponCard, ok := current.GetCardFromHand(weaponID)
 	if !ok {
-		return errors.New("Weapon cardBase not in hand: " + weaponID)
+		return errors.New("weapon card not in hand: " + weaponID)
 	}
 
 	if err := current.UseSpecialPower(warriorCard, targetCard, weaponCard); err != nil {
@@ -339,7 +340,7 @@ func (g *Game) Construct(playerName, cardID string) error {
 
 }
 
-func (g *Game) Spy(playerName string, option int) ([]Card, error) {
+func (g *Game) Spy(playerName string, option int) ([]ports.Card, error) {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name() != playerName {
 		return nil, errors.New(fmt.Sprintf("%s not your turn", playerName))
@@ -422,7 +423,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) error {
 
 func (g *Game) shuffleDiscardPileIntoDeck() {
 	g.deck.Replenish(g.discardPile)
-	g.discardPile = []Card{}
+	g.discardPile = []ports.Card{}
 	g.addToHistory("Shuffled discard pile into deck")
 }
 
@@ -451,13 +452,13 @@ func (g *Game) IsGameEnded() bool {
 	return g.state == StateGameEnded
 }
 
-func (g *Game) OnCardMovedToPile(card Card) {
+func (g *Game) OnCardMovedToPile(card ports.Card) {
 	g.discardPile = append(g.discardPile, card)
 	g.addToHistory(fmt.Sprintf("card moved to discard pile (%d): %s",
 		len(g.discardPile), card.String()))
 }
 
-func (g *Game) OnWarriorMovedToCemetery(warrior Warrior) {
+func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 	for _, c := range warrior.AttackedBy() {
 		g.discardPile = append(g.discardPile, c)
 	}
@@ -469,12 +470,12 @@ func (g *Game) OnWarriorMovedToCemetery(warrior Warrior) {
 		len(g.cemetery), warrior.String()))
 }
 
-func (g *Game) OnCastleCompletion(p Player) {
+func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.state = StateGameEnded
 	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name()))
 }
 
-func (g *Game) OnFieldWithoutWarriors(p Player) {
+func (g *Game) OnFieldWithoutWarriors(p ports.Player) {
 	g.state = StateGameEnded
 	g.addToHistory(fmt.Sprintf("%s loses: No more warriors in field", p.Name()))
 }

@@ -2,13 +2,19 @@ package domain
 
 import (
 	"math/rand"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type Deck struct {
-	Cards []Card
+type deck struct {
+	Cards []ports.Card
 }
 
-func (d *Deck) DrawCard() (Card, bool) {
+func NewDeck(cards []ports.Card) ports.Deck {
+	return &deck{Cards: cards}
+}
+
+func (d *deck) DrawCard() (ports.Card, bool) {
 	if len(d.Cards) == 0 {
 		return nil, false
 	}
@@ -17,22 +23,18 @@ func (d *Deck) DrawCard() (Card, bool) {
 	return c, true
 }
 
-func NewDeck(cards []Card) Deck {
-	return Deck{Cards: cards}
-}
-
-func (d *Deck) Replenish(discardPile []Card) {
+func (d *deck) Replenish(discardPile []ports.Card) {
 	d.Cards = shuffle(discardPile)
 }
 
-func (d *Deck) Reveal(n int) []Card {
+func (d *deck) Reveal(n int) []ports.Card {
 	if n > len(d.Cards) {
 		n = len(d.Cards)
 	}
 	return d.Cards[:n]
 }
 
-func shuffle(cards []Card) []Card {
+func shuffle(cards []ports.Card) []ports.Card {
 	if len(cards) == 0 {
 		return cards
 	}

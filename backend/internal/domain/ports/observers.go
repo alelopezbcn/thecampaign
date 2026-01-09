@@ -1,4 +1,4 @@
-package domain
+package ports
 
 type CardToBeDiscardedObserver interface {
 	OnCardToBeDiscarded(card Card)

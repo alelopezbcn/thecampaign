@@ -1,20 +1,17 @@
-package domain
+package cards
 
 import (
 	"fmt"
 	"strings"
-)
 
-type Catapult interface {
-	Card
-	Attack(castle Castle, position int) (Resource, error)
-}
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 type catapultCard struct {
 	cardBase
 }
 
-func newCatapultCard(id string) Catapult {
+func NewCatapultCard(id string) ports.Catapult {
 	return &catapultCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),
@@ -22,7 +19,7 @@ func newCatapultCard(id string) Catapult {
 		},
 	}
 }
-func (c *catapultCard) Attack(castle Castle, position int) (Resource, error) {
+func (c *catapultCard) Attack(castle ports.Castle, position int) (ports.Resource, error) {
 	gold, err := castle.RemoveGold(position)
 	if err != nil {
 		return nil, err

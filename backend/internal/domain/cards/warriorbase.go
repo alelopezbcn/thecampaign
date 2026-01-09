@@ -1,32 +1,24 @@
-package domain
+package cards
 
 import (
 	"errors"
 	"fmt"
 	"strings"
-)
 
-type Warrior interface {
-	Card
-	Attackable
-	Attack(target Attackable, weapon Weapon) error
-	ProtectedBy(powerCard SpecialPower)
-	Heal()
-	InstantKill()
-	AddWarriorDeadObserver(o WarriorDeadObserver)
-}
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 type warriorCardBase struct {
 	cardBase
 	attackableCardBase
-	protectedBy         SpecialPower
-	WarriorDeadObserver WarriorDeadObserver
+	protectedBy         ports.SpecialPower
+	WarriorDeadObserver ports.WarriorDeadObserver
 }
 
-func (w *warriorCardBase) AddWarriorDeadObserver(o WarriorDeadObserver) {
+func (w *warriorCardBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
-func (w *warriorCardBase) ReceiveDamage(weaponCard Weapon, multiplier int) (isDefeated bool) {
+func (w *warriorCardBase) ReceiveDamage(weaponCard ports.Weapon, multiplier int) (isDefeated bool) {
 	if w.protectedBy != nil {
 		if w.protectedBy.ReceiveDamage(weaponCard, 1) {
 			w.protectedBy = nil
@@ -58,10 +50,10 @@ func (w *warriorCardBase) String() string {
 	}
 	return sb.String()
 }
-func (w *warriorCardBase) Attack(_ Attackable, _ Weapon) error {
-	return errors.New("should be implemented by concrete Warrior types")
+func (w *warriorCardBase) Attack(_ ports.Attackable, _ ports.Weapon) error {
+	return errors.New("should be implemented by concrete warrior types")
 }
-func (w *warriorCardBase) ProtectedBy(powerCard SpecialPower) {
+func (w *warriorCardBase) ProtectedBy(powerCard ports.SpecialPower) {
 	w.protectedBy = powerCard
 }
 func (w *warriorCardBase) Heal() {
@@ -69,7 +61,7 @@ func (w *warriorCardBase) Heal() {
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
-	w.attackedBy = []Weapon{}
+	w.attackedBy = []ports.Weapon{}
 }
 func (w *warriorCardBase) InstantKill() {
 	if w.protectedBy != nil {
@@ -82,6 +74,6 @@ func (w *warriorCardBase) dead() {
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
-	w.attackedBy = []Weapon{}
+	w.attackedBy = []ports.Weapon{}
 	w.WarriorDeadObserver.OnWarriorDead(w)
 }

@@ -1,29 +1,18 @@
-package domain
+package cards
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
-
-type Weapon interface {
-	Card
-	DamageAmount() int
-}
-
-type weaponCardBase struct {
-	damageAmount int
-}
-
-func (s *weaponCardBase) DamageAmount() int {
-	return s.damageAmount
-}
 
 type swordCard struct {
 	cardBase
 	weaponCardBase
 }
 
-func newSwordCard(id string, damageAmount int) Weapon {
+func NewSwordCard(id string, damageAmount int) ports.Weapon {
 	return &swordCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),
@@ -43,7 +32,7 @@ type arrowCard struct {
 	weaponCardBase
 }
 
-func newArrowCard(id string, damageAmount int) Weapon {
+func NewArrowCard(id string, damageAmount int) ports.Weapon {
 	return &arrowCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),
@@ -63,7 +52,7 @@ type poisonCard struct {
 	weaponCardBase
 }
 
-func newPoisonCard(id string, damageAmount int) Weapon {
+func NewPoisonCard(id string, damageAmount int) ports.Weapon {
 	{
 		return &poisonCard{
 			cardBase: cardBase{

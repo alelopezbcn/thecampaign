@@ -1,19 +1,17 @@
-package domain
+package cards
 
 import (
 	"fmt"
 	"strings"
-)
 
-type Spy interface {
-	Card
-}
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 type spyCard struct {
 	cardBase
 }
 
-func newSpyCard(id string) Spy {
+func NewSpyCard(id string) ports.Spy {
 	return &spyCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),

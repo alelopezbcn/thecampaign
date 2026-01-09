@@ -3,31 +3,25 @@ package domain
 import (
 	"errors"
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
 const maxCardsInHand = 7
 
 var ErrHandLimitExceeded = errors.New("hand limit exceeded")
 
-type Hand interface {
-	ShowCards() []Card
-	GetCard(cardID string) (Card, bool)
-	AddCards(cards ...Card) error
-	RemoveCard(card Card) bool
-	CanAddCards(count int) bool
-}
-
 type hand struct {
-	cards []Card
+	cards []ports.Card
 }
 
-func newHand() Hand {
+func NewHand() ports.Hand {
 	return &hand{
-		cards: []Card{},
+		cards: []ports.Card{},
 	}
 }
 
-func (h *hand) AddCards(cards ...Card) error {
+func (h *hand) AddCards(cards ...ports.Card) error {
 	if len(h.cards)+len(cards) > maxCardsInHand {
 		return ErrHandLimitExceeded
 	}
@@ -37,11 +31,11 @@ func (h *hand) AddCards(cards ...Card) error {
 	return nil
 }
 
-func (h *hand) ShowCards() []Card {
+func (h *hand) ShowCards() []ports.Card {
 	return h.cards
 }
 
-func (h *hand) GetCard(cardID string) (Card, bool) {
+func (h *hand) GetCard(cardID string) (ports.Card, bool) {
 	for _, c := range h.cards {
 		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
 			return c, true
@@ -51,7 +45,7 @@ func (h *hand) GetCard(cardID string) (Card, bool) {
 	return nil, false
 }
 
-func (h *hand) RemoveCard(card Card) bool {
+func (h *hand) RemoveCard(card ports.Card) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)

@@ -1,26 +1,22 @@
-package domain
+package cards
 
 import (
 	"errors"
 	"fmt"
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
 const SpecialPowerDamage = 10
 
-type SpecialPower interface {
-	Card
-	Attackable
-	Use(usedBy Warrior, target Warrior) error
-	Destroyed()
-}
 type specialPowerCard struct {
 	cardBase
 	attackableCardBase
 	weaponCardBase
 }
 
-func newSpecialPowerCard(id string) SpecialPower {
+func NewSpecialPowerCard(id string) ports.SpecialPower {
 	return &specialPowerCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),
@@ -28,14 +24,14 @@ func newSpecialPowerCard(id string) SpecialPower {
 		},
 		attackableCardBase: attackableCardBase{
 			health:     SpecialPowerHealth,
-			attackedBy: []Weapon{},
+			attackedBy: []ports.Weapon{},
 		},
 		weaponCardBase: weaponCardBase{
 			damageAmount: SpecialPowerDamage,
 		},
 	}
 }
-func (s *specialPowerCard) Use(usedBy Warrior, target Warrior) error {
+func (s *specialPowerCard) Use(usedBy ports.Warrior, target ports.Warrior) error {
 	if _, ok := usedBy.(*dragonCard); ok {
 		return errors.New("special power action not allowed to be used by Dragon")
 	}
@@ -50,7 +46,7 @@ func (s *specialPowerCard) Use(usedBy Warrior, target Warrior) error {
 	case *dragonCard:
 		target.ReceiveDamage(s, 1)
 	default:
-		return errors.New("special power action not allowed for this Warrior type")
+		return errors.New("special power action not allowed for this warrior type")
 	}
 
 	return nil
@@ -59,10 +55,10 @@ func (s *specialPowerCard) Destroyed() {
 	for _, a := range s.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
-	s.attackedBy = []Weapon{}
+	s.attackedBy = []ports.Weapon{}
 	s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s)
 }
-func (s *specialPowerCard) ReceiveDamage(w Weapon, _ int) (isDefeated bool) {
+func (s *specialPowerCard) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool) {
 	s.health -= w.DamageAmount()
 	s.attackedBy = append(s.attackedBy, w)
 

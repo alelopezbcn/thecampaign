@@ -1,15 +1,17 @@
-package domain
+package cards
 
 import (
 	"errors"
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
 type knightCard struct {
 	warriorCardBase
 }
 
-func newKnightCard(id string) Warrior {
+func NewKnightCard(id string) ports.Warrior {
 	return &knightCard{
 		warriorCardBase: warriorCardBase{
 			cardBase: cardBase{
@@ -18,12 +20,12 @@ func newKnightCard(id string) Warrior {
 			},
 			attackableCardBase: attackableCardBase{
 				health:     WarriorHealth,
-				attackedBy: []Weapon{},
+				attackedBy: []ports.Weapon{},
 			},
 		},
 	}
 }
-func (k *knightCard) Attack(t Attackable, w Weapon) error {
+func (k *knightCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	_, ok := w.(*swordCard)
 	if !ok {
 		return errors.New("knight can only attack with sword")
@@ -43,7 +45,7 @@ type archerCard struct {
 	warriorCardBase
 }
 
-func newArcherCard(id string) Warrior {
+func NewArcherCard(id string) ports.Warrior {
 	return &archerCard{
 		warriorCardBase: warriorCardBase{
 			cardBase: cardBase{
@@ -52,12 +54,12 @@ func newArcherCard(id string) Warrior {
 			},
 			attackableCardBase: attackableCardBase{
 				health:     WarriorHealth,
-				attackedBy: []Weapon{},
+				attackedBy: []ports.Weapon{},
 			},
 		},
 	}
 }
-func (a *archerCard) Attack(t Attackable, w Weapon) error {
+func (a *archerCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	_, ok := w.(*arrowCard)
 	if !ok {
 		return errors.New("archer can only attack with arrow")
@@ -77,7 +79,7 @@ type mageCard struct {
 	warriorCardBase
 }
 
-func newMageCard(id string) Warrior {
+func NewMageCard(id string) ports.Warrior {
 	return &mageCard{
 		warriorCardBase: warriorCardBase{
 			cardBase: cardBase{
@@ -86,12 +88,12 @@ func newMageCard(id string) Warrior {
 			},
 			attackableCardBase: attackableCardBase{
 				health:     WarriorHealth,
-				attackedBy: []Weapon{},
+				attackedBy: []ports.Weapon{},
 			},
 		},
 	}
 }
-func (m *mageCard) Attack(t Attackable, w Weapon) error {
+func (m *mageCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	_, ok := w.(*poisonCard)
 	if !ok {
 		return errors.New("mage can only attack with poison")
@@ -111,7 +113,7 @@ type dragonCard struct {
 	warriorCardBase
 }
 
-func newDragonCard(id string) Warrior {
+func NewDragonCard(id string) ports.Warrior {
 	return &dragonCard{
 		warriorCardBase: warriorCardBase{
 			cardBase: cardBase{
@@ -120,12 +122,12 @@ func newDragonCard(id string) Warrior {
 			},
 			attackableCardBase: attackableCardBase{
 				health:     DragonHealth,
-				attackedBy: []Weapon{},
+				attackedBy: []ports.Weapon{},
 			},
 		},
 	}
 }
-func (d *dragonCard) Attack(t Attackable, w Weapon) error {
+func (d *dragonCard) Attack(t ports.Attackable, w ports.Weapon) error {
 	multiplier := 1
 
 	switch w.(type) {

@@ -2,36 +2,31 @@ package domain
 
 import (
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type Field interface {
-	ShowCards() []Card
-	GetCard(cardID string) (Card, bool)
-	AddCards(cards ...Card)
-	RemoveCard(card Card) bool
-}
-
 type field struct {
-	cards             []Card
-	gameEndedObserver FieldWithoutWarriorsObserver
+	cards             []ports.Card
+	gameEndedObserver ports.FieldWithoutWarriorsObserver
 }
 
-func newField(o FieldWithoutWarriorsObserver) Field {
+func NewField(o ports.FieldWithoutWarriorsObserver) ports.Field {
 	return &field{
-		cards:             []Card{},
+		cards:             []ports.Card{},
 		gameEndedObserver: o,
 	}
 }
 
-func (h *field) AddCards(cards ...Card) {
+func (h *field) AddCards(cards ...ports.Card) {
 	h.cards = append(h.cards, cards...)
 }
 
-func (h *field) ShowCards() []Card {
+func (h *field) ShowCards() []ports.Card {
 	return h.cards
 }
 
-func (h *field) GetCard(cardID string) (Card, bool) {
+func (h *field) GetCard(cardID string) (ports.Card, bool) {
 	for _, c := range h.cards {
 		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
 			return c, true
@@ -41,7 +36,7 @@ func (h *field) GetCard(cardID string) (Card, bool) {
 	return nil, false
 }
 
-func (h *field) RemoveCard(card Card) bool {
+func (h *field) RemoveCard(card ports.Card) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)

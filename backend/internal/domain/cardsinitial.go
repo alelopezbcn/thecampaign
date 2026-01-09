@@ -1,45 +1,50 @@
 package domain
 
-import "fmt"
+import (
+	"fmt"
 
-func warriorsCards() (warriors []Card) {
-	warriors = make([]Card, 0, 15)
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
+
+func warriorsCards() (warriors []ports.Card) {
+	warriors = make([]ports.Card, 0, 15)
 	for i := 1; i < 6; i++ {
-		k := newKnightCard(fmt.Sprintf("k%d", i))
+		k := cards.NewKnightCard(fmt.Sprintf("k%d", i))
 		warriors = append(warriors, k)
 
-		a := newArcherCard(fmt.Sprintf("a%d", i))
+		a := cards.NewArcherCard(fmt.Sprintf("a%d", i))
 		warriors = append(warriors, a)
 
-		m := newMageCard(fmt.Sprintf("m%d", i))
+		m := cards.NewMageCard(fmt.Sprintf("m%d", i))
 		warriors = append(warriors, m)
 	}
 
 	return warriors
 }
 
-func otherButWarriorsCards() (cards []Card) {
-	d := newDragonCard("d")
+func otherButWarriorsCards() (other []ports.Card) {
+	d := cards.NewDragonCard("d")
 
-	cards = []Card{
+	other = []ports.Card{
 		d,
-		newSpecialPowerCard("s1"),
-		newSpecialPowerCard("s2"),
-		newSpecialPowerCard("s3"),
-		newSpyCard("s"),
-		newThiefCard("t"),
-		newCatapultCard("c"),
+		cards.NewSpecialPowerCard("s1"),
+		cards.NewSpecialPowerCard("s2"),
+		cards.NewSpecialPowerCard("s3"),
+		cards.NewSpyCard("s"),
+		cards.NewThiefCard("t"),
+		cards.NewCatapultCard("c"),
 	}
 
 	for i := 1; i < 10; i++ {
-		cards = append(cards, newSwordCard(fmt.Sprintf("e%d", i), i))
-		cards = append(cards, newArrowCard(fmt.Sprintf("f%d", i), i))
-		cards = append(cards, newPoisonCard(fmt.Sprintf("p%d", i), i))
-		cards = append(cards, newGoldCard(fmt.Sprintf("g%d", i), i))
+		other = append(other, cards.NewSwordCard(fmt.Sprintf("e%d", i), i))
+		other = append(other, cards.NewArrowCard(fmt.Sprintf("f%d", i), i))
+		other = append(other, cards.NewPoisonCard(fmt.Sprintf("p%d", i), i))
+		other = append(other, cards.NewGoldCard(fmt.Sprintf("g%d", i), i))
 		if i == 5 || i == 7 {
-			cards = append(cards, newGoldCard(fmt.Sprintf("g%d", i), i))
+			other = append(other, cards.NewGoldCard(fmt.Sprintf("g%d", i), i))
 		}
 	}
 
-	return shuffle(cards)
+	return shuffle(other)
 }

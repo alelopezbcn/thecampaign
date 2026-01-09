@@ -1,29 +1,18 @@
-package domain
+package cards
 
 import (
 	"fmt"
 	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
-
-type Resource interface {
-	Card
-	Value() int
-}
-
-type resourceBase struct {
-	value int
-}
-
-func (r *resourceBase) Value() int {
-	return r.value
-}
 
 type goldCard struct {
 	cardBase
 	resourceBase
 }
 
-func newGoldCard(id string, value int) Resource {
+func NewGoldCard(id string, value int) ports.Resource {
 	return &goldCard{
 		cardBase: cardBase{
 			id:   strings.ToUpper(id),
