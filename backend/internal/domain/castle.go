@@ -21,10 +21,10 @@ type castle struct {
 	initialCard              Card
 	resources                []Resource
 	castleCompletionObserver CastleCompletionObserver
-	player                   *Player
+	player                   Player
 }
 
-func newCastle(p *Player, o CastleCompletionObserver) Castle {
+func newCastle(p Player, o CastleCompletionObserver) Castle {
 	return &castle{
 		resources:                []Resource{},
 		player:                   p,

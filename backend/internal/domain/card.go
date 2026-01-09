@@ -8,9 +8,8 @@ const (
 
 type Card interface {
 	GetID() string
-	SetPlayer(player *Player)
+	AssignedToPlayer(player Player)
 	String() string
-	AddCardToBeDiscardedObserver(o CardToBeDiscardedObserver)
 	GetCardToBeDiscardedObserver() CardToBeDiscardedObserver
 	AddMessageObserver(o MessageObserver)
 	GetMessageObserver() MessageObserver
@@ -19,7 +18,7 @@ type Card interface {
 type cardBase struct {
 	id                        string
 	name                      string
-	player                    *Player
+	player                    Player
 	cardToBeDiscardedObserver CardToBeDiscardedObserver
 	messageObserver           MessageObserver
 }
@@ -27,11 +26,9 @@ type cardBase struct {
 func (c *cardBase) GetID() string {
 	return c.id
 }
-func (c *cardBase) SetPlayer(player *Player) {
+func (c *cardBase) AssignedToPlayer(player Player) {
 	c.player = player
-}
-func (c *cardBase) AddCardToBeDiscardedObserver(o CardToBeDiscardedObserver) {
-	c.cardToBeDiscardedObserver = o
+	c.cardToBeDiscardedObserver = player.(CardToBeDiscardedObserver)
 }
 func (c *cardBase) GetCardToBeDiscardedObserver() CardToBeDiscardedObserver {
 	return c.cardToBeDiscardedObserver

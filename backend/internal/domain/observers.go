@@ -1,19 +1,23 @@
 package domain
 
 type CardToBeDiscardedObserver interface {
-	OnCardToBeDiscarded(player *Player, card Card)
+	OnCardToBeDiscarded(card Card)
 }
 
 type CardMovedToPileObserver interface {
-	OnCardMovedToPile(player *Player, card Card)
+	OnCardMovedToPile(card Card)
 }
 
 type WarriorDeadObserver interface {
-	OnWarriorDead(player *Player, card Warrior)
+	OnWarriorDead(card Warrior)
+}
+
+type WarriorMovedToCemeteryObserver interface {
+	OnWarriorMovedToCemetery(card Warrior)
 }
 
 type CastleCompletionObserver interface {
-	OnCastleCompletion(p *Player)
+	OnCastleCompletion(p Player)
 }
 
 type MessageObserver interface {

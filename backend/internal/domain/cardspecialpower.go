@@ -64,9 +64,9 @@ func (s *specialPowerCard) ReceiveDamage(w Weapon, _ int) (isDefeated bool) {
 
 	if s.health <= 0 {
 		for _, a := range s.attackedBy {
-			a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(s.player, w)
+			a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 		}
-		s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s.player, s)
+		s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s)
 		s.attackedBy = []Weapon{}
 
 		return true

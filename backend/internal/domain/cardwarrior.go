@@ -67,7 +67,7 @@ func (w *warriorCardBase) ProtectedBy(powerCard SpecialPower) {
 func (w *warriorCardBase) Heal() {
 	w.health = WarriorHealth
 	for _, a := range w.attackedBy {
-		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(w.player, a)
+		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
 	w.attackedBy = []Weapon{}
 }
@@ -76,9 +76,9 @@ func (w *warriorCardBase) InstantKill() {
 }
 func (w *warriorCardBase) dead() {
 	for _, a := range w.attackedBy {
-		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(w.player, a)
+		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
 
 	w.attackedBy = []Weapon{}
-	w.WarriorDeadObserver.OnWarriorDead(w.player, w)
+	w.WarriorDeadObserver.OnWarriorDead(w)
 }

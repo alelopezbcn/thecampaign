@@ -6,42 +6,78 @@ import (
 	"math/rand"
 )
 
-type Player struct {
-	Name                    string
-	hand                    *hand
-	field                   *field
-	castle                  Castle
-	cardMovedToPileObserver CardMovedToPileObserver
+type Player interface {
+	Name() string
+	TakeCards(cards ...Card) bool
+	MoveCardToField(cardID string) error
+	GiveCards(cardIDs ...string) ([]Card, error)
+	ShowHand() []Card
+	ShowField() []Card
+	CanTakeCards(count int) bool
+	CardsInHand() int
+	GetCardFromHand(cardID string) (Card, bool)
+	GetCardFromField(cardID string) (Card, bool)
+	Attack(warriorCard Card, targetCard Card, weaponCard Card) error
+	UseSpecialPower(warriorCard Card, targetCard Card, specialPowerCard Card) error
+	CardStolenFromHand(position int) (Card, error)
+	Construct(cardID string) error
+	Thief() Thief
+	Spy() Spy
+	Catapult() Catapult
+	Castle() Castle
+}
+
+type player struct {
+	name                           string
+	hand                           *hand
+	field                          *field
+	castle                         Castle
+	cardMovedToPileObserver        CardMovedToPileObserver
+	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver
 }
 
 func NewPlayer(name string,
 	cardMovedToPileObserver CardMovedToPileObserver,
-	gameEndedObserver CastleCompletionObserver) *Player {
-	p := &Player{
-		Name:                    name,
-		hand:                    newHand(),
-		field:                   newField(gameEndedObserver),
-		cardMovedToPileObserver: cardMovedToPileObserver,
+	warriorMovedToCemetery WarriorMovedToCemeteryObserver,
+	gameEndedObserver CastleCompletionObserver,
+) Player {
+	p := &player{
+		name:                           name,
+		hand:                           newHand(),
+		field:                          newField(gameEndedObserver),
+		cardMovedToPileObserver:        cardMovedToPileObserver,
+		warriorMovedToCemeteryObserver: warriorMovedToCemetery,
 	}
 	p.castle = newCastle(p, gameEndedObserver)
 
 	return p
 }
 
-func (p *Player) takeCards(cards ...Card) bool {
+func (p *player) Name() string {
+	return p.name
+}
+
+func (p *player) CanTakeCards(count int) bool {
+	return p.hand.canAddCards(count)
+}
+
+func (p *player) TakeCards(cards ...Card) bool {
 	if !p.hand.canAddCards(len(cards)) {
 		return false
 	}
 
 	for _, c := range cards {
-		c.SetPlayer(p)
+		c.AssignedToPlayer(p)
+		if w, ok := c.(Warrior); ok {
+			w.AddWarriorDeadObserver(p)
+		}
 	}
 	_ = p.hand.addCards(cards...)
 
 	return true
 }
 
-func (p *Player) giveCards(cardIDs ...string) ([]Card, error) {
+func (p *player) GiveCards(cardIDs ...string) ([]Card, error) {
 	cards := make([]Card, 0, len(cardIDs))
 
 	for _, cardID := range cardIDs {
@@ -60,40 +96,54 @@ func (p *Player) giveCards(cardIDs ...string) ([]Card, error) {
 	return cards, nil
 }
 
-func (p *Player) ShowHand() []Card {
-	return p.hand.showCards()
-}
-
-func (p *Player) CardsInHand() int {
+func (p *player) CardsInHand() int {
 	return len(p.hand.showCards())
 }
 
-func (p *Player) ShowField() []Card {
+func (p *player) ShowHand() []Card {
+	return p.hand.showCards()
+}
+
+func (p *player) ShowField() []Card {
 	return p.field.showCards()
 }
 
-func (p *Player) Castle() Castle {
-	return p.castle
+func (p *player) CardStolenFromHand(position int) (Card, error) {
+	cards := p.hand.showCards()
+	if position < 1 || position > len(cards) {
+		return nil, fmt.Errorf("invalid position %d for stealing cardBase", position)
+	}
+
+	// Create a copy of c.resources and shuffle it
+	copied := make([]Card, len(cards))
+	copy(copied, cards)
+	// Shuffle copied slice
+	for i := range copied {
+		j := i + rand.Intn(len(copied)-i)
+		copied[i], copied[j] = copied[j], copied[i]
+	}
+
+	c := copied[position-1]
+	p.removeCardFromHand(c)
+
+	return c, nil
 }
 
-func (p *Player) GetCardFromHand(cardID string) (Card, bool) {
+func (p *player) GetCardFromHand(cardID string) (Card, bool) {
 	return p.hand.getCard(cardID)
 }
 
-func (p *Player) GetCardFromField(cardID string) (Card, bool) {
+func (p *player) GetCardFromField(cardID string) (Card, bool) {
 	return p.field.getCard(cardID)
 }
 
-func (p *Player) moveCardToField(cardID string) error {
+func (p *player) MoveCardToField(cardID string) error {
 	c, ok := p.GetCardFromHand(cardID)
 	if !ok {
 		return fmt.Errorf("cardBase with ID %s not found in hand", cardID)
 	}
 
-	switch c.(type) {
-	case Warrior, *dragonCard:
-		break
-	default:
+	if _, ok = c.(Warrior); !ok {
 		return fmt.Errorf("only Warrior or dragon cards can be moved to field")
 	}
 
@@ -103,7 +153,7 @@ func (p *Player) moveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *Player) Attack(warriorCard Card, targetCard Card,
+func (p *player) Attack(warriorCard Card, targetCard Card,
 	weaponCard Card) error {
 
 	warrior, ok := warriorCard.(Warrior)
@@ -127,7 +177,7 @@ func (p *Player) Attack(warriorCard Card, targetCard Card,
 	return nil
 }
 
-func (p *Player) UseSpecialPower(warriorCard Card, targetCard Card,
+func (p *player) UseSpecialPower(warriorCard Card, targetCard Card,
 	specialPowerCard Card) error {
 
 	s, ok := specialPowerCard.(SpecialPower)
@@ -151,72 +201,46 @@ func (p *Player) UseSpecialPower(warriorCard Card, targetCard Card,
 	return nil
 }
 
-func (p *Player) removeCardFromHand(card Card) bool {
+func (p *player) removeCardFromHand(card Card) bool {
 	return p.hand.removeCard(card)
 }
 
-func (p *Player) removeCardFromField(card Card) bool {
+func (p *player) removeCardFromField(card Card) bool {
 	return p.field.removeCard(card)
 }
 
-func (p *Player) GetThief() *thiefCard {
+func (p *player) Thief() Thief {
 	for _, c := range p.hand.showCards() {
-		if t, ok := c.(*thiefCard); ok {
+		if t, ok := c.(Thief); ok {
 			return t
 		}
 	}
 	return nil
 }
 
-func (p *Player) GetSpy() *spyCard {
+func (p *player) Spy() Spy {
 	for _, c := range p.hand.showCards() {
-		if s, ok := c.(*spyCard); ok {
+		if s, ok := c.(Spy); ok {
 			return s
 		}
 	}
 	return nil
 }
 
-func (p *Player) GetCatapult() *catapultCard {
+func (p *player) Catapult() Catapult {
 	for _, c := range p.hand.showCards() {
-		if t, ok := c.(*catapultCard); ok {
+		if t, ok := c.(Catapult); ok {
 			return t
 		}
 	}
 	return nil
 }
 
-func (p *Player) Stolen(position int) (Card, error) {
-	cards := p.hand.showCards()
-	if position < 1 || position > len(cards) {
-		return nil, fmt.Errorf("invalid position %d for stealing cardBase", position)
-	}
-
-	// Create a copy of c.resources and shuffle it
-	copied := make([]Card, len(cards))
-	copy(copied, cards)
-	// Shuffle copied slice
-	for i := range copied {
-		j := i + rand.Intn(len(copied)-i)
-		copied[i], copied[j] = copied[j], copied[i]
-	}
-
-	c := copied[position-1]
-	p.removeCardFromHand(c)
-
-	return c, nil
+func (p *player) Castle() Castle {
+	return p.castle
 }
 
-func (p *Player) HasSpy() bool {
-	for _, c := range p.hand.showCards() {
-		if _, ok := c.(*spyCard); ok {
-			return true
-		}
-	}
-	return false
-}
-
-func (p *Player) Construct(cardID string) error {
+func (p *player) Construct(cardID string) error {
 	resourceCard, ok := p.GetCardFromHand(cardID)
 	if !ok {
 		return errors.New("cardBase not in hand: " + cardID)
@@ -229,4 +253,19 @@ func (p *Player) Construct(cardID string) error {
 	p.removeCardFromHand(resourceCard)
 
 	return nil
+}
+
+func (p *player) OnCardToBeDiscarded(card Card) {
+	if !p.removeCardFromHand(card) || !p.removeCardFromField(card) {
+		panic("card not found in player")
+	}
+
+	p.cardMovedToPileObserver.OnCardMovedToPile(card)
+}
+
+func (p *player) OnWarriorDead(warrior Warrior) {
+	if !p.removeCardFromField(warrior) {
+		panic("warrior not found in player field")
+	}
+	p.warriorMovedToCemeteryObserver.OnWarriorMovedToCemetery(warrior)
 }

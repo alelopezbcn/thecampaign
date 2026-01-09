@@ -15,7 +15,7 @@ type Games []Game
 
 type Game struct {
 	id          string
-	Players     []*Player
+	Players     []Player
 	CurrentTurn int
 	state       GameState
 	deck        Deck
@@ -38,11 +38,12 @@ func NewGame(player1, player2 string) *Game {
 		history:     []string{},
 	}
 
-	p1 := NewPlayer(playersArr[0], g, g)
-	p2 := NewPlayer(playersArr[1], g, g)
-	g.Players = []*Player{p1, p2}
+	p1 := NewPlayer(playersArr[0], g, g, g)
+	p2 := NewPlayer(playersArr[1], g, g, g)
+	g.Players = []Player{p1, p2}
 
-	g.addToHistory(fmt.Sprintf("Game created between %s and %s", p1.Name, p2.Name))
+	g.addToHistory(fmt.Sprintf("Game created between %s and %s",
+		p1.Name(), p2.Name()))
 
 	g.deal()
 
@@ -52,20 +53,20 @@ func NewGame(player1, player2 string) *Game {
 func (g *Game) deal() {
 	g.addToHistory("Dealing Cards")
 
-	warriorCards := shuffle(warriorsCards(g))
+	warriorCards := shuffle(warriorsCards())
 
 	// Each player gets 3 Warrior cards
 	warriorsIdx := 0
-	for _, player := range g.Players {
-		player.takeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
+	for _, p := range g.Players {
+		p.TakeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
 		warriorsIdx += 3
 	}
 
-	deckCards := append(warriorCards[warriorsIdx:], otherButWarriorsCards(g)...)
+	deckCards := append(warriorCards[warriorsIdx:], otherButWarriorsCards()...)
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
-	for _, player := range g.Players {
-		player.takeCards(deckCards[otherIdx : otherIdx+3]...)
+	for _, p := range g.Players {
+		p.TakeCards(deckCards[otherIdx : otherIdx+3]...)
 		otherIdx += 4
 	}
 
@@ -76,8 +77,8 @@ func (g *Game) deal() {
 }
 
 func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error {
-	player, _ := g.WhoIsCurrent()
-	if player.Name != playerName {
+	p, _ := g.WhoIsCurrent()
+	if p.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
@@ -92,17 +93,17 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 	}
 
 	for _, id := range warriorIDs {
-		if err := player.moveCardToField(strings.TrimSpace(id)); err != nil {
+		if err := p.MoveCardToField(strings.TrimSpace(id)); err != nil {
 			return err
 		}
 	}
-	g.addToHistory(player.Name + " has set their initial warriors.")
+	g.addToHistory(p.Name() + " has set their initial warriors.")
 	g.switchTurn()
 
 	// Check if both players have set their warriors
 	allSet := true
 	for _, p := range g.Players {
-		if len(p.field.showCards()) == 0 {
+		if len(p.ShowField()) == 0 {
 			allSet = false
 			break
 		}
@@ -120,23 +121,23 @@ func (g *Game) switchTurn() {
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }
 
-func (g *Game) WhoIsCurrent() (current *Player, enemy *Player) {
+func (g *Game) WhoIsCurrent() (current Player, enemy Player) {
 	return g.Players[g.CurrentTurn],
 		g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
-func (g *Game) WhoIsEnemy() *Player {
+func (g *Game) WhoIsEnemy() Player {
 	return g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
 func (g *Game) DrawCards(playerName string, count int) (err error) {
-	player, _ := g.WhoIsCurrent()
-	if player.Name != playerName {
+	p, _ := g.WhoIsCurrent()
+	if p.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	if !player.hand.canAddCards(count) {
-		g.addToHistory(player.Name + " exceeded max number of cards in hand.")
+	if !p.CanTakeCards(count) {
+		g.addToHistory(p.Name() + " exceeded max number of cards in hand.")
 
 		return ErrHandLimitExceeded
 	}
@@ -157,16 +158,16 @@ func (g *Game) DrawCards(playerName string, count int) (err error) {
 		cards = append(cards, c)
 	}
 
-	player.takeCards(cards...)
+	p.TakeCards(cards...)
 
-	g.addToHistory(fmt.Sprintf("%s drew %d card(s).", player.Name, count))
+	g.addToHistory(fmt.Sprintf("%s drew %d card(s).", p.Name(), count))
 
 	return nil
 }
 
 func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 	player, enemy := g.WhoIsCurrent()
-	status.Player = player.Name
+	status.Player = player.Name()
 	status.Hand = player.ShowHand()
 	status.OwnField = player.ShowField()
 	status.OwnCastle = player.Castle()
@@ -181,7 +182,7 @@ func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
 
 func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
 	current, enemy := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
@@ -212,24 +213,24 @@ func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
 
 func (g *Game) MoveWarriorToField(playerName, warriorID string) error {
 	current, _ := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	err := current.moveCardToField(warriorID)
+	err := current.MoveCardToField(warriorID)
 	if err != nil {
 		return fmt.Errorf("moving warrior to field failed: %w", err)
 	}
 
 	g.addToHistory(fmt.Sprintf("%s moved warrior %s to field",
-		current.Name, warriorID))
+		current.Name(), warriorID))
 
 	return nil
 }
 
 func (g *Game) Trade(playerName string, cardIDs []string) error {
 	current, _ := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
@@ -237,7 +238,7 @@ func (g *Game) Trade(playerName string, cardIDs []string) error {
 		return errors.New("must trade exactly 3 cards")
 	}
 
-	cards, err := current.giveCards(cardIDs...)
+	cards, err := current.GiveCards(cardIDs...)
 	if err != nil {
 		return fmt.Errorf("giving cards for trade failed: %w", err)
 	}
@@ -250,14 +251,14 @@ func (g *Game) Trade(playerName string, cardIDs []string) error {
 	}
 
 	g.addToHistory(fmt.Sprintf("%s traded cards %v",
-		current.Name, cardIDs))
+		current.Name(), cardIDs))
 
 	return nil
 }
 
 func (g *Game) Buy(playerName, cardID string) error {
 	current, _ := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
@@ -276,7 +277,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 		return errors.New("cannot buy with gold cardBase of value 1")
 	}
 
-	g.OnCardMovedToPile(current, resourceCard)
+	g.OnCardMovedToPile(resourceCard)
 
 	cardsToBuy := val / 2
 	if err := g.DrawCards(playerName, cardsToBuy); err != nil {
@@ -284,7 +285,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 	}
 
 	g.addToHistory(fmt.Sprintf("%s bought %d card(s) using %s",
-		current.Name, cardsToBuy, resourceCard.String()))
+		current.Name(), cardsToBuy, resourceCard.String()))
 
 	return nil
 
@@ -292,7 +293,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 func (g *Game) SpecialPower(playerName, warriorID, targetID, weaponID string) error {
 	current, enemy := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
@@ -323,7 +324,7 @@ func (g *Game) SpecialPower(playerName, warriorID, targetID, weaponID string) er
 
 func (g *Game) Construct(playerName, cardID string) error {
 	current, _ := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
@@ -332,7 +333,7 @@ func (g *Game) Construct(playerName, cardID string) error {
 	}
 
 	g.addToHistory(fmt.Sprintf("%s constructed castle with cardBase %s",
-		current.Name, cardID))
+		current.Name(), cardID))
 
 	return nil
 
@@ -340,27 +341,27 @@ func (g *Game) Construct(playerName, cardID string) error {
 
 func (g *Game) Spy(playerName string, option int) ([]Card, error) {
 	current, enemy := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return nil, errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	s := current.GetSpy()
+	s := current.Spy()
 	if s == nil {
 		return nil, errors.New("player does not have a Spy to use")
 	}
 
-	g.OnCardMovedToPile(current, s)
+	g.OnCardMovedToPile(s)
 
 	switch option {
 	case 1:
 		// Reveal top 5 cards from deck
-		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", current.Name))
+		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", current.Name()))
 
 		return g.deck.Reveal(5), nil
 	case 2:
 		// Reveal enemy's cards
 		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
-			current.Name, enemy.Name))
+			current.Name(), enemy.Name()))
 
 		return enemy.ShowHand(), nil
 	default:
@@ -370,25 +371,25 @@ func (g *Game) Spy(playerName string, option int) ([]Card, error) {
 
 func (g *Game) Steal(playerName string, cardPosition int) error {
 	current, enemy := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	t := current.GetThief()
+	t := current.Thief()
 	if t == nil {
 		return errors.New("player does not have a thief to steal with")
 	}
 
-	stolenCard, err := enemy.Stolen(cardPosition)
+	stolenCard, err := enemy.CardStolenFromHand(cardPosition)
 	if err != nil {
 		return fmt.Errorf("stealing cardBase failed: %w", err)
 	}
 
-	g.OnCardMovedToPile(current, t)
-	current.takeCards(stolenCard)
+	g.OnCardMovedToPile(t)
+	current.TakeCards(stolenCard)
 
 	g.addToHistory(fmt.Sprintf("%s stole a cardBase from %s",
-		current.Name, enemy.Name))
+		current.Name(), enemy.Name()))
 
 	return nil
 
@@ -396,24 +397,24 @@ func (g *Game) Steal(playerName string, cardPosition int) error {
 
 func (g *Game) Catapult(playerName string, cardPosition int) error {
 	current, enemy := g.WhoIsCurrent()
-	if current.Name != playerName {
+	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	t := current.GetCatapult()
+	t := current.Catapult()
 	if t == nil {
 		return errors.New("player does not have a catapult to attack")
 	}
 
-	stolenGold, err := t.Attack(enemy.castle, cardPosition)
+	stolenGold, err := t.Attack(enemy.Castle(), cardPosition)
 	if err != nil {
 		return fmt.Errorf("attacking castle failed: %w", err)
 	}
 
-	g.OnCardMovedToPile(current, stolenGold)
+	g.OnCardMovedToPile(stolenGold)
 
 	g.addToHistory(fmt.Sprintf("%s used catapult to steal gold from %s's castle",
-		current.Name, enemy.Name))
+		current.Name(), enemy.Name()))
 
 	return nil
 
@@ -436,7 +437,7 @@ func (g *Game) addToHistory(msg string) {
 
 func (g *Game) EndTurn(player string) error {
 	next, _ := g.WhoIsCurrent()
-	if next.Name != player {
+	if next.Name() != player {
 		return errors.New(fmt.Sprintf("%s not your turn", player))
 	}
 
@@ -450,29 +451,27 @@ func (g *Game) IsGameEnded() bool {
 	return g.state == StateGameEnded
 }
 
-func (g *Game) OnCardMovedToPile(player *Player, card Card) {
-	player.removeCardFromHand(card)
+func (g *Game) OnCardMovedToPile(card Card) {
 	g.discardPile = append(g.discardPile, card)
-	g.addToHistory(fmt.Sprintf("Card moved to discard pile (%d): %s",
+	g.addToHistory(fmt.Sprintf("card moved to discard pile (%d): %s",
 		len(g.discardPile), card.String()))
 }
 
-func (g *Game) OnWarriorDead(player *Player, warrior Warrior) {
-	player.removeCardFromField(warrior)
+func (g *Game) OnWarriorMovedToCemetery(warrior Warrior) {
 	for _, c := range warrior.AttackedBy() {
 		g.discardPile = append(g.discardPile, c)
 	}
-	g.addToHistory(fmt.Sprintf("Warrior's affecting cards (%d) moved to discard pile (%d)",
+	g.addToHistory(fmt.Sprintf("warrior's affecting cards (%d) moved to discard pile (%d)",
 		len(warrior.AttackedBy()), len(g.discardPile)))
 
 	g.cemetery = append(g.cemetery, warrior)
-	g.addToHistory(fmt.Sprintf("Warrior died and moved to cemetery (%d): %s",
+	g.addToHistory(fmt.Sprintf("warrior died and moved to cemetery (%d): %s",
 		len(g.cemetery), warrior.String()))
 }
 
-func (g *Game) OnCastleCompletion(p *Player) {
+func (g *Game) OnCastleCompletion(p Player) {
 	g.state = StateGameEnded
-	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name))
+	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name()))
 }
 
 func (g *Game) OnMessage(msg string) {
