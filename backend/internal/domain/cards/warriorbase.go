@@ -15,6 +15,15 @@ type warriorCardBase struct {
 	WarriorDeadObserver ports.WarriorDeadObserver
 }
 
+func newWarriorCardBase(cardBase cardBase, attackableCardBase attackableCardBase,
+) warriorCardBase {
+
+	return warriorCardBase{
+		cardBase:           cardBase,
+		attackableCardBase: attackableCardBase,
+	}
+}
+
 func (w *warriorCardBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
