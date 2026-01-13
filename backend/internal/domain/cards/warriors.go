@@ -10,7 +10,7 @@ type knight struct {
 	*warriorBase
 }
 
-func NewKnight(id string) ports.Warrior {
+func NewKnight(id string) ports.Knight {
 	return &knight{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
@@ -45,7 +45,7 @@ type archer struct {
 	*warriorBase
 }
 
-func NewArcher(id string) ports.Warrior {
+func NewArcher(id string) ports.Archer {
 	return &archer{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
@@ -80,7 +80,7 @@ type mage struct {
 	*warriorBase
 }
 
-func NewMage(id string) ports.Warrior {
+func NewMage(id string) ports.Mage {
 	return &mage{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
@@ -115,7 +115,7 @@ type dragon struct {
 	*warriorBase
 }
 
-func NewDragon(id string) ports.Warrior {
+func NewDragon(id string) ports.Dragon {
 	return &dragon{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
@@ -151,4 +151,13 @@ func (d *dragon) Attack(t ports.Attackable, w ports.Weapon) error {
 	t.ReceiveDamage(w, multiplier)
 
 	return nil
+}
+func (d *dragon) InstantKill(sp ports.SpecialPower) {
+	// Dragon cannot be instant killed
+	d.health -= sp.DamageAmount()
+	d.attackedBy = append(d.attackedBy, sp)
+
+	if d.health <= 0 {
+		d.dead()
+	}
 }

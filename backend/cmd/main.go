@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -113,7 +114,7 @@ func startGame() (*domain.Game, error) {
 
 	p1 := "Alelo"
 	p2 := "Matuelo"
-	return domain.NewGame(p1, p2), nil
+	return domain.NewGame(p1, p2, cards.NewDealer()), nil
 }
 
 func setInitialWarriors() error {

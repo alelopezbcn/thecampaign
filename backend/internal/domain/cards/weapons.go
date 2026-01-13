@@ -11,7 +11,7 @@ type sword struct {
 	*weaponBase
 }
 
-func NewSword(id string, damageAmount int) ports.Weapon {
+func NewSword(id string, damageAmount int) ports.Sword {
 	return &sword{
 		cardBase:   newCardBase(id, "Sword"),
 		weaponBase: newWeaponBase(damageAmount),
@@ -26,7 +26,7 @@ type arrow struct {
 	*weaponBase
 }
 
-func NewArrow(id string, damageAmount int) ports.Weapon {
+func NewArrow(id string, damageAmount int) ports.Arrow {
 	return &arrow{
 		cardBase:   newCardBase(id, "Arrow"),
 		weaponBase: newWeaponBase(damageAmount),
@@ -41,7 +41,7 @@ type poison struct {
 	*weaponBase
 }
 
-func NewPoison(id string, damageAmount int) ports.Weapon {
+func NewPoison(id string, damageAmount int) ports.Poison {
 	{
 		return &poison{
 			cardBase:   newCardBase(id, "Poison"),

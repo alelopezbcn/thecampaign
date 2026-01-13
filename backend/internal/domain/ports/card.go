@@ -28,6 +28,7 @@ type Resource interface {
 type SpecialPower interface {
 	Card
 	Attackable
+	Weapon
 	Use(usedBy Warrior, target Warrior) error
 	Destroyed()
 }
@@ -44,11 +45,39 @@ type Warrior interface {
 	Attack(target Attackable, weapon Weapon) error
 	ProtectedBy(powerCard SpecialPower)
 	Heal()
-	InstantKill()
+	InstantKill(sp SpecialPower)
 	AddWarriorDeadObserver(o WarriorDeadObserver)
 }
 
 type Weapon interface {
 	Card
 	DamageAmount() int
+}
+
+type Dragon interface {
+	Warrior
+}
+
+type Knight interface {
+	Warrior
+}
+
+type Archer interface {
+	Warrior
+}
+
+type Mage interface {
+	Warrior
+}
+
+type Sword interface {
+	Weapon
+}
+
+type Arrow interface {
+	Weapon
+}
+
+type Poison interface {
+	Weapon
 }

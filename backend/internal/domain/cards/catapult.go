@@ -16,12 +16,12 @@ func NewCatapultCard(id string) ports.Catapult {
 	}
 }
 func (c *catapult) Attack(castle ports.Castle, position int) (ports.Resource, error) {
-	gold, err := castle.RemoveGold(position)
+	g, err := castle.RemoveGold(position)
 	if err != nil {
 		return nil, err
 	}
 
-	return gold, nil
+	return g, nil
 }
 func (c *catapult) String() string {
 	return fmt.Sprintf("%s (%s)", c.name, c.id)

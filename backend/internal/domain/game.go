@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/google/uuid"
 )
@@ -22,11 +21,13 @@ type Game struct {
 	state       GameState
 	deck        ports.Deck
 	discardPile []ports.Card
-	cemetery    []ports.Card
+	cemetery    []ports.Warrior
 	history     []string
+	dealer      ports.Dealer
 }
 
-func NewGame(player1, player2 string) *Game {
+func NewGame(player1, player2 string,
+	dealer ports.Dealer) *Game {
 	playersArr := []string{player1, player2}
 	rand.Shuffle(len(playersArr), func(i, j int) {
 		playersArr[i], playersArr[j] = playersArr[j], playersArr[i]
@@ -36,8 +37,9 @@ func NewGame(player1, player2 string) *Game {
 		id:          uuid.NewString(),
 		CurrentTurn: 0,
 		discardPile: []ports.Card{},
-		cemetery:    []ports.Card{},
+		cemetery:    []ports.Warrior{},
 		history:     []string{},
+		dealer:      dealer,
 	}
 
 	p1 := NewPlayer(playersArr[0], g, g, g, g)
@@ -55,7 +57,7 @@ func NewGame(player1, player2 string) *Game {
 func (g *Game) deal() {
 	g.addToHistory("Dealing Cards")
 
-	warriorCards := shuffle(cards.WarriorsCards())
+	warriorCards := shuffle(g.dealer.WarriorsCards())
 
 	// Each player gets 3 Warrior cards
 	warriorsIdx := 0
@@ -64,11 +66,11 @@ func (g *Game) deal() {
 		warriorsIdx += 3
 	}
 
-	deckCards := append(warriorCards[warriorsIdx:], cards.RestCards()...)
+	deckCards := append(warriorCards[warriorsIdx:], g.dealer.OtherCards()...)
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
 	for _, p := range g.Players {
-		p.TakeCards(deckCards[otherIdx : otherIdx+3]...)
+		p.TakeCards(deckCards[otherIdx : otherIdx+4]...)
 		otherIdx += 4
 	}
 
@@ -119,17 +121,9 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 	return nil
 }
 
-func (g *Game) switchTurn() {
-	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
-}
-
 func (g *Game) WhoIsCurrent() (current ports.Player, enemy ports.Player) {
 	return g.Players[g.CurrentTurn],
 		g.Players[(g.CurrentTurn+1)%len(g.Players)]
-}
-
-func (g *Game) WhoIsEnemy() ports.Player {
-	return g.Players[(g.CurrentTurn+1)%len(g.Players)]
 }
 
 func (g *Game) DrawCards(playerName string, count int) (err error) {
@@ -460,12 +454,6 @@ func (g *Game) OnCardMovedToPile(card ports.Card) {
 }
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
-	for _, c := range warrior.AttackedBy() {
-		g.discardPile = append(g.discardPile, c)
-	}
-	g.addToHistory(fmt.Sprintf("warrior's affecting cards (%d) moved to discard pile (%d)",
-		len(warrior.AttackedBy()), len(g.discardPile)))
-
 	g.cemetery = append(g.cemetery, warrior)
 	g.addToHistory(fmt.Sprintf("warrior died and moved to cemetery (%d): %s",
 		len(g.cemetery), warrior.String()))
@@ -483,4 +471,8 @@ func (g *Game) OnFieldWithoutWarriors(p ports.Player) {
 
 func (g *Game) OnMessage(msg string) {
 	g.addToHistory(msg)
+}
+
+func (g *Game) switchTurn() {
+	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }

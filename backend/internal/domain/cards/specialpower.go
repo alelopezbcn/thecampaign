@@ -30,13 +30,17 @@ func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
 
 	switch usedBy.(type) {
 	case *knight:
+		if _, ok := target.(*dragon); ok {
+			return errors.New("dragon cannot be protected")
+		}
 		target.ProtectedBy(s)
 	case *archer:
-		target.InstantKill()
+		target.InstantKill(s)
 	case *mage:
+		if _, ok := target.(*dragon); ok {
+			return errors.New("dragon cannot be healed")
+		}
 		target.Heal()
-	case *dragon:
-		target.ReceiveDamage(s, 1)
 	default:
 		return errors.New("special power action not allowed for this warrior type")
 	}

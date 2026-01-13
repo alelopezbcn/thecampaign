@@ -72,7 +72,7 @@ func (p *player) GiveCards(cardIDs ...string) ([]ports.Card, error) {
 	}
 
 	for _, c := range cards {
-		p.removeCardFromHand(c)
+		p.hand.RemoveCard(c)
 	}
 
 	return cards, nil
@@ -106,7 +106,7 @@ func (p *player) CardStolenFromHand(position int) (ports.Card, error) {
 	}
 
 	c := copied[position-1]
-	p.removeCardFromHand(c)
+	p.hand.RemoveCard(c)
 
 	return c, nil
 }
@@ -130,7 +130,7 @@ func (p *player) MoveCardToField(cardID string) error {
 	}
 
 	p.field.AddCards(c)
-	p.removeCardFromHand(c)
+	p.hand.RemoveCard(c)
 
 	return nil
 }
@@ -183,10 +183,6 @@ func (p *player) UseSpecialPower(usedBy ports.Card, usedOn ports.Card,
 	return nil
 }
 
-func (p *player) removeCardFromHand(card ports.Card) bool {
-	return p.hand.RemoveCard(card)
-}
-
 func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Thief); ok {
@@ -228,13 +224,13 @@ func (p *player) Construct(cardID string) error {
 		return err
 	}
 
-	p.removeCardFromHand(resourceCard)
+	p.hand.RemoveCard(resourceCard)
 
 	return nil
 }
 
 func (p *player) OnCardToBeDiscarded(card ports.Card) {
-	if !p.removeCardFromHand(card) || !p.field.RemoveCard(card) {
+	if !p.hand.RemoveCard(card) && !p.field.RemoveCard(card) {
 		panic("card not found in player")
 	}
 

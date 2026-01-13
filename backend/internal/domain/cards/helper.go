@@ -6,7 +6,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-func WarriorsCards() (warriors []ports.Card) {
+type dealer struct {
+}
+
+func NewDealer() ports.Dealer {
+	return &dealer{}
+}
+
+func (d *dealer) WarriorsCards() (warriors []ports.Card) {
 	warriors = make([]ports.Card, 0, 15)
 	for i := 1; i < 6; i++ {
 		k := NewKnight(fmt.Sprintf("k%d", i))
@@ -22,11 +29,11 @@ func WarriorsCards() (warriors []ports.Card) {
 	return warriors
 }
 
-func RestCards() (other []ports.Card) {
-	d := NewDragon("d")
+func (d *dealer) OtherCards() (other []ports.Card) {
+	dr := NewDragon("d")
 
 	other = []ports.Card{
-		d,
+		dr,
 		NewSpecialPower("s1"),
 		NewSpecialPower("s2"),
 		NewSpecialPower("s3"),

@@ -55,11 +55,12 @@ func (w *warriorBase) Heal() {
 	}
 	w.attackedBy = []ports.Weapon{}
 }
-func (w *warriorBase) InstantKill() {
+func (w *warriorBase) InstantKill(sp ports.SpecialPower) {
 	if w.protectedBy != nil {
 		w.protectedBy.Destroyed()
 		return
 	}
+	w.attackedBy = append(w.attackedBy, sp)
 	w.dead()
 }
 func (w *warriorBase) String() string {

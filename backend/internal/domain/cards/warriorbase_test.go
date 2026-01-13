@@ -170,28 +170,29 @@ func TestWarriorBase_InstantKill_WithProtection(t *testing.T) {
 	}
 	sp.EXPECT().Destroyed()
 
-	w.InstantKill()
+	w.InstantKill(sp)
 }
 
 func TestWarriorBase_InstantKill_WithoutProtection(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	weapon := mocks.NewMockWeapon(ctrl)
+	sp := mocks.NewMockSpecialPower(ctrl)
+
 	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	weapon.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	discardObs.EXPECT().OnCardToBeDiscarded(weapon)
+	sp.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardToBeDiscarded(sp)
 
 	obs := mocks.NewMockWarriorDeadObserver(ctrl)
 	w := &warriorBase{
 		attackableBase: &attackableBase{
-			attackedBy: []ports.Weapon{weapon},
+			attackedBy: []ports.Weapon{},
 		},
 		WarriorDeadObserver: obs,
 	}
 	obs.EXPECT().OnWarriorDead(w)
 
-	w.InstantKill()
+	w.InstantKill(sp)
 	assert.Empty(t, w.attackedBy)
 }
 
