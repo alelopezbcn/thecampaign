@@ -6,7 +6,7 @@ type Player interface {
 	MoveCardToField(cardID string) error
 	GiveCards(cardIDs ...string) ([]Card, error)
 	ShowHand() []Card
-	ShowField() []Card
+	ShowField() Field
 	CanTakeCards(count int) bool
 	CardsInHand() int
 	GetCardFromHand(cardID string) (Card, bool)

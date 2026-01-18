@@ -5,4 +5,8 @@ type Field interface {
 	GetCard(cardID string) (Card, bool)
 	AddCards(cards ...Card)
 	RemoveCard(card Card) bool
+	HasArcher() bool
+	HasMage() bool
+	HasKnight() bool
+	HasDragon() bool
 }

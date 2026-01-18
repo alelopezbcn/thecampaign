@@ -86,8 +86,8 @@ func (p *player) ShowHand() []ports.Card {
 	return p.hand.ShowCards()
 }
 
-func (p *player) ShowField() []ports.Card {
-	return p.field.ShowCards()
+func (p *player) ShowField() ports.Field {
+	return p.field
 }
 
 func (p *player) CardStolenFromHand(position int) (ports.Card, error) {

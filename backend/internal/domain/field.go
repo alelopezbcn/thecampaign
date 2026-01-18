@@ -11,6 +11,54 @@ type field struct {
 	gameEndedObserver ports.FieldWithoutWarriorsObserver
 }
 
+// HasArcher implements ports.Field.
+func (h *field) HasArcher() bool {
+	for _, warriorInField := range h.cards {
+		switch warriorInField.(type) {
+		case ports.Archer:
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasDragon implements ports.Field.
+func (h *field) HasDragon() bool {
+	for _, warriorInField := range h.cards {
+		switch warriorInField.(type) {
+		case ports.Dragon:
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasKnight implements ports.Field.
+func (h *field) HasKnight() bool {
+	for _, warriorInField := range h.cards {
+		switch warriorInField.(type) {
+		case ports.Knight:
+			return true
+		}
+	}
+
+	return false
+}
+
+// HasMage implements ports.Field.
+func (h *field) HasMage() bool {
+	for _, warriorInField := range h.cards {
+		switch warriorInField.(type) {
+		case ports.Mage:
+			return true
+		}
+	}
+
+	return false
+}
+
 func NewField(o ports.FieldWithoutWarriorsObserver) ports.Field {
 	return &field{
 		cards:             []ports.Card{},
