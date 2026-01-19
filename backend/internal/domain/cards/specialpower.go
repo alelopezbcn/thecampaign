@@ -40,7 +40,7 @@ func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
 		if _, ok := target.(*dragon); ok {
 			return errors.New("dragon cannot be healed")
 		}
-		target.Heal()
+		target.Heal(s)
 	default:
 		return errors.New("special power action not allowed for this warrior type")
 	}

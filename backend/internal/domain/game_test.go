@@ -673,6 +673,141 @@ func TestAttacks(t *testing.T) {
 	})
 }
 
+func TestGame_SpecialPower(t *testing.T) {
+	t.Run("Use special power of Archer (Instant Kill) on warrior", func(t *testing.T) {
+		a := cards.NewArcher("a1")
+		target := cards.NewArcher("a2")
+		sp := cards.NewSpecialPower("sp")
+		g := &Game{}
+		p1 := newPlayerWithCardAndObserver("Player1",
+			[]ports.Card{sp},
+			[]ports.Card{a},
+			g,
+		)
+		p2 := newPlayerWithCardAndObserver("Player2",
+			[]ports.Card{},
+			[]ports.Card{target},
+			g,
+		)
+
+		g.Players = []ports.Player{p1, p2}
+
+		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
+		assert.NoError(t, err)
+
+		assert.Equal(t, 0, target.Health())
+		_, ok := p2.GetCardFromField(target.GetID())
+		assert.False(t, ok, "Target should have been removed from field after death")
+		_, ok = p1.GetCardFromHand(sp.GetID())
+		assert.False(t, ok, "Special Power should have been discarded after attack")
+		assert.True(t, foundInCemetery(g, target), "Cemetery should contain the dead target")
+		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
+	})
+	t.Run("Use special power of Archer (Instant Kill) on dragon", func(t *testing.T) {
+		a := cards.NewArcher("a1")
+		target := cards.NewDragon("dr")
+		sp := cards.NewSpecialPower("sp")
+		g := &Game{}
+		p1 := newPlayerWithCardAndObserver("Player1",
+			[]ports.Card{sp},
+			[]ports.Card{a},
+			g,
+		)
+		p2 := newPlayerWithCardAndObserver("Player2",
+			[]ports.Card{},
+			[]ports.Card{target},
+			g,
+		)
+
+		g.Players = []ports.Player{p1, p2}
+
+		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
+		assert.NoError(t, err)
+
+		assert.Equal(t, cards.DragonHealth-cards.SpecialPowerDamage, target.Health())
+		_, ok := p2.GetCardFromField(target.GetID())
+		assert.True(t, ok, "Dragon should still be on the field")
+
+		assert.True(t, findInAttackedBy(target.AttackedBy(), sp.GetID()), "Target should have been marked as attacked by special power")
+	})
+	t.Run("Use special power of Mage (Heal) on warrior", func(t *testing.T) {
+		m := cards.NewMage("m1")
+		target := cards.NewKnight("k1")
+		attacker := cards.NewArcher("a1")
+		arrow := cards.NewArrow("s1", 4)
+
+		sp := cards.NewSpecialPower("sp")
+		g := &Game{}
+		p1 := newPlayerWithCardAndObserver("Player1",
+			[]ports.Card{arrow},
+			[]ports.Card{attacker},
+			g,
+		)
+		p2 := newPlayerWithCardAndObserver("Player2",
+			[]ports.Card{sp},
+			[]ports.Card{m, target},
+			g,
+		)
+
+		g.Players = []ports.Player{p1, p2}
+
+		_ = g.Attack(p1.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
+		assert.Equal(t, cards.WarriorHealth-4, target.Health())
+		err := g.EndTurn(p1.Name())
+		assert.NoError(t, err)
+		err = g.SpecialPower(p2.Name(), m.GetID(), target.GetID(), sp.GetID())
+		assert.NoError(t, err)
+
+		assert.Equal(t, cards.WarriorHealth, target.Health())
+		_, ok := p2.GetCardFromHand(sp.GetID())
+		assert.False(t, ok, "Special Power should have been discarded after use")
+		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
+
+	})
+	t.Run("Use special power of Knight (Protection) on warrior", func(t *testing.T) {
+		user := cards.NewKnight("k1")
+		target := cards.NewKnight("k2")
+		attacker := cards.NewArcher("a1")
+		arrow := cards.NewArrow("a1", 4)
+		arrow2 := cards.NewArrow("a2", 8)
+
+		sp := cards.NewSpecialPower("sp")
+		g := &Game{}
+		p1 := newPlayerWithCardAndObserver("Player1",
+			[]ports.Card{sp},
+			[]ports.Card{user, target},
+			g,
+		)
+		p2 := newPlayerWithCardAndObserver("Player2",
+			[]ports.Card{arrow, arrow2},
+			[]ports.Card{attacker},
+			g,
+		)
+
+		g.Players = []ports.Player{p1, p2}
+
+		err := g.SpecialPower(p1.Name(), user.GetID(), target.GetID(), sp.GetID())
+		assert.NoError(t, err)
+		_ = g.EndTurn(p1.Name())
+
+		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
+		assert.Equal(t, cards.SpecialPowerHealth-4, sp.Health())
+		assert.Equal(t, cards.WarriorHealth, target.Health())
+
+		_, ok := p1.GetCardFromHand(sp.GetID())
+		assert.True(t, ok, "Special Power should still be in field until destroyed")
+
+		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow2.GetID())
+		assert.Equal(t, cards.SpecialPowerHealth-4-8, sp.Health())
+		assert.Equal(t, cards.WarriorHealth, target.Health())
+
+		_, ok = p1.GetCardFromHand(sp.GetID())
+		assert.False(t, ok, "Special Power should have been discarded after destruction")
+		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
+
+	})
+}
+
 func TestDrawCards(t *testing.T) {
 	t.Run("Take card when deck is empty", func(t *testing.T) {
 		p := newPlayerWithCards("Player1", []ports.Card{}, []ports.Card{})
@@ -779,6 +914,15 @@ func TestNewGame(t *testing.T) {
 		assert.Equal(t, 5, current.CardsInHand(), "Player should have 5 cards left in hand after setting 2 warriors")
 		assert.Equal(t, StateWaitingDraw, g.state)
 	})
+}
+
+func findInAttackedBy(cards []ports.Weapon, id string) bool {
+	for _, c := range cards {
+		if c != nil && c.GetID() == id {
+			return true
+		}
+	}
+	return false
 }
 
 func foundInCemetery(g *Game, a ports.Warrior) bool {

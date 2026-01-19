@@ -940,15 +940,15 @@ func (mr *MockWarriorMockRecorder) GetMessageObserver() *gomock.Call {
 }
 
 // Heal mocks base method.
-func (m *MockWarrior) Heal() {
+func (m *MockWarrior) Heal(powerCard ports.SpecialPower) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Heal")
+	m.ctrl.Call(m, "Heal", powerCard)
 }
 
 // Heal indicates an expected call of Heal.
-func (mr *MockWarriorMockRecorder) Heal() *gomock.Call {
+func (mr *MockWarriorMockRecorder) Heal(powerCard any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockWarrior)(nil).Heal))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockWarrior)(nil).Heal), powerCard)
 }
 
 // Health mocks base method.
@@ -1264,15 +1264,15 @@ func (mr *MockDragonMockRecorder) GetMessageObserver() *gomock.Call {
 }
 
 // Heal mocks base method.
-func (m *MockDragon) Heal() {
+func (m *MockDragon) Heal(powerCard ports.SpecialPower) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Heal")
+	m.ctrl.Call(m, "Heal", powerCard)
 }
 
 // Heal indicates an expected call of Heal.
-func (mr *MockDragonMockRecorder) Heal() *gomock.Call {
+func (mr *MockDragonMockRecorder) Heal(powerCard any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockDragon)(nil).Heal))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockDragon)(nil).Heal), powerCard)
 }
 
 // Health mocks base method.
@@ -1471,15 +1471,15 @@ func (mr *MockKnightMockRecorder) GetMessageObserver() *gomock.Call {
 }
 
 // Heal mocks base method.
-func (m *MockKnight) Heal() {
+func (m *MockKnight) Heal(powerCard ports.SpecialPower) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Heal")
+	m.ctrl.Call(m, "Heal", powerCard)
 }
 
 // Heal indicates an expected call of Heal.
-func (mr *MockKnightMockRecorder) Heal() *gomock.Call {
+func (mr *MockKnightMockRecorder) Heal(powerCard any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockKnight)(nil).Heal))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockKnight)(nil).Heal), powerCard)
 }
 
 // Health mocks base method.
@@ -1678,15 +1678,15 @@ func (mr *MockArcherMockRecorder) GetMessageObserver() *gomock.Call {
 }
 
 // Heal mocks base method.
-func (m *MockArcher) Heal() {
+func (m *MockArcher) Heal(powerCard ports.SpecialPower) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Heal")
+	m.ctrl.Call(m, "Heal", powerCard)
 }
 
 // Heal indicates an expected call of Heal.
-func (mr *MockArcherMockRecorder) Heal() *gomock.Call {
+func (mr *MockArcherMockRecorder) Heal(powerCard any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockArcher)(nil).Heal))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockArcher)(nil).Heal), powerCard)
 }
 
 // Health mocks base method.
@@ -1885,15 +1885,15 @@ func (mr *MockMageMockRecorder) GetMessageObserver() *gomock.Call {
 }
 
 // Heal mocks base method.
-func (m *MockMage) Heal() {
+func (m *MockMage) Heal(powerCard ports.SpecialPower) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Heal")
+	m.ctrl.Call(m, "Heal", powerCard)
 }
 
 // Heal indicates an expected call of Heal.
-func (mr *MockMageMockRecorder) Heal() *gomock.Call {
+func (mr *MockMageMockRecorder) Heal(powerCard any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockMage)(nil).Heal))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockMage)(nil).Heal), powerCard)
 }
 
 // Health mocks base method.

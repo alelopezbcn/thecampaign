@@ -260,7 +260,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 	resourceCard, ok := current.GetCardFromHand(cardID)
 	if !ok {
-		return errors.New("Resource cardBase not in hand: " + cardID)
+		return errors.New("Resource card not in hand: " + cardID)
 	}
 
 	r, ok := resourceCard.(ports.Resource)
@@ -270,7 +270,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 	val := r.Value()
 	if val == 1 {
-		return errors.New("cannot buy with gold cardBase of value 1")
+		return errors.New("cannot buy with gold card of value 1")
 	}
 
 	g.OnCardMovedToPile(resourceCard)
@@ -287,20 +287,24 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 }
 
-func (g *Game) SpecialPower(playerName, warriorID, targetID, weaponID string) error {
+func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) error {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
 	}
 
-	warriorCard, ok := current.GetCardFromField(warriorID)
+	warriorCard, ok := current.GetCardFromField(userID)
 	if !ok {
-		return errors.New("warrior cardBase not in field: " + warriorID)
+		return errors.New("warrior card not in field: " + userID)
 	}
 
-	targetCard, ok := enemy.GetCardFromField(targetID)
+	var targetCard ports.Card
+	targetCard, ok = current.GetCardFromField(targetID)
 	if !ok {
-		return errors.New("target cardBase not in enemy field: " + targetID)
+		targetCard, ok = enemy.GetCardFromField(targetID)
+		if !ok {
+			return errors.New("target card not valid: " + targetID)
+		}
 	}
 
 	weaponCard, ok := current.GetCardFromHand(weaponID)
@@ -325,10 +329,10 @@ func (g *Game) Construct(playerName, cardID string) error {
 	}
 
 	if err := current.Construct(cardID); err != nil {
-		return fmt.Errorf("constructing cardBase failed: %w", err)
+		return fmt.Errorf("constructing card failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s constructed castle with cardBase %s",
+	g.addToHistory(fmt.Sprintf("%s constructed castle with card %s",
 		current.Name(), cardID))
 
 	return nil
@@ -378,13 +382,13 @@ func (g *Game) Steal(playerName string, cardPosition int) error {
 
 	stolenCard, err := enemy.CardStolenFromHand(cardPosition)
 	if err != nil {
-		return fmt.Errorf("stealing cardBase failed: %w", err)
+		return fmt.Errorf("stealing card failed: %w", err)
 	}
 
 	g.OnCardMovedToPile(t)
 	current.TakeCards(stolenCard)
 
-	g.addToHistory(fmt.Sprintf("%s stole a cardBase from %s",
+	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		current.Name(), enemy.Name()))
 
 	return nil

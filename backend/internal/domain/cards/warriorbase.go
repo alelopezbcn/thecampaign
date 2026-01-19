@@ -48,8 +48,9 @@ func (w *warriorBase) Attack(_ ports.Attackable, _ ports.Weapon) error {
 func (w *warriorBase) ProtectedBy(powerCard ports.SpecialPower) {
 	w.protectedBy = powerCard
 }
-func (w *warriorBase) Heal() {
+func (w *warriorBase) Heal(sp ports.SpecialPower) {
 	w.health = WarriorHealth
+	w.attackedBy = append(w.attackedBy, sp)
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
 	}
@@ -60,6 +61,7 @@ func (w *warriorBase) InstantKill(sp ports.SpecialPower) {
 		w.protectedBy.Destroyed()
 		return
 	}
+	w.health = 0
 	w.attackedBy = append(w.attackedBy, sp)
 	w.dead()
 }

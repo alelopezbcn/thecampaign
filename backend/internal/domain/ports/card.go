@@ -44,7 +44,7 @@ type Warrior interface {
 	Attackable
 	Attack(target Attackable, weapon Weapon) error
 	ProtectedBy(powerCard SpecialPower)
-	Heal()
+	Heal(powerCard SpecialPower)
 	InstantKill(sp SpecialPower)
 	AddWarriorDeadObserver(o WarriorDeadObserver)
 }
