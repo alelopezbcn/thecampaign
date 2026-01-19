@@ -811,21 +811,20 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		err := g.SpecialPower(p1.Name(), user.GetID(), target.GetID(), sp.GetID())
 		assert.NoError(t, err)
+		assert.NotContains(t, p1.Hand().ShowCards(), sp)
+		isProtected, card := target.IsProtected()
+		assert.True(t, isProtected)
+		assert.Equal(t, card, sp)
 		_ = g.EndTurn(p1.Name())
 
 		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
 		assert.Equal(t, cards.SpecialPowerMaxHealth-4, sp.Health())
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 
-		_, ok := p1.GetCardFromHand(sp.GetID())
-		assert.True(t, ok, "Special Power should still be in field until destroyed")
-
 		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow2.GetID())
 		assert.Equal(t, cards.SpecialPowerMaxHealth-4-8, sp.Health())
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 
-		_, ok = p1.GetCardFromHand(sp.GetID())
-		assert.False(t, ok, "Special Power should have been discarded after destruction")
 		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
 
 	})
@@ -1093,14 +1092,14 @@ func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
 	}
 
 	for _, card := range cardsInField {
-		card.AssignedToPlayer(p)
+		card.AddCardMovedToPileObserver(p)
 		targ, ok := card.(ports.Warrior)
 		if ok {
 			targ.AddWarriorDeadObserver(p)
 		}
 	}
 	for _, card := range cardsInHand {
-		card.AssignedToPlayer(p)
+		card.AddCardMovedToPileObserver(p)
 	}
 
 	return p

@@ -39,42 +39,30 @@ func (m *MockCard) EXPECT() *MockCardMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockCard) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockCard) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockCardMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockCardMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockCard)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockCard)(nil).AddCardMovedToPileObserver), observer)
 }
 
-// AssignedToPlayer mocks base method.
-func (m *MockCard) AssignedToPlayer(player ports.Player) {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockCard) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockCardMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockCard)(nil).AssignedToPlayer), player)
-}
-
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockCard) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockCardMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockCardMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockCard)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockCard)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -89,20 +77,6 @@ func (m *MockCard) GetID() string {
 func (mr *MockCardMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockCard)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockCard) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockCardMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockCard)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -207,28 +181,16 @@ func (m *MockCatapult) EXPECT() *MockCatapultMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockCatapult) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockCatapult) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockCatapultMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockCatapultMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockCatapult)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockCatapult) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockCatapultMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockCatapult)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockCatapult)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // Attack mocks base method.
@@ -246,18 +208,18 @@ func (mr *MockCatapultMockRecorder) Attack(castle, position any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockCatapult)(nil).Attack), castle, position)
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockCatapult) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockCatapult) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockCatapultMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockCatapultMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockCatapult)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockCatapult)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -272,20 +234,6 @@ func (m *MockCatapult) GetID() string {
 func (mr *MockCatapultMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockCatapult)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockCatapult) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockCatapultMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockCatapult)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -325,42 +273,30 @@ func (m *MockResource) EXPECT() *MockResourceMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockResource) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockResource) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockResourceMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockResourceMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockResource)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockResource)(nil).AddCardMovedToPileObserver), observer)
 }
 
-// AssignedToPlayer mocks base method.
-func (m *MockResource) AssignedToPlayer(player ports.Player) {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockResource) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockResourceMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockResource)(nil).AssignedToPlayer), player)
-}
-
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockResource) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockResourceMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockResourceMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockResource)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockResource)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -375,20 +311,6 @@ func (m *MockResource) GetID() string {
 func (mr *MockResourceMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockResource)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockResource) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockResourceMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockResource)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -442,28 +364,16 @@ func (m *MockSpecialPower) EXPECT() *MockSpecialPowerMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockSpecialPower) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockSpecialPower) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockSpecialPowerMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockSpecialPowerMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockSpecialPower)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockSpecialPower) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockSpecialPowerMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockSpecialPower)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockSpecialPower)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // AttackedBy mocks base method.
@@ -506,18 +416,18 @@ func (mr *MockSpecialPowerMockRecorder) Destroyed() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Destroyed", reflect.TypeOf((*MockSpecialPower)(nil).Destroyed))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockSpecialPower) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockSpecialPower) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockSpecialPowerMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockSpecialPowerMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockSpecialPower)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockSpecialPower)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -532,20 +442,6 @@ func (m *MockSpecialPower) GetID() string {
 func (mr *MockSpecialPowerMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockSpecialPower)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockSpecialPower) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockSpecialPowerMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockSpecialPower)(nil).GetMessageObserver))
 }
 
 // Health mocks base method.
@@ -641,28 +537,16 @@ func (m *MockSpy) EXPECT() *MockSpyMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockSpy) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockSpy) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockSpyMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockSpyMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockSpy)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockSpy) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockSpyMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockSpy)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockSpy)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // CanSpy mocks base method.
@@ -677,18 +561,18 @@ func (mr *MockSpyMockRecorder) CanSpy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSpy", reflect.TypeOf((*MockSpy)(nil).CanSpy))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockSpy) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockSpy) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockSpyMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockSpyMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockSpy)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockSpy)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -703,20 +587,6 @@ func (m *MockSpy) GetID() string {
 func (mr *MockSpyMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockSpy)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockSpy) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockSpyMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockSpy)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -756,28 +626,16 @@ func (m *MockThief) EXPECT() *MockThiefMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockThief) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockThief) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockThiefMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockThiefMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockThief)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockThief) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockThiefMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockThief)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockThief)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // CanSteal mocks base method.
@@ -792,18 +650,18 @@ func (mr *MockThiefMockRecorder) CanSteal() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSteal", reflect.TypeOf((*MockThief)(nil).CanSteal))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockThief) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockThief) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockThiefMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockThiefMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockThief)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockThief)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -818,20 +676,6 @@ func (m *MockThief) GetID() string {
 func (mr *MockThiefMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockThief)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockThief) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockThiefMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockThief)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -871,16 +715,16 @@ func (m *MockWarrior) EXPECT() *MockWarriorMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockWarrior) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockWarrior) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockWarriorMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockWarriorMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockWarrior)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockWarrior)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // AddWarriorDeadObserver mocks base method.
@@ -893,18 +737,6 @@ func (m *MockWarrior) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 func (mr *MockWarriorMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockWarrior)(nil).AddWarriorDeadObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockWarrior) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockWarriorMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockWarrior)(nil).AssignedToPlayer), player)
 }
 
 // Attack mocks base method.
@@ -935,18 +767,18 @@ func (mr *MockWarriorMockRecorder) AttackedBy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockWarrior)(nil).AttackedBy))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockWarrior) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockWarrior) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockWarriorMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockWarriorMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockWarrior)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockWarrior)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -961,20 +793,6 @@ func (m *MockWarrior) GetID() string {
 func (mr *MockWarriorMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockWarrior)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockWarrior) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockWarriorMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockWarrior)(nil).GetMessageObserver))
 }
 
 // Heal mocks base method.
@@ -1123,28 +941,16 @@ func (m *MockWeapon) EXPECT() *MockWeaponMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockWeapon) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockWeapon) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockWeaponMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockWeaponMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockWeapon)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockWeapon) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockWeaponMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockWeapon)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockWeapon)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // DamageAmount mocks base method.
@@ -1161,18 +967,18 @@ func (mr *MockWeaponMockRecorder) DamageAmount() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DamageAmount", reflect.TypeOf((*MockWeapon)(nil).DamageAmount))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockWeapon) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockWeapon) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockWeaponMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockWeaponMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockWeapon)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockWeapon)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -1187,20 +993,6 @@ func (m *MockWeapon) GetID() string {
 func (mr *MockWeaponMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockWeapon)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockWeapon) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockWeaponMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockWeapon)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -1254,16 +1046,16 @@ func (m *MockDragon) EXPECT() *MockDragonMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockDragon) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockDragon) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockDragonMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockDragonMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockDragon)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockDragon)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // AddWarriorDeadObserver mocks base method.
@@ -1276,18 +1068,6 @@ func (m *MockDragon) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 func (mr *MockDragonMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockDragon)(nil).AddWarriorDeadObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockDragon) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockDragonMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockDragon)(nil).AssignedToPlayer), player)
 }
 
 // Attack mocks base method.
@@ -1318,18 +1098,18 @@ func (mr *MockDragonMockRecorder) AttackedBy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockDragon)(nil).AttackedBy))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockDragon) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockDragon) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockDragonMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockDragonMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockDragon)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockDragon)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -1344,20 +1124,6 @@ func (m *MockDragon) GetID() string {
 func (mr *MockDragonMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockDragon)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockDragon) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockDragonMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockDragon)(nil).GetMessageObserver))
 }
 
 // Heal mocks base method.
@@ -1506,16 +1272,16 @@ func (m *MockKnight) EXPECT() *MockKnightMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockKnight) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockKnight) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockKnightMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockKnightMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockKnight)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockKnight)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // AddWarriorDeadObserver mocks base method.
@@ -1528,18 +1294,6 @@ func (m *MockKnight) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 func (mr *MockKnightMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockKnight)(nil).AddWarriorDeadObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockKnight) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockKnightMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockKnight)(nil).AssignedToPlayer), player)
 }
 
 // Attack mocks base method.
@@ -1570,18 +1324,18 @@ func (mr *MockKnightMockRecorder) AttackedBy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockKnight)(nil).AttackedBy))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockKnight) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockKnight) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockKnightMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockKnightMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockKnight)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockKnight)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -1596,20 +1350,6 @@ func (m *MockKnight) GetID() string {
 func (mr *MockKnightMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockKnight)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockKnight) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockKnightMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockKnight)(nil).GetMessageObserver))
 }
 
 // Heal mocks base method.
@@ -1758,16 +1498,16 @@ func (m *MockArcher) EXPECT() *MockArcherMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockArcher) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockArcher) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockArcherMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockArcherMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockArcher)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockArcher)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // AddWarriorDeadObserver mocks base method.
@@ -1780,18 +1520,6 @@ func (m *MockArcher) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 func (mr *MockArcherMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockArcher)(nil).AddWarriorDeadObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockArcher) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockArcherMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockArcher)(nil).AssignedToPlayer), player)
 }
 
 // Attack mocks base method.
@@ -1822,18 +1550,18 @@ func (mr *MockArcherMockRecorder) AttackedBy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockArcher)(nil).AttackedBy))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockArcher) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockArcher) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockArcherMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockArcherMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockArcher)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockArcher)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -1848,20 +1576,6 @@ func (m *MockArcher) GetID() string {
 func (mr *MockArcherMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockArcher)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockArcher) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockArcherMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockArcher)(nil).GetMessageObserver))
 }
 
 // Heal mocks base method.
@@ -2010,16 +1724,16 @@ func (m *MockMage) EXPECT() *MockMageMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockMage) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockMage) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockMageMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockMageMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockMage)(nil).AddMessageObserver), o)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockMage)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // AddWarriorDeadObserver mocks base method.
@@ -2032,18 +1746,6 @@ func (m *MockMage) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 func (mr *MockMageMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockMage)(nil).AddWarriorDeadObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockMage) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockMageMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockMage)(nil).AssignedToPlayer), player)
 }
 
 // Attack mocks base method.
@@ -2074,18 +1776,18 @@ func (mr *MockMageMockRecorder) AttackedBy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockMage)(nil).AttackedBy))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockMage) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockMage) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockMageMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockMageMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockMage)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockMage)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -2100,20 +1802,6 @@ func (m *MockMage) GetID() string {
 func (mr *MockMageMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockMage)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockMage) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockMageMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockMage)(nil).GetMessageObserver))
 }
 
 // Heal mocks base method.
@@ -2262,28 +1950,16 @@ func (m *MockSword) EXPECT() *MockSwordMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockSword) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockSword) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockSwordMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockSwordMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockSword)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockSword) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockSwordMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockSword)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockSword)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // DamageAmount mocks base method.
@@ -2300,18 +1976,18 @@ func (mr *MockSwordMockRecorder) DamageAmount() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DamageAmount", reflect.TypeOf((*MockSword)(nil).DamageAmount))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockSword) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockSword) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockSwordMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockSwordMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockSword)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockSword)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -2326,20 +2002,6 @@ func (m *MockSword) GetID() string {
 func (mr *MockSwordMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockSword)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockSword) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockSwordMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockSword)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -2393,28 +2055,16 @@ func (m *MockArrow) EXPECT() *MockArrowMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockArrow) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockArrow) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockArrowMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockArrowMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockArrow)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockArrow) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockArrowMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockArrow)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockArrow)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // DamageAmount mocks base method.
@@ -2431,18 +2081,18 @@ func (mr *MockArrowMockRecorder) DamageAmount() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DamageAmount", reflect.TypeOf((*MockArrow)(nil).DamageAmount))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockArrow) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockArrow) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockArrowMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockArrowMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockArrow)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockArrow)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -2457,20 +2107,6 @@ func (m *MockArrow) GetID() string {
 func (mr *MockArrowMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockArrow)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockArrow) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockArrowMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockArrow)(nil).GetMessageObserver))
 }
 
 // String mocks base method.
@@ -2524,28 +2160,16 @@ func (m *MockPoison) EXPECT() *MockPoisonMockRecorder {
 	return m.recorder
 }
 
-// AddMessageObserver mocks base method.
-func (m *MockPoison) AddMessageObserver(o ports.MessageObserver) {
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockPoison) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AddMessageObserver", o)
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
 }
 
-// AddMessageObserver indicates an expected call of AddMessageObserver.
-func (mr *MockPoisonMockRecorder) AddMessageObserver(o any) *gomock.Call {
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockPoisonMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddMessageObserver", reflect.TypeOf((*MockPoison)(nil).AddMessageObserver), o)
-}
-
-// AssignedToPlayer mocks base method.
-func (m *MockPoison) AssignedToPlayer(player ports.Player) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "AssignedToPlayer", player)
-}
-
-// AssignedToPlayer indicates an expected call of AssignedToPlayer.
-func (mr *MockPoisonMockRecorder) AssignedToPlayer(player any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockPoison)(nil).AssignedToPlayer), player)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockPoison)(nil).AddCardMovedToPileObserver), observer)
 }
 
 // DamageAmount mocks base method.
@@ -2562,18 +2186,18 @@ func (mr *MockPoisonMockRecorder) DamageAmount() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DamageAmount", reflect.TypeOf((*MockPoison)(nil).DamageAmount))
 }
 
-// GetCardToBeDiscardedObserver mocks base method.
-func (m *MockPoison) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockPoison) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCardToBeDiscardedObserver")
-	ret0, _ := ret[0].(ports.CardToBeDiscardedObserver)
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(ports.CardMovedToPileObserver)
 	return ret0
 }
 
-// GetCardToBeDiscardedObserver indicates an expected call of GetCardToBeDiscardedObserver.
-func (mr *MockPoisonMockRecorder) GetCardToBeDiscardedObserver() *gomock.Call {
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockPoisonMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardToBeDiscardedObserver", reflect.TypeOf((*MockPoison)(nil).GetCardToBeDiscardedObserver))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockPoison)(nil).GetCardMovedToPileObserver))
 }
 
 // GetID mocks base method.
@@ -2588,20 +2212,6 @@ func (m *MockPoison) GetID() string {
 func (mr *MockPoisonMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockPoison)(nil).GetID))
-}
-
-// GetMessageObserver mocks base method.
-func (m *MockPoison) GetMessageObserver() ports.MessageObserver {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMessageObserver")
-	ret0, _ := ret[0].(ports.MessageObserver)
-	return ret0
-}
-
-// GetMessageObserver indicates an expected call of GetMessageObserver.
-func (mr *MockPoisonMockRecorder) GetMessageObserver() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMessageObserver", reflect.TypeOf((*MockPoison)(nil).GetMessageObserver))
 }
 
 // String mocks base method.

@@ -51,10 +51,10 @@ func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
 }
 func (s *specialPower) Destroyed() {
 	for _, a := range s.attackedBy {
-		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
+		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
 	s.attackedBy = []ports.Weapon{}
-	s.cardToBeDiscardedObserver.OnCardToBeDiscarded(s)
+	s.cardMovedToPileObserver.OnCardMovedToPile(s)
 }
 func (s *specialPower) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool) {
 	s.health -= w.DamageAmount()

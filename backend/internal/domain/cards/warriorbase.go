@@ -65,7 +65,7 @@ func (w *warriorBase) Heal(sp ports.SpecialPower) {
 	w.health = WarriorMaxHealth
 	w.attackedBy = append(w.attackedBy, sp)
 	for _, a := range w.attackedBy {
-		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
+		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
 	w.attackedBy = []ports.Weapon{}
 }
@@ -89,6 +89,10 @@ func (w *warriorBase) String() string {
 			sb.WriteString(fmt.Sprintf("\n     * %s", card.String()))
 		}
 	}
+	isProtected, card := w.IsProtected()
+	if isProtected {
+		sb.WriteString(fmt.Sprintf("\n     ~ Protected by: %s", card.String()))
+	}
 	return sb.String()
 }
 func (w *warriorBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
@@ -102,7 +106,7 @@ func (w *warriorBase) IsDamaged() bool {
 }
 func (w *warriorBase) dead() {
 	for _, a := range w.attackedBy {
-		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
+		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
 	w.attackedBy = []ports.Weapon{}
 	w.WarriorDeadObserver.OnWarriorDead(w)

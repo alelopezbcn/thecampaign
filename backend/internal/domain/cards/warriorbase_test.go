@@ -55,9 +55,9 @@ func TestReceiveDamage_KillsWarrior(t *testing.T) {
 
 	weapon := mocks.NewMockWeapon(ctrl)
 	weapon.EXPECT().DamageAmount().Return(10)
-	cardDiscarded := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	cardDiscarded.EXPECT().OnCardToBeDiscarded(weapon)
-	weapon.EXPECT().GetCardToBeDiscardedObserver().
+	cardDiscarded := mocks.NewMockCardMovedToPileObserver(ctrl)
+	cardDiscarded.EXPECT().OnCardMovedToPile(weapon)
+	weapon.EXPECT().GetCardMovedToPileObserver().
 		Return(cardDiscarded)
 	obs := mocks.NewMockWarriorDeadObserver(ctrl)
 
@@ -124,13 +124,13 @@ func TestWarriorBase_Heal_RestoresHealthAndDiscardsWeapons(t *testing.T) {
 
 	weapon1 := mocks.NewMockWeapon(ctrl)
 	weapon2 := mocks.NewMockWeapon(ctrl)
-	discardObs1 := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	discardObs2 := mocks.NewMockCardToBeDiscardedObserver(ctrl)
+	discardObs1 := mocks.NewMockCardMovedToPileObserver(ctrl)
+	discardObs2 := mocks.NewMockCardMovedToPileObserver(ctrl)
 
-	weapon1.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs1)
-	weapon2.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs2)
-	discardObs1.EXPECT().OnCardToBeDiscarded(weapon1)
-	discardObs2.EXPECT().OnCardToBeDiscarded(weapon2)
+	weapon1.EXPECT().GetCardMovedToPileObserver().Return(discardObs1)
+	weapon2.EXPECT().GetCardMovedToPileObserver().Return(discardObs2)
+	discardObs1.EXPECT().OnCardMovedToPile(weapon1)
+	discardObs2.EXPECT().OnCardMovedToPile(weapon2)
 
 	w := &warriorBase{
 		attackableBase: &attackableBase{
@@ -139,9 +139,9 @@ func TestWarriorBase_Heal_RestoresHealthAndDiscardsWeapons(t *testing.T) {
 		},
 	}
 	sp := mocks.NewMockSpecialPower(ctrl)
-	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	sp.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	discardObs.EXPECT().OnCardToBeDiscarded(sp)
+	discardObs := mocks.NewMockCardMovedToPileObserver(ctrl)
+	sp.EXPECT().GetCardMovedToPileObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	w.Heal(sp)
 	assert.Equal(t, WarriorMaxHealth, w.health)
@@ -159,9 +159,9 @@ func TestWarriorBase_Heal_NoWeapons(t *testing.T) {
 		},
 	}
 	sp := mocks.NewMockSpecialPower(ctrl)
-	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	sp.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	discardObs.EXPECT().OnCardToBeDiscarded(sp)
+	discardObs := mocks.NewMockCardMovedToPileObserver(ctrl)
+	sp.EXPECT().GetCardMovedToPileObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	w.Heal(sp)
 	assert.Equal(t, WarriorMaxHealth, w.health)
@@ -187,9 +187,9 @@ func TestWarriorBase_InstantKill_WithoutProtection(t *testing.T) {
 
 	sp := mocks.NewMockSpecialPower(ctrl)
 
-	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	sp.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	discardObs.EXPECT().OnCardToBeDiscarded(sp)
+	discardObs := mocks.NewMockCardMovedToPileObserver(ctrl)
+	sp.EXPECT().GetCardMovedToPileObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	obs := mocks.NewMockWarriorDeadObserver(ctrl)
 	w := &warriorBase{

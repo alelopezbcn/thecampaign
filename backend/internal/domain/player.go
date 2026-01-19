@@ -49,7 +49,7 @@ func (p *player) TakeCards(cards ...ports.Card) bool {
 	}
 
 	for _, c := range cards {
-		c.AssignedToPlayer(p)
+		c.AddCardMovedToPileObserver(p)
 		if w, ok := c.(ports.Warrior); ok {
 			w.AddWarriorDeadObserver(p)
 		}
@@ -237,16 +237,7 @@ func (p *player) Construct(cardID string) error {
 	return nil
 }
 
-func (p *player) OnCardToBeDiscarded(card ports.Card) {
-	w, ok := card.(ports.Warrior)
-	if ok && p.field.RemoveWarrior(w) {
-		return
-	}
-
-	if !p.hand.RemoveCard(card) {
-		panic("card not found")
-	}
-
+func (p *player) OnCardMovedToPile(card ports.Card) {
 	p.cardMovedToPileObserver.OnCardMovedToPile(card)
 }
 

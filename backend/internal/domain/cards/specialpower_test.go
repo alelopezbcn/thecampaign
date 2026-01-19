@@ -114,23 +114,23 @@ func TestSpecialPower_Destroyed(t *testing.T) {
 
 	weapon1 := mocks.NewMockWeapon(ctrl)
 	weapon2 := mocks.NewMockWeapon(ctrl)
-	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
+	discardObs := mocks.NewMockCardMovedToPileObserver(ctrl)
 
-	weapon1.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	weapon2.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	discardObs.EXPECT().OnCardToBeDiscarded(weapon1)
-	discardObs.EXPECT().OnCardToBeDiscarded(weapon2)
+	weapon1.EXPECT().GetCardMovedToPileObserver().Return(discardObs)
+	weapon2.EXPECT().GetCardMovedToPileObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardMovedToPile(weapon1)
+	discardObs.EXPECT().OnCardMovedToPile(weapon2)
 
 	sp := &specialPower{
 		cardBase: &cardBase{
-			cardToBeDiscardedObserver: discardObs,
+			cardMovedToPileObserver: discardObs,
 		},
 		attackableBase: &attackableBase{
 			attackedBy: []ports.Weapon{weapon1, weapon2},
 		},
 	}
 
-	discardObs.EXPECT().OnCardToBeDiscarded(sp)
+	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	sp.Destroyed()
 	assert.Empty(t, sp.attackedBy)
@@ -163,13 +163,13 @@ func TestSpecialPower_ReceiveDamage_Defeated(t *testing.T) {
 	weapon := mocks.NewMockWeapon(ctrl)
 	weapon.EXPECT().DamageAmount().Return(15)
 
-	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
-	weapon.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
-	discardObs.EXPECT().OnCardToBeDiscarded(weapon)
+	discardObs := mocks.NewMockCardMovedToPileObserver(ctrl)
+	weapon.EXPECT().GetCardMovedToPileObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardMovedToPile(weapon)
 
 	sp := &specialPower{
 		cardBase: &cardBase{
-			cardToBeDiscardedObserver: discardObs,
+			cardMovedToPileObserver: discardObs,
 		},
 		attackableBase: &attackableBase{
 			attackedBy: []ports.Weapon{},
@@ -177,7 +177,7 @@ func TestSpecialPower_ReceiveDamage_Defeated(t *testing.T) {
 		},
 	}
 
-	discardObs.EXPECT().OnCardToBeDiscarded(sp)
+	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	defeated := sp.ReceiveDamage(weapon, 1)
 	assert.True(t, defeated)

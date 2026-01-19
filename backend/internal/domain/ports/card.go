@@ -2,11 +2,9 @@ package ports
 
 type Card interface {
 	GetID() string
-	AssignedToPlayer(player Player)
 	String() string
-	GetCardToBeDiscardedObserver() CardToBeDiscardedObserver
-	AddMessageObserver(o MessageObserver)
-	GetMessageObserver() MessageObserver
+	AddCardMovedToPileObserver(observer CardMovedToPileObserver)
+	GetCardMovedToPileObserver() CardMovedToPileObserver
 }
 
 type Attackable interface {

@@ -13,11 +13,10 @@ const (
 )
 
 type cardBase struct {
-	id                        string
-	name                      string
-	player                    ports.Player
-	cardToBeDiscardedObserver ports.CardToBeDiscardedObserver
-	messageObserver           ports.MessageObserver
+	id                      string
+	name                    string
+	player                  ports.Player
+	cardMovedToPileObserver ports.CardMovedToPileObserver
 }
 
 func newCardBase(id string, name string) *cardBase {
@@ -30,16 +29,9 @@ func newCardBase(id string, name string) *cardBase {
 func (c *cardBase) GetID() string {
 	return c.id
 }
-func (c *cardBase) AssignedToPlayer(player ports.Player) {
-	c.player = player
-	c.cardToBeDiscardedObserver = player.(ports.CardToBeDiscardedObserver)
+func (c *cardBase) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
+	c.cardMovedToPileObserver = observer
 }
-func (c *cardBase) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
-	return c.cardToBeDiscardedObserver
-}
-func (c *cardBase) AddMessageObserver(o ports.MessageObserver) {
-	c.messageObserver = o
-}
-func (c *cardBase) GetMessageObserver() ports.MessageObserver {
-	return c.messageObserver
+func (c *cardBase) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
+	return c.cardMovedToPileObserver
 }

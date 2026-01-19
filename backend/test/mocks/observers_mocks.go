@@ -16,41 +16,6 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockCardToBeDiscardedObserver is a mock of CardToBeDiscardedObserver interface.
-type MockCardToBeDiscardedObserver struct {
-	ctrl     *gomock.Controller
-	recorder *MockCardToBeDiscardedObserverMockRecorder
-}
-
-// MockCardToBeDiscardedObserverMockRecorder is the mock recorder for MockCardToBeDiscardedObserver.
-type MockCardToBeDiscardedObserverMockRecorder struct {
-	mock *MockCardToBeDiscardedObserver
-}
-
-// NewMockCardToBeDiscardedObserver creates a new mock instance.
-func NewMockCardToBeDiscardedObserver(ctrl *gomock.Controller) *MockCardToBeDiscardedObserver {
-	mock := &MockCardToBeDiscardedObserver{ctrl: ctrl}
-	mock.recorder = &MockCardToBeDiscardedObserverMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockCardToBeDiscardedObserver) EXPECT() *MockCardToBeDiscardedObserverMockRecorder {
-	return m.recorder
-}
-
-// OnCardToBeDiscarded mocks base method.
-func (m *MockCardToBeDiscardedObserver) OnCardToBeDiscarded(card ports.Card) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnCardToBeDiscarded", card)
-}
-
-// OnCardToBeDiscarded indicates an expected call of OnCardToBeDiscarded.
-func (mr *MockCardToBeDiscardedObserverMockRecorder) OnCardToBeDiscarded(card any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnCardToBeDiscarded", reflect.TypeOf((*MockCardToBeDiscardedObserver)(nil).OnCardToBeDiscarded), card)
-}
-
 // MockCardMovedToPileObserver is a mock of CardMovedToPileObserver interface.
 type MockCardMovedToPileObserver struct {
 	ctrl     *gomock.Controller
@@ -224,39 +189,4 @@ func (m *MockFieldWithoutWarriorsObserver) OnFieldWithoutWarriors(p ports.Player
 func (mr *MockFieldWithoutWarriorsObserverMockRecorder) OnFieldWithoutWarriors(p any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnFieldWithoutWarriors", reflect.TypeOf((*MockFieldWithoutWarriorsObserver)(nil).OnFieldWithoutWarriors), p)
-}
-
-// MockMessageObserver is a mock of MessageObserver interface.
-type MockMessageObserver struct {
-	ctrl     *gomock.Controller
-	recorder *MockMessageObserverMockRecorder
-}
-
-// MockMessageObserverMockRecorder is the mock recorder for MockMessageObserver.
-type MockMessageObserverMockRecorder struct {
-	mock *MockMessageObserver
-}
-
-// NewMockMessageObserver creates a new mock instance.
-func NewMockMessageObserver(ctrl *gomock.Controller) *MockMessageObserver {
-	mock := &MockMessageObserver{ctrl: ctrl}
-	mock.recorder = &MockMessageObserverMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockMessageObserver) EXPECT() *MockMessageObserverMockRecorder {
-	return m.recorder
-}
-
-// OnMessage mocks base method.
-func (m *MockMessageObserver) OnMessage(msg string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnMessage", msg)
-}
-
-// OnMessage indicates an expected call of OnMessage.
-func (mr *MockMessageObserverMockRecorder) OnMessage(msg any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnMessage", reflect.TypeOf((*MockMessageObserver)(nil).OnMessage), msg)
 }

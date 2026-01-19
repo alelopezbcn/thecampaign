@@ -1,9 +1,5 @@
 package ports
 
-type CardToBeDiscardedObserver interface {
-	OnCardToBeDiscarded(card Card)
-}
-
 type CardMovedToPileObserver interface {
 	OnCardMovedToPile(card Card)
 }
@@ -22,8 +18,4 @@ type CastleCompletionObserver interface {
 
 type FieldWithoutWarriorsObserver interface {
 	OnFieldWithoutWarriors(p Player)
-}
-
-type MessageObserver interface {
-	OnMessage(msg string)
 }
