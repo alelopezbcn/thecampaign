@@ -10,6 +10,7 @@ type weaponBase struct {
 func newWeaponBase(damageAmount int, weaponType ports.WeaponType) *weaponBase {
 	return &weaponBase{
 		damageAmount: damageAmount,
+		weaponType:   weaponType,
 	}
 }
 

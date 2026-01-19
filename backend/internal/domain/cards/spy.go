@@ -15,6 +15,9 @@ func NewSpy(id string) ports.Spy {
 		cardBase: newCardBase(id, "Spy"),
 	}
 }
+
+func (s *spy) CanSpy() {}
+
 func (s *spy) String() string {
 	return fmt.Sprintf("%s (%s)", s.name, s.id)
 }

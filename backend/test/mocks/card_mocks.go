@@ -665,6 +665,18 @@ func (mr *MockSpyMockRecorder) AssignedToPlayer(player any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockSpy)(nil).AssignedToPlayer), player)
 }
 
+// CanSpy mocks base method.
+func (m *MockSpy) CanSpy() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "CanSpy")
+}
+
+// CanSpy indicates an expected call of CanSpy.
+func (mr *MockSpyMockRecorder) CanSpy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSpy", reflect.TypeOf((*MockSpy)(nil).CanSpy))
+}
+
 // GetCardToBeDiscardedObserver mocks base method.
 func (m *MockSpy) GetCardToBeDiscardedObserver() ports.CardToBeDiscardedObserver {
 	m.ctrl.T.Helper()
@@ -766,6 +778,18 @@ func (m *MockThief) AssignedToPlayer(player ports.Player) {
 func (mr *MockThiefMockRecorder) AssignedToPlayer(player any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AssignedToPlayer", reflect.TypeOf((*MockThief)(nil).AssignedToPlayer), player)
+}
+
+// CanSteal mocks base method.
+func (m *MockThief) CanSteal() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "CanSteal")
+}
+
+// CanSteal indicates an expected call of CanSteal.
+func (mr *MockThiefMockRecorder) CanSteal() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanSteal", reflect.TypeOf((*MockThief)(nil).CanSteal))
 }
 
 // GetCardToBeDiscardedObserver mocks base method.

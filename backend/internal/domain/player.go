@@ -157,6 +157,8 @@ func (p *player) Attack(warriorCard ports.Card, targetCard ports.Card,
 		return fmt.Errorf("attack failed: %w", err)
 	}
 
+	p.hand.RemoveCard(weapon)
+
 	return nil
 }
 
@@ -181,12 +183,15 @@ func (p *player) UseSpecialPower(usedBy ports.Card, usedOn ports.Card,
 		return fmt.Errorf("special power failed: %w", err)
 	}
 
+	p.hand.RemoveCard(specialPowerCard)
+
 	return nil
 }
 
 func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Thief); ok {
+			p.hand.RemoveCard(t)
 			return t
 		}
 	}
@@ -196,6 +201,7 @@ func (p *player) Thief() ports.Thief {
 func (p *player) Spy() ports.Spy {
 	for _, c := range p.hand.ShowCards() {
 		if s, ok := c.(ports.Spy); ok {
+			p.hand.RemoveCard(s)
 			return s
 		}
 	}
@@ -205,6 +211,7 @@ func (p *player) Spy() ports.Spy {
 func (p *player) Catapult() ports.Catapult {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Catapult); ok {
+			p.hand.RemoveCard(t)
 			return t
 		}
 	}

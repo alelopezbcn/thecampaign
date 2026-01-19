@@ -269,6 +269,13 @@ func playTurn() error {
 			}
 			actionsPerformed[catapultAction] = true
 			actionsPending--
+		case specialPowerAction:
+			err := specialPower(status.CurrentPlayer)
+			if err != nil {
+				return err
+			}
+			actionsPerformed[specialPowerAction] = true
+			actionsPending--
 		case passAction:
 			actionsPending = 0
 		default:
@@ -291,12 +298,12 @@ func printTradeAction(actionsPerformed map[int]bool, status domain.GameStatus) {
 func printConstructAction(actionsPerformed map[int]bool, status domain.GameStatus) {
 	hasConstructed, ok := actionsPerformed[constructAction]
 	if !ok || !hasConstructed {
-		if !status.EnemyCastle.IsConstructed() && len(status.ConstructionIDs) > 0 {
+		if !status.CurrentPlayerCastle.IsConstructed() && len(status.ConstructionIDs) > 0 {
 			println(fmt.Sprintf("  %d. Construct (%s)", constructAction,
 				strings.Join(status.ConstructionIDs, ",")))
 			return
 		}
-		if status.EnemyCastle.IsConstructed() && len(status.ResourceIDs) > 0 {
+		if status.CurrentPlayerCastle.IsConstructed() && len(status.ResourceIDs) > 0 {
 			println(fmt.Sprintf("  %d. Add Resources to Castle (%s)", constructAction,
 				strings.Join(status.ResourceIDs, ",")))
 			return
@@ -337,15 +344,28 @@ func printAttackAction(actionsPerformed map[int]bool, status domain.GameStatus) 
 	hasUsedSpecialPower := actionsPerformed[specialPowerAction]
 
 	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && len(status.UsableWeaponIDs) > 0 {
-		println(fmt.Sprintf("  %d. Attack (%s)", attackAction,
+		println(fmt.Sprintf("  %d. Attack with Weapon (%s)", attackAction,
 			strings.Join(status.UsableWeaponIDs, ",")))
 	}
-	// if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && status.CanCatapult {
-	// 	println(fmt.Sprintf("  %d. Catapult", catapultAction))
-	// }
-	// if !ok || !hasUsedSpecialPower {
-	// 	println(fmt.Sprintf("  %d. Use Special Power", specialPowerAction))
-	// }
+	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && status.CatapultID != "" {
+		println(fmt.Sprintf("  %d. Attack with Catapult (%s)", catapultAction,
+			status.CatapultID))
+	}
+	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower &&
+		len(status.SpecialPowerStatus.CanProtectIDs) > 0 {
+		println(fmt.Sprintf("  %d. Protect with Special Power (%s)", specialPowerAction,
+			strings.Join(status.SpecialPowerStatus.CanProtectIDs, ",")))
+	}
+	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower &&
+		len(status.SpecialPowerStatus.CanHealIDs) > 0 {
+		println(fmt.Sprintf("  %d. Heal with Special Power (%s)", specialPowerAction,
+			strings.Join(status.SpecialPowerStatus.CanHealIDs, ",")))
+	}
+	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower &&
+		len(status.SpecialPowerStatus.CanInstantKillIDs) > 0 {
+		println(fmt.Sprintf("  %d. Instant Kill with Special Power (%s)", specialPowerAction,
+			strings.Join(status.SpecialPowerStatus.CanInstantKillIDs, ",")))
+	}
 }
 
 func steal(status domain.GameStatus) error {
@@ -490,6 +510,30 @@ func catapult(status domain.GameStatus) error {
 	return nil
 }
 
+func specialPower(playerName string) error {
+	ok := false
+	for !ok {
+		print("Select the user, the target and the weapon: ")
+		w, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading attack: %w", err)
+		}
+		cards := strings.Split(strings.TrimSpace(w), ",")
+		if len(cards) != 3 {
+			println("Invalid input. Please provide user, target and weapon.")
+			continue
+		}
+
+		err = g.SpecialPower(playerName, cards[0], cards[1], cards[2])
+		if err != nil {
+			println("Error performing attack:", err.Error())
+			continue
+		}
+		ok = true
+	}
+	return nil
+}
+
 func trade(player string) error {
 	ok := false
 	for !ok {
@@ -520,7 +564,7 @@ func attack(playerName string) error {
 		}
 		cards := strings.Split(strings.TrimSpace(w), ",")
 		if len(cards) != 3 {
-			println("Invalid input. Please provide attack, warrior and target.")
+			println("Invalid input. Please provide warrior, target and weapon.")
 			continue
 		}
 

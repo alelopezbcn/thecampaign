@@ -8,15 +8,20 @@ import (
 
 type gold struct {
 	*cardBase
-	*resourceBase
+	value int
 }
 
 func NewGold(id string, value int) ports.Resource {
 	return &gold{
-		cardBase:     newCardBase(id, "Gold Coin"),
-		resourceBase: newResourceBase(value),
+		cardBase: newCardBase(id, "Gold Coin"),
+		value:    value,
 	}
 }
+
+func (g *gold) Value() int {
+	return g.value
+}
+
 func (g *gold) String() string {
 	return fmt.Sprintf("%d %s (%s)", g.Value(), g.name, g.id)
 }

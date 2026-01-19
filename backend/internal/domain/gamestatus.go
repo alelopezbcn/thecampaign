@@ -14,8 +14,9 @@ type GameStatus struct {
 	SpyID              string
 	ThiefID            string
 	ResourceIDs        []string
-	SpecialPowerStatus *SpecialPowerStatus
+	SpecialPowerStatus SpecialPowerStatus
 	ConstructionIDs    []string
+	CatapultID         string
 
 	CurrentPlayerHand          []ports.Card
 	CurrentPlayerField         []ports.Warrior
@@ -33,8 +34,8 @@ type SpecialPowerStatus struct {
 	CanProtectIDs     []string
 }
 
-func newSpecialPowerStatus(ids []string, myField ports.Field, enemyField ports.Field) *SpecialPowerStatus {
-	sp := &SpecialPowerStatus{
+func newSpecialPowerStatus(ids []string, myField ports.Field, enemyField ports.Field) SpecialPowerStatus {
+	sp := SpecialPowerStatus{
 		SpecialPowerIDs: ids,
 	}
 
@@ -77,49 +78,48 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 	gs.ConstructionIDs = []string{}
 	var specialPowerIDs []string
 
-	for _, v := range currentPlayer.Hand().ShowCards() {
-		switch c := v.(type) {
+	for _, card := range currentPlayer.Hand().ShowCards() {
+		switch cardType := card.(type) {
 		case ports.Warrior:
-			gs.WarriorsInHandIDs = append(gs.WarriorsInHandIDs, c.GetID())
+			gs.WarriorsInHandIDs = append(gs.WarriorsInHandIDs, cardType.GetID())
 		case ports.Weapon:
-			w := c.(ports.Weapon)
-			if w.DamageAmount() == 1 {
-				gs.ConstructionIDs = append(gs.ConstructionIDs, w.GetID())
+			if cardType.DamageAmount() == 1 {
+				gs.ConstructionIDs = append(gs.ConstructionIDs, cardType.GetID())
 			}
 
-			switch w.Type() {
+			switch cardType.Type() {
 			case ports.ArrowType:
 				if currentPlayer.Field().HasArcher() ||
 					currentPlayer.Field().HasDragon() {
-					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, w.GetID())
+					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, cardType.GetID())
 				}
 			case ports.PoisonType:
 				if currentPlayer.Field().HasMage() ||
 					currentPlayer.Field().HasDragon() {
-					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, w.GetID())
+					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, cardType.GetID())
 				}
 			case ports.SwordType:
 				if currentPlayer.Field().HasKnight() ||
 					currentPlayer.Field().HasDragon() {
-					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, w.GetID())
+					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, cardType.GetID())
 				}
+			case ports.SpecialPowerType:
+				specialPowerIDs = append(specialPowerIDs, cardType.GetID())
 			}
 		case ports.Catapult:
 			if enemy.Castle().ResourceCards() > 0 {
-				gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, c.GetID())
+				gs.CatapultID = cardType.GetID()
 			}
 		case ports.Spy:
-			gs.SpyID = c.GetID()
+			gs.SpyID = cardType.GetID()
 		case ports.Thief:
-			gs.ThiefID = c.GetID()
+			gs.ThiefID = cardType.GetID()
 		case ports.Resource:
-			if c.Value() == 1 {
-				gs.ConstructionIDs = append(gs.ConstructionIDs, c.GetID())
+			if cardType.Value() == 1 {
+				gs.ConstructionIDs = append(gs.ConstructionIDs, cardType.GetID())
 			}
 
-			gs.ResourceIDs = append(gs.ResourceIDs, c.GetID())
-		case ports.SpecialPower:
-			specialPowerIDs = append(specialPowerIDs, c.GetID())
+			gs.ResourceIDs = append(gs.ResourceIDs, cardType.GetID())
 		}
 	}
 

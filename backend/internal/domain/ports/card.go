@@ -34,9 +34,11 @@ type SpecialPower interface {
 }
 type Spy interface {
 	Card
+	CanSpy()
 }
 type Thief interface {
 	Card
+	CanSteal()
 }
 
 type Warrior interface {

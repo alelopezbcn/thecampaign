@@ -30,6 +30,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, a.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), sword)
 	})
 	t.Run("Knight attacks Mage causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -52,6 +53,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), k.GetID(), m.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, m.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), sword)
 	})
 	t.Run("Knight attacks Knight causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -74,6 +76,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), k.GetID(), k2.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, k2.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), sword)
 	})
 	t.Run("Knight attacks Dragon causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -96,6 +99,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), k.GetID(), d.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, d.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), sword)
 	})
 	t.Run("Knight cant attack with wrong weapon", func(t *testing.T) {
 		dmgAmnt := 4
@@ -118,6 +122,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), poison.GetID())
 		assert.Error(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth, a.Health())
+		assert.Contains(t, p1.Hand().ShowCards(), poison)
 	})
 
 	t.Run("Archer attacks Mage causing double damage", func(t *testing.T) {
@@ -141,6 +146,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Archer attacks Knight causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -163,6 +169,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Archer attacks Archer causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -185,6 +192,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Archer attacks Dragon causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -207,6 +215,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Archer cant attack with wrong weapon", func(t *testing.T) {
 		dmgAmnt := 4
@@ -229,6 +238,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+		assert.Contains(t, p1.Hand().ShowCards(), weapon)
 	})
 
 	t.Run("Mage attacks Knight causing double damage", func(t *testing.T) {
@@ -252,6 +262,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Mage attacks Archer causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -274,6 +285,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Mage attacks Mage causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -296,6 +308,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Mage attacks Dragon causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -318,6 +331,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Mage cant attack with wrong weapon", func(t *testing.T) {
 		dmgAmnt := 4
@@ -340,9 +354,10 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+		assert.Contains(t, p1.Hand().ShowCards(), weapon)
 	})
 
-	t.Run("Player cant attack with non existent cards", func(t *testing.T) {
+	t.Run("Player cant attack with non existing cards", func(t *testing.T) {
 		k := cards.NewKnight("k1")
 		a := cards.NewArcher("a1")
 		sword := cards.NewSword("s1", 4)
@@ -390,6 +405,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Knight with Arrow causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -412,6 +428,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Knight with Poison causing double damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -434,6 +451,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Archer with Sword causing double damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -456,6 +474,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Archer with Arrow causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -478,6 +497,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Archer with Poison causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -500,6 +520,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Mage with Sword causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -522,6 +543,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Mage with Arrow causing double damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -544,6 +566,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Dragon attacks Mage with Poison causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -566,6 +589,7 @@ func TestAttacks(t *testing.T) {
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
 	})
 	t.Run("Warrior dead on second attack", func(t *testing.T) {
 		dmgAmnt := 5
@@ -590,18 +614,17 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), sword1.GetID())
 		assert.NoError(t, err)
+		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
+
 		err = g.Attack(p1.Name(), k.GetID(), a.GetID(), sword2.GetID())
 		assert.NoError(t, err)
+		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
 
 		assert.Equal(t, 0, a.Health())
 		_, ok := p2.GetCardFromField(a.GetID())
 		assert.False(t, ok, "Archer should have been removed from field after death")
 		_, ok = p2.GetCardFromField(a2.GetID())
 		assert.True(t, ok, "Second Archer should still be on the field")
-		_, ok = p1.GetCardFromHand(sword1.GetID())
-		assert.False(t, ok, "Sword should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(sword2.GetID())
-		assert.False(t, ok, "Sword should have been discarded after attack")
 		assert.True(t, foundInCemetery(g, a), "Cemetery should contain the dead archer")
 		assert.True(t, foundInDiscardPile(g, sword1), "Discard pile should contain the used sword")
 		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
@@ -916,6 +939,94 @@ func TestNewGame(t *testing.T) {
 	})
 }
 
+func TestGame_Spy(t *testing.T) {
+	t.Run("Spy reveals top cards of deck", func(t *testing.T) {
+		spy := cards.NewSpy("s1")
+
+		p1 := newPlayerWithCards("Player1",
+			[]ports.Card{spy},
+			[]ports.Warrior{},
+		)
+		p2 := newPlayerWithCards("Player2", nil, nil)
+		deckCards := []ports.Card{
+			cards.NewGold("g1", 5),
+			cards.NewSword("sw1", 4),
+			cards.NewArrow("a1", 3),
+			cards.NewArrow("a2", 5),
+			cards.NewDragon("d1"),
+		}
+		g := &Game{
+			Players: []ports.Player{p1, p2},
+			deck:    NewDeck(deckCards),
+		}
+
+		revealedCards, err := g.Spy(p1.Name(), 1)
+		assert.NoError(t, err)
+		assert.Len(t, revealedCards, 5, "Spy should reveal five cards from the top of the deck")
+		assert.Contains(t, revealedCards, deckCards[0], "Revealed cards should contain the first top card of the deck")
+		assert.Contains(t, revealedCards, deckCards[1], "Revealed cards should contain the second top card of the deck")
+		assert.Contains(t, revealedCards, deckCards[2], "Revealed cards should contain the third top card of the deck")
+		assert.Contains(t, revealedCards, deckCards[3], "Revealed cards should contain the fourth top card of the deck")
+		assert.Contains(t, revealedCards, deckCards[4], "Revealed cards should contain the fifth top card of the deck")
+		_, hasSpy := p1.Hand().GetCard(spy.GetID())
+		assert.False(t, hasSpy)
+	})
+	t.Run("Spy reveals opponent's hand", func(t *testing.T) {
+		spy := cards.NewSpy("s1")
+		enemyCard1 := cards.NewGold("g1", 5)
+		enemyCard2 := cards.NewSword("sw1", 4)
+
+		p1 := newPlayerWithCards("Player1",
+			[]ports.Card{spy},
+			[]ports.Warrior{},
+		)
+		p2 := newPlayerWithCards("Player2",
+			[]ports.Card{enemyCard1, enemyCard2},
+			[]ports.Warrior{},
+		)
+		g := &Game{
+			Players: []ports.Player{p1, p2},
+		}
+
+		revealedCards, err := g.Spy(p1.Name(), 2)
+		assert.NoError(t, err)
+		assert.Len(t, revealedCards, 2, "Spy should reveal two cards from opponent's hand")
+		assert.Contains(t, revealedCards, enemyCard1, "Revealed cards should contain the first enemy card")
+		assert.Contains(t, revealedCards, enemyCard2, "Revealed cards should contain the second enemy card")
+		_, hasSpy := p1.Hand().GetCard(spy.GetID())
+		assert.False(t, hasSpy)
+	})
+}
+
+func TestGame_Steal(t *testing.T) {
+	t.Run("Steal a card from opponent's hand", func(t *testing.T) {
+		stealCard := cards.NewThief("t1")
+		enemyCard1 := cards.NewGold("g1", 5)
+		enemyCard2 := cards.NewSword("sw1", 4)
+		enemyCard3 := cards.NewSword("sw2", 7)
+
+		p1 := newPlayerWithCards("Player1",
+			[]ports.Card{stealCard},
+			[]ports.Warrior{},
+		)
+		p2 := newPlayerWithCards("Player2",
+			[]ports.Card{enemyCard1, enemyCard2, enemyCard3},
+			[]ports.Warrior{},
+		)
+		g := &Game{
+			Players: []ports.Player{p1, p2},
+		}
+
+		err := g.Steal(p1.Name(), 2)
+		assert.NoError(t, err)
+
+		_, hasSteal := p1.Hand().GetCard(stealCard.GetID())
+		assert.False(t, hasSteal, "Steal card should be discarded after use")
+		assert.Len(t, p1.Hand().ShowCards(), 1, "Player should have one more card in hand after stealing")
+		assert.Len(t, p2.Hand().ShowCards(), 2, "Enemy should have one less card in hand after being stolen from")
+	})
+}
+
 func findInAttackedBy(cards []ports.Weapon, id string) bool {
 	for _, c := range cards {
 		if c != nil && c.GetID() == id {
@@ -978,6 +1089,7 @@ func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
 		field: &field{
 			cards: cardsInField,
 		},
+		castle: &castle{},
 	}
 
 	for _, card := range cardsInField {

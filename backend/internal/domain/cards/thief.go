@@ -15,6 +15,9 @@ func NewThief(id string) ports.Thief {
 		cardBase: newCardBase(id, "Thief"),
 	}
 }
+
+func (t *thief) CanSteal() {}
+
 func (t *thief) String() string {
 	return fmt.Sprintf("%s (%s)", t.name, t.id)
 }
