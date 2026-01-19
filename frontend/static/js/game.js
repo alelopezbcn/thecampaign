@@ -1,0 +1,625 @@
+// Game state
+let ws = null;
+let gameState = {
+    playerName: '',
+    gameID: '',
+    isYourTurn: false,
+    currentState: null,
+    selectedCards: [],
+    currentAction: null
+};
+
+// DOM Elements
+const screens = {
+    join: document.getElementById('join-screen'),
+    waiting: document.getElementById('waiting-screen'),
+    setup: document.getElementById('setup-screen'),
+    game: document.getElementById('game-screen'),
+    gameover: document.getElementById('gameover-screen')
+};
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    setupEventListeners();
+});
+
+function setupEventListeners() {
+    // Join screen
+    document.getElementById('join-btn').addEventListener('click', joinGame);
+    document.getElementById('player-name').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinGame();
+    });
+    document.getElementById('game-id').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinGame();
+    });
+
+    // Setup screen
+    document.getElementById('confirm-warriors-btn').addEventListener('click', confirmInitialWarriors);
+
+    // Game screen actions
+    document.getElementById('draw-card-btn').addEventListener('click', () => sendAction('draw_card'));
+    document.getElementById('attack-btn').addEventListener('click', () => startAction('attack'));
+    document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
+    document.getElementById('special-power-btn').addEventListener('click', () => startAction('special_power'));
+    document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
+    document.getElementById('buy-btn').addEventListener('click', () => startAction('buy'));
+    document.getElementById('construct-btn').addEventListener('click', () => startAction('construct'));
+    document.getElementById('spy-btn').addEventListener('click', () => startAction('spy'));
+    document.getElementById('steal-btn').addEventListener('click', () => startAction('steal'));
+    document.getElementById('catapult-btn').addEventListener('click', () => startAction('catapult'));
+    document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
+
+    // Game over
+    document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
+}
+
+// WebSocket functions
+function connectWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+        console.log('WebSocket connected');
+        showStatus('connection-status', 'Connected to server', 'success');
+    };
+
+    ws.onmessage = (event) => {
+        const message = JSON.parse(event.data);
+        console.log('Received message:', message);
+        handleMessage(message);
+    };
+
+    ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+        showStatus('connection-status', 'Connection error', 'error');
+    };
+
+    ws.onclose = () => {
+        console.log('WebSocket closed');
+        showStatus('connection-status', 'Disconnected from server', 'error');
+    };
+}
+
+function sendMessage(type, payload = null) {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = { type, payload };
+        console.log('Sending message:', message);
+        ws.send(JSON.stringify(message));
+    } else {
+        console.error('WebSocket not connected');
+    }
+}
+
+// Message handlers
+function handleMessage(message) {
+    switch (message.type) {
+        case 'error':
+            handleError(message.payload);
+            break;
+        case 'player_joined':
+            handlePlayerJoined(message.payload);
+            break;
+        case 'waiting_for_player':
+            showWaitingScreen();
+            break;
+        case 'game_started':
+            handleGameStarted(message.payload);
+            break;
+        case 'game_state':
+            handleGameState(message.payload);
+            break;
+        case 'game_ended':
+            handleGameEnded();
+            break;
+        case 'spy_result':
+            handleSpyResult(message.payload);
+            break;
+        default:
+            console.log('Unknown message type:', message.type);
+    }
+}
+
+function handleError(payload) {
+    console.error('Server error:', payload.message);
+    showStatus('connection-status', payload.message, 'error');
+    showStatus('setup-status', payload.message, 'error');
+}
+
+function handlePlayerJoined(payload) {
+    console.log('Player joined:', payload.player_name);
+}
+
+function handleGameStarted(payload) {
+    console.log('Game started:', payload);
+    gameState.playerName = payload.your_name;
+    gameState.gameID = payload.game_id;
+
+    document.getElementById('current-game-id').textContent = payload.game_id;
+    document.getElementById('player-name-display').textContent = payload.your_name;
+    document.getElementById('game-id-display').textContent = `Game: ${payload.game_id}`;
+}
+
+function handleGameState(payload) {
+    console.log('Game state updated:', payload);
+    gameState.isYourTurn = payload.is_your_turn;
+    gameState.currentState = payload.game_status;
+    gameState.newlyDrawnCard = payload.newly_drawn_card || null;
+
+    // Determine which screen to show
+    if (payload.game_status.current_player && !isSetupComplete(payload.game_status)) {
+        showSetupScreen(payload.game_status);
+    } else {
+        showGameScreen(payload.game_status);
+    }
+
+    updateTurnIndicator();
+}
+
+function handleGameEnded() {
+    showScreen('gameover');
+    const winner = gameState.currentState ? gameState.currentState.current_player : 'Unknown';
+    document.getElementById('gameover-title').textContent =
+        winner === gameState.playerName ? 'Victory!' : 'Defeat';
+    document.getElementById('gameover-message').textContent =
+        `${winner} wins the game!`;
+}
+
+function handleSpyResult(payload) {
+    alert('Spied cards: ' + JSON.stringify(payload.cards, null, 2));
+}
+
+// Screen management
+function showScreen(screenName) {
+    Object.values(screens).forEach(screen => screen.classList.add('hidden'));
+    screens[screenName].classList.remove('hidden');
+}
+
+function showWaitingScreen() {
+    document.getElementById('current-game-id').textContent = gameState.gameID;
+    showScreen('waiting');
+}
+
+function showSetupScreen(status) {
+    showScreen('setup');
+    renderSetupHand(status);
+    updateSetupTurnIndicator();
+}
+
+function showGameScreen(status) {
+    showScreen('game');
+    renderGameBoard(status);
+    updateActionButtons();
+}
+
+// Game actions
+function joinGame() {
+    const playerName = document.getElementById('player-name').value.trim();
+    const gameID = document.getElementById('game-id').value.trim();
+
+    if (!playerName || !gameID) {
+        showStatus('connection-status', 'Please enter both name and game ID', 'error');
+        return;
+    }
+
+    gameState.playerName = playerName;
+    gameState.gameID = gameID;
+
+    connectWebSocket();
+
+    // Send join message after connection
+    setTimeout(() => {
+        sendMessage('join_game', {
+            player_name: playerName,
+            game_id: gameID
+        });
+    }, 500);
+}
+
+function confirmInitialWarriors() {
+    const selectedWarriors = gameState.selectedCards;
+
+    if (selectedWarriors.length < 1 || selectedWarriors.length > 3) {
+        showStatus('setup-status', 'Select 1-3 warriors', 'error');
+        return;
+    }
+
+    sendMessage('set_initial_warriors', {
+        warrior_ids: selectedWarriors
+    });
+
+    gameState.selectedCards = [];
+}
+
+function sendAction(actionType, payload = null) {
+    sendMessage(actionType, payload);
+    gameState.selectedCards = [];
+    gameState.currentAction = null;
+    updateActionPrompt('');
+}
+
+function startAction(actionType) {
+    gameState.currentAction = actionType;
+    gameState.selectedCards = [];
+
+    let prompt = '';
+    switch (actionType) {
+        case 'attack':
+            prompt = 'Select: 1) Your warrior, 2) Enemy target, 3) Weapon';
+            break;
+        case 'move_warrior':
+            prompt = 'Select a warrior from your hand';
+            break;
+        case 'special_power':
+            prompt = 'Select: 1) Your warrior, 2) Target, 3) Special power card';
+            break;
+        case 'trade':
+            prompt = 'Select 3 cards to trade';
+            break;
+        case 'buy':
+            prompt = 'Select a resource card';
+            break;
+        case 'construct':
+            prompt = 'Select a card to construct with';
+            break;
+        case 'spy':
+            showSpyOptions();
+            return;
+        case 'steal':
+            showStealOptions();
+            return;
+        case 'catapult':
+            showCatapultOptions();
+            return;
+    }
+
+    updateActionPrompt(prompt);
+}
+
+function showSpyOptions() {
+    const option = confirm('Spy options:\nOK = Spy top 5 cards from deck\nCancel = Spy enemy hand');
+    sendAction('spy', { option: option ? 1 : 2 });
+}
+
+function showStealOptions() {
+    const enemyCardCount = gameState.currentState.cards_in_enemy_hand;
+    const position = prompt(`Enter card position to steal (1-${enemyCardCount}):`);
+
+    if (position && !isNaN(position)) {
+        sendAction('steal', { card_position: parseInt(position) });
+    }
+}
+
+function showCatapultOptions() {
+    const resourceCount = gameState.currentState.resource_cards_in_enemy_castle;
+    const position = prompt(`Enter resource position to attack (1-${resourceCount}):`);
+
+    if (position && !isNaN(position)) {
+        sendAction('catapult', { card_position: parseInt(position) });
+    }
+}
+
+// Card selection
+function handleCardClick(cardID, cardType, context) {
+    if (!gameState.isYourTurn) return;
+
+    const action = gameState.currentAction;
+
+    if (context === 'setup') {
+        toggleCardSelection(cardID, 'setup');
+        document.getElementById('confirm-warriors-btn').disabled =
+            gameState.selectedCards.length < 1 || gameState.selectedCards.length > 3;
+        return;
+    }
+
+    if (!action) return;
+
+    gameState.selectedCards.push(cardID);
+
+    // Handle different actions
+    switch (action) {
+        case 'attack':
+            if (gameState.selectedCards.length === 3) {
+                sendAction('attack', {
+                    warrior_id: gameState.selectedCards[0],
+                    target_id: gameState.selectedCards[1],
+                    weapon_id: gameState.selectedCards[2]
+                });
+            }
+            break;
+        case 'special_power':
+            if (gameState.selectedCards.length === 3) {
+                sendAction('special_power', {
+                    user_id: gameState.selectedCards[0],
+                    target_id: gameState.selectedCards[1],
+                    weapon_id: gameState.selectedCards[2]
+                });
+            }
+            break;
+        case 'move_warrior':
+            sendAction('move_warrior', { warrior_id: cardID });
+            break;
+        case 'trade':
+            if (gameState.selectedCards.length === 3) {
+                sendAction('trade', { card_ids: gameState.selectedCards });
+            } else {
+                updateActionPrompt(`Selected ${gameState.selectedCards.length}/3 cards for trade`);
+            }
+            break;
+        case 'buy':
+            sendAction('buy', { card_id: cardID });
+            break;
+        case 'construct':
+            sendAction('construct', { card_id: cardID });
+            break;
+    }
+}
+
+function toggleCardSelection(cardID, context) {
+    const index = gameState.selectedCards.indexOf(cardID);
+    if (index > -1) {
+        gameState.selectedCards.splice(index, 1);
+    } else {
+        gameState.selectedCards.push(cardID);
+    }
+
+    // Update visual selection
+    const container = context === 'setup' ?
+        document.getElementById('setup-hand') :
+        document.getElementById('player-hand');
+
+    const cardElement = container.querySelector(`[data-card-id="${cardID}"]`);
+    if (cardElement) {
+        cardElement.classList.toggle('selected');
+    }
+}
+
+// Rendering functions
+function renderSetupHand(status) {
+    const container = document.getElementById('setup-hand');
+    container.innerHTML = '';
+
+    status.current_player_hand.forEach(card => {
+        if (isWarrior(card)) {
+            const cardElement = createCardElement(card, 'setup');
+            container.appendChild(cardElement);
+        }
+    });
+}
+
+function renderGameBoard(status) {
+    // Render enemy field
+    renderCards('enemy-field', status.enemy_field);
+
+    // Render player field
+    renderCards('player-field', status.current_player_field);
+
+    // Render player hand
+    renderCards('player-hand', status.current_player_hand);
+
+    // Render castles
+    renderCastle('enemy-castle', status.enemy_castle);
+    renderCastle('player-castle', status.current_player_castle);
+
+    // Update enemy hand count
+    document.getElementById('enemy-hand-count').textContent =
+        `${status.cards_in_enemy_hand} cards in hand`;
+}
+
+function renderCards(containerId, cards) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    if (!cards || cards.length === 0) {
+        container.innerHTML = '<div style="color: #666; padding: 20px;">No cards</div>';
+        return;
+    }
+
+    cards.forEach(card => {
+        const cardElement = createCardElement(card, containerId);
+        container.appendChild(cardElement);
+    });
+}
+
+function createCardElement(card, context) {
+    const div = document.createElement('div');
+    div.className = 'card animating';
+    div.dataset.cardId = card.id || generateCardID(card);
+
+    // Determine card type
+    const cardType = getCardType(card);
+    div.classList.add(cardType);
+
+    // Check if this is the newly drawn card and highlight it
+    if (gameState.newlyDrawnCard && div.dataset.cardId === gameState.newlyDrawnCard) {
+        div.classList.add('newly-drawn');
+        // Remove the highlight after animation completes
+        setTimeout(() => {
+            div.classList.remove('newly-drawn');
+        }, 2000);
+    }
+
+    // Create card HTML
+    div.innerHTML = `
+        <div class="card-header">
+            <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
+            <span class="card-type ${cardType}">${cardType}</span>
+        </div>
+        <div class="card-content">
+            <div class="card-name">${getCardName(card)}</div>
+            ${getCardStats(card, cardType)}
+        </div>
+    `;
+
+    // Add click handler
+    if (context === 'setup' || context === 'player-hand') {
+        div.addEventListener('click', () => {
+            handleCardClick(div.dataset.cardId, cardType, context);
+        });
+    }
+
+    return div;
+}
+
+function renderCastle(containerId, castle) {
+    const container = document.getElementById(containerId);
+
+    if (!castle) {
+        container.innerHTML = '<div class="castle-status">Not Constructed</div>';
+        return;
+    }
+
+    const isConstructed = castle.constructed || false;
+    const resourceCount = castle.resource_cards || 0;
+
+    container.className = 'castle';
+    if (isConstructed) {
+        container.classList.add('constructed');
+    }
+
+    container.innerHTML = `
+        <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
+        <div class="castle-resources">
+            ${isConstructed ? `<div>${resourceCount} resource cards</div>` : ''}
+        </div>
+    `;
+}
+
+// Helper functions
+function getCardType(card) {
+    if (card.type) {
+        const type = card.type.toLowerCase();
+        if (type.includes('warrior') || type.includes('knight') ||
+            type.includes('archer') || type.includes('mage') ||
+            type.includes('dragon')) return 'warrior';
+        if (type.includes('sword') || type.includes('arrow') ||
+            type.includes('poison') || type.includes('weapon')) return 'weapon';
+        if (type.includes('gold') || type.includes('resource')) return 'resource';
+        if (type.includes('special') || type.includes('spy') ||
+            type.includes('thief') || type.includes('catapult')) return 'special';
+    }
+    return 'unknown';
+}
+
+function getCardName(card) {
+    if (card.name) return card.name;
+    if (card.type) return card.type;
+    return 'Unknown Card';
+}
+
+function getCardStats(card, cardType) {
+    let stats = '<div class="card-stats">';
+
+    if (cardType === 'warrior') {
+        stats += `
+            <div class="card-stat">
+                <span class="card-stat-label">HP</span>
+                <span class="card-stat-value">${card.hit_points || card.hp || 0}</span>
+            </div>
+        `;
+    } else if (cardType === 'weapon') {
+        stats += `
+            <div class="card-stat">
+                <span class="card-stat-label">DMG</span>
+                <span class="card-stat-value">${card.damage || card.damage_amount || 0}</span>
+            </div>
+        `;
+    } else if (cardType === 'resource') {
+        stats += `
+            <div class="card-stat">
+                <span class="card-stat-label">Value</span>
+                <span class="card-stat-value">${card.value || 0}</span>
+            </div>
+        `;
+    }
+
+    stats += '</div>';
+    return stats;
+}
+
+function isWarrior(card) {
+    const type = getCardType(card);
+    return type === 'warrior';
+}
+
+function isSetupComplete(status) {
+    return status.current_player_field && status.current_player_field.length > 0;
+}
+
+function updateTurnIndicator() {
+    const indicator = document.getElementById('turn-indicator');
+    if (gameState.isYourTurn) {
+        indicator.textContent = 'YOUR TURN';
+        indicator.className = 'turn-indicator your-turn';
+    } else {
+        indicator.textContent = 'ENEMY TURN';
+        indicator.className = 'turn-indicator enemy-turn';
+    }
+}
+
+function updateSetupTurnIndicator() {
+    const nameDisplay = document.getElementById('setup-player-name');
+    const indicator = document.getElementById('setup-turn-indicator');
+
+    nameDisplay.textContent = gameState.playerName;
+
+    if (gameState.isYourTurn) {
+        indicator.textContent = 'YOUR TURN - Select Warriors';
+        indicator.className = 'turn-indicator your-turn';
+        document.getElementById('setup-hand').style.opacity = '1';
+        document.getElementById('confirm-warriors-btn').style.display = 'block';
+    } else {
+        indicator.textContent = 'WAITING - Opponent Selecting';
+        indicator.className = 'turn-indicator enemy-turn';
+        document.getElementById('setup-hand').style.opacity = '0.5';
+        document.getElementById('confirm-warriors-btn').style.display = 'none';
+    }
+}
+
+function updateActionButtons() {
+    const isYourTurn = gameState.isYourTurn;
+    const status = gameState.currentState;
+
+    // Enable/disable all action buttons based on turn
+    document.querySelectorAll('.btn-action, #end-turn-btn').forEach(btn => {
+        btn.disabled = !isYourTurn;
+    });
+
+    if (isYourTurn && status) {
+        // Customize based on available actions
+        document.getElementById('move-warrior-btn').disabled =
+            !status.warriors_in_hand_ids || status.warriors_in_hand_ids.length === 0;
+        document.getElementById('attack-btn').disabled =
+            !status.usable_weapon_ids || status.usable_weapon_ids.length === 0;
+        document.getElementById('buy-btn').disabled =
+            !status.resource_ids || status.resource_ids.length === 0;
+        document.getElementById('construct-btn').disabled =
+            !status.construction_ids || status.construction_ids.length === 0;
+        document.getElementById('spy-btn').disabled = !status.spy_id;
+        document.getElementById('steal-btn').disabled = !status.thief_id;
+        document.getElementById('catapult-btn').disabled = !status.catapult_id;
+    }
+}
+
+function updateActionPrompt(text) {
+    const prompt = document.getElementById('action-prompt');
+    prompt.textContent = text;
+    prompt.className = 'action-prompt' + (text ? ' active' : '');
+}
+
+function showStatus(elementId, message, type) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.textContent = message;
+        element.className = `status-message ${type}`;
+        setTimeout(() => {
+            element.textContent = '';
+            element.className = 'status-message';
+        }, 5000);
+    }
+}
+
+function generateCardID(card) {
+    return `card_${Math.random().toString(36).substr(2, 9)}`;
+}

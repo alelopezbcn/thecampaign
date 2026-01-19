@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Campaign - Card Game</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Join Game Screen -->
+        <div id="join-screen" class="screen">
+            <div class="join-container">
+                <h1>The Campaign</h1>
+                <div class="form-group">
+                    <label for="player-name">Your Name:</label>
+                    <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+                </div>
+                <div class="form-group">
+                    <label for="game-id">Game ID:</label>
+                    <input type="text" id="game-id" placeholder="Enter or create game ID" maxlength="20">
+                </div>
+                <button id="join-btn" class="btn btn-primary">Join Game</button>
+                <div id="connection-status" class="status-message"></div>
+            </div>
+        </div>
+
+        <!-- Waiting Screen -->
+        <div id="waiting-screen" class="screen hidden">
+            <div class="waiting-container">
+                <h2>Waiting for opponent...</h2>
+                <p>Game ID: <span id="current-game-id"></span></p>
+                <p class="hint">Share this Game ID with your opponent</p>
+                <div class="spinner"></div>
+            </div>
+        </div>
+
+        <!-- Initial Warriors Setup Screen -->
+        <div id="setup-screen" class="screen hidden">
+            <div class="setup-container">
+                <div class="setup-header">
+                    <div class="setup-player-info">
+                        <span id="setup-player-name" class="player-name"></span>
+                        <span id="setup-turn-indicator" class="turn-indicator"></span>
+                    </div>
+                </div>
+                <h2>Select Your Initial Warriors (1-3)</h2>
+                <div id="setup-hand" class="card-container"></div>
+                <button id="confirm-warriors-btn" class="btn btn-primary" disabled>Confirm Selection</button>
+                <div id="setup-status" class="status-message"></div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <!-- Top Bar -->
+            <div class="game-header">
+                <div class="player-info">
+                    <span id="player-name-display" class="player-name"></span>
+                    <span id="turn-indicator" class="turn-indicator"></span>
+                </div>
+                <div class="game-info">
+                    <span id="game-id-display"></span>
+                </div>
+            </div>
+
+            <!-- Enemy Area -->
+            <div class="enemy-area">
+                <div class="castle-area">
+                    <h3>Enemy Castle</h3>
+                    <div id="enemy-castle" class="castle">
+                        <div class="castle-status">Not Constructed</div>
+                    </div>
+                </div>
+                <div class="field-area">
+                    <h3>Enemy Field</h3>
+                    <div id="enemy-field" class="field card-container"></div>
+                </div>
+                <div class="enemy-hand-info">
+                    <span id="enemy-hand-count">0 cards in hand</span>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="battlefield-divider"></div>
+
+            <!-- Player Area -->
+            <div class="player-area">
+                <div class="field-area">
+                    <h3>Your Field</h3>
+                    <div id="player-field" class="field card-container"></div>
+                </div>
+                <div class="castle-area">
+                    <h3>Your Castle</h3>
+                    <div id="player-castle" class="castle">
+                        <div class="castle-status">Not Constructed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Player Hand -->
+            <div class="hand-area">
+                <h3>Your Hand</h3>
+                <div id="player-hand" class="hand card-container"></div>
+            </div>
+
+            <!-- Action Panel -->
+            <div class="action-panel">
+                <div class="action-buttons">
+                    <button id="attack-btn" class="btn btn-action" disabled>Attack</button>
+                    <button id="move-warrior-btn" class="btn btn-action" disabled>Move Warrior</button>
+                    <button id="special-power-btn" class="btn btn-action" disabled>Special Power</button>
+                    <button id="trade-btn" class="btn btn-action" disabled>Trade (3 cards)</button>
+                    <button id="buy-btn" class="btn btn-action" disabled>Buy</button>
+                    <button id="construct-btn" class="btn btn-action" disabled>Construct</button>
+                    <button id="spy-btn" class="btn btn-action" disabled>Spy</button>
+                    <button id="steal-btn" class="btn btn-action" disabled>Steal</button>
+                    <button id="catapult-btn" class="btn btn-action" disabled>Catapult</button>
+                    <button id="end-turn-btn" class="btn btn-primary" disabled>End Turn</button>
+                </div>
+                <div id="action-prompt" class="action-prompt"></div>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameover-screen" class="screen hidden">
+            <div class="gameover-container">
+                <h1 id="gameover-title">Game Over!</h1>
+                <p id="gameover-message"></p>
+                <button id="new-game-btn" class="btn btn-primary">New Game</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/js/game.js"></script>
+</body>
+</html>
