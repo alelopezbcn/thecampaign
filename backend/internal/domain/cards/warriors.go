@@ -14,7 +14,8 @@ func NewKnight(id string) ports.Knight {
 	return &knight{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
-			newAttackableBase(WarriorHealth),
+			newAttackableBase(WarriorMaxHealth),
+			ports.KnightType,
 		),
 	}
 }
@@ -49,7 +50,8 @@ func NewArcher(id string) ports.Archer {
 	return &archer{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
-			newAttackableBase(WarriorHealth),
+			newAttackableBase(WarriorMaxHealth),
+			ports.ArcherType,
 		),
 	}
 }
@@ -84,7 +86,8 @@ func NewMage(id string) ports.Mage {
 	return &mage{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
-			newAttackableBase(WarriorHealth),
+			newAttackableBase(WarriorMaxHealth),
+			ports.MageType,
 		),
 	}
 }
@@ -119,7 +122,8 @@ func NewDragon(id string) ports.Dragon {
 	return &dragon{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
-			newAttackableBase(DragonHealth),
+			newAttackableBase(DragonMaxHealth),
+			ports.DragonType,
 		),
 	}
 }

@@ -1,6 +1,11 @@
 package domain
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+)
 
 type GameStatus struct {
 	CurrentPlayer      string
@@ -10,33 +15,15 @@ type GameStatus struct {
 	ThiefID            string
 	ResourceIDs        []string
 	SpecialPowerStatus *SpecialPowerStatus
+	ConstructionIDs    []string
 
-	CurrentPlayerHand          []Card
-	CurrentPlayerField         []Card
-	CurrentPlayerCastle        CastleStatus
-	EnemyField                 []Card
-	EnemyCastle                CastleStatus
+	CurrentPlayerHand          []ports.Card
+	CurrentPlayerField         []ports.Warrior
+	CurrentPlayerCastle        ports.Castle
+	EnemyField                 []ports.Warrior
+	EnemyCastle                ports.Castle
 	CardsInEnemyHand           int
 	ResourceCardsInEnemyCastle int
-}
-
-type Card struct {
-	AffectedBy   []Card
-	ID           string
-	Value        int
-	Type         string
-	CanAttack    []Card
-	CanSpy       bool
-	CanSteal     bool
-	CanBuy       bool
-	CanConstruct bool
-}
-
-func NewCard(c ports.Card) Card {
-	card := Card{
-		ID: c.GetID(),
-	}
-	return card
 }
 
 type SpecialPowerStatus struct {
@@ -46,28 +33,39 @@ type SpecialPowerStatus struct {
 	CanProtectIDs     []string
 }
 
-func NewSpecialPowerStatus(ids []string, myField ports.Field, enemyField ports.Field) *SpecialPowerStatus {
+func newSpecialPowerStatus(ids []string, myField ports.Field, enemyField ports.Field) *SpecialPowerStatus {
 	sp := &SpecialPowerStatus{
 		SpecialPowerIDs: ids,
 	}
 
 	if myField.HasArcher() {
-		// loopear enemyField y determinar los IDs que puedo InstantKill, enemies y escudos
-
+		for _, warrior := range enemyField.Warriors() {
+			if ok, card := warrior.IsProtected(); ok {
+				sp.CanInstantKillIDs = append(sp.CanInstantKillIDs, card.GetID())
+			} else {
+				sp.CanInstantKillIDs = append(sp.CanInstantKillIDs, warrior.GetID())
+			}
+		}
 	}
 	if myField.HasKnight() {
-		// loopear myField y ver a quien puedo proteger (no dragon, no ya protegidos)
-		// en game validar que no se proteja a uno ya protegido!
+		for _, warrior := range myField.Warriors() {
+			isProtected, _ := warrior.IsProtected()
+			if warrior.Type() == ports.DragonType || isProtected {
+				continue
+			}
+			sp.CanProtectIDs = append(sp.CanProtectIDs, warrior.GetID())
+		}
 	}
 	if myField.HasMage() {
-		// loopear myField y ver a quien puedo curar (los que tengan daño recibido, no Dragon)
+		for _, warrior := range myField.Warriors() {
+			if warrior.Type() == ports.DragonType || !warrior.IsDamaged() {
+				continue
+			}
+			sp.CanHealIDs = append(sp.CanHealIDs, warrior.GetID())
+		}
 	}
 
 	return sp
-}
-
-type CastleStatus struct {
-	AffectedBy []Card
 }
 
 func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
@@ -76,26 +74,33 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 	gs.WarriorsInHandIDs = []string{}
 	gs.UsableWeaponIDs = []string{}
 	gs.ResourceIDs = []string{}
+	gs.ConstructionIDs = []string{}
 	var specialPowerIDs []string
-	for _, v := range currentPlayer.ShowHand() {
+
+	for _, v := range currentPlayer.Hand().ShowCards() {
 		switch c := v.(type) {
 		case ports.Warrior:
 			gs.WarriorsInHandIDs = append(gs.WarriorsInHandIDs, c.GetID())
 		case ports.Weapon:
-			switch w := c.(type) {
-			case ports.Arrow:
-				if currentPlayer.ShowField().HasArcher() ||
-					currentPlayer.ShowField().HasDragon() {
+			w := c.(ports.Weapon)
+			if w.DamageAmount() == 1 {
+				gs.ConstructionIDs = append(gs.ConstructionIDs, w.GetID())
+			}
+
+			switch w.Type() {
+			case ports.ArrowType:
+				if currentPlayer.Field().HasArcher() ||
+					currentPlayer.Field().HasDragon() {
 					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, w.GetID())
 				}
-			case ports.Poison:
-				if currentPlayer.ShowField().HasMage() ||
-					currentPlayer.ShowField().HasDragon() {
+			case ports.PoisonType:
+				if currentPlayer.Field().HasMage() ||
+					currentPlayer.Field().HasDragon() {
 					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, w.GetID())
 				}
-			case ports.Sword:
-				if currentPlayer.ShowField().HasKnight() ||
-					currentPlayer.ShowField().HasDragon() {
+			case ports.SwordType:
+				if currentPlayer.Field().HasKnight() ||
+					currentPlayer.Field().HasDragon() {
 					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, w.GetID())
 				}
 			}
@@ -103,12 +108,15 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 			if enemy.Castle().ResourceCards() > 0 {
 				gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, c.GetID())
 			}
-
 		case ports.Spy:
 			gs.SpyID = c.GetID()
 		case ports.Thief:
 			gs.ThiefID = c.GetID()
 		case ports.Resource:
+			if c.Value() == 1 {
+				gs.ConstructionIDs = append(gs.ConstructionIDs, c.GetID())
+			}
+
 			gs.ResourceIDs = append(gs.ResourceIDs, c.GetID())
 		case ports.SpecialPower:
 			specialPowerIDs = append(specialPowerIDs, c.GetID())
@@ -116,9 +124,52 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 	}
 
 	if len(specialPowerIDs) > 0 {
-		gs.SpecialPowerStatus = NewSpecialPowerStatus(specialPowerIDs,
-			currentPlayer.ShowField(), enemy.ShowField())
+		gs.SpecialPowerStatus = newSpecialPowerStatus(specialPowerIDs,
+			currentPlayer.Field(), enemy.Field())
 	}
 
+	gs.CurrentPlayerHand = currentPlayer.Hand().ShowCards()
+	gs.CurrentPlayerField = currentPlayer.Field().Warriors()
+	gs.CurrentPlayerCastle = currentPlayer.Castle()
+	gs.EnemyField = enemy.Field().Warriors()
+	gs.EnemyCastle = enemy.Castle()
+	gs.CardsInEnemyHand = enemy.CardsInHand()
+	gs.ResourceCardsInEnemyCastle = enemy.Castle().ResourceCards()
+
 	return gs
+}
+
+func (g *GameStatus) ShowBoard() string {
+	sb := strings.Builder{}
+
+	if !g.EnemyCastle.IsConstructed() {
+		sb.WriteString("Enemy's castle: not constructed \n")
+	} else {
+		sb.WriteString(fmt.Sprintf("Enemy's castle: %s \n", g.EnemyCastle.String()))
+	}
+
+	sb.WriteString("Enemy's field: \n")
+	for _, c := range g.EnemyField {
+		sb.WriteString("  - " + c.String() + "\n")
+	}
+	sb.WriteString("--------\n")
+
+	sb.WriteString("Your field: \n")
+	for _, c := range g.CurrentPlayerField {
+		sb.WriteString("  - " + c.String() + "\n")
+	}
+
+	if !g.CurrentPlayerCastle.IsConstructed() {
+		sb.WriteString("Your castle: not constructed \n")
+	} else {
+		sb.WriteString(fmt.Sprintf("Your castle: %s \n", g.CurrentPlayerCastle.String()))
+	}
+	sb.WriteString("--------\n")
+
+	sb.WriteString("Your hand: \n")
+	for _, c := range g.CurrentPlayerHand {
+		sb.WriteString("  - " + c.String() + "\n")
+	}
+	sb.WriteString("\n--------")
+	return sb.String()
 }

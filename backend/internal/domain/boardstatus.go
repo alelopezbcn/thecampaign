@@ -10,9 +10,9 @@ import (
 type BoardStatus struct {
 	Player                     string
 	Hand                       []ports.Card
-	OwnField                   []ports.Card
+	OwnField                   []ports.Warrior
 	OwnCastle                  ports.Castle
-	EnemyField                 []ports.Card
+	EnemyField                 []ports.Warrior
 	EnemyCastle                ports.Castle
 	CardsInEnemyHand           int
 	ResourceCardsInEnemyCastle int

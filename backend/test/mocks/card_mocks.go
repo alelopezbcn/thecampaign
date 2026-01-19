@@ -590,6 +590,20 @@ func (mr *MockSpecialPowerMockRecorder) String() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockSpecialPower)(nil).String))
 }
 
+// Type mocks base method.
+func (m *MockSpecialPower) Type() ports.WeaponType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WeaponType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockSpecialPowerMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockSpecialPower)(nil).Type))
+}
+
 // Use mocks base method.
 func (m *MockSpecialPower) Use(usedBy, target ports.Warrior) error {
 	m.ctrl.T.Helper()
@@ -977,16 +991,47 @@ func (mr *MockWarriorMockRecorder) InstantKill(sp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockWarrior)(nil).InstantKill), sp)
 }
 
-// ProtectedBy mocks base method.
-func (m *MockWarrior) ProtectedBy(powerCard ports.SpecialPower) {
+// IsDamaged mocks base method.
+func (m *MockWarrior) IsDamaged() bool {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ProtectedBy", powerCard)
+	ret := m.ctrl.Call(m, "IsDamaged")
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
-// ProtectedBy indicates an expected call of ProtectedBy.
-func (mr *MockWarriorMockRecorder) ProtectedBy(powerCard any) *gomock.Call {
+// IsDamaged indicates an expected call of IsDamaged.
+func (mr *MockWarriorMockRecorder) IsDamaged() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProtectedBy", reflect.TypeOf((*MockWarrior)(nil).ProtectedBy), powerCard)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDamaged", reflect.TypeOf((*MockWarrior)(nil).IsDamaged))
+}
+
+// IsProtected mocks base method.
+func (m *MockWarrior) IsProtected() (bool, ports.Card) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(ports.Card)
+	return ret0, ret1
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockWarriorMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockWarrior)(nil).IsProtected))
+}
+
+// Protect mocks base method.
+func (m *MockWarrior) Protect(powerCard ports.SpecialPower) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Protect", powerCard)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Protect indicates an expected call of Protect.
+func (mr *MockWarriorMockRecorder) Protect(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Protect", reflect.TypeOf((*MockWarrior)(nil).Protect), powerCard)
 }
 
 // ReceiveDamage mocks base method.
@@ -1015,6 +1060,20 @@ func (m *MockWarrior) String() string {
 func (mr *MockWarriorMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockWarrior)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockWarrior) Type() ports.WarriorType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WarriorType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockWarriorMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockWarrior)(nil).Type))
 }
 
 // MockWeapon is a mock of Weapon interface.
@@ -1132,6 +1191,20 @@ func (m *MockWeapon) String() string {
 func (mr *MockWeaponMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockWeapon)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockWeapon) Type() ports.WeaponType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WeaponType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockWeaponMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockWeapon)(nil).Type))
 }
 
 // MockDragon is a mock of Dragon interface.
@@ -1301,16 +1374,47 @@ func (mr *MockDragonMockRecorder) InstantKill(sp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockDragon)(nil).InstantKill), sp)
 }
 
-// ProtectedBy mocks base method.
-func (m *MockDragon) ProtectedBy(powerCard ports.SpecialPower) {
+// IsDamaged mocks base method.
+func (m *MockDragon) IsDamaged() bool {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ProtectedBy", powerCard)
+	ret := m.ctrl.Call(m, "IsDamaged")
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
-// ProtectedBy indicates an expected call of ProtectedBy.
-func (mr *MockDragonMockRecorder) ProtectedBy(powerCard any) *gomock.Call {
+// IsDamaged indicates an expected call of IsDamaged.
+func (mr *MockDragonMockRecorder) IsDamaged() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProtectedBy", reflect.TypeOf((*MockDragon)(nil).ProtectedBy), powerCard)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDamaged", reflect.TypeOf((*MockDragon)(nil).IsDamaged))
+}
+
+// IsProtected mocks base method.
+func (m *MockDragon) IsProtected() (bool, ports.Card) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(ports.Card)
+	return ret0, ret1
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockDragonMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockDragon)(nil).IsProtected))
+}
+
+// Protect mocks base method.
+func (m *MockDragon) Protect(powerCard ports.SpecialPower) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Protect", powerCard)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Protect indicates an expected call of Protect.
+func (mr *MockDragonMockRecorder) Protect(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Protect", reflect.TypeOf((*MockDragon)(nil).Protect), powerCard)
 }
 
 // ReceiveDamage mocks base method.
@@ -1339,6 +1443,20 @@ func (m *MockDragon) String() string {
 func (mr *MockDragonMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockDragon)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockDragon) Type() ports.WarriorType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WarriorType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockDragonMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockDragon)(nil).Type))
 }
 
 // MockKnight is a mock of Knight interface.
@@ -1508,16 +1626,47 @@ func (mr *MockKnightMockRecorder) InstantKill(sp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockKnight)(nil).InstantKill), sp)
 }
 
-// ProtectedBy mocks base method.
-func (m *MockKnight) ProtectedBy(powerCard ports.SpecialPower) {
+// IsDamaged mocks base method.
+func (m *MockKnight) IsDamaged() bool {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ProtectedBy", powerCard)
+	ret := m.ctrl.Call(m, "IsDamaged")
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
-// ProtectedBy indicates an expected call of ProtectedBy.
-func (mr *MockKnightMockRecorder) ProtectedBy(powerCard any) *gomock.Call {
+// IsDamaged indicates an expected call of IsDamaged.
+func (mr *MockKnightMockRecorder) IsDamaged() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProtectedBy", reflect.TypeOf((*MockKnight)(nil).ProtectedBy), powerCard)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDamaged", reflect.TypeOf((*MockKnight)(nil).IsDamaged))
+}
+
+// IsProtected mocks base method.
+func (m *MockKnight) IsProtected() (bool, ports.Card) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(ports.Card)
+	return ret0, ret1
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockKnightMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockKnight)(nil).IsProtected))
+}
+
+// Protect mocks base method.
+func (m *MockKnight) Protect(powerCard ports.SpecialPower) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Protect", powerCard)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Protect indicates an expected call of Protect.
+func (mr *MockKnightMockRecorder) Protect(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Protect", reflect.TypeOf((*MockKnight)(nil).Protect), powerCard)
 }
 
 // ReceiveDamage mocks base method.
@@ -1546,6 +1695,20 @@ func (m *MockKnight) String() string {
 func (mr *MockKnightMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockKnight)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockKnight) Type() ports.WarriorType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WarriorType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockKnightMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockKnight)(nil).Type))
 }
 
 // MockArcher is a mock of Archer interface.
@@ -1715,16 +1878,47 @@ func (mr *MockArcherMockRecorder) InstantKill(sp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockArcher)(nil).InstantKill), sp)
 }
 
-// ProtectedBy mocks base method.
-func (m *MockArcher) ProtectedBy(powerCard ports.SpecialPower) {
+// IsDamaged mocks base method.
+func (m *MockArcher) IsDamaged() bool {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ProtectedBy", powerCard)
+	ret := m.ctrl.Call(m, "IsDamaged")
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
-// ProtectedBy indicates an expected call of ProtectedBy.
-func (mr *MockArcherMockRecorder) ProtectedBy(powerCard any) *gomock.Call {
+// IsDamaged indicates an expected call of IsDamaged.
+func (mr *MockArcherMockRecorder) IsDamaged() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProtectedBy", reflect.TypeOf((*MockArcher)(nil).ProtectedBy), powerCard)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDamaged", reflect.TypeOf((*MockArcher)(nil).IsDamaged))
+}
+
+// IsProtected mocks base method.
+func (m *MockArcher) IsProtected() (bool, ports.Card) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(ports.Card)
+	return ret0, ret1
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockArcherMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockArcher)(nil).IsProtected))
+}
+
+// Protect mocks base method.
+func (m *MockArcher) Protect(powerCard ports.SpecialPower) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Protect", powerCard)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Protect indicates an expected call of Protect.
+func (mr *MockArcherMockRecorder) Protect(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Protect", reflect.TypeOf((*MockArcher)(nil).Protect), powerCard)
 }
 
 // ReceiveDamage mocks base method.
@@ -1753,6 +1947,20 @@ func (m *MockArcher) String() string {
 func (mr *MockArcherMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockArcher)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockArcher) Type() ports.WarriorType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WarriorType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockArcherMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockArcher)(nil).Type))
 }
 
 // MockMage is a mock of Mage interface.
@@ -1922,16 +2130,47 @@ func (mr *MockMageMockRecorder) InstantKill(sp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockMage)(nil).InstantKill), sp)
 }
 
-// ProtectedBy mocks base method.
-func (m *MockMage) ProtectedBy(powerCard ports.SpecialPower) {
+// IsDamaged mocks base method.
+func (m *MockMage) IsDamaged() bool {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "ProtectedBy", powerCard)
+	ret := m.ctrl.Call(m, "IsDamaged")
+	ret0, _ := ret[0].(bool)
+	return ret0
 }
 
-// ProtectedBy indicates an expected call of ProtectedBy.
-func (mr *MockMageMockRecorder) ProtectedBy(powerCard any) *gomock.Call {
+// IsDamaged indicates an expected call of IsDamaged.
+func (mr *MockMageMockRecorder) IsDamaged() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProtectedBy", reflect.TypeOf((*MockMage)(nil).ProtectedBy), powerCard)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDamaged", reflect.TypeOf((*MockMage)(nil).IsDamaged))
+}
+
+// IsProtected mocks base method.
+func (m *MockMage) IsProtected() (bool, ports.Card) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(ports.Card)
+	return ret0, ret1
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockMageMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockMage)(nil).IsProtected))
+}
+
+// Protect mocks base method.
+func (m *MockMage) Protect(powerCard ports.SpecialPower) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Protect", powerCard)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Protect indicates an expected call of Protect.
+func (mr *MockMageMockRecorder) Protect(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Protect", reflect.TypeOf((*MockMage)(nil).Protect), powerCard)
 }
 
 // ReceiveDamage mocks base method.
@@ -1960,6 +2199,20 @@ func (m *MockMage) String() string {
 func (mr *MockMageMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockMage)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockMage) Type() ports.WarriorType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WarriorType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockMageMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockMage)(nil).Type))
 }
 
 // MockSword is a mock of Sword interface.
@@ -2079,6 +2332,20 @@ func (mr *MockSwordMockRecorder) String() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockSword)(nil).String))
 }
 
+// Type mocks base method.
+func (m *MockSword) Type() ports.WeaponType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WeaponType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockSwordMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockSword)(nil).Type))
+}
+
 // MockArrow is a mock of Arrow interface.
 type MockArrow struct {
 	ctrl     *gomock.Controller
@@ -2196,6 +2463,20 @@ func (mr *MockArrowMockRecorder) String() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockArrow)(nil).String))
 }
 
+// Type mocks base method.
+func (m *MockArrow) Type() ports.WeaponType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WeaponType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockArrowMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockArrow)(nil).Type))
+}
+
 // MockPoison is a mock of Poison interface.
 type MockPoison struct {
 	ctrl     *gomock.Controller
@@ -2311,4 +2592,18 @@ func (m *MockPoison) String() string {
 func (mr *MockPoisonMockRecorder) String() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockPoison)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockPoison) Type() ports.WeaponType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(ports.WeaponType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockPoisonMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockPoison)(nil).Type))
 }

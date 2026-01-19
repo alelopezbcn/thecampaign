@@ -12,14 +12,16 @@ type warriorBase struct {
 	*cardBase
 	*attackableBase
 	protectedBy         ports.SpecialPower
+	warriorType         ports.WarriorType
 	WarriorDeadObserver ports.WarriorDeadObserver
 }
 
 func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
-) *warriorBase {
+	warriorType ports.WarriorType) *warriorBase {
 	return &warriorBase{
 		cardBase:       cardBase,
 		attackableBase: attackableCardBase,
+		warriorType:    warriorType,
 	}
 }
 
@@ -45,11 +47,22 @@ func (w *warriorBase) ReceiveDamage(weaponCard ports.Weapon, multiplier int) (is
 func (w *warriorBase) Attack(_ ports.Attackable, _ ports.Weapon) error {
 	return errors.New("should be implemented by concrete warrior types")
 }
-func (w *warriorBase) ProtectedBy(powerCard ports.SpecialPower) {
+func (w *warriorBase) Protect(powerCard ports.SpecialPower) error {
+	if w.protectedBy != nil {
+		return errors.New("warrior already protected")
+	}
 	w.protectedBy = powerCard
+
+	return nil
+}
+func (w *warriorBase) IsProtected() (bool, ports.Card) {
+	if w.protectedBy != nil {
+		return true, w.protectedBy
+	}
+	return false, nil
 }
 func (w *warriorBase) Heal(sp ports.SpecialPower) {
-	w.health = WarriorHealth
+	w.health = WarriorMaxHealth
 	w.attackedBy = append(w.attackedBy, sp)
 	for _, a := range w.attackedBy {
 		a.GetCardToBeDiscardedObserver().OnCardToBeDiscarded(a)
@@ -80,6 +93,12 @@ func (w *warriorBase) String() string {
 }
 func (w *warriorBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
+}
+func (w *warriorBase) Type() ports.WarriorType {
+	return w.warriorType
+}
+func (w *warriorBase) IsDamaged() bool {
+	return w.health < WarriorMaxHealth
 }
 func (w *warriorBase) dead() {
 	for _, a := range w.attackedBy {

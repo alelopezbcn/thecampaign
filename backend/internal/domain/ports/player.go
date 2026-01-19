@@ -5,8 +5,8 @@ type Player interface {
 	TakeCards(cards ...Card) bool
 	MoveCardToField(cardID string) error
 	GiveCards(cardIDs ...string) ([]Card, error)
-	ShowHand() []Card
-	ShowField() Field
+	Hand() Hand
+	Field() Field
 	CanTakeCards(count int) bool
 	CardsInHand() int
 	GetCardFromHand(cardID string) (Card, bool)

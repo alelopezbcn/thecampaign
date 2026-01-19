@@ -148,7 +148,7 @@ func setInitialWarriors() error {
 func showCurrentPlayerHand(player ports.Player) {
 	println(currentHandHeader)
 	println(player.Name() + "'s Hand:")
-	for _, c := range player.ShowHand() {
+	for _, c := range player.Hand().ShowCards() {
 		println(fmt.Sprintf("  - %s", c.String()))
 	}
 	println(currentHandHeader)
@@ -177,51 +177,21 @@ func playTurn() error {
 	actionsPerformed := map[int]bool{}
 	actionsPending := 10
 
-	var status domain.BoardStatus
+	var status domain.GameStatus
 
 	for actionsPending > 0 {
 		status = g.GetStatusForNextPlayer()
-		println("\nBoard Status for", status.Player)
+		println("\nBoard Status for", status.CurrentPlayer)
 		println()
-		println(status.String())
+		println(status.ShowBoard())
 
 		println("Available Actions:")
-		hasAttacked, ok := actionsPerformed[attackAction]
-		if !ok || !hasAttacked {
-			println(fmt.Sprintf("  %d. Attack", attackAction))
-		}
-		hasSpied, ok := actionsPerformed[spyAction]
-		if !ok || !hasSpied {
-			println(fmt.Sprintf("  %d. Spy", spyAction))
-		}
-		hasStolen, ok := actionsPerformed[stealAction]
-		if !ok || !hasStolen {
-			println(fmt.Sprintf("  %d. Steal", stealAction))
-		}
-		hasBought, ok := actionsPerformed[buyAction]
-		if !ok || !hasBought {
-			println(fmt.Sprintf("  %d. Buy", buyAction))
-		}
-		hasConstructed, ok := actionsPerformed[constructAction]
-		if !ok || !hasConstructed {
-			println(fmt.Sprintf("  %d. Construct", constructAction))
-		}
-		hasTraded, ok := actionsPerformed[tradeAction]
-		if !ok || !hasTraded {
-			println(fmt.Sprintf("  %d. Trade", tradeAction))
-		}
-		hasMovedWarrior, ok := actionsPerformed[moveWarriorAction]
-		if !ok || !hasMovedWarrior {
-			println(fmt.Sprintf("  %d. Move warrior to Field", moveWarriorAction))
-		}
-		hasCatapult, ok := actionsPerformed[catapultAction]
-		if !ok || !hasCatapult {
-			println(fmt.Sprintf("  %d. Catapult", catapultAction))
-		}
-		hasUsedSpecialPower, ok := actionsPerformed[specialPowerAction]
-		if !ok || !hasUsedSpecialPower {
-			println(fmt.Sprintf("  %d. Use Special Power", specialPowerAction))
-		}
+		printMoveWarriorAction(actionsPerformed, status)
+		printAttackAction(actionsPerformed, status)
+		printSpySteal(actionsPerformed, status)
+		printBuyAction(actionsPerformed, status)
+		printConstructAction(actionsPerformed, status)
+		printTradeAction(actionsPerformed, status)
 		println(fmt.Sprintf("  %d. Pass Turn", passAction))
 		print("Select an action: ")
 
@@ -250,13 +220,13 @@ func playTurn() error {
 
 		switch opt {
 		case attackAction:
-			if err := attack(status.Player); err != nil {
+			if err := attack(status.CurrentPlayer); err != nil {
 				return err
 			}
 			actionsPerformed[attackAction] = true
 			actionsPending--
 		case spyAction:
-			if err := spy(status.Player); err != nil {
+			if err := spy(status.CurrentPlayer); err != nil {
 				return err
 			}
 			actionsPerformed[spyAction] = true
@@ -268,25 +238,25 @@ func playTurn() error {
 			actionsPerformed[stealAction] = true
 			actionsPending--
 		case buyAction:
-			if err := buy(status.Player); err != nil {
+			if err := buy(status.CurrentPlayer); err != nil {
 				return err
 			}
 			actionsPerformed[buyAction] = true
 			actionsPending--
 		case constructAction:
-			if err := construct(status.Player); err != nil {
+			if err := construct(status.CurrentPlayer); err != nil {
 				return err
 			}
 			actionsPerformed[constructAction] = true
 			actionsPending--
 		case tradeAction:
-			if err := trade(status.Player); err != nil {
+			if err := trade(status.CurrentPlayer); err != nil {
 				return err
 			}
 			actionsPerformed[tradeAction] = true
 			actionsPending--
 		case moveWarriorAction:
-			err := moveWarrior(status.Player)
+			err := moveWarrior(status.CurrentPlayer)
 			if err != nil {
 				return err
 			}
@@ -306,12 +276,79 @@ func playTurn() error {
 		}
 	}
 
-	_ = g.EndTurn(status.Player)
+	_ = g.EndTurn(status.CurrentPlayer)
 
 	return nil
 }
 
-func steal(status domain.BoardStatus) error {
+func printTradeAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+	hasTraded, ok := actionsPerformed[tradeAction]
+	if (!ok || !hasTraded) && len(status.CurrentPlayerHand) >= 3 {
+		println(fmt.Sprintf("  %d. Trade", tradeAction))
+	}
+}
+
+func printConstructAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+	hasConstructed, ok := actionsPerformed[constructAction]
+	if !ok || !hasConstructed {
+		if !status.EnemyCastle.IsConstructed() && len(status.ConstructionIDs) > 0 {
+			println(fmt.Sprintf("  %d. Construct (%s)", constructAction,
+				strings.Join(status.ConstructionIDs, ",")))
+			return
+		}
+		if status.EnemyCastle.IsConstructed() && len(status.ResourceIDs) > 0 {
+			println(fmt.Sprintf("  %d. Add Resources to Castle (%s)", constructAction,
+				strings.Join(status.ResourceIDs, ",")))
+			return
+		}
+	}
+}
+
+func printBuyAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+	hasBought, ok := actionsPerformed[buyAction]
+	if (!ok || !hasBought) && len(status.ResourceIDs) > 0 {
+		println(fmt.Sprintf("  %d. Buy (%s)", buyAction,
+			strings.Join(status.ResourceIDs, ",")))
+	}
+}
+
+func printSpySteal(actionsPerformed map[int]bool, status domain.GameStatus) {
+	hasSpied, okSpy := actionsPerformed[spyAction]
+	hasStolen, okSteal := actionsPerformed[stealAction]
+	if (!okSpy || !hasSpied || !hasStolen) && status.SpyID != "" {
+		println(fmt.Sprintf("  %d. Spy", spyAction))
+	}
+	if (!okSteal || !hasStolen || !hasSpied) && status.ThiefID != "" {
+		println(fmt.Sprintf("  %d. Steal", stealAction))
+	}
+}
+
+func printMoveWarriorAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+	hasMovedWarrior, ok := actionsPerformed[moveWarriorAction]
+	if (!ok || !hasMovedWarrior) && len(status.WarriorsInHandIDs) > 0 {
+		println(fmt.Sprintf("  %d. Move warrior to Field (%s)", moveWarriorAction,
+			strings.Join(status.WarriorsInHandIDs, ",")))
+	}
+}
+
+func printAttackAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+	hasAttacked := actionsPerformed[attackAction]
+	hasCatapult := actionsPerformed[catapultAction]
+	hasUsedSpecialPower := actionsPerformed[specialPowerAction]
+
+	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && len(status.UsableWeaponIDs) > 0 {
+		println(fmt.Sprintf("  %d. Attack (%s)", attackAction,
+			strings.Join(status.UsableWeaponIDs, ",")))
+	}
+	// if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && status.CanCatapult {
+	// 	println(fmt.Sprintf("  %d. Catapult", catapultAction))
+	// }
+	// if !ok || !hasUsedSpecialPower {
+	// 	println(fmt.Sprintf("  %d. Use Special Power", specialPowerAction))
+	// }
+}
+
+func steal(status domain.GameStatus) error {
 	ok := false
 	print(fmt.Sprintf("The enemy has %d cards in hand. Choose one: ",
 		status.CardsInEnemyHand))
@@ -327,7 +364,7 @@ func steal(status domain.BoardStatus) error {
 			continue
 		}
 
-		err = g.Steal(status.Player, position)
+		err = g.Steal(status.CurrentPlayer, position)
 		if err != nil {
 			println("Error stealing:", err.Error())
 			continue
@@ -427,7 +464,7 @@ func moveWarrior(player string) error {
 	return nil
 }
 
-func catapult(status domain.BoardStatus) error {
+func catapult(status domain.GameStatus) error {
 	ok := false
 	print(fmt.Sprintf("The enemy's castle has %d resource cards. Choose one: ",
 		status.ResourceCardsInEnemyCastle))
@@ -443,7 +480,7 @@ func catapult(status domain.BoardStatus) error {
 			continue
 		}
 
-		err = g.Catapult(status.Player, position)
+		err = g.Catapult(status.CurrentPlayer, position)
 		if err != nil {
 			println("Error stealing:", err.Error())
 			continue

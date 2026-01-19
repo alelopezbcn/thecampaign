@@ -39,61 +39,117 @@ func (m *MockField) EXPECT() *MockFieldMockRecorder {
 	return m.recorder
 }
 
-// AddCards mocks base method.
-func (m *MockField) AddCards(cards ...ports.Card) {
+// AddWarriors mocks base method.
+func (m *MockField) AddWarriors(cards ...ports.Warrior) {
 	m.ctrl.T.Helper()
 	varargs := []any{}
 	for _, a := range cards {
 		varargs = append(varargs, a)
 	}
-	m.ctrl.Call(m, "AddCards", varargs...)
+	m.ctrl.Call(m, "AddWarriors", varargs...)
 }
 
-// AddCards indicates an expected call of AddCards.
-func (mr *MockFieldMockRecorder) AddCards(cards ...any) *gomock.Call {
+// AddWarriors indicates an expected call of AddWarriors.
+func (mr *MockFieldMockRecorder) AddWarriors(cards ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCards", reflect.TypeOf((*MockField)(nil).AddCards), cards...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriors", reflect.TypeOf((*MockField)(nil).AddWarriors), cards...)
 }
 
-// GetCard mocks base method.
-func (m *MockField) GetCard(cardID string) (ports.Card, bool) {
+// GetWarrior mocks base method.
+func (m *MockField) GetWarrior(cardID string) (ports.Warrior, bool) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetCard", cardID)
-	ret0, _ := ret[0].(ports.Card)
+	ret := m.ctrl.Call(m, "GetWarrior", cardID)
+	ret0, _ := ret[0].(ports.Warrior)
 	ret1, _ := ret[1].(bool)
 	return ret0, ret1
 }
 
-// GetCard indicates an expected call of GetCard.
-func (mr *MockFieldMockRecorder) GetCard(cardID any) *gomock.Call {
+// GetWarrior indicates an expected call of GetWarrior.
+func (mr *MockFieldMockRecorder) GetWarrior(cardID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCard", reflect.TypeOf((*MockField)(nil).GetCard), cardID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWarrior", reflect.TypeOf((*MockField)(nil).GetWarrior), cardID)
 }
 
-// RemoveCard mocks base method.
-func (m *MockField) RemoveCard(card ports.Card) bool {
+// HasArcher mocks base method.
+func (m *MockField) HasArcher() bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveCard", card)
+	ret := m.ctrl.Call(m, "HasArcher")
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// RemoveCard indicates an expected call of RemoveCard.
-func (mr *MockFieldMockRecorder) RemoveCard(card any) *gomock.Call {
+// HasArcher indicates an expected call of HasArcher.
+func (mr *MockFieldMockRecorder) HasArcher() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveCard", reflect.TypeOf((*MockField)(nil).RemoveCard), card)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasArcher", reflect.TypeOf((*MockField)(nil).HasArcher))
 }
 
-// ShowCards mocks base method.
-func (m *MockField) ShowCards() []ports.Card {
+// HasDragon mocks base method.
+func (m *MockField) HasDragon() bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ShowCards")
-	ret0, _ := ret[0].([]ports.Card)
+	ret := m.ctrl.Call(m, "HasDragon")
+	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// ShowCards indicates an expected call of ShowCards.
-func (mr *MockFieldMockRecorder) ShowCards() *gomock.Call {
+// HasDragon indicates an expected call of HasDragon.
+func (mr *MockFieldMockRecorder) HasDragon() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShowCards", reflect.TypeOf((*MockField)(nil).ShowCards))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasDragon", reflect.TypeOf((*MockField)(nil).HasDragon))
+}
+
+// HasKnight mocks base method.
+func (m *MockField) HasKnight() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasKnight")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasKnight indicates an expected call of HasKnight.
+func (mr *MockFieldMockRecorder) HasKnight() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasKnight", reflect.TypeOf((*MockField)(nil).HasKnight))
+}
+
+// HasMage mocks base method.
+func (m *MockField) HasMage() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasMage")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasMage indicates an expected call of HasMage.
+func (mr *MockFieldMockRecorder) HasMage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasMage", reflect.TypeOf((*MockField)(nil).HasMage))
+}
+
+// RemoveWarrior mocks base method.
+func (m *MockField) RemoveWarrior(card ports.Warrior) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveWarrior", card)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// RemoveWarrior indicates an expected call of RemoveWarrior.
+func (mr *MockFieldMockRecorder) RemoveWarrior(card any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveWarrior", reflect.TypeOf((*MockField)(nil).RemoveWarrior), card)
+}
+
+// Warriors mocks base method.
+func (m *MockField) Warriors() []ports.Warrior {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Warriors")
+	ret0, _ := ret[0].([]ports.Warrior)
+	return ret0
+}
+
+// Warriors indicates an expected call of Warriors.
+func (mr *MockFieldMockRecorder) Warriors() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Warriors", reflect.TypeOf((*MockField)(nil).Warriors))
 }

@@ -12,7 +12,7 @@ import (
 func TestNewSpecialPower(t *testing.T) {
 	sp := NewSpecialPower("sp1")
 	assert.Equal(t, "SP1", sp.GetID())
-	assert.Equal(t, SpecialPowerHealth, sp.Health())
+	assert.Equal(t, SpecialPowerMaxHealth, sp.Health())
 	assert.Equal(t, SpecialPowerDamage, sp.DamageAmount())
 	assert.Contains(t, sp.String(), "Special Power (SP1)")
 }
@@ -24,7 +24,7 @@ func TestSpecialPower_Use_ByKnight(t *testing.T) {
 	sp := NewSpecialPower("sp1")
 	knight := NewKnight("k1")
 	target := mocks.NewMockWarrior(ctrl)
-	target.EXPECT().ProtectedBy(sp)
+	target.EXPECT().Protect(sp)
 
 	err := sp.Use(knight, target)
 	assert.NoError(t, err)
@@ -72,7 +72,7 @@ func TestSpecialPower_Use_ByMage(t *testing.T) {
 	sp := NewSpecialPower("sp1")
 	mage := NewMage("m1")
 	target := mocks.NewMockWarrior(ctrl)
-	target.EXPECT().Heal()
+	target.EXPECT().Heal(sp)
 
 	err := sp.Use(mage, target)
 	assert.NoError(t, err)

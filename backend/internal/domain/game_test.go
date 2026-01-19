@@ -17,11 +17,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{sword},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{a},
+			[]ports.Warrior{a},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -29,7 +29,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), sword.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*2, a.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, a.Health())
 	})
 	t.Run("Knight attacks Mage causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -39,11 +39,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{sword},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{m},
+			[]ports.Warrior{m},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -51,7 +51,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), k.GetID(), m.GetID(), sword.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, m.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, m.Health())
 	})
 	t.Run("Knight attacks Knight causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -61,11 +61,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{sword},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{k2},
+			[]ports.Warrior{k2},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -73,7 +73,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), k.GetID(), k2.GetID(), sword.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, k2.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, k2.Health())
 	})
 	t.Run("Knight attacks Dragon causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -83,11 +83,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{sword},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{d},
+			[]ports.Warrior{d},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -95,7 +95,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), k.GetID(), d.GetID(), sword.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.DragonHealth-dmgAmnt*1, d.Health())
+		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, d.Health())
 	})
 	t.Run("Knight cant attack with wrong weapon", func(t *testing.T) {
 		dmgAmnt := 4
@@ -105,11 +105,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{poison},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{a},
+			[]ports.Warrior{a},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -117,7 +117,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), poison.GetID())
 		assert.Error(t, err)
-		assert.Equal(t, cards.WarriorHealth, a.Health())
+		assert.Equal(t, cards.WarriorMaxHealth, a.Health())
 	})
 
 	t.Run("Archer attacks Mage causing double damage", func(t *testing.T) {
@@ -128,11 +128,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -140,7 +140,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*2, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 	})
 	t.Run("Archer attacks Knight causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -150,11 +150,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -162,7 +162,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Archer attacks Archer causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -172,11 +172,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -184,7 +184,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Archer attacks Dragon causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -194,11 +194,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -206,7 +206,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.DragonHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Archer cant attack with wrong weapon", func(t *testing.T) {
 		dmgAmnt := 4
@@ -216,11 +216,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -228,7 +228,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
-		assert.Equal(t, cards.WarriorHealth, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 	})
 
 	t.Run("Mage attacks Knight causing double damage", func(t *testing.T) {
@@ -239,11 +239,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -251,7 +251,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*2, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 	})
 	t.Run("Mage attacks Archer causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -261,11 +261,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -273,7 +273,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Mage attacks Mage causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -283,11 +283,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -295,7 +295,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Mage attacks Dragon causing normal damage", func(t *testing.T) {
 		dmgAmnt := 4
@@ -305,11 +305,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -317,7 +317,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.DragonHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Mage cant attack with wrong weapon", func(t *testing.T) {
 		dmgAmnt := 4
@@ -327,11 +327,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -339,7 +339,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
-		assert.Equal(t, cards.WarriorHealth, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 	})
 
 	t.Run("Player cant attack with non existent cards", func(t *testing.T) {
@@ -349,11 +349,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{sword},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{a},
+			[]ports.Warrior{a},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -377,11 +377,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -389,7 +389,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Dragon attacks Knight with Arrow causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -399,11 +399,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -411,7 +411,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Dragon attacks Knight with Poison causing double damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -421,11 +421,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -433,7 +433,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*2, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 	})
 	t.Run("Dragon attacks Archer with Sword causing double damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -443,11 +443,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -455,7 +455,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*2, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 	})
 	t.Run("Dragon attacks Archer with Arrow causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -465,11 +465,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -477,7 +477,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Dragon attacks Archer with Poison causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -487,11 +487,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -499,7 +499,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Dragon attacks Mage with Sword causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -509,11 +509,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -521,7 +521,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Dragon attacks Mage with Arrow causing double damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -531,11 +531,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -543,7 +543,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*2, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 	})
 	t.Run("Dragon attacks Mage with Poison causing normal damage", func(t *testing.T) {
 		dmgAmnt := 6
@@ -553,11 +553,11 @@ func TestAttacks(t *testing.T) {
 
 		p1 := newPlayerWithCards("Player1",
 			[]ports.Card{weapon},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 		)
 		p2 := newPlayerWithCards("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 		)
 		g := &Game{
 			Players: []ports.Player{p1, p2},
@@ -565,7 +565,7 @@ func TestAttacks(t *testing.T) {
 
 		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorHealth-dmgAmnt*1, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 	})
 	t.Run("Warrior dead on second attack", func(t *testing.T) {
 		dmgAmnt := 5
@@ -577,12 +577,12 @@ func TestAttacks(t *testing.T) {
 		g := &Game{}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{sword1, sword2},
-			[]ports.Card{k},
+			[]ports.Warrior{k},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
 			[]ports.Card{},
-			[]ports.Card{a, a2},
+			[]ports.Warrior{a, a2},
 			g,
 		)
 
@@ -623,12 +623,12 @@ func TestAttacks(t *testing.T) {
 		g := &Game{}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{poison1, sword2, arrow3, sword4},
-			[]ports.Card{m1, k2, a3},
+			[]ports.Warrior{m1, k2, a3},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
 			[]ports.Card{},
-			[]ports.Card{target, a2},
+			[]ports.Warrior{target, a2},
 			g,
 		)
 
@@ -681,12 +681,12 @@ func TestGame_SpecialPower(t *testing.T) {
 		g := &Game{}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{sp},
-			[]ports.Card{a},
+			[]ports.Warrior{a},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 			g,
 		)
 
@@ -710,12 +710,12 @@ func TestGame_SpecialPower(t *testing.T) {
 		g := &Game{}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{sp},
-			[]ports.Card{a},
+			[]ports.Warrior{a},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
 			[]ports.Card{},
-			[]ports.Card{target},
+			[]ports.Warrior{target},
 			g,
 		)
 
@@ -724,7 +724,7 @@ func TestGame_SpecialPower(t *testing.T) {
 		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
 		assert.NoError(t, err)
 
-		assert.Equal(t, cards.DragonHealth-cards.SpecialPowerDamage, target.Health())
+		assert.Equal(t, cards.DragonMaxHealth-cards.SpecialPowerDamage, target.Health())
 		_, ok := p2.GetCardFromField(target.GetID())
 		assert.True(t, ok, "Dragon should still be on the field")
 
@@ -740,25 +740,25 @@ func TestGame_SpecialPower(t *testing.T) {
 		g := &Game{}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{arrow},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
 			[]ports.Card{sp},
-			[]ports.Card{m, target},
+			[]ports.Warrior{m, target},
 			g,
 		)
 
 		g.Players = []ports.Player{p1, p2}
 
 		_ = g.Attack(p1.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
-		assert.Equal(t, cards.WarriorHealth-4, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth-4, target.Health())
 		err := g.EndTurn(p1.Name())
 		assert.NoError(t, err)
 		err = g.SpecialPower(p2.Name(), m.GetID(), target.GetID(), sp.GetID())
 		assert.NoError(t, err)
 
-		assert.Equal(t, cards.WarriorHealth, target.Health())
+		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 		_, ok := p2.GetCardFromHand(sp.GetID())
 		assert.False(t, ok, "Special Power should have been discarded after use")
 		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
@@ -775,12 +775,12 @@ func TestGame_SpecialPower(t *testing.T) {
 		g := &Game{}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{sp},
-			[]ports.Card{user, target},
+			[]ports.Warrior{user, target},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
 			[]ports.Card{arrow, arrow2},
-			[]ports.Card{attacker},
+			[]ports.Warrior{attacker},
 			g,
 		)
 
@@ -791,15 +791,15 @@ func TestGame_SpecialPower(t *testing.T) {
 		_ = g.EndTurn(p1.Name())
 
 		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
-		assert.Equal(t, cards.SpecialPowerHealth-4, sp.Health())
-		assert.Equal(t, cards.WarriorHealth, target.Health())
+		assert.Equal(t, cards.SpecialPowerMaxHealth-4, sp.Health())
+		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 
 		_, ok := p1.GetCardFromHand(sp.GetID())
 		assert.True(t, ok, "Special Power should still be in field until destroyed")
 
 		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow2.GetID())
-		assert.Equal(t, cards.SpecialPowerHealth-4-8, sp.Health())
-		assert.Equal(t, cards.WarriorHealth, target.Health())
+		assert.Equal(t, cards.SpecialPowerMaxHealth-4-8, sp.Health())
+		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 
 		_, ok = p1.GetCardFromHand(sp.GetID())
 		assert.False(t, ok, "Special Power should have been discarded after destruction")
@@ -810,7 +810,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 func TestDrawCards(t *testing.T) {
 	t.Run("Take card when deck is empty", func(t *testing.T) {
-		p := newPlayerWithCards("Player1", []ports.Card{}, []ports.Card{})
+		p := newPlayerWithCards("Player1", []ports.Card{}, []ports.Warrior{})
 		g := &Game{
 			Players: []ports.Player{p},
 			deck:    NewDeck([]ports.Card{}),
@@ -831,7 +831,7 @@ func TestDrawCards(t *testing.T) {
 	t.Run("Take card from deck to hand", func(t *testing.T) {
 		p := newPlayerWithCards("Player1",
 			[]ports.Card{cards.NewGold("g1", 5)},
-			[]ports.Card{})
+			[]ports.Warrior{})
 		g := &Game{
 			Players: []ports.Player{p},
 			deck: NewDeck([]ports.Card{
@@ -870,7 +870,7 @@ func TestNewGame(t *testing.T) {
 		current, _ := g.WhoIsCurrent()
 		cont := 0
 		var warriors1 []string
-		for _, card := range current.ShowHand() {
+		for _, card := range current.Hand().ShowCards() {
 			if _, ok := card.(ports.Warrior); ok {
 				cont++
 				warriors1 = append(warriors1, card.GetID())
@@ -882,19 +882,19 @@ func TestNewGame(t *testing.T) {
 
 		err := g.SetInitialWarriors(current.Name(), warriors1)
 		assert.NoError(t, err)
-		assert.Equal(t, len(current.ShowField()), len(warriors1))
-		assert.True(t, containsCardWithID(current.ShowField(), warriors1[0]), "Field should contain the warrior with the given ID")
-		assert.True(t, containsCardWithID(current.ShowField(), warriors1[1]), "Field should contain the warrior with the given ID")
-		assert.True(t, containsCardWithID(current.ShowField(), warriors1[2]), "Field should contain the warrior with the given ID")
-		assert.False(t, containsCardWithID(current.ShowHand(), warriors1[0]), "Hand should not contain the warrior with the given ID")
-		assert.False(t, containsCardWithID(current.ShowHand(), warriors1[1]), "Hand should not contain the warrior with the given ID")
-		assert.False(t, containsCardWithID(current.ShowHand(), warriors1[2]), "Hand should not contain the warrior with the given ID")
+		assert.Equal(t, len(current.Field().Warriors()), len(warriors1))
+		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[0]), "Field should contain the warrior with the given ID")
+		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[1]), "Field should contain the warrior with the given ID")
+		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[2]), "Field should contain the warrior with the given ID")
+		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[0]), "Hand should not contain the warrior with the given ID")
+		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[1]), "Hand should not contain the warrior with the given ID")
+		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[2]), "Hand should not contain the warrior with the given ID")
 		assert.Equal(t, 4, current.CardsInHand(), "Player should have 4 cards left in hand after setting 3 warriors")
 
 		current, _ = g.WhoIsCurrent()
 		cont = 0
 		var warriors2 []string
-		for _, card := range current.ShowHand() {
+		for _, card := range current.Hand().ShowCards() {
 			if _, ok := card.(ports.Warrior); ok {
 				cont++
 				warriors2 = append(warriors2, card.GetID())
@@ -906,11 +906,11 @@ func TestNewGame(t *testing.T) {
 
 		err = g.SetInitialWarriors(current.Name(), warriors2)
 		assert.NoError(t, err)
-		assert.Equal(t, len(current.ShowField()), len(warriors2))
-		assert.True(t, containsCardWithID(current.ShowField(), warriors2[0]), "Field should contain the warrior with the given ID")
-		assert.True(t, containsCardWithID(current.ShowField(), warriors2[1]), "Field should contain the warrior with the given ID")
-		assert.False(t, containsCardWithID(current.ShowHand(), warriors2[0]), "Hand should not contain the warrior with the given ID")
-		assert.False(t, containsCardWithID(current.ShowHand(), warriors2[1]), "Hand should not contain the warrior with the given ID")
+		assert.Equal(t, len(current.Field().Warriors()), len(warriors2))
+		assert.True(t, fieldContainsCardWithID(current.Field(), warriors2[0]), "Field should contain the warrior with the given ID")
+		assert.True(t, fieldContainsCardWithID(current.Field(), warriors2[1]), "Field should contain the warrior with the given ID")
+		assert.False(t, handContainsCardWithID(current.Hand(), warriors2[0]), "Hand should not contain the warrior with the given ID")
+		assert.False(t, handContainsCardWithID(current.Hand(), warriors2[1]), "Hand should not contain the warrior with the given ID")
 		assert.Equal(t, 5, current.CardsInHand(), "Player should have 5 cards left in hand after setting 2 warriors")
 		assert.Equal(t, StateWaitingDraw, g.state)
 	})
@@ -943,8 +943,17 @@ func foundInDiscardPile(g *Game, a ports.Card) bool {
 	return false
 }
 
-func containsCardWithID(cards []ports.Card, id string) bool {
-	for _, c := range cards {
+func fieldContainsCardWithID(field ports.Field, id string) bool {
+	for _, c := range field.Warriors() {
+		if c != nil && c.GetID() == id {
+			return true
+		}
+	}
+	return false
+}
+
+func handContainsCardWithID(hand ports.Hand, id string) bool {
+	for _, c := range hand.ShowCards() {
 		if c != nil && c.GetID() == id {
 			return true
 		}
@@ -953,12 +962,12 @@ func containsCardWithID(cards []ports.Card, id string) bool {
 }
 
 func newPlayerWithCards(name string, cardsInHand []ports.Card,
-	cardsInField []ports.Card) ports.Player {
+	cardsInField []ports.Warrior) ports.Player {
 	return newPlayerWithCardAndObserver(name, cardsInHand, cardsInField, nil)
 }
 
 func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
-	cardsInField []ports.Card, game *Game) ports.Player {
+	cardsInField []ports.Warrior, game *Game) ports.Player {
 	p := &player{
 		name:                           name,
 		cardMovedToPileObserver:        game,

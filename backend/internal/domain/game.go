@@ -107,7 +107,7 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 	// Check if both players have set their warriors
 	allSet := true
 	for _, p := range g.Players {
-		if len(p.ShowField().ShowCards()) == 0 {
+		if len(p.Field().Warriors()) == 0 {
 			allSet = false
 			break
 		}
@@ -161,19 +161,9 @@ func (g *Game) DrawCards(playerName string, count int) (err error) {
 	return nil
 }
 
-func (g *Game) GetStatusForNextPlayer() (status BoardStatus) {
+func (g *Game) GetStatusForNextPlayer() (status GameStatus) {
 	player, enemy := g.WhoIsCurrent()
-	status.Player = player.Name()
-	status.Hand = player.ShowHand()
-	status.OwnField = player.ShowField().ShowCards()
-	status.OwnCastle = player.Castle()
-
-	status.EnemyField = enemy.ShowField().ShowCards()
-	status.EnemyCastle = enemy.Castle()
-	status.CardsInEnemyHand = enemy.CardsInHand()
-	status.ResourceCardsInEnemyCastle = enemy.Castle().ResourceCards()
-
-	return status
+	return NewGameStatus(player, enemy)
 }
 
 func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
@@ -363,7 +353,7 @@ func (g *Game) Spy(playerName string, option int) ([]ports.Card, error) {
 		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
 			current.Name(), enemy.Name()))
 
-		return enemy.ShowHand(), nil
+		return enemy.Hand().ShowCards(), nil
 	default:
 		return nil, errors.New("invalid Spy option")
 	}

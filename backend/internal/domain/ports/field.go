@@ -1,10 +1,10 @@
 package ports
 
 type Field interface {
-	ShowCards() []Card
-	GetCard(cardID string) (Card, bool)
-	AddCards(cards ...Card)
-	RemoveCard(card Card) bool
+	Warriors() []Warrior
+	GetWarrior(cardID string) (Warrior, bool)
+	AddWarriors(cards ...Warrior)
+	RemoveWarrior(card Warrior) bool
 	HasArcher() bool
 	HasMage() bool
 	HasKnight() bool

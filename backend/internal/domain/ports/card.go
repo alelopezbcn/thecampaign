@@ -43,15 +43,19 @@ type Warrior interface {
 	Card
 	Attackable
 	Attack(target Attackable, weapon Weapon) error
-	ProtectedBy(powerCard SpecialPower)
+	Protect(powerCard SpecialPower) error
+	IsProtected() (bool, Card)
 	Heal(powerCard SpecialPower)
 	InstantKill(sp SpecialPower)
 	AddWarriorDeadObserver(o WarriorDeadObserver)
+	Type() WarriorType
+	IsDamaged() bool
 }
 
 type Weapon interface {
 	Card
 	DamageAmount() int
+	Type() WeaponType
 }
 
 type Dragon interface {

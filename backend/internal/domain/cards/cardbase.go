@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	WarriorHealth      = 20
-	DragonHealth       = 20
-	SpecialPowerHealth = 10
+	WarriorMaxHealth      = 20
+	DragonMaxHealth       = 20
+	SpecialPowerMaxHealth = 10
 )
 
 type cardBase struct {

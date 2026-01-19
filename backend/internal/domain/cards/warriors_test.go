@@ -12,7 +12,7 @@ func TestNewKnightCard(t *testing.T) {
 	knight := NewKnight("k1")
 
 	assert.Equal(t, "K1", knight.GetID())
-	assert.Equal(t, WarriorHealth, knight.Health())
+	assert.Equal(t, WarriorMaxHealth, knight.Health())
 }
 
 func TestKnight_Attack_WithInvalidWeapon(t *testing.T) {
@@ -60,7 +60,7 @@ func TestKnight_Attack_WithSword_NoMultiplier(t *testing.T) {
 
 	err := knight.Attack(target, sword)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
 func TestKnight_Attack_WithSword_Multiplier(t *testing.T) {
@@ -74,14 +74,14 @@ func TestKnight_Attack_WithSword_Multiplier(t *testing.T) {
 
 	err := knight.Attack(target, sword)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
 
 func TestNewArcherCard(t *testing.T) {
 	archer := NewArcher("a1")
 
 	assert.Equal(t, "A1", archer.GetID())
-	assert.Equal(t, WarriorHealth, archer.Health())
+	assert.Equal(t, WarriorMaxHealth, archer.Health())
 }
 
 func TestArcher_Attack_WithInvalidWeapon(t *testing.T) {
@@ -129,7 +129,7 @@ func TestArcher_Attack_WithArrow_NoMultiplier(t *testing.T) {
 
 	err := archer.Attack(target, arw)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
 func TestArcher_Attack_WithArrow_Multiplier(t *testing.T) {
@@ -143,14 +143,14 @@ func TestArcher_Attack_WithArrow_Multiplier(t *testing.T) {
 
 	err := archer.Attack(target, arw)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
 
 func TestNewMageCard(t *testing.T) {
 	mage := NewMage("m1")
 
 	assert.Equal(t, "M1", mage.GetID())
-	assert.Equal(t, WarriorHealth, mage.Health())
+	assert.Equal(t, WarriorMaxHealth, mage.Health())
 }
 
 func TestMage_Attack_WithInvalidWeapon(t *testing.T) {
@@ -198,7 +198,7 @@ func TestMage_Attack_WithPoison_NoMultiplier(t *testing.T) {
 
 	err := mage.Attack(target, poison)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
 func TestMage_Attack_WithPoison_Multiplier(t *testing.T) {
@@ -212,14 +212,14 @@ func TestMage_Attack_WithPoison_Multiplier(t *testing.T) {
 
 	err := mage.Attack(target, poison)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
 
 func TestNewDragonCard(t *testing.T) {
 	dragon := NewDragon("d1")
 
 	assert.Equal(t, "D1", dragon.GetID())
-	assert.Equal(t, WarriorHealth, dragon.Health())
+	assert.Equal(t, WarriorMaxHealth, dragon.Health())
 }
 
 func TestDragon_Attack_TargetNil(t *testing.T) {
@@ -252,7 +252,7 @@ func TestDragon_Attack_Archer_Multiplier(t *testing.T) {
 
 	err := dragon.Attack(target, sword)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
 
 func TestDragon_Attack_Archer_NoMultiplier(t *testing.T) {
@@ -263,7 +263,7 @@ func TestDragon_Attack_Archer_NoMultiplier(t *testing.T) {
 
 	err := dragon.Attack(target, arrow)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
 func TestDragon_Attack_Mage_Multiplier(t *testing.T) {
@@ -274,7 +274,7 @@ func TestDragon_Attack_Mage_Multiplier(t *testing.T) {
 
 	err := dragon.Attack(target, arrow)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
 
 func TestDragon_Attack_Mage_NoMultiplier(t *testing.T) {
@@ -285,7 +285,7 @@ func TestDragon_Attack_Mage_NoMultiplier(t *testing.T) {
 
 	err := dragon.Attack(target, poison)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
 func TestDragon_Attack_Knight_Multiplier(t *testing.T) {
@@ -296,7 +296,7 @@ func TestDragon_Attack_Knight_Multiplier(t *testing.T) {
 
 	err := dragon.Attack(target, poison)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
 
 func TestDragon_Attack_Knight_NoMultiplier(t *testing.T) {
@@ -307,5 +307,5 @@ func TestDragon_Attack_Knight_NoMultiplier(t *testing.T) {
 
 	err := dragon.Attack(target, sword)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorHealth-dmgAmnt, target.Health())
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }

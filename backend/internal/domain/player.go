@@ -82,11 +82,11 @@ func (p *player) CardsInHand() int {
 	return len(p.hand.ShowCards())
 }
 
-func (p *player) ShowHand() []ports.Card {
-	return p.hand.ShowCards()
+func (p *player) Hand() ports.Hand {
+	return p.hand
 }
 
-func (p *player) ShowField() ports.Field {
+func (p *player) Field() ports.Field {
 	return p.field
 }
 
@@ -116,7 +116,7 @@ func (p *player) GetCardFromHand(cardID string) (ports.Card, bool) {
 }
 
 func (p *player) GetCardFromField(cardID string) (ports.Card, bool) {
-	return p.field.GetCard(cardID)
+	return p.field.GetWarrior(cardID)
 }
 
 func (p *player) MoveCardToField(cardID string) error {
@@ -125,11 +125,12 @@ func (p *player) MoveCardToField(cardID string) error {
 		return fmt.Errorf("card with ID %s not found in hand", cardID)
 	}
 
-	if _, ok = c.(ports.Warrior); !ok {
+	w, ok := c.(ports.Warrior)
+	if !ok {
 		return fmt.Errorf("onlywarrior or dragon cards can be moved to field")
 	}
 
-	p.field.AddCards(c)
+	p.field.AddWarriors(w)
 	p.hand.RemoveCard(c)
 
 	return nil
@@ -230,15 +231,20 @@ func (p *player) Construct(cardID string) error {
 }
 
 func (p *player) OnCardToBeDiscarded(card ports.Card) {
-	if !p.hand.RemoveCard(card) && !p.field.RemoveCard(card) {
-		panic("card not found in player")
+	w, ok := card.(ports.Warrior)
+	if ok && p.field.RemoveWarrior(w) {
+		return
+	}
+
+	if !p.hand.RemoveCard(card) {
+		panic("card not found")
 	}
 
 	p.cardMovedToPileObserver.OnCardMovedToPile(card)
 }
 
 func (p *player) OnWarriorDead(warrior ports.Warrior) {
-	if !p.field.RemoveCard(warrior) {
+	if !p.field.RemoveWarrior(warrior) {
 		panic("warrior not found in player field")
 	}
 	p.warriorMovedToCemeteryObserver.OnWarriorMovedToCemetery(warrior)

@@ -19,8 +19,8 @@ type specialPower struct {
 func NewSpecialPower(id string) ports.SpecialPower {
 	return &specialPower{
 		cardBase:       newCardBase(id, "Special Power"),
-		attackableBase: newAttackableBase(SpecialPowerHealth),
-		weaponBase:     newWeaponBase(SpecialPowerDamage),
+		attackableBase: newAttackableBase(SpecialPowerMaxHealth),
+		weaponBase:     newWeaponBase(SpecialPowerDamage, ports.SpecialPowerType),
 	}
 }
 func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
@@ -33,7 +33,9 @@ func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
 		if _, ok := target.(*dragon); ok {
 			return errors.New("dragon cannot be protected")
 		}
-		target.ProtectedBy(s)
+		if err := target.Protect(s); err != nil {
+			return err
+		}
 	case *archer:
 		target.InstantKill(s)
 	case *mage:

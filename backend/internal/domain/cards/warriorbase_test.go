@@ -114,7 +114,7 @@ func TestProtectedBy_SetsProtection(t *testing.T) {
 	w := &warriorBase{}
 	sp := mocks.NewMockSpecialPower(ctrl)
 
-	w.ProtectedBy(sp)
+	w.Protect(sp)
 	assert.Equal(t, sp, w.protectedBy)
 }
 
@@ -138,9 +138,13 @@ func TestWarriorBase_Heal_RestoresHealthAndDiscardsWeapons(t *testing.T) {
 			attackedBy: []ports.Weapon{weapon1, weapon2},
 		},
 	}
+	sp := mocks.NewMockSpecialPower(ctrl)
+	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
+	sp.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardToBeDiscarded(sp)
 
-	w.Heal()
-	assert.Equal(t, WarriorHealth, w.health)
+	w.Heal(sp)
+	assert.Equal(t, WarriorMaxHealth, w.health)
 	assert.Empty(t, w.attackedBy)
 }
 
@@ -154,9 +158,13 @@ func TestWarriorBase_Heal_NoWeapons(t *testing.T) {
 			attackedBy: []ports.Weapon{},
 		},
 	}
+	sp := mocks.NewMockSpecialPower(ctrl)
+	discardObs := mocks.NewMockCardToBeDiscardedObserver(ctrl)
+	sp.EXPECT().GetCardToBeDiscardedObserver().Return(discardObs)
+	discardObs.EXPECT().OnCardToBeDiscarded(sp)
 
-	w.Heal()
-	assert.Equal(t, WarriorHealth, w.health)
+	w.Heal(sp)
+	assert.Equal(t, WarriorMaxHealth, w.health)
 	assert.Empty(t, w.attackedBy)
 }
 

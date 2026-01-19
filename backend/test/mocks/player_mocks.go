@@ -138,6 +138,20 @@ func (mr *MockPlayerMockRecorder) Construct(cardID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Construct", reflect.TypeOf((*MockPlayer)(nil).Construct), cardID)
 }
 
+// Field mocks base method.
+func (m *MockPlayer) Field() ports.Field {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Field")
+	ret0, _ := ret[0].(ports.Field)
+	return ret0
+}
+
+// Field indicates an expected call of Field.
+func (mr *MockPlayerMockRecorder) Field() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Field", reflect.TypeOf((*MockPlayer)(nil).Field))
+}
+
 // GetCardFromField mocks base method.
 func (m *MockPlayer) GetCardFromField(cardID string) (ports.Card, bool) {
 	m.ctrl.T.Helper()
@@ -187,6 +201,20 @@ func (mr *MockPlayerMockRecorder) GiveCards(cardIDs ...any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GiveCards", reflect.TypeOf((*MockPlayer)(nil).GiveCards), cardIDs...)
 }
 
+// Hand mocks base method.
+func (m *MockPlayer) Hand() ports.Hand {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Hand")
+	ret0, _ := ret[0].(ports.Hand)
+	return ret0
+}
+
+// Hand indicates an expected call of Hand.
+func (mr *MockPlayerMockRecorder) Hand() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hand", reflect.TypeOf((*MockPlayer)(nil).Hand))
+}
+
 // MoveCardToField mocks base method.
 func (m *MockPlayer) MoveCardToField(cardID string) error {
 	m.ctrl.T.Helper()
@@ -213,34 +241,6 @@ func (m *MockPlayer) Name() string {
 func (mr *MockPlayerMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockPlayer)(nil).Name))
-}
-
-// ShowField mocks base method.
-func (m *MockPlayer) ShowField() []ports.Card {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ShowField")
-	ret0, _ := ret[0].([]ports.Card)
-	return ret0
-}
-
-// ShowField indicates an expected call of ShowField.
-func (mr *MockPlayerMockRecorder) ShowField() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShowField", reflect.TypeOf((*MockPlayer)(nil).ShowField))
-}
-
-// ShowHand mocks base method.
-func (m *MockPlayer) ShowHand() []ports.Card {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ShowHand")
-	ret0, _ := ret[0].([]ports.Card)
-	return ret0
-}
-
-// ShowHand indicates an expected call of ShowHand.
-func (mr *MockPlayerMockRecorder) ShowHand() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ShowHand", reflect.TypeOf((*MockPlayer)(nil).ShowHand))
 }
 
 // Spy mocks base method.
