@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 )
@@ -19,9 +20,69 @@ func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
-		return g.SetInitialWarriors(client.PlayerName, p.WarriorIDs)
-	})
+	room, exists := h.getGameRoom(client)
+	if !exists || room.Game == nil {
+		client.SendError("Game not found")
+		return
+	}
+
+	room.mutex.Lock()
+
+	// Set initial warriors
+	if err := room.Game.SetInitialWarriors(client.PlayerName, p.WarriorIDs); err != nil {
+		room.mutex.Unlock()
+		client.SendError(err.Error())
+		return
+	}
+
+	// Check if both players have warriors on field (setup complete)
+	// After SetInitialWarriors, the turn has already switched, so check both players' fields directly
+	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
+	bothHaveWarriors := len(currentPlayer.Field().Warriors()) > 0 && len(enemyPlayer.Field().Warriors()) > 0
+
+	log.Printf("SetInitialWarriors: currentPlayer=%s, currentPlayerField=%d, enemyField=%d, bothHaveWarriors=%v",
+		currentPlayer.Name(), len(currentPlayer.Field().Warriors()), len(enemyPlayer.Field().Warriors()), bothHaveWarriors)
+
+	var newCardID string
+	if bothHaveWarriors {
+		// Setup complete - auto draw for the current player
+		// Get the current player's hand before drawing
+		handBefore := make(map[string]bool)
+		handCardsBefore := currentPlayer.Hand().ShowCards()
+		for _, card := range handCardsBefore {
+			handBefore[card.GetID()] = true
+		}
+
+		log.Printf("Setup complete! Drawing card for %s (hand size before: %d)", currentPlayer.Name(), len(handCardsBefore))
+
+		if err := room.Game.DrawCards(currentPlayer.Name(), 1); err != nil {
+			log.Printf("Error drawing card: %v", err)
+			room.mutex.Unlock()
+			client.SendError(err.Error())
+			return
+		}
+
+		// Get hand after drawing to identify the new card
+		handCardsAfter := currentPlayer.Hand().ShowCards()
+		for _, card := range handCardsAfter {
+			if !handBefore[card.GetID()] {
+				newCardID = card.GetID()
+				break
+			}
+		}
+		log.Printf("Newly drawn card ID: %s (hand size after: %d)", newCardID, len(handCardsAfter))
+	}
+
+	room.mutex.Unlock()
+
+	// Send updated game state
+	log.Printf("Sending game state with newCardID: %s", newCardID)
+	h.sendGameState(client.GameID, newCardID)
+
+	// Check if game ended
+	if room.Game.IsGameEnded() {
+		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
+	}
 }
 
 func (h *Hub) handleAttack(client *Client, payload interface{}) {
@@ -206,6 +267,8 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 }
 
 func (h *Hub) handleEndTurn(client *Client) {
+	log.Printf("handleEndTurn called by %s", client.PlayerName)
+
 	room, exists := h.getGameRoom(client)
 	if !exists || room.Game == nil {
 		client.SendError("Game not found")
@@ -216,6 +279,7 @@ func (h *Hub) handleEndTurn(client *Client) {
 
 	// End the current player's turn
 	if err := room.Game.EndTurn(client.PlayerName); err != nil {
+		log.Printf("EndTurn error: %v", err)
 		room.mutex.Unlock()
 		client.SendError(err.Error())
 		return
@@ -229,8 +293,11 @@ func (h *Hub) handleEndTurn(client *Client) {
 		handBefore[card.GetID()] = true
 	}
 
+	log.Printf("EndTurn: nextPlayer=%s, hand size before draw=%d", nextPlayer.Name(), len(statusBefore.CurrentPlayerHand))
+
 	// Automatically draw a card for the new current player
 	if err := room.Game.DrawCards(nextPlayer.Name(), 1); err != nil {
+		log.Printf("DrawCards error: %v", err)
 		room.mutex.Unlock()
 		client.SendError(err.Error())
 		return
@@ -246,9 +313,12 @@ func (h *Hub) handleEndTurn(client *Client) {
 		}
 	}
 
+	log.Printf("EndTurn: newCardID=%s, hand size after draw=%d", newCardID, len(statusAfter.CurrentPlayerHand))
+
 	room.mutex.Unlock()
 
 	// Send updated game state with newly drawn card ID
+	log.Printf("Sending game state with newCardID: %s", newCardID)
 	h.sendGameState(client.GameID, newCardID)
 
 	// Check if game ended

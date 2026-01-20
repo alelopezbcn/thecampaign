@@ -37,7 +37,6 @@ function setupEventListeners() {
     document.getElementById('confirm-warriors-btn').addEventListener('click', confirmInitialWarriors);
 
     // Game screen actions
-    document.getElementById('draw-card-btn').addEventListener('click', () => sendAction('draw_card'));
     document.getElementById('attack-btn').addEventListener('click', () => startAction('attack'));
     document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
     document.getElementById('special-power-btn').addEventListener('click', () => startAction('special_power'));
@@ -143,9 +142,11 @@ function handleGameStarted(payload) {
 
 function handleGameState(payload) {
     console.log('Game state updated:', payload);
+    console.log('Newly drawn card from payload:', payload.newly_drawn_card);
     gameState.isYourTurn = payload.is_your_turn;
     gameState.currentState = payload.game_status;
     gameState.newlyDrawnCard = payload.newly_drawn_card || null;
+    console.log('gameState.newlyDrawnCard set to:', gameState.newlyDrawnCard);
 
     // Determine which screen to show
     if (payload.game_status.current_player && !isSetupComplete(payload.game_status)) {
@@ -432,7 +433,9 @@ function createCardElement(card, context) {
     div.classList.add(cardType);
 
     // Check if this is the newly drawn card and highlight it
+    console.log('Creating card:', div.dataset.cardId, 'newlyDrawnCard:', gameState.newlyDrawnCard);
     if (gameState.newlyDrawnCard && div.dataset.cardId === gameState.newlyDrawnCard) {
+        console.log('MATCH! Adding newly-drawn class to:', div.dataset.cardId);
         div.classList.add('newly-drawn');
         // Remove the highlight after animation completes
         setTimeout(() => {

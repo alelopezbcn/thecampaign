@@ -239,7 +239,9 @@ func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
 
 	for playerName, client := range room.Players {
 		var status domain.GameStatus
-		if playerName == currentPlayerName {
+		isCurrentPlayer := playerName == currentPlayerName
+
+		if isCurrentPlayer {
 			// Current player's turn - show their perspective
 			status = room.Game.GetStatusForNextPlayer()
 		} else {
@@ -248,11 +250,25 @@ func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
 			status = domain.NewGameStatus(enemyPlayer, currentPlayer)
 		}
 
+		// Only send newly drawn card ID to the player who received it
+		cardIDForPlayer := ""
+		if isCurrentPlayer {
+			cardIDForPlayer = drawnCardID
+		}
+
 		payload := GameStatePayload{
 			GameStatus:     ConvertGameStatus(status),
-			IsYourTurn:     playerName == currentPlayerName,
+			IsYourTurn:     isCurrentPlayer,
 			GameEnded:      room.Game.IsGameEnded(),
-			NewlyDrawnCard: drawnCardID,
+			NewlyDrawnCard: cardIDForPlayer,
+		}
+
+		log.Printf("sendGameState to %s: isYourTurn=%v, newlyDrawnCard='%s', handSize=%d, drawnCardID='%s'",
+			playerName, isCurrentPlayer, cardIDForPlayer, len(status.CurrentPlayerHand), drawnCardID)
+
+		// Debug: serialize and log the payload
+		if debugData, err := json.Marshal(payload); err == nil {
+			log.Printf("Payload JSON: %s", string(debugData))
 		}
 
 		client.SendMessage(MsgGameState, payload)

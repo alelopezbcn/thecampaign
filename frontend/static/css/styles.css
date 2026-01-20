@@ -382,6 +382,7 @@ body {
 /* Card Styles */
 .card {
     width: 120px;
+    height: 160px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 10px;
@@ -390,6 +391,9 @@ body {
     transition: all 0.3s;
     position: relative;
     user-select: none;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
 }
 
 .card:hover {
@@ -401,6 +405,32 @@ body {
     border-color: #667eea;
     background: rgba(102, 126, 234, 0.2);
     transform: translateY(-8px);
+}
+
+.card.newly-drawn {
+    animation: newCardPulse 2s ease-out;
+    border-color: #ffd700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3);
+}
+
+@keyframes newCardPulse {
+    0% {
+        transform: scale(0.8) translateY(20px);
+        opacity: 0;
+        box-shadow: 0 0 0 rgba(255, 215, 0, 0);
+    }
+    30% {
+        transform: scale(1.1) translateY(-10px);
+        opacity: 1;
+        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
+    }
+    50% {
+        transform: scale(1.05) translateY(-5px);
+    }
+    100% {
+        transform: scale(1) translateY(0);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3);
+    }
 }
 
 .card.disabled {

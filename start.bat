@@ -3,6 +3,17 @@ echo ========================================
 echo The Campaign - Multiplayer Card Game
 echo ========================================
 echo.
+echo Building server...
+cd backend
+go build -o ..\server.exe .\cmd\server\main.go
+if %errorlevel% neq 0 (
+    echo Build failed!
+    pause
+    exit /b 1
+)
+cd ..
+echo Build successful!
+echo.
 echo Starting server on http://localhost:8080
 echo.
 echo To play:
