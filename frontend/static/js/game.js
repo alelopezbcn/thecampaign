@@ -247,7 +247,7 @@ function startAction(actionType) {
     let prompt = '';
     switch (actionType) {
         case 'attack':
-            prompt = 'Select: 1) Your warrior, 2) Enemy target, 3) Weapon';
+            prompt = 'Select: 1) Enemy target, 2) Weapon from your hand';
             break;
         case 'move_warrior':
             prompt = 'Select a warrior from your hand';
@@ -321,11 +321,10 @@ function handleCardClick(cardID, cardType, context) {
     // Handle different actions
     switch (action) {
         case 'attack':
-            if (gameState.selectedCards.length === 3) {
+            if (gameState.selectedCards.length === 2) {
                 sendAction('attack', {
-                    warrior_id: gameState.selectedCards[0],
-                    target_id: gameState.selectedCards[1],
-                    weapon_id: gameState.selectedCards[2]
+                    target_id: gameState.selectedCards[0],
+                    weapon_id: gameState.selectedCards[1]
                 });
             }
             break;

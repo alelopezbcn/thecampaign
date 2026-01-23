@@ -51,7 +51,7 @@ func newSpecialPowerStatus(ids []string, myField ports.Field, enemyField ports.F
 	if myField.HasKnight() {
 		for _, warrior := range myField.Warriors() {
 			isProtected, _ := warrior.IsProtected()
-			if warrior.Type() == ports.DragonType || isProtected {
+			if warrior.Type() == ports.DragonWarriorType || isProtected {
 				continue
 			}
 			sp.CanProtectIDs = append(sp.CanProtectIDs, warrior.GetID())
@@ -59,7 +59,7 @@ func newSpecialPowerStatus(ids []string, myField ports.Field, enemyField ports.F
 	}
 	if myField.HasMage() {
 		for _, warrior := range myField.Warriors() {
-			if warrior.Type() == ports.DragonType || !warrior.IsDamaged() {
+			if warrior.Type() == ports.DragonWarriorType || !warrior.IsDamaged() {
 				continue
 			}
 			sp.CanHealIDs = append(sp.CanHealIDs, warrior.GetID())
@@ -88,22 +88,22 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 			}
 
 			switch cardType.Type() {
-			case ports.ArrowType:
+			case ports.ArrowWeaponType:
 				if currentPlayer.Field().HasArcher() ||
 					currentPlayer.Field().HasDragon() {
 					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, cardType.GetID())
 				}
-			case ports.PoisonType:
+			case ports.PoisonWeaponType:
 				if currentPlayer.Field().HasMage() ||
 					currentPlayer.Field().HasDragon() {
 					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, cardType.GetID())
 				}
-			case ports.SwordType:
+			case ports.SwordWeaponType:
 				if currentPlayer.Field().HasKnight() ||
 					currentPlayer.Field().HasDragon() {
 					gs.UsableWeaponIDs = append(gs.UsableWeaponIDs, cardType.GetID())
 				}
-			case ports.SpecialPowerType:
+			case ports.SpecialPowerWeaponType:
 				specialPowerIDs = append(specialPowerIDs, cardType.GetID())
 			}
 		case ports.Catapult:

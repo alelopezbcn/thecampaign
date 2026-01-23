@@ -130,6 +130,20 @@ func (mr *MockAttackableMockRecorder) AttackedBy() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockAttackable)(nil).AttackedBy))
 }
 
+// BeAttacked mocks base method.
+func (m *MockAttackable) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockAttackableMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockAttackable)(nil).BeAttacked), weapon)
+}
+
 // Health mocks base method.
 func (m *MockAttackable) Health() int {
 	m.ctrl.T.Helper()
@@ -388,6 +402,20 @@ func (m *MockSpecialPower) AttackedBy() []ports.Weapon {
 func (mr *MockSpecialPowerMockRecorder) AttackedBy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockSpecialPower)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockSpecialPower) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockSpecialPowerMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockSpecialPower)(nil).BeAttacked), weapon)
 }
 
 // DamageAmount mocks base method.
@@ -739,20 +767,6 @@ func (mr *MockWarriorMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockWarrior)(nil).AddWarriorDeadObserver), o)
 }
 
-// Attack mocks base method.
-func (m *MockWarrior) Attack(target ports.Attackable, weapon ports.Weapon) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Attack", target, weapon)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Attack indicates an expected call of Attack.
-func (mr *MockWarriorMockRecorder) Attack(target, weapon any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockWarrior)(nil).Attack), target, weapon)
-}
-
 // AttackedBy mocks base method.
 func (m *MockWarrior) AttackedBy() []ports.Weapon {
 	m.ctrl.T.Helper()
@@ -765,6 +779,20 @@ func (m *MockWarrior) AttackedBy() []ports.Weapon {
 func (mr *MockWarriorMockRecorder) AttackedBy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockWarrior)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockWarrior) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockWarriorMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockWarrior)(nil).BeAttacked), weapon)
 }
 
 // GetCardMovedToPileObserver mocks base method.
@@ -1070,20 +1098,6 @@ func (mr *MockDragonMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockDragon)(nil).AddWarriorDeadObserver), o)
 }
 
-// Attack mocks base method.
-func (m *MockDragon) Attack(target ports.Attackable, weapon ports.Weapon) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Attack", target, weapon)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Attack indicates an expected call of Attack.
-func (mr *MockDragonMockRecorder) Attack(target, weapon any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockDragon)(nil).Attack), target, weapon)
-}
-
 // AttackedBy mocks base method.
 func (m *MockDragon) AttackedBy() []ports.Weapon {
 	m.ctrl.T.Helper()
@@ -1096,6 +1110,20 @@ func (m *MockDragon) AttackedBy() []ports.Weapon {
 func (mr *MockDragonMockRecorder) AttackedBy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockDragon)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockDragon) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockDragonMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockDragon)(nil).BeAttacked), weapon)
 }
 
 // GetCardMovedToPileObserver mocks base method.
@@ -1296,20 +1324,6 @@ func (mr *MockKnightMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockKnight)(nil).AddWarriorDeadObserver), o)
 }
 
-// Attack mocks base method.
-func (m *MockKnight) Attack(target ports.Attackable, weapon ports.Weapon) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Attack", target, weapon)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Attack indicates an expected call of Attack.
-func (mr *MockKnightMockRecorder) Attack(target, weapon any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockKnight)(nil).Attack), target, weapon)
-}
-
 // AttackedBy mocks base method.
 func (m *MockKnight) AttackedBy() []ports.Weapon {
 	m.ctrl.T.Helper()
@@ -1322,6 +1336,20 @@ func (m *MockKnight) AttackedBy() []ports.Weapon {
 func (mr *MockKnightMockRecorder) AttackedBy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockKnight)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockKnight) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockKnightMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockKnight)(nil).BeAttacked), weapon)
 }
 
 // GetCardMovedToPileObserver mocks base method.
@@ -1522,20 +1550,6 @@ func (mr *MockArcherMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockArcher)(nil).AddWarriorDeadObserver), o)
 }
 
-// Attack mocks base method.
-func (m *MockArcher) Attack(target ports.Attackable, weapon ports.Weapon) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Attack", target, weapon)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Attack indicates an expected call of Attack.
-func (mr *MockArcherMockRecorder) Attack(target, weapon any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockArcher)(nil).Attack), target, weapon)
-}
-
 // AttackedBy mocks base method.
 func (m *MockArcher) AttackedBy() []ports.Weapon {
 	m.ctrl.T.Helper()
@@ -1548,6 +1562,20 @@ func (m *MockArcher) AttackedBy() []ports.Weapon {
 func (mr *MockArcherMockRecorder) AttackedBy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockArcher)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockArcher) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockArcherMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockArcher)(nil).BeAttacked), weapon)
 }
 
 // GetCardMovedToPileObserver mocks base method.
@@ -1748,20 +1776,6 @@ func (mr *MockMageMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockMage)(nil).AddWarriorDeadObserver), o)
 }
 
-// Attack mocks base method.
-func (m *MockMage) Attack(target ports.Attackable, weapon ports.Weapon) error {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Attack", target, weapon)
-	ret0, _ := ret[0].(error)
-	return ret0
-}
-
-// Attack indicates an expected call of Attack.
-func (mr *MockMageMockRecorder) Attack(target, weapon any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockMage)(nil).Attack), target, weapon)
-}
-
 // AttackedBy mocks base method.
 func (m *MockMage) AttackedBy() []ports.Weapon {
 	m.ctrl.T.Helper()
@@ -1774,6 +1788,20 @@ func (m *MockMage) AttackedBy() []ports.Weapon {
 func (mr *MockMageMockRecorder) AttackedBy() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockMage)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockMage) BeAttacked(weapon ports.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockMageMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockMage)(nil).BeAttacked), weapon)
 }
 
 // GetCardMovedToPileObserver mocks base method.

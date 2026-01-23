@@ -11,7 +11,7 @@ type Player interface {
 	CardsInHand() int
 	GetCardFromHand(cardID string) (Card, bool)
 	GetCardFromField(cardID string) (Card, bool)
-	Attack(warriorCard Card, targetCard Card, weaponCard Card) error
+	Attack(targetCard Card, weaponCard Card) error
 	UseSpecialPower(warriorCard Card, targetCard Card, specialPowerCard Card) error
 	CardStolenFromHand(position int) (Card, error)
 	Construct(cardID string) error

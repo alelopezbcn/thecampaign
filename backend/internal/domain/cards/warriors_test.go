@@ -3,10 +3,11 @@ package cards
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
+
+// Knight tests
 
 func TestNewKnightCard(t *testing.T) {
 	knight := NewKnight("k1")
@@ -15,136 +16,56 @@ func TestNewKnightCard(t *testing.T) {
 	assert.Equal(t, WarriorMaxHealth, knight.Health())
 }
 
-func TestKnight_Attack_WithInvalidWeapon(t *testing.T) {
+func TestKnight_BeAttacked_WeaponNil(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	knight := NewKnight("k1")
-	target := mocks.NewMockAttackable(ctrl)
-	arrow := NewArrow("id", 0)
 
-	err := knight.Attack(target, arrow)
-	assert.ErrorContains(t, err, "knight can only attack with sword")
-}
-
-func TestKnight_Attack_TargetNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	knight := NewKnight("k1")
-	sword := mocks.NewMockWeapon(ctrl)
-
-	err := knight.Attack(nil, sword)
-	assert.ErrorContains(t, err, "target cannot be nil")
-}
-
-func TestKnight_Attack_WeaponNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	knight := NewKnight("k1")
-	target := mocks.NewMockAttackable(ctrl)
-
-	err := knight.Attack(target, nil)
+	err := knight.BeAttacked(nil)
 	assert.ErrorContains(t, err, "weapon cannot be nil")
 }
 
-func TestKnight_Attack_WithSword_NoMultiplier(t *testing.T) {
+func TestKnight_BeAttacked_WithSword_NoMultiplier(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	dmgAmnt := 5
-	knight := NewKnight("k1")
-	target := NewMage("id")
+	target := NewKnight("k1")
 	sword := NewSword("id", dmgAmnt)
 
-	err := knight.Attack(target, sword)
+	err := target.BeAttacked(sword)
 	assert.NoError(t, err)
 	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
-func TestKnight_Attack_WithSword_Multiplier(t *testing.T) {
+func TestKnight_BeAttacked_WithArrow_NoMultiplier(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	dmgAmnt := 5
-	knight := NewKnight("k1")
-	target := NewArcher("id")
-	sword := NewSword("id", dmgAmnt)
+	target := NewKnight("k1")
+	arrow := NewArrow("id", dmgAmnt)
 
-	err := knight.Attack(target, sword)
-	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
-}
-
-func TestNewArcherCard(t *testing.T) {
-	archer := NewArcher("a1")
-
-	assert.Equal(t, "A1", archer.GetID())
-	assert.Equal(t, WarriorMaxHealth, archer.Health())
-}
-
-func TestArcher_Attack_WithInvalidWeapon(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	archer := NewArcher("a1")
-	target := mocks.NewMockAttackable(ctrl)
-	sword := NewSword("id", 0)
-
-	err := archer.Attack(target, sword)
-	assert.ErrorContains(t, err, "archer can only attack with arrow")
-}
-
-func TestArcher_Attack_TargetNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	archer := NewArcher("a1")
-	arrow := mocks.NewMockWeapon(ctrl)
-
-	err := archer.Attack(nil, arrow)
-	assert.ErrorContains(t, err, "target cannot be nil")
-}
-
-func TestArcher_Attack_WeaponNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	archer := NewArcher("a1")
-	target := mocks.NewMockAttackable(ctrl)
-
-	err := archer.Attack(target, nil)
-	assert.ErrorContains(t, err, "weapon cannot be nil")
-}
-
-func TestArcher_Attack_WithArrow_NoMultiplier(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	dmgAmnt := 4
-	archer := NewArcher("a1")
-	target := NewKnight("id")
-	arw := NewArrow("id", dmgAmnt)
-
-	err := archer.Attack(target, arw)
+	err := target.BeAttacked(arrow)
 	assert.NoError(t, err)
 	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
-func TestArcher_Attack_WithArrow_Multiplier(t *testing.T) {
+func TestKnight_BeAttacked_WithPoison_Multiplier(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dmgAmnt := 4
-	archer := NewArcher("a1")
-	target := NewMage("id")
-	arw := NewArrow("id", dmgAmnt)
+	dmgAmnt := 5
+	target := NewKnight("k1")
+	poison := NewPoison("id", dmgAmnt)
 
-	err := archer.Attack(target, arw)
+	err := target.BeAttacked(poison)
 	assert.NoError(t, err)
 	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
+
+// Mage tests
 
 func TestNewMageCard(t *testing.T) {
 	mage := NewMage("m1")
@@ -153,159 +74,167 @@ func TestNewMageCard(t *testing.T) {
 	assert.Equal(t, WarriorMaxHealth, mage.Health())
 }
 
-func TestMage_Attack_WithInvalidWeapon(t *testing.T) {
+func TestMage_BeAttacked_WeaponNil(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	mage := NewMage("m1")
-	target := mocks.NewMockAttackable(ctrl)
-	sword := NewSword("id", 0)
 
-	err := mage.Attack(target, sword)
-	assert.ErrorContains(t, err, "mage can only attack with poison")
-}
-
-func TestMage_Attack_TargetNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mage := NewMage("m1")
-	staff := mocks.NewMockWeapon(ctrl)
-
-	err := mage.Attack(nil, staff)
-	assert.ErrorContains(t, err, "target cannot be nil")
-}
-
-func TestMage_Attack_WeaponNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mage := NewMage("m1")
-	target := mocks.NewMockAttackable(ctrl)
-
-	err := mage.Attack(target, nil)
+	err := mage.BeAttacked(nil)
 	assert.ErrorContains(t, err, "weapon cannot be nil")
 }
 
-func TestMage_Attack_WithPoison_NoMultiplier(t *testing.T) {
+func TestMage_BeAttacked_WithSword_NoMultiplier(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dmgAmnt := 6
-	mage := NewMage("m1")
-	target := NewArcher("id")
-	poison := NewPoison("id", dmgAmnt)
+	dmgAmnt := 5
+	target := NewMage("m1")
+	sword := NewSword("id", dmgAmnt)
 
-	err := mage.Attack(target, poison)
+	err := target.BeAttacked(sword)
 	assert.NoError(t, err)
 	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
 }
 
-func TestMage_Attack_WithPoison_Multiplier(t *testing.T) {
+func TestMage_BeAttacked_WithPoison_NoMultiplier(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dmgAmnt := 6
-	mage := NewMage("m1")
-	target := NewKnight("id")
+	dmgAmnt := 5
+	target := NewMage("m1")
 	poison := NewPoison("id", dmgAmnt)
 
-	err := mage.Attack(target, poison)
+	err := target.BeAttacked(poison)
+	assert.NoError(t, err)
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
+}
+
+func TestMage_BeAttacked_WithArrow_Multiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dmgAmnt := 5
+	target := NewMage("m1")
+	arrow := NewArrow("id", dmgAmnt)
+
+	err := target.BeAttacked(arrow)
 	assert.NoError(t, err)
 	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
 }
+
+// Archer tests
+
+func TestNewArcherCard(t *testing.T) {
+	archer := NewArcher("a1")
+
+	assert.Equal(t, "A1", archer.GetID())
+	assert.Equal(t, WarriorMaxHealth, archer.Health())
+}
+
+func TestArcher_BeAttacked_WeaponNil(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	archer := NewArcher("a1")
+
+	err := archer.BeAttacked(nil)
+	assert.ErrorContains(t, err, "weapon cannot be nil")
+}
+
+func TestArcher_BeAttacked_WithArrow_NoMultiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dmgAmnt := 5
+	target := NewArcher("a1")
+	arrow := NewArrow("id", dmgAmnt)
+
+	err := target.BeAttacked(arrow)
+	assert.NoError(t, err)
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
+}
+
+func TestArcher_BeAttacked_WithPoison_NoMultiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dmgAmnt := 5
+	target := NewArcher("a1")
+	poison := NewPoison("id", dmgAmnt)
+
+	err := target.BeAttacked(poison)
+	assert.NoError(t, err)
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
+}
+
+func TestArcher_BeAttacked_WithSword_Multiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dmgAmnt := 5
+	target := NewArcher("a1")
+	sword := NewSword("id", dmgAmnt)
+
+	err := target.BeAttacked(sword)
+	assert.NoError(t, err)
+	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
+}
+
+// Dragon tests
 
 func TestNewDragonCard(t *testing.T) {
 	dragon := NewDragon("d1")
 
 	assert.Equal(t, "D1", dragon.GetID())
-	assert.Equal(t, WarriorMaxHealth, dragon.Health())
+	assert.Equal(t, DragonMaxHealth, dragon.Health())
 }
 
-func TestDragon_Attack_TargetNil(t *testing.T) {
+func TestDragon_BeAttacked_WeaponNil(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	dragon := NewDragon("d1")
-	fireBreath := mocks.NewMockWeapon(ctrl)
 
-	err := dragon.Attack(nil, fireBreath)
-	assert.ErrorContains(t, err, "target cannot be nil")
-}
-
-func TestDragon_Attack_WeaponNil(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	dragon := NewDragon("d1")
-	target := mocks.NewMockAttackable(ctrl)
-
-	err := dragon.Attack(target, nil)
+	err := dragon.BeAttacked(nil)
 	assert.ErrorContains(t, err, "weapon cannot be nil")
 }
 
-func TestDragon_Attack_Archer_Multiplier(t *testing.T) {
-	dmgAmnt := 2
-	dragon := NewDragon("d1")
-	target := NewArcher("id")
+func TestDragon_BeAttacked_WithSword_NoMultiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dmgAmnt := 5
+	target := NewDragon("d1")
 	sword := NewSword("id", dmgAmnt)
 
-	err := dragon.Attack(target, sword)
+	err := target.BeAttacked(sword)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
+	assert.Equal(t, DragonMaxHealth-dmgAmnt, target.Health())
 }
 
-func TestDragon_Attack_Archer_NoMultiplier(t *testing.T) {
-	dmgAmnt := 2
-	dragon := NewDragon("d1")
-	target := NewArcher("id")
+func TestDragon_BeAttacked_WithArrow_NoMultiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	dmgAmnt := 5
+	target := NewDragon("d1")
 	arrow := NewArrow("id", dmgAmnt)
 
-	err := dragon.Attack(target, arrow)
+	err := target.BeAttacked(arrow)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
+	assert.Equal(t, DragonMaxHealth-dmgAmnt, target.Health())
 }
 
-func TestDragon_Attack_Mage_Multiplier(t *testing.T) {
-	dmgAmnt := 2
-	dragon := NewDragon("d1")
-	target := NewMage("id")
-	arrow := NewArrow("id", dmgAmnt)
+func TestDragon_BeAttacked_WithPoison_NoMultiplier(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
-	err := dragon.Attack(target, arrow)
-	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
-}
-
-func TestDragon_Attack_Mage_NoMultiplier(t *testing.T) {
-	dmgAmnt := 2
-	dragon := NewDragon("d1")
-	target := NewMage("id")
+	dmgAmnt := 5
+	target := NewDragon("d1")
 	poison := NewPoison("id", dmgAmnt)
 
-	err := dragon.Attack(target, poison)
+	err := target.BeAttacked(poison)
 	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
-}
-
-func TestDragon_Attack_Knight_Multiplier(t *testing.T) {
-	dmgAmnt := 2
-	dragon := NewDragon("d1")
-	target := NewKnight("id")
-	poison := NewPoison("id", dmgAmnt)
-
-	err := dragon.Attack(target, poison)
-	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt*2, target.Health())
-}
-
-func TestDragon_Attack_Knight_NoMultiplier(t *testing.T) {
-	dmgAmnt := 2
-	dragon := NewDragon("d1")
-	target := NewKnight("id")
-	sword := NewSword("id", dmgAmnt)
-
-	err := dragon.Attack(target, sword)
-	assert.NoError(t, err)
-	assert.Equal(t, WarriorMaxHealth-dmgAmnt, target.Health())
+	assert.Equal(t, DragonMaxHealth-dmgAmnt, target.Health())
 }

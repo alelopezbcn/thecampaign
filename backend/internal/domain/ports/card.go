@@ -10,6 +10,7 @@ type Card interface {
 type Attackable interface {
 	Health() int
 	ReceiveDamage(weapon Weapon, multiplier int) (isDefeated bool)
+	BeAttacked(weapon Weapon) error
 	AttackedBy() []Weapon
 }
 
@@ -42,7 +43,6 @@ type Thief interface {
 type Warrior interface {
 	Card
 	Attackable
-	Attack(target Attackable, weapon Weapon) error
 	Protect(powerCard SpecialPower) error
 	IsProtected() (bool, Card)
 	Heal(powerCard SpecialPower)

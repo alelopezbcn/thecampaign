@@ -44,9 +44,10 @@ func (w *warriorBase) ReceiveDamage(weaponCard ports.Weapon, multiplier int) (is
 
 	return false
 }
-func (w *warriorBase) Attack(_ ports.Attackable, _ ports.Weapon) error {
+func (w *warriorBase) BeAttacked(_ ports.Weapon) error {
 	return errors.New("should be implemented by concrete warrior types")
 }
+
 func (w *warriorBase) Protect(powerCard ports.SpecialPower) error {
 	if w.protectedBy != nil {
 		return errors.New("warrior already protected")

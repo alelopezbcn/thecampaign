@@ -94,15 +94,14 @@ func TestReceiveDamage_ReducesHealth_NoDeath(t *testing.T) {
 	assert.Equal(t, weapon, w.attackedBy[0])
 }
 
-func TestWarriorBase_Attack_ReturnsError(t *testing.T) {
+func TestWarriorBase_BeAttacked_ReturnsError(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
 	w := &warriorBase{}
-	attackable := mocks.NewMockAttackable(ctrl)
 	weapon := mocks.NewMockWeapon(ctrl)
 
-	err := w.Attack(attackable, weapon)
+	err := w.BeAttacked(weapon)
 	assert.Error(t, err)
 	assert.EqualError(t, err, "should be implemented by concrete warrior types")
 }

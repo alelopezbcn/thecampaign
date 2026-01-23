@@ -14,7 +14,7 @@ type sword struct {
 func NewSword(id string, damageAmount int) ports.Sword {
 	return &sword{
 		cardBase:   newCardBase(id, "Sword"),
-		weaponBase: newWeaponBase(damageAmount, ports.SwordType),
+		weaponBase: newWeaponBase(damageAmount, ports.SwordWeaponType),
 	}
 }
 func (s *sword) String() string {
@@ -29,7 +29,7 @@ type arrow struct {
 func NewArrow(id string, damageAmount int) ports.Arrow {
 	return &arrow{
 		cardBase:   newCardBase(id, "Arrow"),
-		weaponBase: newWeaponBase(damageAmount, ports.ArrowType),
+		weaponBase: newWeaponBase(damageAmount, ports.ArrowWeaponType),
 	}
 }
 func (a *arrow) String() string {
@@ -45,7 +45,7 @@ func NewPoison(id string, damageAmount int) ports.Poison {
 	{
 		return &poison{
 			cardBase:   newCardBase(id, "Poison"),
-			weaponBase: newWeaponBase(damageAmount, ports.PoisonType),
+			weaponBase: newWeaponBase(damageAmount, ports.PoisonWeaponType),
 		}
 	}
 }

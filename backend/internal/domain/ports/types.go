@@ -3,10 +3,10 @@ package ports
 type WarriorType string
 
 const (
-	ArcherType WarriorType = "Archer"
-	KnightType WarriorType = "Knight"
-	MageType   WarriorType = "Mage"
-	DragonType WarriorType = "Dragon"
+	ArcherWarriorType WarriorType = "Archer"
+	KnightWarriorType WarriorType = "Knight"
+	MageWarriorType   WarriorType = "Mage"
+	DragonWarriorType WarriorType = "Dragon"
 )
 
 func (wt WarriorType) String() string {
@@ -16,10 +16,10 @@ func (wt WarriorType) String() string {
 type WeaponType string
 
 const (
-	SwordType        WeaponType = "Sword"
-	ArrowType        WeaponType = "Arrow"
-	PoisonType       WeaponType = "Poison"
-	SpecialPowerType WeaponType = "Special Power"
+	SwordWeaponType        WeaponType = "Sword"
+	ArrowWeaponType        WeaponType = "Arrow"
+	PoisonWeaponType       WeaponType = "Poison"
+	SpecialPowerWeaponType WeaponType = "Special Power"
 )
 
 func (wt WeaponType) String() string {

@@ -27,7 +27,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), sword.GetID())
+		err := g.Attack(p1.Name(), a.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, a.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
@@ -50,7 +50,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), k.GetID(), m.GetID(), sword.GetID())
+		err := g.Attack(p1.Name(), m.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, m.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
@@ -73,7 +73,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), k.GetID(), k2.GetID(), sword.GetID())
+		err := g.Attack(p1.Name(), k2.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, k2.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
@@ -96,7 +96,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), k.GetID(), d.GetID(), sword.GetID())
+		err := g.Attack(p1.Name(), d.GetID(), sword.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, d.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
@@ -119,7 +119,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), poison.GetID())
+		err := g.Attack(p1.Name(), a.GetID(), poison.GetID())
 		assert.Error(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth, a.Health())
 		assert.Contains(t, p1.Hand().ShowCards(), poison)
@@ -143,7 +143,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -166,7 +166,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -189,7 +189,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -212,7 +212,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -235,7 +235,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 		assert.Contains(t, p1.Hand().ShowCards(), weapon)
@@ -259,7 +259,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -282,7 +282,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -305,7 +305,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -328,7 +328,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -351,7 +351,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 		assert.Contains(t, p1.Hand().ShowCards(), weapon)
@@ -374,13 +374,10 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), "non-existent-attacker", a.GetID(), sword.GetID())
+		err := g.Attack(p1.Name(), "non-existent-target", sword.GetID())
 		assert.Error(t, err)
 
-		err = g.Attack(p1.Name(), k.GetID(), "non-existent-target", sword.GetID())
-		assert.Error(t, err)
-
-		err = g.Attack(p1.Name(), k.GetID(), a.GetID(), "non-existent-weapon")
+		err = g.Attack(p1.Name(), a.GetID(), "non-existent-weapon")
 		assert.Error(t, err)
 	})
 
@@ -402,7 +399,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -425,7 +422,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -448,7 +445,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -471,7 +468,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -494,7 +491,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -517,7 +514,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -540,7 +537,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -563,7 +560,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -586,7 +583,7 @@ func TestAttacks(t *testing.T) {
 			Players: []ports.Player{p1, p2},
 		}
 
-		err := g.Attack(p1.Name(), attacker.GetID(), target.GetID(), weapon.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
@@ -612,11 +609,11 @@ func TestAttacks(t *testing.T) {
 
 		g.Players = []ports.Player{p1, p2}
 
-		err := g.Attack(p1.Name(), k.GetID(), a.GetID(), sword1.GetID())
+		err := g.Attack(p1.Name(), a.GetID(), sword1.GetID())
 		assert.NoError(t, err)
 		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
 
-		err = g.Attack(p1.Name(), k.GetID(), a.GetID(), sword2.GetID())
+		err = g.Attack(p1.Name(), a.GetID(), sword2.GetID())
 		assert.NoError(t, err)
 		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
 
@@ -657,13 +654,13 @@ func TestAttacks(t *testing.T) {
 
 		g.Players = []ports.Player{p1, p2}
 
-		err := g.Attack(p1.Name(), m1.GetID(), target.GetID(), poison1.GetID())
+		err := g.Attack(p1.Name(), target.GetID(), poison1.GetID())
 		assert.NoError(t, err)
-		err = g.Attack(p1.Name(), k2.GetID(), target.GetID(), sword2.GetID())
+		err = g.Attack(p1.Name(), target.GetID(), sword2.GetID())
 		assert.NoError(t, err)
-		err = g.Attack(p1.Name(), a3.GetID(), target.GetID(), arrow3.GetID())
+		err = g.Attack(p1.Name(), target.GetID(), arrow3.GetID())
 		assert.NoError(t, err)
-		err = g.Attack(p1.Name(), k2.GetID(), target.GetID(), sword4.GetID())
+		err = g.Attack(p1.Name(), target.GetID(), sword4.GetID())
 		assert.NoError(t, err)
 
 		assert.Equal(t, 0, target.Health())
@@ -774,7 +771,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		g.Players = []ports.Player{p1, p2}
 
-		_ = g.Attack(p1.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
+		_ = g.Attack(p1.Name(), target.GetID(), arrow.GetID())
 		assert.Equal(t, cards.WarriorMaxHealth-4, target.Health())
 		err := g.EndTurn(p1.Name())
 		assert.NoError(t, err)
@@ -817,11 +814,11 @@ func TestGame_SpecialPower(t *testing.T) {
 		assert.Equal(t, card, sp)
 		_ = g.EndTurn(p1.Name())
 
-		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow.GetID())
+		_ = g.Attack(p2.Name(), target.GetID(), arrow.GetID())
 		assert.Equal(t, cards.SpecialPowerMaxHealth-4, sp.Health())
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 
-		_ = g.Attack(p2.Name(), attacker.GetID(), target.GetID(), arrow2.GetID())
+		_ = g.Attack(p2.Name(), target.GetID(), arrow2.GetID())
 		assert.Equal(t, cards.SpecialPowerMaxHealth-4-8, sp.Health())
 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
 

@@ -557,7 +557,7 @@ func trade(player string) error {
 func attack(playerName string) error {
 	ok := false
 	for !ok {
-		print("Select the warrior, the target and the weapon: ")
+		print("Select the target and the weapon: ")
 		w, err := reader.ReadString('\n')
 		if err != nil {
 			return fmt.Errorf("error reading attack: %w", err)
@@ -568,7 +568,7 @@ func attack(playerName string) error {
 			continue
 		}
 
-		err = g.Attack(playerName, cards[0], cards[1], cards[2])
+		err = g.Attack(playerName, cards[0], cards[1])
 		if err != nil {
 			println("Error performing attack:", err.Error())
 			continue

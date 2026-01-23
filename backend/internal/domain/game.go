@@ -166,15 +166,10 @@ func (g *Game) GetStatusForNextPlayer() (status GameStatus) {
 	return NewGameStatus(player, enemy)
 }
 
-func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
+func (g *Game) Attack(playerName, targetID, weaponID string) error {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name() != playerName {
 		return errors.New(fmt.Sprintf("%s not your turn", playerName))
-	}
-
-	warriorCard, ok := current.GetCardFromField(warriorID)
-	if !ok {
-		return errors.New("warrior card not in field: " + warriorID)
 	}
 
 	targetCard, ok := enemy.GetCardFromField(targetID)
@@ -187,12 +182,12 @@ func (g *Game) Attack(playerName, warriorID, targetID, weaponID string) error {
 		return errors.New("weapon card not in hand: " + weaponID)
 	}
 
-	if err := current.Attack(warriorCard, targetCard, weaponCard); err != nil {
+	if err := current.Attack(targetCard, weaponCard); err != nil {
 		return fmt.Errorf("attack action failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s\nattacked\n%s",
-		warriorCard.String(), targetCard.String()))
+	g.addToHistory(fmt.Sprintf("%s\nwas attacked with \n%s",
+		targetCard.String(), targetCard.String()))
 
 	return nil
 }

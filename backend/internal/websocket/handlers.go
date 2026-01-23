@@ -99,7 +99,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) error {
-		return g.Attack(client.PlayerName, p.WarriorID, p.TargetID, p.WeaponID)
+		return g.Attack(client.PlayerName, p.TargetID, p.WeaponID)
 	})
 }
 

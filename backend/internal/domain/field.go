@@ -15,7 +15,7 @@ type field struct {
 func (h *field) HasArcher() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.ArcherType:
+		case ports.ArcherWarriorType:
 			return true
 		}
 	}
@@ -27,7 +27,7 @@ func (h *field) HasArcher() bool {
 func (h *field) HasDragon() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.DragonType:
+		case ports.DragonWarriorType:
 			return true
 		}
 	}
@@ -39,7 +39,7 @@ func (h *field) HasDragon() bool {
 func (h *field) HasKnight() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.KnightType:
+		case ports.KnightWarriorType:
 			return true
 		}
 	}
@@ -51,7 +51,7 @@ func (h *field) HasKnight() bool {
 func (h *field) HasMage() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.MageType:
+		case ports.MageWarriorType:
 			return true
 		}
 	}

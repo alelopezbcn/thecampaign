@@ -20,8 +20,18 @@ func NewSpecialPower(id string) ports.SpecialPower {
 	return &specialPower{
 		cardBase:       newCardBase(id, "Special Power"),
 		attackableBase: newAttackableBase(SpecialPowerMaxHealth),
-		weaponBase:     newWeaponBase(SpecialPowerDamage, ports.SpecialPowerType),
+		weaponBase:     newWeaponBase(SpecialPowerDamage, ports.SpecialPowerWeaponType),
 	}
+}
+func (s *specialPower) BeAttacked(w ports.Weapon) error {
+	if w == nil {
+		return errors.New("weapon cannot be nil")
+	}
+
+	multiplier := 1
+	s.ReceiveDamage(w, multiplier)
+
+	return nil
 }
 func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
 	if _, ok := usedBy.(*dragon); ok {

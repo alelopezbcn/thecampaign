@@ -40,17 +40,17 @@ func (m *MockPlayer) EXPECT() *MockPlayerMockRecorder {
 }
 
 // Attack mocks base method.
-func (m *MockPlayer) Attack(warriorCard, targetCard, weaponCard ports.Card) error {
+func (m *MockPlayer) Attack(targetCard, weaponCard ports.Card) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Attack", warriorCard, targetCard, weaponCard)
+	ret := m.ctrl.Call(m, "Attack", targetCard, weaponCard)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Attack indicates an expected call of Attack.
-func (mr *MockPlayerMockRecorder) Attack(warriorCard, targetCard, weaponCard any) *gomock.Call {
+func (mr *MockPlayerMockRecorder) Attack(targetCard, weaponCard any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockPlayer)(nil).Attack), warriorCard, targetCard, weaponCard)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockPlayer)(nil).Attack), targetCard, weaponCard)
 }
 
 // CanTakeCards mocks base method.

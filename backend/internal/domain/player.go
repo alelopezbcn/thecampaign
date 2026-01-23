@@ -136,13 +136,9 @@ func (p *player) MoveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *player) Attack(warriorCard ports.Card, targetCard ports.Card,
+func (p *player) Attack(targetCard ports.Card,
 	weaponCard ports.Card) error {
 
-	warrior, ok := warriorCard.(ports.Warrior)
-	if !ok {
-		return fmt.Errorf("the attacking cardBase is not a warrior")
-	}
 	target, ok := targetCard.(ports.Attackable)
 	if !ok {
 		return fmt.Errorf("the target cardBase cannot be attacked")
@@ -152,7 +148,22 @@ func (p *player) Attack(warriorCard ports.Card, targetCard ports.Card,
 		return fmt.Errorf("the card is not a weapon")
 	}
 
-	err := warrior.Attack(target, weapon)
+	switch weapon.Type() {
+	case ports.SwordWeaponType:
+		if !p.Field().HasKnight() && !p.Field().HasDragon() {
+			return fmt.Errorf("sword weapon cannot be used")
+		}
+	case ports.ArrowWeaponType:
+		if !p.Field().HasArcher() && !p.Field().HasDragon() {
+			return fmt.Errorf("arrow weapon cannot be used")
+		}
+	case ports.PoisonWeaponType:
+		if !p.Field().HasMage() && !p.Field().HasDragon() {
+			return fmt.Errorf("poison weapon cannot be used")
+		}
+	}
+
+	err := target.BeAttacked(weapon)
 	if err != nil {
 		return fmt.Errorf("attack failed: %w", err)
 	}

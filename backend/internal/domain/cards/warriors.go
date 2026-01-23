@@ -15,29 +15,21 @@ func NewKnight(id string) ports.Knight {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.KnightType,
+			ports.KnightWarriorType,
 		),
 	}
 }
-func (k *knight) Attack(t ports.Attackable, w ports.Weapon) error {
-	if t == nil {
-		return errors.New("target cannot be nil")
-	}
+func (k *knight) BeAttacked(w ports.Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
 
-	_, ok := w.(*sword)
-	if !ok {
-		return errors.New("knight can only attack with sword")
-	}
-
 	multiplier := 1
-	if _, ok = t.(*archer); ok {
+	if w.Type() == ports.PoisonWeaponType {
 		multiplier = 2
 	}
 
-	t.ReceiveDamage(w, multiplier)
+	k.ReceiveDamage(w, multiplier)
 
 	return nil
 }
@@ -51,29 +43,21 @@ func NewArcher(id string) ports.Archer {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.ArcherType,
+			ports.ArcherWarriorType,
 		),
 	}
 }
-func (a *archer) Attack(t ports.Attackable, w ports.Weapon) error {
-	if t == nil {
-		return errors.New("target cannot be nil")
-	}
+func (a *archer) BeAttacked(w ports.Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
 
-	_, ok := w.(*arrow)
-	if !ok {
-		return errors.New("archer can only attack with arrow")
-	}
-
 	multiplier := 1
-	if _, ok = t.(*mage); ok {
+	if w.Type() == ports.SwordWeaponType {
 		multiplier = 2
 	}
 
-	t.ReceiveDamage(w, multiplier)
+	a.ReceiveDamage(w, multiplier)
 
 	return nil
 }
@@ -87,29 +71,21 @@ func NewMage(id string) ports.Mage {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.MageType,
+			ports.MageWarriorType,
 		),
 	}
 }
-func (m *mage) Attack(t ports.Attackable, w ports.Weapon) error {
-	if t == nil {
-		return errors.New("target cannot be nil")
-	}
+func (m *mage) BeAttacked(w ports.Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
 
-	_, ok := w.(*poison)
-	if !ok {
-		return errors.New("mage can only attack with poison")
-	}
-
 	multiplier := 1
-	if _, ok = t.(*knight); ok {
+	if w.Type() == ports.ArrowWeaponType {
 		multiplier = 2
 	}
 
-	t.ReceiveDamage(w, multiplier)
+	m.ReceiveDamage(w, multiplier)
 
 	return nil
 }
@@ -123,36 +99,17 @@ func NewDragon(id string) ports.Dragon {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
 			newAttackableBase(DragonMaxHealth),
-			ports.DragonType,
+			ports.DragonWarriorType,
 		),
 	}
 }
-func (d *dragon) Attack(t ports.Attackable, w ports.Weapon) error {
-	if t == nil {
-		return errors.New("target cannot be nil")
-	}
+func (d *dragon) BeAttacked(w ports.Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
 
 	multiplier := 1
-
-	switch w.(type) {
-	case *sword:
-		if _, ok := t.(*archer); ok {
-			multiplier = 2
-		}
-	case *arrow:
-		if _, ok := t.(*mage); ok {
-			multiplier = 2
-		}
-	case *poison:
-		if _, ok := t.(*knight); ok {
-			multiplier = 2
-		}
-	}
-
-	t.ReceiveDamage(w, multiplier)
+	d.ReceiveDamage(w, multiplier)
 
 	return nil
 }

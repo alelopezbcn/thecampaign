@@ -47,9 +47,8 @@ type SetInitialWarriorsPayload struct {
 
 // AttackPayload for attack action
 type AttackPayload struct {
-	WarriorID string `json:"warrior_id"`
-	TargetID  string `json:"target_id"`
-	WeaponID  string `json:"weapon_id"`
+	TargetID string `json:"target_id"`
+	WeaponID string `json:"weapon_id"`
 }
 
 // SpecialPowerPayload for special power action
