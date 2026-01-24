@@ -39,6 +39,20 @@ func (m *MockCastle) EXPECT() *MockCastleMockRecorder {
 	return m.recorder
 }
 
+// CanBeAttacked mocks base method.
+func (m *MockCastle) CanBeAttacked() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeAttacked")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeAttacked indicates an expected call of CanBeAttacked.
+func (mr *MockCastleMockRecorder) CanBeAttacked() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeAttacked", reflect.TypeOf((*MockCastle)(nil).CanBeAttacked))
+}
+
 // Construct mocks base method.
 func (m *MockCastle) Construct(card ports.Card) error {
 	m.ctrl.T.Helper()
@@ -51,6 +65,20 @@ func (m *MockCastle) Construct(card ports.Card) error {
 func (mr *MockCastleMockRecorder) Construct(card any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Construct", reflect.TypeOf((*MockCastle)(nil).Construct), card)
+}
+
+// GetID mocks base method.
+func (m *MockCastle) GetID() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetID")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetID indicates an expected call of GetID.
+func (mr *MockCastleMockRecorder) GetID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockCastle)(nil).GetID))
 }
 
 // IsConstructed mocks base method.

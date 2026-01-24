@@ -6,15 +6,15 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type fieldCard struct {
-	card
-	AttackedBy  []card
-	ProtectedBy card
+type FieldCard struct {
+	Card
+	AttackedBy  []Card
+	ProtectedBy Card
 }
 
-func newFieldCard(warrior ports.Warrior) fieldCard {
+func newFieldCard(warrior ports.Warrior) FieldCard {
 
-	var aCardType cardType
+	var aCardType CardType
 	switch warrior.Type() {
 	case ports.KnightWarriorType:
 		aCardType = CardTypeKnight
@@ -26,9 +26,9 @@ func newFieldCard(warrior ports.Warrior) fieldCard {
 		aCardType = CardTypeDragon
 	}
 
-	var attackedByCards []card
+	var attackedByCards []Card
 	for _, attacker := range warrior.AttackedBy() {
-		var weaponCardType cardType
+		var weaponCardType CardType
 		switch attacker.Type() {
 		case ports.SwordWeaponType:
 			weaponCardType = CardTypeSword
@@ -41,19 +41,19 @@ func newFieldCard(warrior ports.Warrior) fieldCard {
 			weaponCardType, attacker.DamageAmount()))
 	}
 
-	var protectedByCard card
+	var protectedByCard Card
 	if ok, protector := warrior.IsProtected(); ok {
 		protectedByCard = newCard(protector.GetID(), CardTypeSpecialPower, 0)
 	}
 
-	return fieldCard{
-		card:        newCard(warrior.GetID(), aCardType, warrior.Health()),
+	return FieldCard{
+		Card:        newCard(warrior.GetID(), aCardType, warrior.Health()),
 		AttackedBy:  attackedByCards,
 		ProtectedBy: protectedByCard,
 	}
 }
 
-func (c fieldCard) String() string {
+func (c FieldCard) String() string {
 	return fmt.Sprintf("%s - %s (%d)%s%s",
 		c.CardID,
 		c.CardType.String(),

@@ -273,7 +273,6 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 }
 
-Remove the userID as we did with Attack, and merge the two methods
 func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) error {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name() != playerName {

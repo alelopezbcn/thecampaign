@@ -18,11 +18,11 @@ type GameStatus struct {
 	CanInitiateCastle bool
 	CanGrowCastle     bool
 
-	CurrentPlayerHand          []handCard
-	CurrentPlayerField         []fieldCard
-	CurrentPlayerCastle        castle
-	EnemyField                 []fieldCard
-	EnemyCastle                castle
+	CurrentPlayerHand          []HandCard
+	CurrentPlayerField         []FieldCard
+	CurrentPlayerCastle        Castle
+	EnemyField                 []FieldCard
+	EnemyCastle                Castle
 	CardsInEnemyHand           int
 	ResourceCardsInEnemyCastle int
 }
@@ -56,16 +56,15 @@ func (g *GameStatus) ShowBoard() string {
 func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 	gs := GameStatus{}
 	gs.CurrentPlayer = currentPlayer.Name()
-	gs.CurrentPlayerHand = []handCard{}
-	gs.CurrentPlayerField = []fieldCard{}
-	gs.EnemyField = []fieldCard{}
+	gs.CurrentPlayerHand = []HandCard{}
+	gs.CurrentPlayerField = []FieldCard{}
+	gs.EnemyField = []FieldCard{}
 
 	for _, card := range currentPlayer.Hand().ShowCards() {
 		switch ct := card.(type) {
 		case ports.Warrior:
 			gs.CanMoveWarrior = true
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, newWarriorHandCard(ct))
-
 		case ports.Weapon:
 			gs.CanInitiateCastle = ct.CanConstruct()
 
@@ -80,7 +79,6 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				newWeaponHandCard(ct, currentPlayer.Field(),
 					enemy.Field().AttackableIDs()))
-
 		case ports.Catapult:
 			canBeUsed := enemy.Castle().CanBeAttacked()
 			gs.CanAttack = gs.CanAttack || canBeUsed
@@ -90,6 +88,7 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				newCatapultHandCard(ct.GetID(), castleID))
+
 		case ports.Spy:
 			gs.CanSpy = true
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,

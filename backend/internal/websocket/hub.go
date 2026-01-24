@@ -7,6 +7,7 @@ import (
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
 // ClientMessage represents a message from a client
@@ -238,7 +239,7 @@ func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
 	}
 
 	for playerName, client := range room.Players {
-		var status domain.GameStatus
+		var status gamestatus.GameStatus
 		isCurrentPlayer := playerName == currentPlayerName
 
 		if isCurrentPlayer {
@@ -247,7 +248,7 @@ func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
 		} else {
 			// Not their turn - show enemy player's perspective
 			// Enemy sees their own hand and the current player's field
-			status = domain.NewGameStatus(enemyPlayer, currentPlayer)
+			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer)
 		}
 
 		// Only send newly drawn card ID to the player who received it

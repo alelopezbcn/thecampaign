@@ -4,20 +4,20 @@ import (
 	"fmt"
 )
 
-type card struct {
+type Card struct {
 	CardID   string
-	CardType cardType
+	CardType CardType
 	Value    int
 }
 
-func newCard(cardID string, cardType cardType, value int) card {
-	return card{
+func newCard(cardID string, cardType CardType, value int) Card {
+	return Card{
 		CardID:   cardID,
 		CardType: cardType,
 		Value:    value,
 	}
 }
 
-func (c card) String() string {
+func (c Card) String() string {
 	return fmt.Sprintf("%s - %s (%d)", c.CardID, c.CardType.String(), c.Value)
 }

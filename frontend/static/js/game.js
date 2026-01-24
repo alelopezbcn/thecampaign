@@ -455,7 +455,7 @@ function createCardElement(card, context) {
     `;
 
     // Add click handler
-    if (context === 'setup' || context === 'player-hand') {
+    if (context === 'setup' || context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {
         div.addEventListener('click', () => {
             handleCardClick(div.dataset.cardId, cardType, context);
         });
@@ -589,18 +589,14 @@ function updateActionButtons() {
     });
 
     if (isYourTurn && status) {
-        // Customize based on available actions
-        document.getElementById('move-warrior-btn').disabled =
-            !status.warriors_in_hand_ids || status.warriors_in_hand_ids.length === 0;
-        document.getElementById('attack-btn').disabled =
-            !status.usable_weapon_ids || status.usable_weapon_ids.length === 0;
-        document.getElementById('buy-btn').disabled =
-            !status.resource_ids || status.resource_ids.length === 0;
-        document.getElementById('construct-btn').disabled =
-            !status.construction_ids || status.construction_ids.length === 0;
-        document.getElementById('spy-btn').disabled = !status.spy_id;
-        document.getElementById('steal-btn').disabled = !status.thief_id;
-        document.getElementById('catapult-btn').disabled = !status.catapult_id;
+        // Customize based on available actions (using new boolean fields)
+        document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
+        document.getElementById('attack-btn').disabled = !status.can_attack;
+        document.getElementById('buy-btn').disabled = !status.can_buy;
+        document.getElementById('construct-btn').disabled = !status.can_initiate_castle && !status.can_grow_castle;
+        document.getElementById('spy-btn').disabled = !status.can_spy;
+        document.getElementById('steal-btn').disabled = !status.can_steal;
+        document.getElementById('catapult-btn').disabled = !status.can_catapult;
     }
 }
 
