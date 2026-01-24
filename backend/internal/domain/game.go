@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/google/uuid"
 )
@@ -161,9 +162,9 @@ func (g *Game) DrawCards(playerName string, count int) (err error) {
 	return nil
 }
 
-func (g *Game) GetStatusForNextPlayer() (status GameStatus) {
+func (g *Game) GetStatusForNextPlayer() (status gamestatus.GameStatus) {
 	player, enemy := g.WhoIsCurrent()
-	return NewGameStatus(player, enemy)
+	return gamestatus.NewGameStatus(player, enemy)
 }
 
 func (g *Game) Attack(playerName, targetID, weaponID string) error {
@@ -272,6 +273,7 @@ func (g *Game) Buy(playerName, cardID string) error {
 
 }
 
+Remove the userID as we did with Attack, and merge the two methods
 func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) error {
 	current, enemy := g.WhoIsCurrent()
 	if current.Name() != playerName {

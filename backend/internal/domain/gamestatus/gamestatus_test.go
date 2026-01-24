@@ -1,4 +1,4 @@
-package domain
+package gamestatus
 
 import (
 	"testing"

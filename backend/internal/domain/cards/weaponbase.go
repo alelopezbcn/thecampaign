@@ -21,3 +21,7 @@ func (s *weaponBase) DamageAmount() int {
 func (s *weaponBase) Type() ports.WeaponType {
 	return s.weaponType
 }
+
+func (s *weaponBase) CanConstruct() bool {
+	return s.DamageAmount() == 1
+}

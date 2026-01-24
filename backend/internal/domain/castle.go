@@ -10,6 +10,7 @@ import (
 const MaxCastleResources = 25
 
 type castle struct {
+	id                       string
 	isConstructed            bool
 	initialCard              ports.Card
 	resources                []ports.Resource
@@ -19,10 +20,15 @@ type castle struct {
 
 func newCastle(p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
 	return &castle{
+		id:                       "castle_" + p.Name(),
 		resources:                []ports.Resource{},
 		player:                   p,
 		castleCompletionObserver: o,
 	}
+}
+
+func (c *castle) GetID() string {
+	return c.id
 }
 
 func (c *castle) Construct(card ports.Card) error {
@@ -97,6 +103,10 @@ func (c *castle) RemoveGold(position int) (ports.Resource, error) {
 	}
 
 	return nil, fmt.Errorf("failed to remove Resource cardBase from castle")
+}
+
+func (c *castle) CanBeAttacked() bool {
+	return c.IsConstructed() && c.ResourceCards() > 0
 }
 
 func (c *castle) String() string {

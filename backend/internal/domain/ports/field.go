@@ -9,4 +9,5 @@ type Field interface {
 	HasMage() bool
 	HasKnight() bool
 	HasDragon() bool
+	AttackableIDs() []string
 }

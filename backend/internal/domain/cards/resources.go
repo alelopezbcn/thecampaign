@@ -22,6 +22,14 @@ func (g *gold) Value() int {
 	return g.value
 }
 
+func (g *gold) CanConstruct() bool {
+	return g.value == 1
+}
+
+func (g *gold) CanBuy() bool {
+	return g.value >= 2
+}
+
 func (g *gold) String() string {
 	return fmt.Sprintf("%d %s (%s)", g.Value(), g.name, g.id)
 }

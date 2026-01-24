@@ -22,6 +22,8 @@ type Catapult interface {
 type Resource interface {
 	Card
 	Value() int
+	CanConstruct() bool
+	CanBuy() bool
 }
 
 type SpecialPower interface {
@@ -56,6 +58,7 @@ type Weapon interface {
 	Card
 	DamageAmount() int
 	Type() WeaponType
+	CanConstruct() bool
 }
 
 type Dragon interface {

@@ -10,23 +10,23 @@ import (
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	_ "github.com/mattn/go-sqlite3"
 )
 
 const (
-	currentHandHeader  = "****************************************"
-	newPhaseHeader     = "----------------------------------------------------------"
-	attackAction       = 1
-	spyAction          = 2
-	stealAction        = 3
-	buyAction          = 4
-	constructAction    = 5
-	tradeAction        = 6
-	moveWarriorAction  = 7
-	catapultAction     = 8
-	specialPowerAction = 9
-	passAction         = 10
+	currentHandHeader = "****************************************"
+	newPhaseHeader    = "----------------------------------------------------------"
+	attackAction      = 1
+	spyAction         = 2
+	stealAction       = 3
+	buyAction         = 4
+	constructAction   = 5
+	tradeAction       = 6
+	moveWarriorAction = 7
+	catapultAction    = 8
+	passAction        = 9
 )
 
 var (
@@ -177,7 +177,7 @@ func playTurn() error {
 	actionsPerformed := map[int]bool{}
 	actionsPending := 10
 
-	var status domain.GameStatus
+	var status gamestatus.GameStatus
 
 	for actionsPending > 0 {
 		status = g.GetStatusForNextPlayer()
@@ -269,13 +269,6 @@ func playTurn() error {
 			}
 			actionsPerformed[catapultAction] = true
 			actionsPending--
-		case specialPowerAction:
-			err := specialPower(status.CurrentPlayer)
-			if err != nil {
-				return err
-			}
-			actionsPerformed[specialPowerAction] = true
-			actionsPending--
 		case passAction:
 			actionsPending = 0
 		default:
@@ -288,87 +281,65 @@ func playTurn() error {
 	return nil
 }
 
-func printTradeAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+func printTradeAction(actionsPerformed map[int]bool, status gamestatus.GameStatus) {
 	hasTraded, ok := actionsPerformed[tradeAction]
 	if (!ok || !hasTraded) && len(status.CurrentPlayerHand) >= 3 {
 		println(fmt.Sprintf("  %d. Trade", tradeAction))
 	}
 }
 
-func printConstructAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+func printConstructAction(actionsPerformed map[int]bool, status gamestatus.GameStatus) {
 	hasConstructed, ok := actionsPerformed[constructAction]
 	if !ok || !hasConstructed {
-		if !status.CurrentPlayerCastle.IsConstructed() && len(status.ConstructionIDs) > 0 {
-			println(fmt.Sprintf("  %d. Construct (%s)", constructAction,
-				strings.Join(status.ConstructionIDs, ",")))
+		if !status.CurrentPlayerCastle.IsConstructed && status.CanInitiateCastle {
+			println(fmt.Sprintf("  %d. Construct", constructAction))
 			return
 		}
-		if status.CurrentPlayerCastle.IsConstructed() && len(status.ResourceIDs) > 0 {
-			println(fmt.Sprintf("  %d. Add Resources to Castle (%s)", constructAction,
-				strings.Join(status.ResourceIDs, ",")))
+		if status.CurrentPlayerCastle.IsConstructed && status.CanGrowCastle {
+			println(fmt.Sprintf("  %d. Add Resources to Castle", constructAction))
 			return
 		}
 	}
 }
 
-func printBuyAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+func printBuyAction(actionsPerformed map[int]bool, status gamestatus.GameStatus) {
 	hasBought, ok := actionsPerformed[buyAction]
-	if (!ok || !hasBought) && len(status.ResourceIDs) > 0 {
-		println(fmt.Sprintf("  %d. Buy (%s)", buyAction,
-			strings.Join(status.ResourceIDs, ",")))
+	if (!ok || !hasBought) && status.CanBuy {
+		println(fmt.Sprintf("  %d. Buy", buyAction))
 	}
 }
 
-func printSpySteal(actionsPerformed map[int]bool, status domain.GameStatus) {
+func printSpySteal(actionsPerformed map[int]bool, status gamestatus.GameStatus) {
 	hasSpied, okSpy := actionsPerformed[spyAction]
 	hasStolen, okSteal := actionsPerformed[stealAction]
-	if (!okSpy || !hasSpied || !hasStolen) && status.SpyID != "" {
+	if (!okSpy || !hasSpied || !hasStolen) && status.CanSpy {
 		println(fmt.Sprintf("  %d. Spy", spyAction))
 	}
-	if (!okSteal || !hasStolen || !hasSpied) && status.ThiefID != "" {
+	if (!okSteal || !hasStolen || !hasSpied) && status.CanSteal {
 		println(fmt.Sprintf("  %d. Steal", stealAction))
 	}
 }
 
-func printMoveWarriorAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+func printMoveWarriorAction(actionsPerformed map[int]bool, status gamestatus.GameStatus) {
 	hasMovedWarrior, ok := actionsPerformed[moveWarriorAction]
-	if (!ok || !hasMovedWarrior) && len(status.WarriorsInHandIDs) > 0 {
-		println(fmt.Sprintf("  %d. Move warrior to Field (%s)", moveWarriorAction,
-			strings.Join(status.WarriorsInHandIDs, ",")))
+	if (!ok || !hasMovedWarrior) && status.CanMoveWarrior {
+		println(fmt.Sprintf("  %d. Move warrior to Field", moveWarriorAction))
 	}
 }
 
-func printAttackAction(actionsPerformed map[int]bool, status domain.GameStatus) {
+func printAttackAction(actionsPerformed map[int]bool, status gamestatus.GameStatus) {
 	hasAttacked := actionsPerformed[attackAction]
 	hasCatapult := actionsPerformed[catapultAction]
-	hasUsedSpecialPower := actionsPerformed[specialPowerAction]
 
-	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && len(status.UsableWeaponIDs) > 0 {
-		println(fmt.Sprintf("  %d. Attack with Weapon (%s)", attackAction,
-			strings.Join(status.UsableWeaponIDs, ",")))
+	if !hasAttacked && !hasCatapult && status.CanAttack {
+		println(fmt.Sprintf("  %d. Attack with Weapon", attackAction))
 	}
-	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower && status.CatapultID != "" {
-		println(fmt.Sprintf("  %d. Attack with Catapult (%s)", catapultAction,
-			status.CatapultID))
-	}
-	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower &&
-		len(status.SpecialPowerStatus.CanProtectIDs) > 0 {
-		println(fmt.Sprintf("  %d. Protect with Special Power (%s)", specialPowerAction,
-			strings.Join(status.SpecialPowerStatus.CanProtectIDs, ",")))
-	}
-	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower &&
-		len(status.SpecialPowerStatus.CanHealIDs) > 0 {
-		println(fmt.Sprintf("  %d. Heal with Special Power (%s)", specialPowerAction,
-			strings.Join(status.SpecialPowerStatus.CanHealIDs, ",")))
-	}
-	if !hasAttacked && !hasCatapult && !hasUsedSpecialPower &&
-		len(status.SpecialPowerStatus.CanInstantKillIDs) > 0 {
-		println(fmt.Sprintf("  %d. Instant Kill with Special Power (%s)", specialPowerAction,
-			strings.Join(status.SpecialPowerStatus.CanInstantKillIDs, ",")))
+	if !hasAttacked && !hasCatapult && status.CanCatapult {
+		println(fmt.Sprintf("  %d. Attack with Catapult", catapultAction))
 	}
 }
 
-func steal(status domain.GameStatus) error {
+func steal(status gamestatus.GameStatus) error {
 	ok := false
 	print(fmt.Sprintf("The enemy has %d cards in hand. Choose one: ",
 		status.CardsInEnemyHand))
@@ -484,7 +455,7 @@ func moveWarrior(player string) error {
 	return nil
 }
 
-func catapult(status domain.GameStatus) error {
+func catapult(status gamestatus.GameStatus) error {
 	ok := false
 	print(fmt.Sprintf("The enemy's castle has %d resource cards. Choose one: ",
 		status.ResourceCardsInEnemyCastle))
