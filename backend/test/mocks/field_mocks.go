@@ -55,6 +55,20 @@ func (mr *MockFieldMockRecorder) AddWarriors(cards ...any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriors", reflect.TypeOf((*MockField)(nil).AddWarriors), cards...)
 }
 
+// AttackableIDs mocks base method.
+func (m *MockField) AttackableIDs() []string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AttackableIDs")
+	ret0, _ := ret[0].([]string)
+	return ret0
+}
+
+// AttackableIDs indicates an expected call of AttackableIDs.
+func (mr *MockFieldMockRecorder) AttackableIDs() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackableIDs", reflect.TypeOf((*MockField)(nil).AttackableIDs))
+}
+
 // GetWarrior mocks base method.
 func (m *MockField) GetWarrior(cardID string) (ports.Warrior, bool) {
 	m.ctrl.T.Helper()

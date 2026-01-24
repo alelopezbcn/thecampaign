@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(timeout 2 ./server.exe:*)"
+      "Bash(timeout 2 ./server.exe:*)",
+      "Bash(go test:*)"
     ]
   }
 }

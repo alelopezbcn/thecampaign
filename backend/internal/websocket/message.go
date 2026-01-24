@@ -104,30 +104,37 @@ type GameStatePayload struct {
 
 // GameStatusDTO is the JSON-friendly game status
 type GameStatusDTO struct {
-	CurrentPlayer              string              `json:"current_player"`
-	WarriorsInHandIDs          []string            `json:"warriors_in_hand_ids"`
-	UsableWeaponIDs            []string            `json:"usable_weapon_ids"`
-	SpyID                      string              `json:"spy_id"`
-	ThiefID                    string              `json:"thief_id"`
-	ResourceIDs                []string            `json:"resource_ids"`
-	SpecialPowerStatus         SpecialPowerStatusDTO `json:"special_power_status"`
-	ConstructionIDs            []string            `json:"construction_ids"`
-	CatapultID                 string              `json:"catapult_id"`
-	CurrentPlayerHand          []CardDTO           `json:"current_player_hand"`
-	CurrentPlayerField         []CardDTO           `json:"current_player_field"`
-	CurrentPlayerCastle        CastleDTO           `json:"current_player_castle"`
-	EnemyField                 []CardDTO           `json:"enemy_field"`
-	EnemyCastle                CastleDTO           `json:"enemy_castle"`
-	CardsInEnemyHand           int                 `json:"cards_in_enemy_hand"`
-	ResourceCardsInEnemyCastle int                 `json:"resource_cards_in_enemy_castle"`
+	CurrentPlayer     string `json:"current_player"`
+	CanMoveWarrior    bool   `json:"can_move_warrior"`
+	CanAttack         bool   `json:"can_attack"`
+	CanCatapult       bool   `json:"can_catapult"`
+	CanSpy            bool   `json:"can_spy"`
+	CanSteal          bool   `json:"can_steal"`
+	CanBuy            bool   `json:"can_buy"`
+	CanInitiateCastle bool   `json:"can_initiate_castle"`
+	CanGrowCastle     bool   `json:"can_grow_castle"`
+
+	CurrentPlayerHand          []HandCardDTO  `json:"current_player_hand"`
+	CurrentPlayerField         []FieldCardDTO `json:"current_player_field"`
+	CurrentPlayerCastle        CastleDTO      `json:"current_player_castle"`
+	EnemyField                 []FieldCardDTO `json:"enemy_field"`
+	EnemyCastle                CastleDTO      `json:"enemy_castle"`
+	CardsInEnemyHand           int            `json:"cards_in_enemy_hand"`
+	ResourceCardsInEnemyCastle int            `json:"resource_cards_in_enemy_castle"`
 }
 
-// SpecialPowerStatusDTO for special powers
-type SpecialPowerStatusDTO struct {
-	SpecialPowerIDs   []string `json:"special_power_ids"`
-	CanHealIDs        []string `json:"can_heal_ids"`
-	CanInstantKillIDs []string `json:"can_instant_kill_ids"`
-	CanProtectIDs     []string `json:"can_protect_ids"`
+// HandCardDTO represents a card in the player's hand
+type HandCardDTO struct {
+	CardDTO
+	CanBeUsedOnIDs []string `json:"can_be_used_on_ids"`
+	CanConstruct   bool     `json:"can_construct"`
+}
+
+// FieldCardDTO represents a card on the battlefield
+type FieldCardDTO struct {
+	CardDTO
+	AttackedBy  []CardDTO `json:"attacked_by,omitempty"`
+	ProtectedBy *CardDTO  `json:"protected_by,omitempty"`
 }
 
 // ErrorPayload for error messages

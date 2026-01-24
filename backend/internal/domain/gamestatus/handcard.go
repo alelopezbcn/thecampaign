@@ -6,17 +6,17 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type handCard struct {
-	card
-	CanBeUsedOnIDs []string
-	CanConstruct   bool
+type HandCard struct {
+	Card
+	CanBeUsedOnIDs []string `json:"can_be_used_on_ids"`
+	CanConstruct   bool     `json:"can_construct"`
 }
 
-func newHandCard(cardID string, cardType cardType, value int,
-	canBeUsedOnIDs []string, canConstruct bool) handCard {
+func newHandCard(cardID string, cardType CardType, value int,
+	canBeUsedOnIDs []string, canConstruct bool) HandCard {
 
-	return handCard{
-		card: card{
+	return HandCard{
+		Card: Card{
 			CardID:   cardID,
 			CardType: cardType,
 			Value:    value,
@@ -26,8 +26,8 @@ func newHandCard(cardID string, cardType cardType, value int,
 	}
 }
 
-func newWarriorHandCard(warrior ports.Warrior) handCard {
-	var aCardType cardType
+func newWarriorHandCard(warrior ports.Warrior) HandCard {
+	var aCardType CardType
 	switch warrior.Type() {
 	case ports.KnightWarriorType:
 		aCardType = CardTypeKnight
@@ -44,10 +44,10 @@ func newWarriorHandCard(warrior ports.Warrior) handCard {
 }
 
 func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
-	attackableIDs []string) handCard {
+	attackableIDs []string) HandCard {
 
 	canBeUsed := false
-	var aCardType cardType
+	var aCardType CardType
 
 	switch weapon.Type() {
 	case ports.SwordWeaponType:
@@ -70,7 +70,7 @@ func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 }
 
 func newSpecialPowerHandCard(specialPower ports.SpecialPower,
-	myField ports.Field, enemyField ports.Field) handCard {
+	myField ports.Field, enemyField ports.Field) HandCard {
 
 	canBeUsedOnIDs := []string{}
 
@@ -105,7 +105,7 @@ func newSpecialPowerHandCard(specialPower ports.SpecialPower,
 		0, canBeUsedOnIDs, false)
 }
 
-func newCatapultHandCard(cardID string, castleID string) handCard {
+func newCatapultHandCard(cardID string, castleID string) HandCard {
 	canBeUsedOnIDs := []string{}
 	if castleID != "" {
 		canBeUsedOnIDs = append(canBeUsedOnIDs, castleID)
@@ -113,23 +113,23 @@ func newCatapultHandCard(cardID string, castleID string) handCard {
 	return newHandCard(cardID, CardTypeCatapult, 0, canBeUsedOnIDs, false)
 }
 
-func newSpyHandCard(cardID string) handCard {
+func newSpyHandCard(cardID string) HandCard {
 	return newHandCard(cardID, CardTypeSpy, 0, []string{}, false)
 }
 
-func newThiefHandCard(cardID string) handCard {
+func newThiefHandCard(cardID string) HandCard {
 	return newHandCard(cardID, CardTypeThief, 0, []string{}, false)
 }
 
-func newResourceHandCard(resource ports.Resource) handCard {
+func newResourceHandCard(resource ports.Resource) HandCard {
 	return newHandCard(resource.GetID(), CardTypeResource,
 		resource.Value(), []string{}, resource.CanConstruct())
 }
 
-func (c handCard) CanBeUsed() bool {
+func (c HandCard) CanBeUsed() bool {
 	return len(c.CanBeUsedOnIDs) > 0
 }
 
-func (c handCard) String() string {
-	return fmt.Sprintf("%s | CanAffect: %v", c.card.String(), c.CanBeUsedOnIDs)
+func (c HandCard) String() string {
+	return fmt.Sprintf("%s | CanAffect: %v", c.Card.String(), c.CanBeUsedOnIDs)
 }

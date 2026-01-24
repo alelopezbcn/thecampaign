@@ -48,6 +48,10 @@ function setupEventListeners() {
     document.getElementById('catapult-btn').addEventListener('click', () => startAction('catapult'));
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
 
+    // Confirm/Cancel action buttons
+    document.getElementById('confirm-attack-btn').addEventListener('click', confirmAttack);
+    document.getElementById('cancel-action-btn').addEventListener('click', cancelAction);
+
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
 }
@@ -148,6 +152,12 @@ function handleGameState(payload) {
     gameState.newlyDrawnCard = payload.newly_drawn_card || null;
     console.log('gameState.newlyDrawnCard set to:', gameState.newlyDrawnCard);
 
+    // Reset action state when game state updates
+    gameState.currentAction = null;
+    gameState.selectedCards = [];
+    hideConfirmButtons();
+    updateActionPrompt('');
+
     // Determine which screen to show
     if (payload.game_status.current_player && !isSetupComplete(payload.game_status)) {
         showSetupScreen(payload.game_status);
@@ -235,19 +245,64 @@ function confirmInitialWarriors() {
 
 function sendAction(actionType, payload = null) {
     sendMessage(actionType, payload);
-    gameState.selectedCards = [];
+    clearSelections();
     gameState.currentAction = null;
     updateActionPrompt('');
+    hideConfirmButtons();
+}
+
+function confirmAttack() {
+    if (gameState.selectedCards.length === 2) {
+        sendAction('attack', {
+            target_id: gameState.selectedCards[0],
+            weapon_id: gameState.selectedCards[1]
+        });
+    }
+}
+
+function cancelAction() {
+    clearSelections();
+    gameState.currentAction = null;
+    updateActionPrompt('');
+    hideConfirmButtons();
+
+    // Re-render hand to remove unusable styles
+    if (gameState.currentState) {
+        renderCards('player-hand', gameState.currentState.current_player_hand);
+    }
+}
+
+function showConfirmButtons() {
+    document.getElementById('confirm-action-buttons').classList.remove('hidden');
+}
+
+function hideConfirmButtons() {
+    document.getElementById('confirm-action-buttons').classList.add('hidden');
+}
+
+function highlightSelectedCard(cardID) {
+    const card = document.querySelector(`[data-card-id="${cardID}"]`);
+    if (card) {
+        card.classList.add('selected');
+    }
+}
+
+function clearSelections() {
+    gameState.selectedCards = [];
+    document.querySelectorAll('.card.selected').forEach(card => {
+        card.classList.remove('selected');
+    });
 }
 
 function startAction(actionType) {
+    clearSelections();
+    hideConfirmButtons();
     gameState.currentAction = actionType;
-    gameState.selectedCards = [];
 
     let prompt = '';
     switch (actionType) {
         case 'attack':
-            prompt = 'Select: 1) Enemy target, 2) Weapon from your hand';
+            prompt = 'Select an enemy target first';
             break;
         case 'move_warrior':
             prompt = 'Select a warrior from your hand';
@@ -276,6 +331,11 @@ function startAction(actionType) {
     }
 
     updateActionPrompt(prompt);
+
+    // Re-render hand to apply unusable styles
+    if (gameState.currentState) {
+        renderCards('player-hand', gameState.currentState.current_player_hand);
+    }
 }
 
 function showSpyOptions() {
@@ -317,15 +377,16 @@ function handleCardClick(cardID, cardType, context) {
     if (!action) return;
 
     gameState.selectedCards.push(cardID);
+    highlightSelectedCard(cardID);
 
     // Handle different actions
     switch (action) {
         case 'attack':
-            if (gameState.selectedCards.length === 2) {
-                sendAction('attack', {
-                    target_id: gameState.selectedCards[0],
-                    weapon_id: gameState.selectedCards[1]
-                });
+            if (gameState.selectedCards.length === 1) {
+                updateActionPrompt('Now select a weapon from your hand');
+            } else if (gameState.selectedCards.length === 2) {
+                updateActionPrompt('Attack ready! Confirm or cancel.');
+                showConfirmButtons();
             }
             break;
         case 'special_power':
@@ -431,6 +492,22 @@ function createCardElement(card, context) {
     const cardType = getCardType(card);
     div.classList.add(cardType);
 
+    // Apply card color from backend (with transparency for background)
+    if (card.color) {
+        const bgColor = hexToRgba(card.color, 0.3);
+        div.style.setProperty('background', bgColor, 'important');
+        div.style.setProperty('border-color', card.color, 'important');
+    }
+
+    // Check if card is unusable during attack phase
+    const canBeUsedOnIDs = card.can_be_used_on_ids || [];
+    if (context === 'player-hand' && gameState.currentAction === 'attack') {
+        const isUnusable = isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs);
+        if (isUnusable) {
+            div.classList.add('unusable');
+        }
+    }
+
     // Check if this is the newly drawn card and highlight it
     console.log('Creating card:', div.dataset.cardId, 'newlyDrawnCard:', gameState.newlyDrawnCard);
     if (gameState.newlyDrawnCard && div.dataset.cardId === gameState.newlyDrawnCard) {
@@ -446,7 +523,7 @@ function createCardElement(card, context) {
     div.innerHTML = `
         <div class="card-header">
             <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
-            <span class="card-type ${cardType}">${cardType}</span>
+            <span class="card-type ${cardType}">${card.type || cardType}</span>
         </div>
         <div class="card-content">
             <div class="card-name">${getCardName(card)}</div>
@@ -455,7 +532,7 @@ function createCardElement(card, context) {
     `;
 
     // Add click handler
-    if (context === 'setup' || context === 'player-hand') {
+    if (context === 'setup' || context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {
         div.addEventListener('click', () => {
             handleCardClick(div.dataset.cardId, cardType, context);
         });
@@ -489,23 +566,55 @@ function renderCastle(containerId, castle) {
 }
 
 // Helper functions
-function getCardType(card) {
-    if (card.type) {
-        const type = card.type.toLowerCase();
-        if (type.includes('warrior') || type.includes('knight') ||
-            type.includes('archer') || type.includes('mage') ||
-            type.includes('dragon')) return 'warrior';
-        if (type.includes('sword') || type.includes('arrow') ||
-            type.includes('poison') || type.includes('weapon')) return 'weapon';
-        if (type.includes('gold') || type.includes('resource')) return 'resource';
-        if (type.includes('special') || type.includes('spy') ||
-            type.includes('thief') || type.includes('catapult')) return 'special';
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs) {
+    const rawType = (card.type || '').toLowerCase();
+
+    // Warriors, Resources, Spy, Thief are always unusable during attack
+    if (cardType === 'warrior' || cardType === 'resource') {
+        return true;
     }
+    if (rawType === 'spy' || rawType === 'thief') {
+        return true;
+    }
+
+    // Weapons and Special Powers need valid targets
+    if (cardType === 'weapon' || rawType === 'specialpower') {
+        return canBeUsedOnIDs.length === 0;
+    }
+
+    // Catapult needs enemy castle to be constructed
+    if (rawType === 'catapult') {
+        const enemyCastle = gameState.currentState?.enemy_castle;
+        return !enemyCastle || !enemyCastle.constructed;
+    }
+
+    return true; // Unknown types are unusable
+}
+
+function getCardType(card) {
+    // type is the category: Warrior, Weapon, Resource, SpecialPower, Spy, Thief, Catapult
+    const typeName = card.type || '';
+    const type = typeName.toLowerCase();
+
+    if (type === 'warrior') return 'warrior';
+    if (type === 'weapon') return 'weapon';
+    if (type === 'resource') return 'resource';
+    if (type === 'specialpower') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult') return 'special';
     return 'unknown';
 }
 
 function getCardName(card) {
-    if (card.name) return card.name;
+    // sub_type is the specific type: Knight, Sword, etc.
+    // Falls back to type if sub_type is empty
+    if (card.sub_type) return card.sub_type;
     if (card.type) return card.type;
     return 'Unknown Card';
 }
@@ -517,14 +626,14 @@ function getCardStats(card, cardType) {
         stats += `
             <div class="card-stat">
                 <span class="card-stat-label">HP</span>
-                <span class="card-stat-value">${card.hit_points || card.hp || 0}</span>
+                <span class="card-stat-value">${card.value || 0}</span>
             </div>
         `;
     } else if (cardType === 'weapon') {
         stats += `
             <div class="card-stat">
                 <span class="card-stat-label">DMG</span>
-                <span class="card-stat-value">${card.damage || card.damage_amount || 0}</span>
+                <span class="card-stat-value">${card.value || 0}</span>
             </div>
         `;
     } else if (cardType === 'resource') {
@@ -589,18 +698,14 @@ function updateActionButtons() {
     });
 
     if (isYourTurn && status) {
-        // Customize based on available actions
-        document.getElementById('move-warrior-btn').disabled =
-            !status.warriors_in_hand_ids || status.warriors_in_hand_ids.length === 0;
-        document.getElementById('attack-btn').disabled =
-            !status.usable_weapon_ids || status.usable_weapon_ids.length === 0;
-        document.getElementById('buy-btn').disabled =
-            !status.resource_ids || status.resource_ids.length === 0;
-        document.getElementById('construct-btn').disabled =
-            !status.construction_ids || status.construction_ids.length === 0;
-        document.getElementById('spy-btn').disabled = !status.spy_id;
-        document.getElementById('steal-btn').disabled = !status.thief_id;
-        document.getElementById('catapult-btn').disabled = !status.catapult_id;
+        // Customize based on available actions (using new boolean fields)
+        document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
+        document.getElementById('attack-btn').disabled = !status.can_attack;
+        document.getElementById('buy-btn').disabled = !status.can_buy;
+        document.getElementById('construct-btn').disabled = !status.can_initiate_castle && !status.can_grow_castle;
+        document.getElementById('spy-btn').disabled = !status.can_spy;
+        document.getElementById('steal-btn').disabled = !status.can_steal;
+        document.getElementById('catapult-btn').disabled = !status.can_catapult;
     }
 }
 

@@ -299,6 +299,34 @@ func (mr *MockResourceMockRecorder) AddCardMovedToPileObserver(observer any) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockResource)(nil).AddCardMovedToPileObserver), observer)
 }
 
+// CanBuy mocks base method.
+func (m *MockResource) CanBuy() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBuy")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBuy indicates an expected call of CanBuy.
+func (mr *MockResourceMockRecorder) CanBuy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBuy", reflect.TypeOf((*MockResource)(nil).CanBuy))
+}
+
+// CanConstruct mocks base method.
+func (m *MockResource) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockResourceMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockResource)(nil).CanConstruct))
+}
+
 // GetCardMovedToPileObserver mocks base method.
 func (m *MockResource) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
@@ -416,6 +444,20 @@ func (m *MockSpecialPower) BeAttacked(weapon ports.Weapon) error {
 func (mr *MockSpecialPowerMockRecorder) BeAttacked(weapon any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockSpecialPower)(nil).BeAttacked), weapon)
+}
+
+// CanConstruct mocks base method.
+func (m *MockSpecialPower) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockSpecialPowerMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockSpecialPower)(nil).CanConstruct))
 }
 
 // DamageAmount mocks base method.
@@ -979,6 +1021,20 @@ func (m *MockWeapon) AddCardMovedToPileObserver(observer ports.CardMovedToPileOb
 func (mr *MockWeaponMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockWeapon)(nil).AddCardMovedToPileObserver), observer)
+}
+
+// CanConstruct mocks base method.
+func (m *MockWeapon) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockWeaponMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockWeapon)(nil).CanConstruct))
 }
 
 // DamageAmount mocks base method.
@@ -1990,6 +2046,20 @@ func (mr *MockSwordMockRecorder) AddCardMovedToPileObserver(observer any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockSword)(nil).AddCardMovedToPileObserver), observer)
 }
 
+// CanConstruct mocks base method.
+func (m *MockSword) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockSwordMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockSword)(nil).CanConstruct))
+}
+
 // DamageAmount mocks base method.
 func (m *MockSword) DamageAmount() int {
 	m.ctrl.T.Helper()
@@ -2095,6 +2165,20 @@ func (mr *MockArrowMockRecorder) AddCardMovedToPileObserver(observer any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockArrow)(nil).AddCardMovedToPileObserver), observer)
 }
 
+// CanConstruct mocks base method.
+func (m *MockArrow) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockArrowMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockArrow)(nil).CanConstruct))
+}
+
 // DamageAmount mocks base method.
 func (m *MockArrow) DamageAmount() int {
 	m.ctrl.T.Helper()
@@ -2198,6 +2282,20 @@ func (m *MockPoison) AddCardMovedToPileObserver(observer ports.CardMovedToPileOb
 func (mr *MockPoisonMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockPoison)(nil).AddCardMovedToPileObserver), observer)
+}
+
+// CanConstruct mocks base method.
+func (m *MockPoison) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockPoisonMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockPoison)(nil).CanConstruct))
 }
 
 // DamageAmount mocks base method.

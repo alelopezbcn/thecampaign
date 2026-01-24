@@ -290,7 +290,7 @@ func (h *Hub) handleEndTurn(client *Client) {
 	statusBefore := room.Game.GetStatusForNextPlayer()
 	handBefore := make(map[string]bool)
 	for _, card := range statusBefore.CurrentPlayerHand {
-		handBefore[card.GetID()] = true
+		handBefore[card.Card.CardID] = true
 	}
 
 	log.Printf("EndTurn: nextPlayer=%s, hand size before draw=%d", nextPlayer.Name(), len(statusBefore.CurrentPlayerHand))
@@ -307,8 +307,8 @@ func (h *Hub) handleEndTurn(client *Client) {
 	statusAfter := room.Game.GetStatusForNextPlayer()
 	var newCardID string
 	for _, card := range statusAfter.CurrentPlayerHand {
-		if !handBefore[card.GetID()] {
-			newCardID = card.GetID()
+		if !handBefore[card.Card.CardID] {
+			newCardID = card.Card.CardID
 			break
 		}
 	}

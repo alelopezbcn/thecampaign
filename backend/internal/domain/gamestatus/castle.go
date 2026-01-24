@@ -6,21 +6,21 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-type castle struct {
-	IsConstructed bool
-	ResourceCards int
-	Value         int
+type Castle struct {
+	IsConstructed bool `json:"constructed"`
+	ResourceCards int  `json:"resource_cards"`
+	Value         int  `json:"value"`
 }
 
-func newCastle(c ports.Castle) castle {
-	return castle{
+func newCastle(c ports.Castle) Castle {
+	return Castle{
 		IsConstructed: c.IsConstructed(),
 		ResourceCards: c.ResourceCards(),
 		Value:         c.Value(),
 	}
 }
 
-func (c castle) String() string {
+func (c Castle) String() string {
 	if !c.IsConstructed {
 		return "Castle not constructed"
 	}
