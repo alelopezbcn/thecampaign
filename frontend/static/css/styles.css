@@ -443,7 +443,7 @@ body {
 }
 
 .card.unusable {
-    opacity: 0.15;
+    opacity: 0.25;
     pointer-events: none;
 }
 

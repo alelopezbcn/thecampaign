@@ -265,6 +265,11 @@ function cancelAction() {
     gameState.currentAction = null;
     updateActionPrompt('');
     hideConfirmButtons();
+
+    // Re-render hand to remove unusable styles
+    if (gameState.currentState) {
+        renderCards('player-hand', gameState.currentState.current_player_hand);
+    }
 }
 
 function showConfirmButtons() {
@@ -326,6 +331,11 @@ function startAction(actionType) {
     }
 
     updateActionPrompt(prompt);
+
+    // Re-render hand to apply unusable styles
+    if (gameState.currentState) {
+        renderCards('player-hand', gameState.currentState.current_player_hand);
+    }
 }
 
 function showSpyOptions() {
@@ -489,10 +499,13 @@ function createCardElement(card, context) {
         div.style.setProperty('border-color', card.color, 'important');
     }
 
-    // Check if card is unusable during attack phase (weapon with no valid targets)
+    // Check if card is unusable during attack phase
     const canBeUsedOnIDs = card.can_be_used_on_ids || [];
-    if (context === 'player-hand' && cardType === 'weapon' && canBeUsedOnIDs.length === 0) {
-        div.classList.add('unusable');
+    if (context === 'player-hand' && gameState.currentAction === 'attack') {
+        const isUnusable = isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs);
+        if (isUnusable) {
+            div.classList.add('unusable');
+        }
     }
 
     // Check if this is the newly drawn card and highlight it
@@ -558,6 +571,31 @@ function hexToRgba(hex, alpha) {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs) {
+    const rawType = (card.type || '').toLowerCase();
+
+    // Warriors, Resources, Spy, Thief are always unusable during attack
+    if (cardType === 'warrior' || cardType === 'resource') {
+        return true;
+    }
+    if (rawType === 'spy' || rawType === 'thief') {
+        return true;
+    }
+
+    // Weapons and Special Powers need valid targets
+    if (cardType === 'weapon' || rawType === 'specialpower') {
+        return canBeUsedOnIDs.length === 0;
+    }
+
+    // Catapult needs enemy castle to be constructed
+    if (rawType === 'catapult') {
+        const enemyCastle = gameState.currentState?.enemy_castle;
+        return !enemyCastle || !enemyCastle.constructed;
+    }
+
+    return true; // Unknown types are unusable
 }
 
 function getCardType(card) {
