@@ -680,6 +680,366 @@ func TestGameStatus_CatapultInHand_CanAttackAlreadyTrue(t *testing.T) {
 	assert.Empty(t, catapultCard.CanBeUsedOnIDs)
 }
 
+// ========== Spy Tests (line 92-95) ==========
+
+func TestGameStatus_SpyInHand_SetsCanSpy(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create spy mock
+	spy := mocks.NewMockSpy(ctrl)
+	spy.EXPECT().GetID().Return("SPY1")
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{spy})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanSpy)
+	assert.Equal(t, 1, len(gameStatus.CurrentPlayerHand))
+	assert.Equal(t, "SPY1", gameStatus.CurrentPlayerHand[0].CardID)
+	assert.Equal(t, CardTypeSpy, gameStatus.CurrentPlayerHand[0].CardType)
+}
+
+func TestGameStatus_MultipleSpiesInHand(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create multiple spy mocks
+	spy1 := mocks.NewMockSpy(ctrl)
+	spy1.EXPECT().GetID().Return("SPY1")
+
+	spy2 := mocks.NewMockSpy(ctrl)
+	spy2.EXPECT().GetID().Return("SPY2")
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{spy1, spy2})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanSpy)
+	assert.Equal(t, 2, len(gameStatus.CurrentPlayerHand))
+}
+
+// ========== Thief Tests (line 96-99) ==========
+
+func TestGameStatus_ThiefInHand_SetsCanSteal(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create thief mock
+	thief := mocks.NewMockThief(ctrl)
+	thief.EXPECT().GetID().Return("THIEF1")
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{thief})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanSteal)
+	assert.Equal(t, 1, len(gameStatus.CurrentPlayerHand))
+	assert.Equal(t, "THIEF1", gameStatus.CurrentPlayerHand[0].CardID)
+	assert.Equal(t, CardTypeThief, gameStatus.CurrentPlayerHand[0].CardType)
+}
+
+func TestGameStatus_MultipleThievesInHand(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create multiple thief mocks
+	thief1 := mocks.NewMockThief(ctrl)
+	thief1.EXPECT().GetID().Return("THIEF1")
+
+	thief2 := mocks.NewMockThief(ctrl)
+	thief2.EXPECT().GetID().Return("THIEF2")
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{thief1, thief2})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanSteal)
+	assert.Equal(t, 2, len(gameStatus.CurrentPlayerHand))
+}
+
+func TestGameStatus_SpyAndThiefInHand(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create spy and thief mocks
+	spy := mocks.NewMockSpy(ctrl)
+	spy.EXPECT().GetID().Return("SPY1")
+
+	thief := mocks.NewMockThief(ctrl)
+	thief.EXPECT().GetID().Return("THIEF1")
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{spy, thief})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanSpy)
+	assert.True(t, gameStatus.CanSteal)
+	assert.Equal(t, 2, len(gameStatus.CurrentPlayerHand))
+
+	// Verify both card types are present
+	cardTypes := make(map[CardType]bool)
+	for _, hc := range gameStatus.CurrentPlayerHand {
+		cardTypes[hc.CardType] = true
+	}
+	assert.True(t, cardTypes[CardTypeSpy])
+	assert.True(t, cardTypes[CardTypeThief])
+}
+
+// ========== Resource Tests (line 100-106) ==========
+
+func TestGameStatus_ResourceInHand_CanConstruct_SetsCanInitiateCastle(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create resource mock that can construct (value 1)
+	resource := mocks.NewMockResource(ctrl)
+	resource.EXPECT().CanConstruct().Return(true).Times(2) // Once in gamestatus.go, once in handcard.go
+	resource.EXPECT().CanBuy().Return(false)
+	resource.EXPECT().GetID().Return("G1")
+	resource.EXPECT().Value().Return(1)
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{resource})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanInitiateCastle)
+	assert.True(t, gameStatus.CanGrowCastle)
+	assert.False(t, gameStatus.CanBuy)
+	assert.Equal(t, 1, len(gameStatus.CurrentPlayerHand))
+	assert.Equal(t, "G1", gameStatus.CurrentPlayerHand[0].CardID)
+	assert.Equal(t, CardTypeResource, gameStatus.CurrentPlayerHand[0].CardType)
+	assert.True(t, gameStatus.CurrentPlayerHand[0].CanConstruct)
+}
+
+func TestGameStatus_ResourceInHand_CannotConstruct(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create resource mock that cannot construct (value > 1)
+	resource := mocks.NewMockResource(ctrl)
+	resource.EXPECT().CanConstruct().Return(false).Times(2)
+	resource.EXPECT().CanBuy().Return(true)
+	resource.EXPECT().GetID().Return("G1")
+	resource.EXPECT().Value().Return(5)
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{resource})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.False(t, gameStatus.CanInitiateCastle)
+	assert.True(t, gameStatus.CanGrowCastle) // Always true when resource in hand
+	assert.True(t, gameStatus.CanBuy)
+	assert.Equal(t, 1, len(gameStatus.CurrentPlayerHand))
+	assert.False(t, gameStatus.CurrentPlayerHand[0].CanConstruct)
+}
+
+func TestGameStatus_ResourceInHand_CanBuy_True(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create resource mock that can buy
+	resource := mocks.NewMockResource(ctrl)
+	resource.EXPECT().CanConstruct().Return(false).Times(2)
+	resource.EXPECT().CanBuy().Return(true)
+	resource.EXPECT().GetID().Return("G1")
+	resource.EXPECT().Value().Return(9)
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{resource})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanBuy)
+}
+
+func TestGameStatus_ResourceInHand_CanBuy_False(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Create resource mock that cannot buy (low value)
+	resource := mocks.NewMockResource(ctrl)
+	resource.EXPECT().CanConstruct().Return(true).Times(2)
+	resource.EXPECT().CanBuy().Return(false)
+	resource.EXPECT().GetID().Return("G1")
+	resource.EXPECT().Value().Return(1)
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{resource})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.False(t, gameStatus.CanBuy)
+}
+
+func TestGameStatus_MultipleResourcesInHand_CanInitiateCastleIsOr(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// First resource cannot construct
+	resource1 := mocks.NewMockResource(ctrl)
+	resource1.EXPECT().CanConstruct().Return(false).Times(2)
+	resource1.EXPECT().CanBuy().Return(true)
+	resource1.EXPECT().GetID().Return("G1")
+	resource1.EXPECT().Value().Return(5)
+
+	// Second resource can construct - should set CanInitiateCastle to true
+	resource2 := mocks.NewMockResource(ctrl)
+	resource2.EXPECT().CanConstruct().Return(true).Times(2)
+	resource2.EXPECT().CanBuy().Return(false)
+	resource2.EXPECT().GetID().Return("G2")
+	resource2.EXPECT().Value().Return(1)
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{resource1, resource2})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanInitiateCastle) // true because resource2 can construct
+	assert.True(t, gameStatus.CanGrowCastle)
+	assert.False(t, gameStatus.CanBuy) // Last resource's CanBuy value wins
+	assert.Equal(t, 2, len(gameStatus.CurrentPlayerHand))
+}
+
+func TestGameStatus_ResourceInHand_AlwaysSetsCanGrowCastle(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	p1, p1Hand, p1Field, _, p2, p2Field, _ := setupBaseMocks(ctrl)
+
+	// Any resource sets CanGrowCastle to true
+	resource := mocks.NewMockResource(ctrl)
+	resource.EXPECT().CanConstruct().Return(false).Times(2)
+	resource.EXPECT().CanBuy().Return(false)
+	resource.EXPECT().GetID().Return("G1")
+	resource.EXPECT().Value().Return(3)
+
+	p1Hand.EXPECT().ShowCards().Return([]ports.Card{resource})
+
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	assert.True(t, gameStatus.CanGrowCastle) // Always true when resource in hand
+	assert.False(t, gameStatus.CanInitiateCastle)
+	assert.False(t, gameStatus.CanBuy)
+}
+
+func TestGameStatus_CardValues_RealCards(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Create real warrior and weapon cards
+	knight := cards.NewKnight("k1")
+	sword := cards.NewSword("s1", 7)
+	arrow := cards.NewArrow("a1", 5)
+	gold := cards.NewGold("g1", 9)
+
+	cardsInHand := []ports.Card{knight, sword, arrow, gold}
+
+	// Setup mocks
+	p1 := mocks.NewMockPlayer(ctrl)
+	p1Hand := mocks.NewMockHand(ctrl)
+	p1Field := mocks.NewMockField(ctrl)
+	p1Castle := mocks.NewMockCastle(ctrl)
+
+	p1.EXPECT().Name().Return("p1")
+	p1.EXPECT().Hand().Return(p1Hand)
+	p1.EXPECT().Field().Return(p1Field).AnyTimes()
+	p1.EXPECT().Castle().Return(p1Castle)
+
+	p1Hand.EXPECT().ShowCards().Return(cardsInHand)
+	p1Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p1Field.EXPECT().HasKnight().Return(true).AnyTimes()
+	p1Field.EXPECT().HasArcher().Return(true).AnyTimes()
+	p1Field.EXPECT().HasMage().Return(false).AnyTimes()
+	p1Field.EXPECT().HasDragon().Return(false).AnyTimes()
+	p1Castle.EXPECT().IsConstructed().Return(false)
+	p1Castle.EXPECT().ResourceCards().Return(0)
+	p1Castle.EXPECT().Value().Return(0)
+
+	p2 := mocks.NewMockPlayer(ctrl)
+	p2Field := mocks.NewMockField(ctrl)
+	p2Castle := mocks.NewMockCastle(ctrl)
+
+	p2.EXPECT().Field().Return(p2Field).AnyTimes()
+	p2.EXPECT().Castle().Return(p2Castle).AnyTimes()
+	p2.EXPECT().CardsInHand().Return(0)
+
+	p2Field.EXPECT().Warriors().Return([]ports.Warrior{})
+	p2Field.EXPECT().AttackableIDs().Return([]string{}).AnyTimes()
+	p2Castle.EXPECT().IsConstructed().Return(false)
+	p2Castle.EXPECT().ResourceCards().Return(0).AnyTimes()
+	p2Castle.EXPECT().Value().Return(0)
+
+	gameStatus := NewGameStatus(p1, p2)
+
+	// Verify we have 4 cards
+	assert.Equal(t, 4, len(gameStatus.CurrentPlayerHand))
+
+	// Find each card and verify its value
+	for _, hc := range gameStatus.CurrentPlayerHand {
+		switch hc.CardID {
+		case "K1":
+			assert.Equal(t, 20, hc.Value, "Knight should have health of 20")
+		case "S1":
+			assert.Equal(t, 7, hc.Value, "Sword should have damage of 7")
+		case "A1":
+			assert.Equal(t, 5, hc.Value, "Arrow should have damage of 5")
+		case "G1":
+			assert.Equal(t, 9, hc.Value, "Gold should have value of 9")
+		}
+	}
+}
+
 /* func TestGameStatus_UsableWeapons_All(t *testing.T) {
 	k := cards.NewKnight("k1")
 	a := cards.NewArcher("a1")

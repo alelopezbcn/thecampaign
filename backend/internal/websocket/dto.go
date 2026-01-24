@@ -6,10 +6,11 @@ import (
 
 // CardDTO represents a card for JSON serialization
 type CardDTO struct {
-	ID    string `json:"id"`
-	Type  string `json:"type"`
-	Color string `json:"color"`
-	Value int    `json:"value,omitempty"`
+	ID      string `json:"id"`
+	Type    string `json:"type"`
+	SubType string `json:"sub_type,omitempty"`
+	Color   string `json:"color"`
+	Value   int    `json:"value,omitempty"`
 }
 
 // CastleDTO represents a castle for JSON serialization
@@ -47,10 +48,11 @@ func convertHandCards(cards []gamestatus.HandCard) []HandCardDTO {
 	for i, card := range cards {
 		dtos[i] = HandCardDTO{
 			CardDTO: CardDTO{
-				ID:    card.Card.CardID,
-				Type:  card.Card.CardType.Name,
-				Color: card.Card.CardType.Color,
-				Value: card.Card.Value,
+				ID:      card.Card.CardID,
+				Type:    card.Card.CardType.Name,
+				SubType: card.Card.CardType.SubName,
+				Color:   card.Card.CardType.Color,
+				Value:   card.Card.Value,
 			},
 			CanBeUsedOnIDs: card.CanBeUsedOnIDs,
 			CanConstruct:   card.CanConstruct,
@@ -64,10 +66,11 @@ func convertFieldCards(cards []gamestatus.FieldCard) []FieldCardDTO {
 	for i, card := range cards {
 		dto := FieldCardDTO{
 			CardDTO: CardDTO{
-				ID:    card.Card.CardID,
-				Type:  card.Card.CardType.Name,
-				Color: card.Card.CardType.Color,
-				Value: card.Card.Value,
+				ID:      card.Card.CardID,
+				Type:    card.Card.CardType.Name,
+				SubType: card.Card.CardType.SubName,
+				Color:   card.Card.CardType.Color,
+				Value:   card.Card.Value,
 			},
 		}
 
@@ -75,20 +78,22 @@ func convertFieldCards(cards []gamestatus.FieldCard) []FieldCardDTO {
 			dto.AttackedBy = make([]CardDTO, len(card.AttackedBy))
 			for j, attacker := range card.AttackedBy {
 				dto.AttackedBy[j] = CardDTO{
-					ID:    attacker.CardID,
-					Type:  attacker.CardType.Name,
-					Color: attacker.CardType.Color,
-					Value: attacker.Value,
+					ID:      attacker.CardID,
+					Type:    attacker.CardType.Name,
+					SubType: attacker.CardType.SubName,
+					Color:   attacker.CardType.Color,
+					Value:   attacker.Value,
 				}
 			}
 		}
 
 		if card.ProtectedBy.CardID != "" {
 			dto.ProtectedBy = &CardDTO{
-				ID:    card.ProtectedBy.CardID,
-				Type:  card.ProtectedBy.CardType.Name,
-				Color: card.ProtectedBy.CardType.Color,
-				Value: card.ProtectedBy.Value,
+				ID:      card.ProtectedBy.CardID,
+				Type:    card.ProtectedBy.CardType.Name,
+				SubType: card.ProtectedBy.CardType.SubName,
+				Color:   card.ProtectedBy.CardType.Color,
+				Value:   card.ProtectedBy.Value,
 			}
 		}
 

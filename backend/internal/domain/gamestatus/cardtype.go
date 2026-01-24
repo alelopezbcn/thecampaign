@@ -1,8 +1,9 @@
 package gamestatus
 
 type CardType struct {
-	Name  string
-	Color string
+	Name    string `json:"name"`
+	SubName string `json:"sub_name"`
+	Color   string `json:"color"`
 }
 
 func (c CardType) String() string {
@@ -10,16 +11,16 @@ func (c CardType) String() string {
 }
 
 var (
-	CardTypeKnight       = CardType{"Knight", "#0000FF"}       // Blue
-	CardTypeSword        = CardType{"Weapon", "#ADD8E6"}       // Light Blue
-	CardTypeArcher       = CardType{"Archer", "#008000"}       // Green
-	CardTypeArrow        = CardType{"Weapon", "#90EE90"}       // Light Green
-	CardTypeMage         = CardType{"Mage", "#800080"}         // Purple
-	CardTypePoison       = CardType{"Weapon", "#D8BFD8"}       // Light Purple (Thistle)
-	CardTypeDragon       = CardType{"Dragon", "#FF0000"}       // Red
-	CardTypeResource     = CardType{"Resource", "#FFFF00"}     // Yellow
-	CardTypeSpecialPower = CardType{"SpecialPower", "#FFA500"} // Orange
-	CardTypeSpy          = CardType{"Spy", "#D3D3D3"}          // Light Gray
-	CardTypeThief        = CardType{"Thief", "#D3D3D3"}        // Light Gray
-	CardTypeCatapult     = CardType{"Catapult", "#D3D3D3"}     // Light Gray
+	CardTypeKnight       = CardType{"Warrior", "Knight", "#0000FF"} // Blue
+	CardTypeSword        = CardType{"Weapon", "Sword", "#ADD8E6"}   // Light Blue
+	CardTypeArcher       = CardType{"Warrior", "Archer", "#008000"} // Green
+	CardTypeArrow        = CardType{"Weapon", "Arrow", "#90EE90"}   // Light Green
+	CardTypeMage         = CardType{"Warrior", "Mage", "#800080"}   // Purple
+	CardTypePoison       = CardType{"Weapon", "Poison", "#D8BFD8"}  // Light Purple (Thistle)
+	CardTypeDragon       = CardType{"Warrior", "Dragon", "#FF0000"} // Red
+	CardTypeResource     = CardType{"Resource", "", "#FFFF00"}      // Yellow
+	CardTypeSpecialPower = CardType{"SpecialPower", "", "#FFA500"}  // Orange
+	CardTypeSpy          = CardType{"Spy", "", "#D3D3D3"}           // Light Gray
+	CardTypeThief        = CardType{"Thief", "", "#D3D3D3"}         // Light Gray
+	CardTypeCatapult     = CardType{"Catapult", "", "#D3D3D3"}      // Light Gray
 )

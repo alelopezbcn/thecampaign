@@ -8,8 +8,8 @@ import (
 
 type FieldCard struct {
 	Card
-	AttackedBy  []Card
-	ProtectedBy Card
+	AttackedBy  []Card `json:"attacked_by"`
+	ProtectedBy Card   `json:"protected_by"`
 }
 
 func newFieldCard(warrior ports.Warrior) FieldCard {

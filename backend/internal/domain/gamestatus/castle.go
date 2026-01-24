@@ -7,9 +7,9 @@ import (
 )
 
 type Castle struct {
-	IsConstructed bool
-	ResourceCards int
-	Value         int
+	IsConstructed bool `json:"constructed"`
+	ResourceCards int  `json:"resource_cards"`
+	Value         int  `json:"value"`
 }
 
 func newCastle(c ports.Castle) Castle {

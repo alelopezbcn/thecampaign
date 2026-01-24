@@ -8,23 +8,23 @@ import (
 )
 
 type GameStatus struct {
-	CurrentPlayer     string
-	CanMoveWarrior    bool
-	CanAttack         bool
-	CanCatapult       bool
-	CanSpy            bool
-	CanSteal          bool
-	CanBuy            bool
-	CanInitiateCastle bool
-	CanGrowCastle     bool
+	CurrentPlayer     string `json:"current_player"`
+	CanMoveWarrior    bool   `json:"can_move_warrior"`
+	CanAttack         bool   `json:"can_attack"`
+	CanCatapult       bool   `json:"can_catapult"`
+	CanSpy            bool   `json:"can_spy"`
+	CanSteal          bool   `json:"can_steal"`
+	CanBuy            bool   `json:"can_buy"`
+	CanInitiateCastle bool   `json:"can_initiate_castle"`
+	CanGrowCastle     bool   `json:"can_grow_castle"`
 
-	CurrentPlayerHand          []HandCard
-	CurrentPlayerField         []FieldCard
-	CurrentPlayerCastle        Castle
-	EnemyField                 []FieldCard
-	EnemyCastle                Castle
-	CardsInEnemyHand           int
-	ResourceCardsInEnemyCastle int
+	CurrentPlayerHand          []HandCard  `json:"current_player_hand"`
+	CurrentPlayerField         []FieldCard `json:"current_player_field"`
+	CurrentPlayerCastle        Castle      `json:"current_player_castle"`
+	EnemyField                 []FieldCard `json:"enemy_field"`
+	EnemyCastle                Castle      `json:"enemy_castle"`
+	CardsInEnemyHand           int         `json:"cards_in_enemy_hand"`
+	ResourceCardsInEnemyCastle int         `json:"resource_cards_in_enemy_castle"`
 }
 
 func (g *GameStatus) ShowBoard() string {

@@ -5,9 +5,9 @@ import (
 )
 
 type Card struct {
-	CardID   string
-	CardType CardType
-	Value    int
+	CardID   string   `json:"card_id"`
+	CardType CardType `json:"card_type"`
+	Value    int      `json:"value"`
 }
 
 func newCard(cardID string, cardType CardType, value int) Card {

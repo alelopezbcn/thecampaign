@@ -8,8 +8,8 @@ import (
 
 type HandCard struct {
 	Card
-	CanBeUsedOnIDs []string
-	CanConstruct   bool
+	CanBeUsedOnIDs []string `json:"can_be_used_on_ids"`
+	CanConstruct   bool     `json:"can_construct"`
 }
 
 func newHandCard(cardID string, cardType CardType, value int,
