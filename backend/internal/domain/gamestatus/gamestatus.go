@@ -5,18 +5,15 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type GameStatus struct {
-	CurrentPlayer     string `json:"current_player"`
-	CanMoveWarrior    bool   `json:"can_move_warrior"`
-	CanAttack         bool   `json:"can_attack"`
-	CanCatapult       bool   `json:"can_catapult"`
-	CanSpy            bool   `json:"can_spy"`
-	CanSteal          bool   `json:"can_steal"`
-	CanBuy            bool   `json:"can_buy"`
-	CanInitiateCastle bool   `json:"can_initiate_castle"`
-	CanGrowCastle     bool   `json:"can_grow_castle"`
+	CurrentPlayer  string   `json:"current_player"`
+	CurrentAction  string   `json:"current_action"` // new
+	NewCards       []string `json:"new_cards"`
+	CanMoveWarrior bool     `json:"can_move_warrior"`
+	CanSwap        bool     `json:"can_swap"` // new
 
 	CurrentPlayerHand          []HandCard  `json:"current_player_hand"`
 	CurrentPlayerField         []FieldCard `json:"current_player_field"`
@@ -53,9 +50,18 @@ func (g *GameStatus) ShowBoard() string {
 	return sb.String()
 }
 
-func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
+func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
+	action types.ActionType, newCards ...ports.Card) GameStatus {
+
 	gs := GameStatus{}
 	gs.CurrentPlayer = currentPlayer.Name()
+	gs.CurrentAction = string(action)
+
+	gs.NewCards = make([]string, len(newCards))
+	for i, c := range newCards {
+		gs.NewCards[i] = c.GetID()
+	}
+
 	gs.CurrentPlayerHand = []HandCard{}
 	gs.CurrentPlayerField = []FieldCard{}
 	gs.EnemyField = []FieldCard{}
@@ -66,43 +72,32 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player) GameStatus {
 			gs.CanMoveWarrior = true
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, newWarriorHandCard(ct))
 		case ports.Weapon:
-			gs.CanInitiateCastle = ct.CanConstruct()
-
-			gs.CanAttack = true
-			if ct.Type() == ports.SpecialPowerWeaponType {
+			if ct.Type() == types.SpecialPowerWeaponType {
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 					newSpecialPowerHandCard(ct.(ports.SpecialPower), currentPlayer.Field(),
-						enemy.Field()))
+						enemy.Field(), action))
 				continue
 			}
 
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				newWeaponHandCard(ct, currentPlayer.Field(),
-					enemy.Field().AttackableIDs()))
+					enemy.Field(), enemy.Castle().IsConstructed(), action))
+
 		case ports.Catapult:
-			canBeUsed := enemy.Castle().CanBeAttacked()
-			gs.CanAttack = gs.CanAttack || canBeUsed
-			castleID := ""
-			if canBeUsed {
-				castleID = enemy.Castle().GetID()
-			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newCatapultHandCard(ct.GetID(), castleID))
+				newCatapultHandCard(ct.GetID(), enemy.Castle().CanBeAttacked(),
+					action))
 
 		case ports.Spy:
-			gs.CanSpy = true
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newSpyHandCard(ct.GetID()))
+				newSpyHandCard(ct.GetID(), action))
 		case ports.Thief:
-			gs.CanSteal = true
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newThiefHandCard(ct.GetID()))
+				newThiefHandCard(ct.GetID(), action))
 		case ports.Resource:
-			gs.CanInitiateCastle = gs.CanInitiateCastle || ct.CanConstruct()
-			gs.CanGrowCastle = true
-			gs.CanBuy = ct.CanBuy()
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newResourceHandCard(ct))
+				newResourceHandCard(ct, enemy.Castle().IsConstructed(),
+					action))
 		}
 	}
 

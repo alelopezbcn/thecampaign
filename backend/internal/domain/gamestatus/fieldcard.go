@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type FieldCard struct {
@@ -16,13 +17,13 @@ func newFieldCard(warrior ports.Warrior) FieldCard {
 
 	var aCardType CardType
 	switch warrior.Type() {
-	case ports.KnightWarriorType:
+	case types.KnightWarriorType:
 		aCardType = CardTypeKnight
-	case ports.ArcherWarriorType:
+	case types.ArcherWarriorType:
 		aCardType = CardTypeArcher
-	case ports.MageWarriorType:
+	case types.MageWarriorType:
 		aCardType = CardTypeMage
-	case ports.DragonWarriorType:
+	case types.DragonWarriorType:
 		aCardType = CardTypeDragon
 	}
 
@@ -30,11 +31,11 @@ func newFieldCard(warrior ports.Warrior) FieldCard {
 	for _, attacker := range warrior.AttackedBy() {
 		var weaponCardType CardType
 		switch attacker.Type() {
-		case ports.SwordWeaponType:
+		case types.SwordWeaponType:
 			weaponCardType = CardTypeSword
-		case ports.ArrowWeaponType:
+		case types.ArrowWeaponType:
 			weaponCardType = CardTypeArrow
-		case ports.PoisonWeaponType:
+		case types.PoisonWeaponType:
 			weaponCardType = CardTypePoison
 		}
 		attackedByCards = append(attackedByCards, newCard(attacker.GetID(),

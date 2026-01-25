@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type knight struct {
@@ -15,7 +16,7 @@ func NewKnight(id string) ports.Knight {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.KnightWarriorType,
+			types.KnightWarriorType,
 		),
 	}
 }
@@ -25,7 +26,7 @@ func (k *knight) BeAttacked(w ports.Weapon) error {
 	}
 
 	multiplier := 1
-	if w.Type() == ports.PoisonWeaponType {
+	if w.Type() == types.PoisonWeaponType {
 		multiplier = 2
 	}
 
@@ -43,7 +44,7 @@ func NewArcher(id string) ports.Archer {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.ArcherWarriorType,
+			types.ArcherWarriorType,
 		),
 	}
 }
@@ -53,7 +54,7 @@ func (a *archer) BeAttacked(w ports.Weapon) error {
 	}
 
 	multiplier := 1
-	if w.Type() == ports.SwordWeaponType {
+	if w.Type() == types.SwordWeaponType {
 		multiplier = 2
 	}
 
@@ -71,7 +72,7 @@ func NewMage(id string) ports.Mage {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.MageWarriorType,
+			types.MageWarriorType,
 		),
 	}
 }
@@ -81,7 +82,7 @@ func (m *mage) BeAttacked(w ports.Weapon) error {
 	}
 
 	multiplier := 1
-	if w.Type() == ports.ArrowWeaponType {
+	if w.Type() == types.ArrowWeaponType {
 		multiplier = 2
 	}
 
@@ -99,7 +100,7 @@ func NewDragon(id string) ports.Dragon {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
 			newAttackableBase(DragonMaxHealth),
-			ports.DragonWarriorType,
+			types.DragonWarriorType,
 		),
 	}
 }

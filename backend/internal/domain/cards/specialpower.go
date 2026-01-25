@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 const SpecialPowerDamage = 10
@@ -20,7 +21,7 @@ func NewSpecialPower(id string) ports.SpecialPower {
 	return &specialPower{
 		cardBase:       newCardBase(id, "Special Power"),
 		attackableBase: newAttackableBase(SpecialPowerMaxHealth),
-		weaponBase:     newWeaponBase(SpecialPowerDamage, ports.SpecialPowerWeaponType),
+		weaponBase:     newWeaponBase(SpecialPowerDamage, types.SpecialPowerWeaponType),
 	}
 }
 func (s *specialPower) BeAttacked(w ports.Weapon) error {

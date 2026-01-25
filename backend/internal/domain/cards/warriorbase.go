@@ -6,18 +6,19 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type warriorBase struct {
 	*cardBase
 	*attackableBase
 	protectedBy         ports.SpecialPower
-	warriorType         ports.WarriorType
+	warriorType         types.WarriorType
 	WarriorDeadObserver ports.WarriorDeadObserver
 }
 
 func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
-	warriorType ports.WarriorType) *warriorBase {
+	warriorType types.WarriorType) *warriorBase {
 	return &warriorBase{
 		cardBase:       cardBase,
 		attackableBase: attackableCardBase,
@@ -99,7 +100,7 @@ func (w *warriorBase) String() string {
 func (w *warriorBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
-func (w *warriorBase) Type() ports.WarriorType {
+func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
 func (w *warriorBase) IsDamaged() bool {

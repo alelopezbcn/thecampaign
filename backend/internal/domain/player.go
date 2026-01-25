@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type player struct {
@@ -149,15 +150,15 @@ func (p *player) Attack(targetCard ports.Card,
 	}
 
 	switch weapon.Type() {
-	case ports.SwordWeaponType:
+	case types.SwordWeaponType:
 		if !p.Field().HasKnight() && !p.Field().HasDragon() {
 			return fmt.Errorf("sword weapon cannot be used")
 		}
-	case ports.ArrowWeaponType:
+	case types.ArrowWeaponType:
 		if !p.Field().HasArcher() && !p.Field().HasDragon() {
 			return fmt.Errorf("arrow weapon cannot be used")
 		}
-	case ports.PoisonWeaponType:
+	case types.PoisonWeaponType:
 		if !p.Field().HasMage() && !p.Field().HasDragon() {
 			return fmt.Errorf("poison weapon cannot be used")
 		}

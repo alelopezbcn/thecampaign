@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	ports "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -557,10 +558,10 @@ func (mr *MockSpecialPowerMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockSpecialPower) Type() ports.WeaponType {
+func (m *MockSpecialPower) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -975,10 +976,10 @@ func (mr *MockWarriorMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockWarrior) Type() ports.WarriorType {
+func (m *MockWarrior) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1094,10 +1095,10 @@ func (mr *MockWeaponMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockWeapon) Type() ports.WeaponType {
+func (m *MockWeapon) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -1320,10 +1321,10 @@ func (mr *MockDragonMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockDragon) Type() ports.WarriorType {
+func (m *MockDragon) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1546,10 +1547,10 @@ func (mr *MockKnightMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockKnight) Type() ports.WarriorType {
+func (m *MockKnight) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1772,10 +1773,10 @@ func (mr *MockArcherMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockArcher) Type() ports.WarriorType {
+func (m *MockArcher) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1998,10 +1999,10 @@ func (mr *MockMageMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockMage) Type() ports.WarriorType {
+func (m *MockMage) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -2117,10 +2118,10 @@ func (mr *MockSwordMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockSword) Type() ports.WeaponType {
+func (m *MockSword) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -2236,10 +2237,10 @@ func (mr *MockArrowMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockArrow) Type() ports.WeaponType {
+func (m *MockArrow) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -2355,10 +2356,10 @@ func (mr *MockPoisonMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockPoison) Type() ports.WeaponType {
+func (m *MockPoison) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 

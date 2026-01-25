@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type field struct {
@@ -15,7 +16,7 @@ type field struct {
 func (h *field) HasArcher() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.ArcherWarriorType:
+		case types.ArcherWarriorType:
 			return true
 		}
 	}
@@ -27,7 +28,7 @@ func (h *field) HasArcher() bool {
 func (h *field) HasDragon() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.DragonWarriorType:
+		case types.DragonWarriorType:
 			return true
 		}
 	}
@@ -39,7 +40,7 @@ func (h *field) HasDragon() bool {
 func (h *field) HasKnight() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.KnightWarriorType:
+		case types.KnightWarriorType:
 			return true
 		}
 	}
@@ -51,7 +52,7 @@ func (h *field) HasKnight() bool {
 func (h *field) HasMage() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.MageWarriorType:
+		case types.MageWarriorType:
 			return true
 		}
 	}

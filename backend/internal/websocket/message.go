@@ -5,19 +5,19 @@ type MessageType string
 
 const (
 	// Client to Server messages
-	MsgJoinGame         MessageType = "join_game"
+	MsgJoinGame           MessageType = "join_game"
 	MsgSetInitialWarriors MessageType = "set_initial_warriors"
-	MsgDrawCard         MessageType = "draw_card"
-	MsgAttack           MessageType = "attack"
-	MsgSpecialPower     MessageType = "special_power"
-	MsgMoveWarrior      MessageType = "move_warrior"
-	MsgTrade            MessageType = "trade"
-	MsgBuy              MessageType = "buy"
-	MsgConstruct        MessageType = "construct"
-	MsgSpy              MessageType = "spy"
-	MsgSteal            MessageType = "steal"
-	MsgCatapult         MessageType = "catapult"
-	MsgEndTurn          MessageType = "end_turn"
+	MsgDrawCard           MessageType = "draw_card"
+	MsgAttack             MessageType = "attack"
+	MsgSpecialPower       MessageType = "special_power"
+	MsgMoveWarrior        MessageType = "move_warrior"
+	MsgTrade              MessageType = "trade"
+	MsgBuy                MessageType = "buy"
+	MsgConstruct          MessageType = "construct"
+	MsgSpy                MessageType = "spy"
+	MsgSteal              MessageType = "steal"
+	MsgCatapult           MessageType = "catapult"
+	MsgEndTurn            MessageType = "end_turn"
 
 	// Server to Client messages
 	MsgGameState        MessageType = "game_state"
@@ -95,11 +95,11 @@ type CatapultPayload struct {
 
 // GameStatePayload is sent to update clients with game state
 type GameStatePayload struct {
-	GameStatus    GameStatusDTO `json:"game_status"`
-	IsYourTurn    bool          `json:"is_your_turn"`
-	GameEnded     bool          `json:"game_ended"`
-	History       []string      `json:"history,omitempty"`
-	NewlyDrawnCard string       `json:"newly_drawn_card,omitempty"` // ID of card just drawn
+	GameStatus     GameStatusDTO `json:"game_status"`
+	IsYourTurn     bool          `json:"is_your_turn"`
+	GameEnded      bool          `json:"game_ended"`
+	History        []string      `json:"history,omitempty"`
+	NewlyDrawnCard string        `json:"newly_drawn_card,omitempty"` // ID of card just drawn
 }
 
 // GameStatusDTO is the JSON-friendly game status
@@ -126,7 +126,7 @@ type GameStatusDTO struct {
 // HandCardDTO represents a card in the player's hand
 type HandCardDTO struct {
 	CardDTO
-	CanBeUsedOnIDs []string `json:"can_be_used_on_ids"`
+	CanBeUsedOnIDs []string `json:"use_on"`
 	CanConstruct   bool     `json:"can_construct"`
 }
 

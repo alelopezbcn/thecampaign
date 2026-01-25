@@ -1,17 +1,4 @@
-package ports
-
-type WarriorType string
-
-const (
-	ArcherWarriorType WarriorType = "Archer"
-	KnightWarriorType WarriorType = "Knight"
-	MageWarriorType   WarriorType = "Mage"
-	DragonWarriorType WarriorType = "Dragon"
-)
-
-func (wt WarriorType) String() string {
-	return string(wt)
-}
+package types
 
 type WeaponType string
 

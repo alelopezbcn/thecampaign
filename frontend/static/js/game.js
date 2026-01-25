@@ -500,7 +500,7 @@ function createCardElement(card, context) {
     }
 
     // Check if card is unusable during attack phase
-    const canBeUsedOnIDs = card.can_be_used_on_ids || [];
+    const canBeUsedOnIDs = card.use_on || [];
     if (context === 'player-hand' && gameState.currentAction === 'attack') {
         const isUnusable = isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs);
         if (isUnusable) {

@@ -1,13 +1,15 @@
 package cards
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+import (
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
+)
 
 type weaponBase struct {
 	damageAmount int
-	weaponType   ports.WeaponType
+	weaponType   types.WeaponType
 }
 
-func newWeaponBase(damageAmount int, weaponType ports.WeaponType) *weaponBase {
+func newWeaponBase(damageAmount int, weaponType types.WeaponType) *weaponBase {
 	return &weaponBase{
 		damageAmount: damageAmount,
 		weaponType:   weaponType,
@@ -18,7 +20,7 @@ func (s *weaponBase) DamageAmount() int {
 	return s.damageAmount
 }
 
-func (s *weaponBase) Type() ports.WeaponType {
+func (s *weaponBase) Type() types.WeaponType {
 	return s.weaponType
 }
 
