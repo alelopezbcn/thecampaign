@@ -233,6 +233,8 @@ func (h *Hub) sendGameState(gameID string) {
 	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
 	currentPlayerName := currentPlayer.Name()
 	currentAction := room.Game.CurrentAction()
+	canTrade := room.Game.CanTrade
+	canMove := room.Game.CanMoveWarrior
 
 	for playerName, client := range room.Players {
 		var status gamestatus.GameStatus
@@ -240,11 +242,11 @@ func (h *Hub) sendGameState(gameID string) {
 
 		if isCurrentPlayer {
 			// Current player's turn - show their perspective
-			status = gamestatus.NewGameStatus(currentPlayer, enemyPlayer, currentAction)
+			status = gamestatus.NewGameStatus(currentPlayer, enemyPlayer, currentAction, canMove, canTrade)
 		} else {
 			// Not their turn - show enemy player's perspective
 			// Enemy sees their own hand and the current player's field
-			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer, currentAction)
+			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer, currentAction, canMove, canTrade)
 		}
 
 		payload := GameStatePayload{
@@ -276,6 +278,8 @@ func (h *Hub) sendGameStateWithStatus(gameID string, currentPlayerStatus gamesta
 	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
 	currentPlayerName := currentPlayer.Name()
 	currentAction := room.Game.CurrentAction()
+	canTrade := room.Game.CanTrade
+	canMove := room.Game.CanMoveWarrior
 
 	for playerName, client := range room.Players {
 		var status gamestatus.GameStatus
@@ -286,7 +290,7 @@ func (h *Hub) sendGameStateWithStatus(gameID string, currentPlayerStatus gamesta
 			status = currentPlayerStatus
 		} else {
 			// Enemy sees their own hand and the current player's field
-			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer, currentAction)
+			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer, currentAction, canMove, canTrade)
 		}
 
 		payload := GameStatePayload{

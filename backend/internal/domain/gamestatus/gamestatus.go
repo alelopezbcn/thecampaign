@@ -51,7 +51,7 @@ func (g *GameStatus) ShowBoard() string {
 }
 
 func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
-	action types.ActionType, newCards ...ports.Card) GameStatus {
+	action types.ActionType, canMove bool, canTrade bool, newCards ...ports.Card) GameStatus {
 
 	gs := GameStatus{
 		CurrentPlayer:              currentPlayer.Name(),
@@ -64,7 +64,7 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 		EnemyField:                 []FieldCard{},
 		EnemyCastle:                newCastle(enemy.Castle()),
 		ResourceCardsInEnemyCastle: enemy.Castle().ResourceCards(),
-		CanTrade:                   len(currentPlayer.Hand().ShowCards()) >= 3,
+		CanTrade:                   canTrade && len(currentPlayer.Hand().ShowCards()) >= 3,
 	}
 
 	if len(newCards) > 0 {
@@ -76,7 +76,7 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 	for _, card := range currentPlayer.Hand().ShowCards() {
 		switch ct := card.(type) {
 		case ports.Warrior:
-			gs.CanMoveWarrior = true
+			gs.CanMoveWarrior = canMove
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, newWarriorHandCard(ct))
 		case ports.Weapon:
 			if ct.Type() == types.SpecialPowerWeaponType {
