@@ -54,8 +54,8 @@ function setupEventListeners() {
     document.getElementById('confirm-action-btn').addEventListener('click', confirmAction);
     document.getElementById('cancel-action-btn').addEventListener('click', cancelAction);
 
-    // Steal modal cancel button
-    document.getElementById('cancel-steal-btn').addEventListener('click', hideStealModal);
+    // Game modal close button
+    document.getElementById('modal-close-btn').addEventListener('click', hideGameModal);
 
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
@@ -183,6 +183,19 @@ function handleGameState(payload) {
 
     updateTurnIndicator();
     updatePhaseIndicator();
+
+    // Check if we just bought cards (new_cards present and current phase is construct)
+    const newCards = payload.game_status.new_cards || [];
+    const currentAction = payload.game_status.current_action;
+    if (newCards.length > 0 && currentAction === 'construct' && payload.is_your_turn) {
+        // Find the full card data for the new cards
+        const boughtCards = payload.game_status.current_player_hand.filter(
+            card => newCards.includes(card.id)
+        );
+        if (boughtCards.length > 0) {
+            showBoughtCardsModal(boughtCards);
+        }
+    }
 }
 
 function handleGameEnded() {
@@ -195,7 +208,8 @@ function handleGameEnded() {
 }
 
 function handleSpyResult(payload) {
-    alert('Spied cards: ' + JSON.stringify(payload.cards, null, 2));
+    const cards = payload.cards || [];
+    showSpyResultModal(cards);
 }
 
 // Screen management
@@ -456,8 +470,8 @@ function handleSpyStealPhaseHandClick(cardID, card) {
 
     if (cardType === 'spy') {
         gameState.actionState.type = 'spy';
-        updateActionPrompt('Spy selected - confirm to spy on enemy hand');
-        showConfirmButtons();
+        // Show spy options modal
+        showSpyOptionsModal();
     } else if (cardType === 'thief') {
         gameState.actionState.type = 'thief';
         // Show steal modal immediately when thief is selected
@@ -608,13 +622,6 @@ function confirmAction() {
         return;
     }
 
-    // Handle spy
-    if (actionState.type === 'spy' && actionState.weaponId) {
-        sendAction('spy', { card_id: actionState.weaponId });
-        resetActionState();
-        return;
-    }
-
     // Handle buy
     if (actionState.type === 'buy' && actionState.weaponId) {
         sendAction('buy', { card_id: actionState.weaponId });
@@ -734,8 +741,12 @@ function createCardElement(card, context) {
     const currentAction = gameState.currentAction;
 
     if (context === 'player-hand' && gameState.isYourTurn) {
+        // During trade action, all cards are usable
+        if (currentAction === 'trade') {
+            // All cards enabled for trade
+        }
         // During move_warrior action, only warriors are usable
-        if (currentAction === 'move_warrior') {
+        else if (currentAction === 'move_warrior') {
             if (cardType !== 'warrior') {
                 div.classList.add('unusable');
             }
@@ -796,6 +807,7 @@ function renderCastle(containerId, castle) {
 
     const isConstructed = castle.constructed || false;
     const resourceCount = castle.resource_cards || 0;
+    const castleValue = castle.value || 0;
 
     container.className = 'castle';
     if (isConstructed) {
@@ -804,9 +816,12 @@ function renderCastle(containerId, castle) {
 
     container.innerHTML = `
         <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
-        <div class="castle-resources">
-            ${isConstructed ? `<div>${resourceCount} resource cards</div>` : ''}
-        </div>
+        ${isConstructed ? `
+            <div class="castle-info">
+                <div class="castle-value">Value: ${castleValue}</div>
+                <div class="castle-resources">${resourceCount} resource cards</div>
+            </div>
+        ` : ''}
     `;
 }
 
@@ -975,36 +990,105 @@ function generateCardID(card) {
     return `card_${Math.random().toString(36).substr(2, 9)}`;
 }
 
-// Steal Modal Functions
-function showStealModal() {
-    const modal = document.getElementById('steal-modal');
-    const container = document.getElementById('steal-cards-container');
-    const enemyHandCount = gameState.currentState?.cards_in_enemy_hand || 0;
+// Game Modal Functions
+function showGameModal(title, subtitle, content, showCloseOnly = true) {
+    const modal = document.getElementById('game-modal');
+    document.getElementById('modal-title').textContent = title;
+    document.getElementById('modal-subtitle').textContent = subtitle;
+    document.getElementById('modal-cards-container').innerHTML = content;
 
-    container.innerHTML = '';
-
-    // Create face-down cards for each enemy card
-    for (let i = 0; i < enemyHandCount; i++) {
-        const cardDiv = document.createElement('div');
-        cardDiv.className = 'card-face-down';
-        cardDiv.dataset.position = i;
-        cardDiv.innerHTML = `<span class="card-position">#${i + 1}</span>`;
-        cardDiv.addEventListener('click', () => selectStealPosition(i));
-        container.appendChild(cardDiv);
-    }
+    // Show/hide close button based on context
+    const closeBtn = document.getElementById('modal-close-btn');
+    closeBtn.style.display = showCloseOnly ? 'block' : 'none';
 
     modal.classList.remove('hidden');
 }
 
-function hideStealModal() {
-    const modal = document.getElementById('steal-modal');
+function hideGameModal() {
+    const modal = document.getElementById('game-modal');
     modal.classList.add('hidden');
     resetActionState();
     updateActionPrompt('');
 }
 
+// Steal Modal
+function showStealModal() {
+    const enemyHandCount = gameState.currentState?.cards_in_enemy_hand || 0;
+
+    let content = '';
+    for (let i = 0; i < enemyHandCount; i++) {
+        content += `
+            <div class="card-face-down" data-position="${i}" onclick="selectStealPosition(${i})">
+                <span class="card-position">#${i + 1}</span>
+            </div>
+        `;
+    }
+
+    showGameModal('Select a card to steal', "Choose one of your opponent's cards", content, true);
+}
+
 function selectStealPosition(position) {
-    // Send steal action with the selected position
     sendAction('steal', { card_position: position });
-    hideStealModal();
+    hideGameModal();
+}
+
+// Spy Options Modal
+function showSpyOptionsModal() {
+    const content = `
+        <div class="spy-option" onclick="selectSpyOption(1)">
+            <div class="spy-option-title">Reveal Deck</div>
+            <div class="spy-option-desc">See the top 5 cards from the deck</div>
+        </div>
+        <div class="spy-option" onclick="selectSpyOption(2)">
+            <div class="spy-option-title">Reveal Enemy Hand</div>
+            <div class="spy-option-desc">See all cards in your opponent's hand</div>
+        </div>
+    `;
+
+    showGameModal('Choose Spy Action', 'Select what you want to spy on', content, true);
+}
+
+function selectSpyOption(option) {
+    hideGameModal();
+    sendAction('spy', { option: option });
+}
+
+// Spy Result Modal
+function showSpyResultModal(cards) {
+    showCardsModal(cards, 'Spied Cards', 'These are the cards you revealed');
+}
+
+// Bought Cards Modal
+function showBoughtCardsModal(cards) {
+    showCardsModal(cards, 'Cards Bought!', `You bought ${cards.length} card${cards.length > 1 ? 's' : ''}`);
+}
+
+// Generic Cards Modal
+function showCardsModal(cards, title, subtitle) {
+    let content = '';
+
+    if (cards.length === 0) {
+        content = '<p style="color: #b0b0b0;">No cards to show</p>';
+    } else {
+        cards.forEach(card => {
+            const cardType = getCardType(card);
+            const cardName = getCardName(card);
+            const bgColor = card.color ? hexToRgba(card.color, 0.3) : '';
+            const borderColor = card.color || '';
+
+            content += `
+                <div class="card ${cardType}" style="${bgColor ? `background: ${bgColor};` : ''} ${borderColor ? `border-color: ${borderColor};` : ''}">
+                    <div class="card-header">
+                        <span class="card-type ${cardType}">${card.type || cardType}</span>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-name">${cardName}</div>
+                        ${getCardStats(card, cardType)}
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    showGameModal(title, subtitle, content, true);
 }

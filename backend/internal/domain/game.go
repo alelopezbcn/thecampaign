@@ -326,6 +326,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 	return status, nil
 }
 
+// TODO: Spy debe devolver UI cards
 func (g *Game) Spy(playerName string, option int) (spiedCards []ports.Card,
 	status gamestatus.GameStatus, err error) {
 
@@ -415,7 +416,7 @@ func (g *Game) Buy(playerName, cardID string) (
 	}
 
 	val := r.Value()
-
+	p.GiveCards(resourceCard.GetID())
 	g.OnCardMovedToPile(resourceCard)
 
 	cardsToBuy := val / 2

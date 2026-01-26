@@ -132,13 +132,15 @@
             </div>
         </div>
 
-        <!-- Steal Modal -->
-        <div id="steal-modal" class="modal hidden">
+        <!-- Game Modal (for spy/steal actions) -->
+        <div id="game-modal" class="modal hidden">
             <div class="modal-content">
-                <h2>Select a card to steal</h2>
-                <p class="modal-subtitle">Choose one of your opponent's cards</p>
-                <div id="steal-cards-container" class="steal-cards-container"></div>
-                <button id="cancel-steal-btn" class="btn btn-secondary">Cancel</button>
+                <h2 id="modal-title">Modal Title</h2>
+                <p id="modal-subtitle" class="modal-subtitle">Modal subtitle</p>
+                <div id="modal-cards-container" class="modal-cards-container"></div>
+                <div id="modal-buttons" class="modal-buttons">
+                    <button id="modal-close-btn" class="btn btn-secondary">Close</button>
+                </div>
             </div>
         </div>
     </div>

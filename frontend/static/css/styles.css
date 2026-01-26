@@ -398,11 +398,22 @@ body {
     margin-bottom: 10px;
 }
 
-.castle-resources {
+.castle-info {
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
     gap: 5px;
-    justify-content: center;
+    align-items: center;
+}
+
+.castle-value {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #ffd93d;
+}
+
+.castle-resources {
+    font-size: 0.9em;
+    color: #b0b0b0;
 }
 
 .field {
@@ -767,13 +778,60 @@ body {
     font-size: 1em;
 }
 
-/* Steal Cards Container */
-.steal-cards-container {
+/* Modal Cards Container */
+.modal-cards-container {
     display: flex;
     flex-wrap: wrap;
     gap: 15px;
     justify-content: center;
     margin-bottom: 25px;
+}
+
+.modal-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Spy Option Button */
+.spy-option {
+    width: 200px;
+    padding: 20px;
+    background: linear-gradient(135deg, #2d2d4a 0%, #1e1e32 100%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.spy-option:hover {
+    transform: translateY(-5px);
+    border-color: #a78bfa;
+    box-shadow: 0 8px 25px rgba(167, 139, 250, 0.4);
+}
+
+.spy-option-title {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: #e0e0e0;
+    margin-bottom: 8px;
+}
+
+.spy-option-desc {
+    font-size: 0.85em;
+    color: #b0b0b0;
+}
+
+/* Cards in modal (non-interactive) */
+.modal-cards-container .card {
+    cursor: default;
+    pointer-events: none;
+}
+
+.modal-cards-container .card:hover {
+    transform: none;
+    box-shadow: none;
 }
 
 /* Face Down Card */
