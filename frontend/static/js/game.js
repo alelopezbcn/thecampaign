@@ -7,6 +7,7 @@ let gameState = {
     currentState: null,
     selectedCards: [],
     currentAction: null,
+    pendingAction: null, // Track last action sent to detect results (trade, buy, etc.)
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -184,17 +185,21 @@ function handleGameState(payload) {
     updateTurnIndicator();
     updatePhaseIndicator();
 
-    // Check if we just bought cards (new_cards present and current phase is construct)
+    // Check if we have new cards from a pending action (trade or buy)
     const newCards = payload.game_status.new_cards || [];
-    const currentAction = payload.game_status.current_action;
-    if (newCards.length > 0 && currentAction === 'construct' && payload.is_your_turn) {
+    if (newCards.length > 0 && payload.is_your_turn && gameState.pendingAction) {
         // Find the full card data for the new cards
-        const boughtCards = payload.game_status.current_player_hand.filter(
+        const acquiredCards = payload.game_status.current_player_hand.filter(
             card => newCards.includes(card.id)
         );
-        if (boughtCards.length > 0) {
-            showBoughtCardsModal(boughtCards);
+        if (acquiredCards.length > 0) {
+            if (gameState.pendingAction === 'buy') {
+                showBoughtCardsModal(acquiredCards);
+            } else if (gameState.pendingAction === 'trade') {
+                showTradedCardsModal(acquiredCards);
+            }
         }
+        gameState.pendingAction = null; // Clear after handling
     }
 }
 
@@ -275,6 +280,10 @@ function confirmInitialWarriors() {
 }
 
 function sendAction(actionType, payload = null) {
+    // Track actions that will return new cards
+    if (actionType === 'trade' || actionType === 'buy') {
+        gameState.pendingAction = actionType;
+    }
     sendMessage(actionType, payload);
     clearSelections();
     gameState.currentAction = null;
@@ -1061,6 +1070,11 @@ function showSpyResultModal(cards) {
 // Bought Cards Modal
 function showBoughtCardsModal(cards) {
     showCardsModal(cards, 'Cards Bought!', `You bought ${cards.length} card${cards.length > 1 ? 's' : ''}`);
+}
+
+// Traded Cards Modal
+function showTradedCardsModal(cards) {
+    showCardsModal(cards, 'Card Received!', 'You traded 3 cards for this');
 }
 
 // Generic Cards Modal
