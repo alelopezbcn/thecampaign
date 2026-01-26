@@ -45,7 +45,7 @@ func newWarriorHandCard(warrior ports.Warrior) HandCard {
 }
 
 func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
-	enemyField ports.Field, enemyCastleConstructed bool,
+	enemyField ports.Field, castleConstructed bool,
 	action types.ActionType) HandCard {
 
 	canBeUsed := false
@@ -70,7 +70,7 @@ func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 	}
 
 	if action == types.ActionTypeConstruct {
-		canBeUsed = !enemyCastleConstructed && weapon.CanConstruct()
+		canBeUsed = !castleConstructed && weapon.CanConstruct()
 		return newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, canBeUsed)
 	}
@@ -142,7 +142,7 @@ func newThiefHandCard(cardID string, action types.ActionType) HandCard {
 		action == types.ActionTypeSpySteal)
 }
 
-func newResourceHandCard(resource ports.Resource, enemyCastleConstructed bool,
+func newResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
 	action types.ActionType) HandCard {
 
 	if action != types.ActionTypeBuy && action != types.ActionTypeConstruct {
@@ -151,15 +151,17 @@ func newResourceHandCard(resource ports.Resource, enemyCastleConstructed bool,
 	}
 
 	if action == types.ActionTypeConstruct {
-		if !enemyCastleConstructed {
+		// If player's castle is already constructed/started, any resource can be added
+		if playerCastleConstructed {
 			return newHandCard(resource.GetID(), CardTypeResource,
-				resource.Value(), []string{}, resource.CanConstruct())
+				resource.Value(), []string{}, true)
 		}
-
+		// If player's castle hasn't started, only resources that can start construction
 		return newHandCard(resource.GetID(), CardTypeResource,
-			resource.Value(), []string{}, true)
+			resource.Value(), []string{}, resource.CanConstruct())
 	}
 
+	// Buy action - use resource's CanBuy method
 	return newHandCard(resource.GetID(), CardTypeResource,
 		resource.Value(), []string{}, resource.CanBuy())
 }

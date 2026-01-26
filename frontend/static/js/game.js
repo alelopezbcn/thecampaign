@@ -54,6 +54,9 @@ function setupEventListeners() {
     document.getElementById('confirm-action-btn').addEventListener('click', confirmAction);
     document.getElementById('cancel-action-btn').addEventListener('click', cancelAction);
 
+    // Steal modal cancel button
+    document.getElementById('cancel-steal-btn').addEventListener('click', hideStealModal);
+
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
 }
@@ -343,6 +346,24 @@ function handleCardClick(cardID, cardType, context, card = null) {
         return;
     }
 
+    // Handle spy/steal phase card selection from hand
+    if (status && status.current_action === 'spy/steal' && context === 'player-hand') {
+        handleSpyStealPhaseHandClick(cardID, card);
+        return;
+    }
+
+    // Handle buy phase card selection from hand
+    if (status && status.current_action === 'buy' && context === 'player-hand') {
+        handleBuyPhaseHandClick(cardID, card);
+        return;
+    }
+
+    // Handle construct phase card selection from hand
+    if (status && status.current_action === 'construct' && context === 'player-hand') {
+        handleConstructPhaseHandClick(cardID, card);
+        return;
+    }
+
     // Handle target selection for attack phase (enemy field)
     if (gameState.actionState.weaponId && context === 'enemy-field') {
         handleAttackPhaseTargetClick(cardID, 'enemy');
@@ -419,6 +440,58 @@ function handleAttackPhaseTargetClick(cardID, side) {
     } else if (actionType === 'specialpower') {
         updateActionPrompt('Special power ready - confirm to use');
     }
+}
+
+// Spy/Steal phase handlers
+function handleSpyStealPhaseHandClick(cardID, card) {
+    if (card && card.can_be_used === false) {
+        return;
+    }
+
+    const cardType = card ? (card.type || '').toLowerCase() : '';
+
+    clearSelections();
+    gameState.actionState.weaponId = cardID;
+    highlightSelectedCard(cardID);
+
+    if (cardType === 'spy') {
+        gameState.actionState.type = 'spy';
+        updateActionPrompt('Spy selected - confirm to spy on enemy hand');
+        showConfirmButtons();
+    } else if (cardType === 'thief') {
+        gameState.actionState.type = 'thief';
+        // Show steal modal immediately when thief is selected
+        showStealModal();
+    }
+}
+
+// Buy phase handlers
+function handleBuyPhaseHandClick(cardID, card) {
+    if (card && card.can_be_used === false) {
+        return;
+    }
+
+    clearSelections();
+    gameState.actionState.weaponId = cardID;
+    gameState.actionState.type = 'buy';
+    highlightSelectedCard(cardID);
+    updateActionPrompt('Resource selected - confirm to buy a card');
+    showConfirmButtons();
+}
+
+// Construct phase handlers
+function handleConstructPhaseHandClick(cardID, card) {
+    if (card && card.can_be_used === false) {
+        return;
+    }
+
+    // Select one resource card for construct
+    clearSelections();
+    gameState.selectedCards = [cardID];
+    gameState.actionState.type = 'construct';
+    highlightSelectedCard(cardID);
+    updateActionPrompt('Resource selected - confirm to construct castle');
+    showConfirmButtons();
 }
 
 function highlightValidUserWarriors(weapon) {
@@ -534,6 +607,27 @@ function confirmAction() {
         resetActionState();
         return;
     }
+
+    // Handle spy
+    if (actionState.type === 'spy' && actionState.weaponId) {
+        sendAction('spy', { card_id: actionState.weaponId });
+        resetActionState();
+        return;
+    }
+
+    // Handle buy
+    if (actionState.type === 'buy' && actionState.weaponId) {
+        sendAction('buy', { card_id: actionState.weaponId });
+        resetActionState();
+        return;
+    }
+
+    // Handle construct (send one card at a time)
+    if (actionState.type === 'construct' && gameState.selectedCards.length > 0) {
+        sendAction('construct', { card_id: gameState.selectedCards[0] });
+        resetActionState();
+        return;
+    }
 }
 
 function cancelAction() {
@@ -635,19 +729,23 @@ function createCardElement(card, context) {
         div.style.setProperty('border-color', card.color, 'important');
     }
 
-    // Check if card can be used based on current action
+    // Check if card can be used based on current action (only when it's your turn)
     const status = gameState.currentState;
     const currentAction = gameState.currentAction;
 
-    if (context === 'player-hand') {
-        // During move_warrior, only warriors are usable
+    if (context === 'player-hand' && gameState.isYourTurn) {
+        // During move_warrior action, only warriors are usable
         if (currentAction === 'move_warrior') {
             if (cardType !== 'warrior') {
                 div.classList.add('unusable');
             }
         }
-        // During attack phase, use backend can_be_used flag
-        else if (status && status.current_action === 'attack') {
+        // Warriors are only usable during move_warrior action
+        else if (cardType === 'warrior') {
+            div.classList.add('unusable');
+        }
+        // During action phases (attack, spy/steal, buy, construct), use backend can_be_used flag
+        else if (status && ['attack', 'spy/steal', 'buy', 'construct'].includes(status.current_action)) {
             if (card.can_be_used === false) {
                 div.classList.add('unusable');
             }
@@ -875,4 +973,38 @@ function showStatus(elementId, message, type) {
 
 function generateCardID(card) {
     return `card_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+// Steal Modal Functions
+function showStealModal() {
+    const modal = document.getElementById('steal-modal');
+    const container = document.getElementById('steal-cards-container');
+    const enemyHandCount = gameState.currentState?.cards_in_enemy_hand || 0;
+
+    container.innerHTML = '';
+
+    // Create face-down cards for each enemy card
+    for (let i = 0; i < enemyHandCount; i++) {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card-face-down';
+        cardDiv.dataset.position = i;
+        cardDiv.innerHTML = `<span class="card-position">#${i + 1}</span>`;
+        cardDiv.addEventListener('click', () => selectStealPosition(i));
+        container.appendChild(cardDiv);
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function hideStealModal() {
+    const modal = document.getElementById('steal-modal');
+    modal.classList.add('hidden');
+    resetActionState();
+    updateActionPrompt('');
+}
+
+function selectStealPosition(position) {
+    // Send steal action with the selected position
+    sendAction('steal', { card_position: position });
+    hideStealModal();
 }

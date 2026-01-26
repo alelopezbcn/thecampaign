@@ -53,6 +53,7 @@ func (g *GameStatus) ShowBoard() string {
 func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 	action types.ActionType, canMove bool, canTrade bool, newCards ...ports.Card) GameStatus {
 
+	// Cache castle info with nil checks
 	gs := GameStatus{
 		CurrentPlayer:              currentPlayer.Name(),
 		CurrentAction:              string(action),
@@ -88,7 +89,7 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				newWeaponHandCard(ct, currentPlayer.Field(),
-					enemy.Field(), enemy.Castle().IsConstructed(), action))
+					enemy.Field(), currentPlayer.Castle().IsConstructed(), action))
 
 		case ports.Catapult:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
@@ -103,8 +104,7 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 				newThiefHandCard(ct.GetID(), action))
 		case ports.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newResourceHandCard(ct, enemy.Castle().IsConstructed(),
-					action))
+				newResourceHandCard(ct, currentPlayer.Castle().IsConstructed(), action))
 		}
 	}
 
