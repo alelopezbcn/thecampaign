@@ -186,7 +186,7 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 	g.addToHistory(fmt.Sprintf("%s moved warrior %s to field",
 		p.Name(), warriorID))
 
-	status = gamestatus.NewGameStatus(p, e, g.currentAction, nil)
+	status = gamestatus.NewGameStatus(p, e, g.currentAction)
 
 	return status, nil
 }
@@ -251,7 +251,7 @@ func (g *Game) Attack(playerName, targetID, weaponID string) (
 		targetCard.String(), targetCard.String()))
 
 	g.currentAction = types.ActionTypeSpySteal
-	status = gamestatus.NewGameStatus(p, e, g.currentAction, nil)
+	status = gamestatus.NewGameStatus(p, e, g.currentAction)
 	return status, nil
 }
 
@@ -290,7 +290,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		warriorCard.String(), targetCard.String()))
 
 	g.currentAction = types.ActionTypeSpySteal
-	status = gamestatus.NewGameStatus(p, e, g.currentAction, nil)
+	status = gamestatus.NewGameStatus(p, e, g.currentAction)
 
 	return status, nil
 }
@@ -319,7 +319,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 		p.Name(), e.Name()))
 
 	g.currentAction = types.ActionTypeSpySteal
-	status = gamestatus.NewGameStatus(p, e, g.currentAction, nil)
+	status = gamestatus.NewGameStatus(p, e, g.currentAction)
 
 	return status, nil
 }
@@ -340,7 +340,7 @@ func (g *Game) Spy(playerName string, option int) (spiedCards []ports.Card,
 	g.OnCardMovedToPile(s)
 
 	g.currentAction = types.ActionTypeBuy
-	status = gamestatus.NewGameStatus(p, e, g.currentAction, nil)
+	status = gamestatus.NewGameStatus(p, e, g.currentAction)
 
 	switch option {
 	case 1:
@@ -543,4 +543,32 @@ func (g *Game) OnMessage(msg string) {
 
 func (g *Game) switchTurn() {
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
+}
+
+func (g *Game) CurrentAction() types.ActionType {
+	return g.currentAction
+}
+
+func (g *Game) SkipPhase(playerName string) (status gamestatus.GameStatus, err error) {
+	p, e := g.WhoIsCurrent()
+	if p.Name() != playerName {
+		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+	}
+
+	switch g.currentAction {
+	case types.ActionTypeAttack:
+		g.currentAction = types.ActionTypeSpySteal
+	case types.ActionTypeSpySteal:
+		g.currentAction = types.ActionTypeBuy
+	case types.ActionTypeBuy:
+		g.currentAction = types.ActionTypeConstruct
+	case types.ActionTypeConstruct:
+		g.currentAction = types.ActionTypeEndTurn
+	default:
+		return status, errors.New("cannot skip this phase")
+	}
+
+	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
+	status = gamestatus.NewGameStatus(p, e, g.currentAction)
+	return status, nil
 }

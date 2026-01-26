@@ -6,7 +6,14 @@ let gameState = {
     isYourTurn: false,
     currentState: null,
     selectedCards: [],
-    currentAction: null
+    currentAction: null,
+    // Attack phase state
+    attackState: {
+        weaponId: null,
+        weaponType: null, // 'weapon', 'specialpower', 'catapult'
+        userId: null,     // For special power - the warrior using the power
+        targetId: null    // Target enemy warrior
+    }
 };
 
 // DOM Elements
@@ -36,24 +43,28 @@ function setupEventListeners() {
     // Setup screen
     document.getElementById('confirm-warriors-btn').addEventListener('click', confirmInitialWarriors);
 
-    // Game screen actions
-    document.getElementById('attack-btn').addEventListener('click', () => startAction('attack'));
+    // Game screen actions - only 4 buttons
     document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
-    document.getElementById('special-power-btn').addEventListener('click', () => startAction('special_power'));
     document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
-    document.getElementById('buy-btn').addEventListener('click', () => startAction('buy'));
-    document.getElementById('construct-btn').addEventListener('click', () => startAction('construct'));
-    document.getElementById('spy-btn').addEventListener('click', () => startAction('spy'));
-    document.getElementById('steal-btn').addEventListener('click', () => startAction('steal'));
-    document.getElementById('catapult-btn').addEventListener('click', () => startAction('catapult'));
+    document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
 
     // Confirm/Cancel action buttons
-    document.getElementById('confirm-attack-btn').addEventListener('click', confirmAttack);
-    document.getElementById('cancel-action-btn').addEventListener('click', cancelAction);
+    document.getElementById('confirm-action-btn').addEventListener('click', confirmAttackAction);
+    document.getElementById('cancel-action-btn').addEventListener('click', cancelAttackAction);
 
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
+}
+
+function handleSkipPhase() {
+    const status = gameState.currentState;
+    // If we're in the last phase (endturn), end the turn instead
+    if (status && status.current_action === 'endturn') {
+        sendAction('end_turn');
+    } else {
+        sendAction('skip_phase');
+    }
 }
 
 // WebSocket functions
@@ -146,16 +157,17 @@ function handleGameStarted(payload) {
 
 function handleGameState(payload) {
     console.log('Game state updated:', payload);
-    console.log('Newly drawn card from payload:', payload.newly_drawn_card);
+    console.log('New cards from payload:', payload.game_status.new_cards);
     gameState.isYourTurn = payload.is_your_turn;
     gameState.currentState = payload.game_status;
-    gameState.newlyDrawnCard = payload.newly_drawn_card || null;
-    console.log('gameState.newlyDrawnCard set to:', gameState.newlyDrawnCard);
+    // Use the first card from new_cards array for highlighting
+    gameState.newlyDrawnCards = payload.game_status.new_cards || [];
+    console.log('gameState.newlyDrawnCards set to:', gameState.newlyDrawnCards);
 
     // Reset action state when game state updates
     gameState.currentAction = null;
     gameState.selectedCards = [];
-    hideConfirmButtons();
+    resetAttackState();
     updateActionPrompt('');
 
     // Determine which screen to show
@@ -166,6 +178,7 @@ function handleGameState(payload) {
     }
 
     updateTurnIndicator();
+    updatePhaseIndicator();
 }
 
 function handleGameEnded() {
@@ -248,36 +261,6 @@ function sendAction(actionType, payload = null) {
     clearSelections();
     gameState.currentAction = null;
     updateActionPrompt('');
-    hideConfirmButtons();
-}
-
-function confirmAttack() {
-    if (gameState.selectedCards.length === 2) {
-        sendAction('attack', {
-            target_id: gameState.selectedCards[0],
-            weapon_id: gameState.selectedCards[1]
-        });
-    }
-}
-
-function cancelAction() {
-    clearSelections();
-    gameState.currentAction = null;
-    updateActionPrompt('');
-    hideConfirmButtons();
-
-    // Re-render hand to remove unusable styles
-    if (gameState.currentState) {
-        renderCards('player-hand', gameState.currentState.current_player_hand);
-    }
-}
-
-function showConfirmButtons() {
-    document.getElementById('confirm-action-buttons').classList.remove('hidden');
-}
-
-function hideConfirmButtons() {
-    document.getElementById('confirm-action-buttons').classList.add('hidden');
 }
 
 function highlightSelectedCard(cardID) {
@@ -296,81 +279,56 @@ function clearSelections() {
 
 function startAction(actionType) {
     clearSelections();
-    hideConfirmButtons();
     gameState.currentAction = actionType;
 
     let prompt = '';
     switch (actionType) {
-        case 'attack':
-            prompt = 'Select an enemy target first';
-            break;
         case 'move_warrior':
             prompt = 'Select a warrior from your hand';
-            break;
-        case 'special_power':
-            prompt = 'Select: 1) Your warrior, 2) Target, 3) Special power card';
             break;
         case 'trade':
             prompt = 'Select 3 cards to trade';
             break;
-        case 'buy':
-            prompt = 'Select a resource card';
-            break;
-        case 'construct':
-            prompt = 'Select a card to construct with';
-            break;
-        case 'spy':
-            showSpyOptions();
-            return;
-        case 'steal':
-            showStealOptions();
-            return;
-        case 'catapult':
-            showCatapultOptions();
-            return;
     }
 
     updateActionPrompt(prompt);
 
-    // Re-render hand to apply unusable styles
+    // Re-render hand to apply styles
     if (gameState.currentState) {
         renderCards('player-hand', gameState.currentState.current_player_hand);
     }
 }
 
-function showSpyOptions() {
-    const option = confirm('Spy options:\nOK = Spy top 5 cards from deck\nCancel = Spy enemy hand');
-    sendAction('spy', { option: option ? 1 : 2 });
-}
-
-function showStealOptions() {
-    const enemyCardCount = gameState.currentState.cards_in_enemy_hand;
-    const position = prompt(`Enter card position to steal (1-${enemyCardCount}):`);
-
-    if (position && !isNaN(position)) {
-        sendAction('steal', { card_position: parseInt(position) });
-    }
-}
-
-function showCatapultOptions() {
-    const resourceCount = gameState.currentState.resource_cards_in_enemy_castle;
-    const position = prompt(`Enter resource position to attack (1-${resourceCount}):`);
-
-    if (position && !isNaN(position)) {
-        sendAction('catapult', { card_position: parseInt(position) });
-    }
-}
-
 // Card selection
-function handleCardClick(cardID, cardType, context) {
+function handleCardClick(cardID, cardType, context, card = null) {
     if (!gameState.isYourTurn) return;
 
     const action = gameState.currentAction;
+    const status = gameState.currentState;
 
     if (context === 'setup') {
         toggleCardSelection(cardID, 'setup');
         document.getElementById('confirm-warriors-btn').disabled =
             gameState.selectedCards.length < 1 || gameState.selectedCards.length > 3;
+        return;
+    }
+
+    // Handle attack phase card selection from hand
+    if (status && status.current_action === 'attack' && context === 'player-hand') {
+        handleAttackPhaseHandClick(cardID, card);
+        return;
+    }
+
+    // Handle target selection for attack phase (enemy field)
+    if (gameState.attackState.weaponId && context === 'enemy-field') {
+        handleAttackPhaseTargetClick(cardID, 'enemy');
+        return;
+    }
+
+    // Handle user warrior selection for special power (player field)
+    if (gameState.attackState.weaponId && gameState.attackState.weaponType === 'specialpower' &&
+        !gameState.attackState.userId && context === 'player-field') {
+        handleAttackPhaseUserClick(cardID);
         return;
     }
 
@@ -381,23 +339,6 @@ function handleCardClick(cardID, cardType, context) {
 
     // Handle different actions
     switch (action) {
-        case 'attack':
-            if (gameState.selectedCards.length === 1) {
-                updateActionPrompt('Now select a weapon from your hand');
-            } else if (gameState.selectedCards.length === 2) {
-                updateActionPrompt('Attack ready! Confirm or cancel.');
-                showConfirmButtons();
-            }
-            break;
-        case 'special_power':
-            if (gameState.selectedCards.length === 3) {
-                sendAction('special_power', {
-                    user_id: gameState.selectedCards[0],
-                    target_id: gameState.selectedCards[1],
-                    weapon_id: gameState.selectedCards[2]
-                });
-            }
-            break;
         case 'move_warrior':
             sendAction('move_warrior', { warrior_id: cardID });
             break;
@@ -408,12 +349,172 @@ function handleCardClick(cardID, cardType, context) {
                 updateActionPrompt(`Selected ${gameState.selectedCards.length}/3 cards for trade`);
             }
             break;
-        case 'buy':
-            sendAction('buy', { card_id: cardID });
-            break;
-        case 'construct':
-            sendAction('construct', { card_id: cardID });
-            break;
+    }
+}
+
+// Attack phase handlers
+function handleAttackPhaseHandClick(cardID, card) {
+    // Check if card can be used
+    if (card && card.can_be_used === false) {
+        return; // Card cannot be used in this phase
+    }
+
+    // Determine weapon type from card data
+    const cardType = card ? (card.type || '').toLowerCase() : '';
+
+    // Reset attack state
+    resetAttackState();
+
+    // Store weapon info
+    gameState.attackState.weaponId = cardID;
+
+    if (cardType === 'specialpower') {
+        gameState.attackState.weaponType = 'specialpower';
+        highlightSelectedCard(cardID);
+        updateActionPrompt('Select a warrior from your field to use the special power');
+        highlightValidUserWarriors(card);
+    } else if (cardType === 'catapult') {
+        gameState.attackState.weaponType = 'catapult';
+        highlightSelectedCard(cardID);
+        updateActionPrompt('Catapult selected - confirm to attack enemy castle');
+        showConfirmButtons();
+    } else if (cardType === 'weapon') {
+        gameState.attackState.weaponType = 'weapon';
+        highlightSelectedCard(cardID);
+        updateActionPrompt('Select a target from enemy field');
+        highlightValidTargets(card);
+    }
+}
+
+function handleAttackPhaseUserClick(cardID) {
+    // User selected a warrior to use the special power
+    gameState.attackState.userId = cardID;
+    highlightSelectedCard(cardID);
+
+    updateActionPrompt('Now select a target from enemy field');
+
+    // Get the weapon card to find valid targets
+    const weapon = findCardById(gameState.attackState.weaponId);
+    highlightValidTargets(weapon);
+}
+
+function handleAttackPhaseTargetClick(cardID, side) {
+    // Check if this is a valid target
+    const weapon = findCardById(gameState.attackState.weaponId);
+    if (weapon && weapon.use_on && !weapon.use_on.includes(cardID)) {
+        return; // Not a valid target
+    }
+
+    gameState.attackState.targetId = cardID;
+    highlightSelectedCard(cardID);
+
+    const weaponType = gameState.attackState.weaponType;
+    if (weaponType === 'weapon') {
+        updateActionPrompt('Attack ready - confirm to attack');
+    } else if (weaponType === 'specialpower') {
+        updateActionPrompt('Special power ready - confirm to use');
+    }
+
+    showConfirmButtons();
+}
+
+function highlightValidUserWarriors(weapon) {
+    // For special powers, highlight warriors on player's field that can use the power
+    const playerField = document.getElementById('player-field');
+    playerField.querySelectorAll('.card').forEach(card => {
+        const cardId = card.dataset.cardId;
+        if (weapon && weapon.use_on && weapon.use_on.includes(cardId)) {
+            card.classList.add('valid-target');
+        }
+    });
+}
+
+function highlightValidTargets(weapon) {
+    // Highlight valid targets on enemy field
+    const enemyField = document.getElementById('enemy-field');
+    enemyField.querySelectorAll('.card').forEach(card => {
+        const cardId = card.dataset.cardId;
+        if (weapon && weapon.use_on && weapon.use_on.includes(cardId)) {
+            card.classList.add('valid-target');
+        }
+    });
+}
+
+function findCardById(cardId) {
+    const status = gameState.currentState;
+    if (!status) return null;
+
+    // Search in hand
+    for (const card of status.current_player_hand || []) {
+        if (card.id === cardId) return card;
+    }
+
+    // Search in player field
+    for (const card of status.current_player_field || []) {
+        if (card.id === cardId) return card;
+    }
+
+    return null;
+}
+
+function resetAttackState() {
+    gameState.attackState = {
+        weaponId: null,
+        weaponType: null,
+        userId: null,
+        targetId: null
+    };
+
+    // Clear visual selections
+    document.querySelectorAll('.card.selected, .card.valid-target').forEach(card => {
+        card.classList.remove('selected', 'valid-target');
+    });
+
+    hideConfirmButtons();
+}
+
+function showConfirmButtons() {
+    document.getElementById('confirm-action-buttons').classList.remove('hidden');
+}
+
+function hideConfirmButtons() {
+    document.getElementById('confirm-action-buttons').classList.add('hidden');
+}
+
+function confirmAttackAction() {
+    const attackState = gameState.attackState;
+
+    if (!attackState.weaponId) return;
+
+    if (attackState.weaponType === 'catapult') {
+        // Catapult attack on castle
+        sendAction('catapult', { card_position: 0 }); // Backend determines position
+    } else if (attackState.weaponType === 'specialpower') {
+        if (!attackState.userId || !attackState.targetId) return;
+        sendAction('special_power', {
+            weapon_id: attackState.weaponId,
+            user_id: attackState.userId,
+            target_id: attackState.targetId
+        });
+    } else if (attackState.weaponType === 'weapon') {
+        if (!attackState.targetId) return;
+        sendAction('attack', {
+            weapon_id: attackState.weaponId,
+            target_id: attackState.targetId
+        });
+    }
+
+    resetAttackState();
+    updateActionPrompt('');
+}
+
+function cancelAttackAction() {
+    resetAttackState();
+    updateActionPrompt('');
+
+    // Re-render to clear highlights
+    if (gameState.currentState) {
+        renderGameBoard(gameState.currentState);
     }
 }
 
@@ -488,6 +589,13 @@ function createCardElement(card, context) {
     div.className = 'card animating';
     div.dataset.cardId = card.id || generateCardID(card);
 
+    // Store card data for attack phase logic
+    div.dataset.cardType = card.type || '';
+    div.dataset.cardSubType = card.sub_type || '';
+    if (card.use_on) {
+        div.dataset.useOn = JSON.stringify(card.use_on);
+    }
+
     // Determine card type
     const cardType = getCardType(card);
     div.classList.add(cardType);
@@ -499,18 +607,18 @@ function createCardElement(card, context) {
         div.style.setProperty('border-color', card.color, 'important');
     }
 
-    // Check if card is unusable during attack phase
-    const canBeUsedOnIDs = card.use_on || [];
-    if (context === 'player-hand' && gameState.currentAction === 'attack') {
-        const isUnusable = isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs);
-        if (isUnusable) {
+    // Check if card can be used during attack phase (only for hand cards)
+    const status = gameState.currentState;
+    if (context === 'player-hand' && status && status.current_action === 'attack') {
+        if (card.can_be_used === false) {
             div.classList.add('unusable');
         }
     }
 
-    // Check if this is the newly drawn card and highlight it
-    console.log('Creating card:', div.dataset.cardId, 'newlyDrawnCard:', gameState.newlyDrawnCard);
-    if (gameState.newlyDrawnCard && div.dataset.cardId === gameState.newlyDrawnCard) {
+    // Check if this is a newly drawn card and highlight it
+    const newCards = gameState.newlyDrawnCards || [];
+    console.log('Creating card:', div.dataset.cardId, 'newlyDrawnCards:', newCards);
+    if (newCards.includes(div.dataset.cardId)) {
         console.log('MATCH! Adding newly-drawn class to:', div.dataset.cardId);
         div.classList.add('newly-drawn');
         // Remove the highlight after animation completes
@@ -534,7 +642,7 @@ function createCardElement(card, context) {
     // Add click handler
     if (context === 'setup' || context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {
         div.addEventListener('click', () => {
-            handleCardClick(div.dataset.cardId, cardType, context);
+            handleCardClick(div.dataset.cardId, cardType, context, card);
         });
     }
 
@@ -571,31 +679,6 @@ function hexToRgba(hex, alpha) {
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
-}
-
-function isCardUnusableDuringAttack(card, cardType, canBeUsedOnIDs) {
-    const rawType = (card.type || '').toLowerCase();
-
-    // Warriors, Resources, Spy, Thief are always unusable during attack
-    if (cardType === 'warrior' || cardType === 'resource') {
-        return true;
-    }
-    if (rawType === 'spy' || rawType === 'thief') {
-        return true;
-    }
-
-    // Weapons and Special Powers need valid targets
-    if (cardType === 'weapon' || rawType === 'specialpower') {
-        return canBeUsedOnIDs.length === 0;
-    }
-
-    // Catapult needs enemy castle to be constructed
-    if (rawType === 'catapult') {
-        const enemyCastle = gameState.currentState?.enemy_castle;
-        return !enemyCastle || !enemyCastle.constructed;
-    }
-
-    return true; // Unknown types are unusable
 }
 
 function getCardType(card) {
@@ -692,21 +775,45 @@ function updateActionButtons() {
     const isYourTurn = gameState.isYourTurn;
     const status = gameState.currentState;
 
-    // Enable/disable all action buttons based on turn
-    document.querySelectorAll('.btn-action, #end-turn-btn').forEach(btn => {
-        btn.disabled = !isYourTurn;
+    // Disable all action buttons first
+    document.querySelectorAll('.btn-action, #skip-phase-btn, #end-turn-btn').forEach(btn => {
+        btn.disabled = true;
     });
 
-    if (isYourTurn && status) {
-        // Customize based on available actions (using new boolean fields)
-        document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
-        document.getElementById('attack-btn').disabled = !status.can_attack;
-        document.getElementById('buy-btn').disabled = !status.can_buy;
-        document.getElementById('construct-btn').disabled = !status.can_initiate_castle && !status.can_grow_castle;
-        document.getElementById('spy-btn').disabled = !status.can_spy;
-        document.getElementById('steal-btn').disabled = !status.can_steal;
-        document.getElementById('catapult-btn').disabled = !status.can_catapult;
+    if (!isYourTurn || !status) return;
+
+    // Move Warrior - enabled if can_move_warrior is true
+    document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
+
+    // Trade - enabled if can_trade is true (from backend)
+    document.getElementById('trade-btn').disabled = !status.can_trade;
+
+    // Skip Phase and End Turn - always enabled during your turn
+    document.getElementById('skip-phase-btn').disabled = false;
+    document.getElementById('end-turn-btn').disabled = false;
+}
+
+function updatePhaseIndicator() {
+    const phaseElement = document.getElementById('current-phase');
+    const status = gameState.currentState;
+
+    if (!status || !status.current_action) {
+        phaseElement.textContent = '';
+        return;
     }
+
+    const phaseNames = {
+        'draw': 'Draw Card',
+        'attack': 'Attack Phase',
+        'spy/steal': 'Spy/Steal Phase',
+        'buy': 'Buy Phase',
+        'construct': 'Construct Phase',
+        'endturn': 'End Turn'
+    };
+
+    const phaseName = phaseNames[status.current_action] || status.current_action;
+    phaseElement.textContent = phaseName;
+    phaseElement.className = `phase-badge phase-${status.current_action.replace('/', '-')}`;
 }
 
 function updateActionPrompt(text) {

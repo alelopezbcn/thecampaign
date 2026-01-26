@@ -18,6 +18,7 @@ const (
 	MsgSteal              MessageType = "steal"
 	MsgCatapult           MessageType = "catapult"
 	MsgEndTurn            MessageType = "end_turn"
+	MsgSkipPhase          MessageType = "skip_phase"
 
 	// Server to Client messages
 	MsgGameState        MessageType = "game_state"
@@ -95,24 +96,19 @@ type CatapultPayload struct {
 
 // GameStatePayload is sent to update clients with game state
 type GameStatePayload struct {
-	GameStatus     GameStatusDTO `json:"game_status"`
-	IsYourTurn     bool          `json:"is_your_turn"`
-	GameEnded      bool          `json:"game_ended"`
-	History        []string      `json:"history,omitempty"`
-	NewlyDrawnCard string        `json:"newly_drawn_card,omitempty"` // ID of card just drawn
+	GameStatus GameStatusDTO `json:"game_status"`
+	IsYourTurn bool          `json:"is_your_turn"`
+	GameEnded  bool          `json:"game_ended"`
+	History    []string      `json:"history,omitempty"`
 }
 
 // GameStatusDTO is the JSON-friendly game status
 type GameStatusDTO struct {
-	CurrentPlayer     string `json:"current_player"`
-	CanMoveWarrior    bool   `json:"can_move_warrior"`
-	CanAttack         bool   `json:"can_attack"`
-	CanCatapult       bool   `json:"can_catapult"`
-	CanSpy            bool   `json:"can_spy"`
-	CanSteal          bool   `json:"can_steal"`
-	CanBuy            bool   `json:"can_buy"`
-	CanInitiateCastle bool   `json:"can_initiate_castle"`
-	CanGrowCastle     bool   `json:"can_grow_castle"`
+	CurrentPlayer  string   `json:"current_player"`
+	CurrentAction  string   `json:"current_action"`
+	NewCards       []string `json:"new_cards"`
+	CanMoveWarrior bool     `json:"can_move_warrior"`
+	CanTrade       bool     `json:"can_trade"`
 
 	CurrentPlayerHand          []HandCardDTO  `json:"current_player_hand"`
 	CurrentPlayerField         []FieldCardDTO `json:"current_player_field"`
@@ -127,7 +123,7 @@ type GameStatusDTO struct {
 type HandCardDTO struct {
 	CardDTO
 	CanBeUsedOnIDs []string `json:"use_on"`
-	CanConstruct   bool     `json:"can_construct"`
+	CanBeUsed      bool     `json:"can_be_used"`
 }
 
 // FieldCardDTO represents a card on the battlefield

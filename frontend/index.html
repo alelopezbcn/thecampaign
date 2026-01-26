@@ -59,6 +59,9 @@
                     <span id="player-name-display" class="player-name"></span>
                     <span id="turn-indicator" class="turn-indicator"></span>
                 </div>
+                <div class="phase-indicator">
+                    <span id="current-phase" class="phase-badge"></span>
+                </div>
                 <div class="game-info">
                     <span id="game-id-display"></span>
                 </div>
@@ -107,20 +110,14 @@
             <!-- Action Panel -->
             <div class="action-panel">
                 <div class="action-buttons">
-                    <button id="attack-btn" class="btn btn-action" disabled>Attack</button>
                     <button id="move-warrior-btn" class="btn btn-action" disabled>Move Warrior</button>
-                    <button id="special-power-btn" class="btn btn-action" disabled>Special Power</button>
                     <button id="trade-btn" class="btn btn-action" disabled>Trade (3 cards)</button>
-                    <button id="buy-btn" class="btn btn-action" disabled>Buy</button>
-                    <button id="construct-btn" class="btn btn-action" disabled>Construct</button>
-                    <button id="spy-btn" class="btn btn-action" disabled>Spy</button>
-                    <button id="steal-btn" class="btn btn-action" disabled>Steal</button>
-                    <button id="catapult-btn" class="btn btn-action" disabled>Catapult</button>
+                    <button id="skip-phase-btn" class="btn btn-secondary" disabled>Skip Phase</button>
                     <button id="end-turn-btn" class="btn btn-primary" disabled>End Turn</button>
                 </div>
                 <div id="action-prompt" class="action-prompt"></div>
                 <div id="confirm-action-buttons" class="confirm-action-buttons hidden">
-                    <button id="confirm-attack-btn" class="btn btn-primary">Confirm Attack</button>
+                    <button id="confirm-action-btn" class="btn btn-primary">Confirm</button>
                     <button id="cancel-action-btn" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>

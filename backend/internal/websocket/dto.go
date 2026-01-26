@@ -23,15 +23,11 @@ type CastleDTO struct {
 // ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
 func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 	return GameStatusDTO{
-		CurrentPlayer:     status.CurrentPlayer,
-		CanMoveWarrior:    status.CanMoveWarrior,
-		CanAttack:         status.CanAttack,
-		CanCatapult:       status.CanCatapult,
-		CanSpy:            status.CanSpy,
-		CanSteal:          status.CanSteal,
-		CanBuy:            status.CanBuy,
-		CanInitiateCastle: status.CanInitiateCastle,
-		CanGrowCastle:     status.CanGrowCastle,
+		CurrentPlayer:  status.CurrentPlayer,
+		CurrentAction:  status.CurrentAction,
+		NewCards:       status.NewCards,
+		CanMoveWarrior: status.CanMoveWarrior,
+		CanTrade:       status.CanTrade,
 
 		CurrentPlayerHand:          convertHandCards(status.CurrentPlayerHand),
 		CurrentPlayerField:         convertFieldCards(status.CurrentPlayerField),
@@ -55,7 +51,7 @@ func convertHandCards(cards []gamestatus.HandCard) []HandCardDTO {
 				Value:   card.Card.Value,
 			},
 			CanBeUsedOnIDs: card.CanBeUsedOnIDs,
-			CanConstruct:   card.CanConstruct,
+			CanBeUsed:      card.CanBeUsed,
 		}
 	}
 	return dtos

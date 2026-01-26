@@ -118,6 +118,8 @@ func (h *Hub) processMessage(client *Client, msg *Message) {
 		h.handleCatapult(client, msg.Payload)
 	case MsgEndTurn:
 		h.handleEndTurn(client)
+	case MsgSkipPhase:
+		h.handleSkipPhase(client)
 	default:
 		client.SendError("Unknown message type")
 	}
@@ -216,8 +218,7 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 }
 
 // sendGameState sends the current game state to all players in a game
-// newlyDrawnCardID is optional - pass empty string if no card was just drawn
-func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
+func (h *Hub) sendGameState(gameID string) {
 	h.mutex.RLock()
 	room, exists := h.gameRooms[gameID]
 	h.mutex.RUnlock()
@@ -231,12 +232,7 @@ func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
 
 	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
 	currentPlayerName := currentPlayer.Name()
-
-	// Get the newly drawn card ID if provided
-	drawnCardID := ""
-	if len(newlyDrawnCardID) > 0 {
-		drawnCardID = newlyDrawnCardID[0]
-	}
+	currentAction := room.Game.CurrentAction()
 
 	for playerName, client := range room.Players {
 		var status gamestatus.GameStatus
@@ -244,33 +240,63 @@ func (h *Hub) sendGameState(gameID string, newlyDrawnCardID ...string) {
 
 		if isCurrentPlayer {
 			// Current player's turn - show their perspective
-			status = room.Game.GetStatusForNextPlayer()
+			status = gamestatus.NewGameStatus(currentPlayer, enemyPlayer, currentAction)
 		} else {
 			// Not their turn - show enemy player's perspective
 			// Enemy sees their own hand and the current player's field
-			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer)
-		}
-
-		// Only send newly drawn card ID to the player who received it
-		cardIDForPlayer := ""
-		if isCurrentPlayer {
-			cardIDForPlayer = drawnCardID
+			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer, currentAction)
 		}
 
 		payload := GameStatePayload{
-			GameStatus:     ConvertGameStatus(status),
-			IsYourTurn:     isCurrentPlayer,
-			GameEnded:      room.Game.IsGameEnded(),
-			NewlyDrawnCard: cardIDForPlayer,
+			GameStatus: ConvertGameStatus(status),
+			IsYourTurn: isCurrentPlayer,
+			GameEnded:  room.Game.IsGameEnded(),
 		}
 
-		log.Printf("sendGameState to %s: isYourTurn=%v, newlyDrawnCard='%s', handSize=%d, drawnCardID='%s'",
-			playerName, isCurrentPlayer, cardIDForPlayer, len(status.CurrentPlayerHand), drawnCardID)
+		log.Printf("sendGameState to %s: isYourTurn=%v, currentAction=%s, handSize=%d",
+			playerName, isCurrentPlayer, currentAction, len(status.CurrentPlayerHand))
 
-		// Debug: serialize and log the payload
-		if debugData, err := json.Marshal(payload); err == nil {
-			log.Printf("Payload JSON: %s", string(debugData))
+		client.SendMessage(MsgGameState, payload)
+	}
+}
+
+// sendGameStateWithStatus sends the game state using a pre-computed status for the current player
+func (h *Hub) sendGameStateWithStatus(gameID string, currentPlayerStatus gamestatus.GameStatus) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists || room.Game == nil {
+		return
+	}
+
+	room.mutex.RLock()
+	defer room.mutex.RUnlock()
+
+	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
+	currentPlayerName := currentPlayer.Name()
+	currentAction := room.Game.CurrentAction()
+
+	for playerName, client := range room.Players {
+		var status gamestatus.GameStatus
+		isCurrentPlayer := playerName == currentPlayerName
+
+		if isCurrentPlayer {
+			// Use the pre-computed status for current player
+			status = currentPlayerStatus
+		} else {
+			// Enemy sees their own hand and the current player's field
+			status = gamestatus.NewGameStatus(enemyPlayer, currentPlayer, currentAction)
 		}
+
+		payload := GameStatePayload{
+			GameStatus: ConvertGameStatus(status),
+			IsYourTurn: isCurrentPlayer,
+			GameEnded:  room.Game.IsGameEnded(),
+		}
+
+		log.Printf("sendGameStateWithStatus to %s: isYourTurn=%v, currentAction=%s, newCards=%v",
+			playerName, isCurrentPlayer, status.CurrentAction, status.NewCards)
 
 		client.SendMessage(MsgGameState, payload)
 	}
@@ -304,7 +330,7 @@ func (h *Hub) getGameRoom(client *Client) (*GameRoom, bool) {
 }
 
 // Helper function to execute game action and send state
-func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) error) {
+func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (gamestatus.GameStatus, error)) {
 	room, exists := h.getGameRoom(client)
 	if !exists || room.Game == nil {
 		client.SendError("Game not found")
@@ -312,7 +338,7 @@ func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) error)
 	}
 
 	room.mutex.Lock()
-	err := action(room.Game)
+	status, err := action(room.Game)
 	room.mutex.Unlock()
 
 	if err != nil {
@@ -320,8 +346,8 @@ func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) error)
 		return
 	}
 
-	// Send updated game state to all players
-	h.sendGameState(client.GameID)
+	// Send updated game state to all players using the returned status
+	h.sendGameStateWithStatus(client.GameID, status)
 
 	// Check if game ended
 	if room.Game.IsGameEnded() {

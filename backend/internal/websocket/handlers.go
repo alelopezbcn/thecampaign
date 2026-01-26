@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
 func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
@@ -36,48 +37,35 @@ func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
 	}
 
 	// Check if both players have warriors on field (setup complete)
-	// After SetInitialWarriors, the turn has already switched, so check both players' fields directly
 	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
 	bothHaveWarriors := len(currentPlayer.Field().Warriors()) > 0 && len(enemyPlayer.Field().Warriors()) > 0
 
 	log.Printf("SetInitialWarriors: currentPlayer=%s, currentPlayerField=%d, enemyField=%d, bothHaveWarriors=%v",
 		currentPlayer.Name(), len(currentPlayer.Field().Warriors()), len(enemyPlayer.Field().Warriors()), bothHaveWarriors)
 
-	var newCardID string
+	var status gamestatus.GameStatus
 	if bothHaveWarriors {
 		// Setup complete - auto draw for the current player
-		// Get the current player's hand before drawing
-		handBefore := make(map[string]bool)
-		handCardsBefore := currentPlayer.Hand().ShowCards()
-		for _, card := range handCardsBefore {
-			handBefore[card.GetID()] = true
-		}
+		log.Printf("Setup complete! Drawing card for %s", currentPlayer.Name())
 
-		log.Printf("Setup complete! Drawing card for %s (hand size before: %d)", currentPlayer.Name(), len(handCardsBefore))
-
-		if err := room.Game.DrawCards(currentPlayer.Name(), 1); err != nil {
+		status, err = room.Game.DrawCard(currentPlayer.Name())
+		if err != nil {
 			log.Printf("Error drawing card: %v", err)
 			room.mutex.Unlock()
 			client.SendError(err.Error())
 			return
 		}
-
-		// Get hand after drawing to identify the new card
-		handCardsAfter := currentPlayer.Hand().ShowCards()
-		for _, card := range handCardsAfter {
-			if !handBefore[card.GetID()] {
-				newCardID = card.GetID()
-				break
-			}
-		}
-		log.Printf("Newly drawn card ID: %s (hand size after: %d)", newCardID, len(handCardsAfter))
+		log.Printf("Drew card, new cards: %v", status.NewCards)
 	}
 
 	room.mutex.Unlock()
 
 	// Send updated game state
-	log.Printf("Sending game state with newCardID: %s", newCardID)
-	h.sendGameState(client.GameID, newCardID)
+	if bothHaveWarriors {
+		h.sendGameStateWithStatus(client.GameID, status)
+	} else {
+		h.sendGameState(client.GameID)
+	}
 
 	// Check if game ended
 	if room.Game.IsGameEnded() {
@@ -98,7 +86,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.Attack(client.PlayerName, p.TargetID, p.WeaponID)
 	})
 }
@@ -116,7 +104,7 @@ func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.SpecialPower(client.PlayerName, p.UserID, p.TargetID, p.WeaponID)
 	})
 }
@@ -134,7 +122,7 @@ func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.MoveWarriorToField(client.PlayerName, p.WarriorID)
 	})
 }
@@ -152,7 +140,7 @@ func (h *Hub) handleTrade(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.Trade(client.PlayerName, p.CardIDs)
 	})
 }
@@ -170,7 +158,7 @@ func (h *Hub) handleBuy(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.Buy(client.PlayerName, p.CardID)
 	})
 }
@@ -188,7 +176,7 @@ func (h *Hub) handleConstruct(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.Construct(client.PlayerName, p.CardID)
 	})
 }
@@ -213,7 +201,7 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 	}
 
 	room.mutex.Lock()
-	cards, err := room.Game.Spy(client.PlayerName, p.Option)
+	cards, status, err := room.Game.Spy(client.PlayerName, p.Option)
 	room.mutex.Unlock()
 
 	if err != nil {
@@ -226,8 +214,13 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 		"cards": cards,
 	})
 
-	// Send updated game state
-	h.sendGameState(client.GameID)
+	// Send updated game state with the returned status
+	h.sendGameStateWithStatus(client.GameID, status)
+
+	// Check if game ended
+	if room.Game.IsGameEnded() {
+		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
+	}
 }
 
 func (h *Hub) handleSteal(client *Client, payload interface{}) {
@@ -243,7 +236,7 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.Steal(client.PlayerName, p.CardPosition)
 	})
 }
@@ -261,7 +254,7 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) error {
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
 		return g.Catapult(client.PlayerName, p.CardPosition)
 	})
 }
@@ -278,51 +271,44 @@ func (h *Hub) handleEndTurn(client *Client) {
 	room.mutex.Lock()
 
 	// End the current player's turn
-	if err := room.Game.EndTurn(client.PlayerName); err != nil {
+	_, err := room.Game.EndTurn(client.PlayerName)
+	if err != nil {
 		log.Printf("EndTurn error: %v", err)
 		room.mutex.Unlock()
 		client.SendError(err.Error())
 		return
 	}
 
-	// Get the new current player and their hand before drawing
+	// Get the new current player
 	nextPlayer, _ := room.Game.WhoIsCurrent()
-	statusBefore := room.Game.GetStatusForNextPlayer()
-	handBefore := make(map[string]bool)
-	for _, card := range statusBefore.CurrentPlayerHand {
-		handBefore[card.Card.CardID] = true
-	}
-
-	log.Printf("EndTurn: nextPlayer=%s, hand size before draw=%d", nextPlayer.Name(), len(statusBefore.CurrentPlayerHand))
+	log.Printf("EndTurn: nextPlayer=%s", nextPlayer.Name())
 
 	// Automatically draw a card for the new current player
-	if err := room.Game.DrawCards(nextPlayer.Name(), 1); err != nil {
-		log.Printf("DrawCards error: %v", err)
+	status, err := room.Game.DrawCard(nextPlayer.Name())
+	if err != nil {
+		log.Printf("DrawCard error: %v", err)
 		room.mutex.Unlock()
 		client.SendError(err.Error())
 		return
 	}
 
-	// Get hand after drawing to identify the new card
-	statusAfter := room.Game.GetStatusForNextPlayer()
-	var newCardID string
-	for _, card := range statusAfter.CurrentPlayerHand {
-		if !handBefore[card.Card.CardID] {
-			newCardID = card.Card.CardID
-			break
-		}
-	}
-
-	log.Printf("EndTurn: newCardID=%s, hand size after draw=%d", newCardID, len(statusAfter.CurrentPlayerHand))
+	log.Printf("EndTurn: newCards=%v", status.NewCards)
 
 	room.mutex.Unlock()
 
-	// Send updated game state with newly drawn card ID
-	log.Printf("Sending game state with newCardID: %s", newCardID)
-	h.sendGameState(client.GameID, newCardID)
+	// Send updated game state with the status from DrawCard
+	h.sendGameStateWithStatus(client.GameID, status)
 
 	// Check if game ended
 	if room.Game.IsGameEnded() {
 		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
 	}
+}
+
+func (h *Hub) handleSkipPhase(client *Client) {
+	log.Printf("handleSkipPhase called by %s", client.PlayerName)
+
+	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+		return g.SkipPhase(client.PlayerName)
+	})
 }

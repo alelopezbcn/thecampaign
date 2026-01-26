@@ -10,10 +10,10 @@ import (
 
 type GameStatus struct {
 	CurrentPlayer  string   `json:"current_player"`
-	CurrentAction  string   `json:"current_action"` // new
+	CurrentAction  string   `json:"current_action"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
-	CanSwap        bool     `json:"can_swap"` // new
+	CanTrade       bool     `json:"can_trade"`
 
 	CurrentPlayerHand          []HandCard  `json:"current_player_hand"`
 	CurrentPlayerField         []FieldCard `json:"current_player_field"`
@@ -53,18 +53,25 @@ func (g *GameStatus) ShowBoard() string {
 func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 	action types.ActionType, newCards ...ports.Card) GameStatus {
 
-	gs := GameStatus{}
-	gs.CurrentPlayer = currentPlayer.Name()
-	gs.CurrentAction = string(action)
-
-	gs.NewCards = make([]string, len(newCards))
-	for i, c := range newCards {
-		gs.NewCards[i] = c.GetID()
+	gs := GameStatus{
+		CurrentPlayer:              currentPlayer.Name(),
+		CurrentAction:              string(action),
+		NewCards:                   []string{},
+		CurrentPlayerHand:          []HandCard{},
+		CurrentPlayerField:         []FieldCard{},
+		CurrentPlayerCastle:        newCastle(currentPlayer.Castle()),
+		CardsInEnemyHand:           enemy.CardsInHand(),
+		EnemyField:                 []FieldCard{},
+		EnemyCastle:                newCastle(enemy.Castle()),
+		ResourceCardsInEnemyCastle: enemy.Castle().ResourceCards(),
+		CanTrade:                   len(currentPlayer.Hand().ShowCards()) >= 3,
 	}
 
-	gs.CurrentPlayerHand = []HandCard{}
-	gs.CurrentPlayerField = []FieldCard{}
-	gs.EnemyField = []FieldCard{}
+	if len(newCards) > 0 {
+		for _, c := range newCards {
+			gs.NewCards = append(gs.NewCards, c.GetID())
+		}
+	}
 
 	for _, card := range currentPlayer.Hand().ShowCards() {
 		switch ct := card.(type) {
@@ -107,11 +114,6 @@ func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
 	for _, warrior := range enemy.Field().Warriors() {
 		gs.EnemyField = append(gs.EnemyField, newFieldCard(warrior))
 	}
-
-	gs.CurrentPlayerCastle = newCastle(currentPlayer.Castle())
-	gs.EnemyCastle = newCastle(enemy.Castle())
-	gs.CardsInEnemyHand = enemy.CardsInHand()
-	gs.ResourceCardsInEnemyCastle = enemy.Castle().ResourceCards()
 
 	return gs
 }

@@ -260,6 +260,67 @@ body {
     50% { opacity: 0.6; }
 }
 
+/* Phase Indicator */
+.phase-indicator {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.phase-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.phase-badge.phase-draw {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.phase-badge.phase-attack {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+    color: white;
+    animation: phasePulse 1.5s ease-in-out infinite;
+}
+
+.phase-badge.phase-spy-steal {
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    color: white;
+    animation: phasePulse 1.5s ease-in-out infinite;
+}
+
+.phase-badge.phase-buy {
+    background: linear-gradient(135deg, #ffd93d 0%, #f0c000 100%);
+    color: #333;
+    animation: phasePulse 1.5s ease-in-out infinite;
+}
+
+.phase-badge.phase-construct {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a3a0 100%);
+    color: white;
+    animation: phasePulse 1.5s ease-in-out infinite;
+}
+
+.phase-badge.phase-endturn {
+    background: linear-gradient(135deg, #4cd964 0%, #34c759 100%);
+    color: white;
+}
+
+@keyframes phasePulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+}
+
 /* Enemy Area */
 .enemy-area {
     display: grid;
@@ -449,6 +510,21 @@ body {
 
 .card.unusable:hover {
     transform: none;
+}
+
+.card.valid-target {
+    border-color: #4cd964;
+    box-shadow: 0 0 15px rgba(76, 217, 100, 0.5);
+    animation: targetPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes targetPulse {
+    0%, 100% {
+        box-shadow: 0 0 15px rgba(76, 217, 100, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 25px rgba(76, 217, 100, 0.8);
+    }
 }
 
 .confirm-action-buttons {
