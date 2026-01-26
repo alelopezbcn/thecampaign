@@ -399,6 +399,13 @@ function handleCardClick(cardID, cardType, context, card = null) {
         handleAttackPhaseUserClick(cardID);
         return;
     }
+
+    // Handle target selection for special power on own field (Mage heal, Knight protect)
+    if (gameState.actionState.weaponId && gameState.actionState.type === 'specialpower' &&
+        gameState.actionState.userId && context === 'player-field') {
+        handleAttackPhaseTargetClick(cardID, 'player');
+        return;
+    }
 }
 
 // Attack phase handlers
@@ -449,29 +456,33 @@ function handleAttackPhaseUserClick(cardID) {
     const user = findCardById(cardID);
     const userName = getCardName(user);
 
-    // Get the effect based on warrior type
+    // Get the effect and target info based on warrior type
     const userType = (user?.sub_type || '').toLowerCase();
     let effect = '';
     let emoji = '✨';
+    let targetHint = 'Select a target';
 
     switch (userType) {
         case 'archer':
             effect = 'INSTANT KILL';
             emoji = '🎯';
+            targetHint = 'Select an enemy to kill';
             break;
         case 'knight':
             effect = 'PROTECT';
             emoji = '🛡️';
+            targetHint = 'Select an ally to protect';
             break;
         case 'mage':
             effect = 'HEAL';
             emoji = '💚';
+            targetHint = 'Select an ally to heal';
             break;
         default:
             effect = getCardName(weapon);
     }
 
-    updateActionPrompt(`${emoji} ${userName} will use ${effect} - Select a target`);
+    updateActionPrompt(`${emoji} ${userName} will use ${effect} - ${targetHint}`);
 
     highlightValidTargets(weapon);
 }
@@ -571,6 +582,15 @@ function highlightValidTargets(weapon) {
             card.classList.add('valid-target');
         }
     });
+
+    // Also highlight valid targets on player field (for Mage heal, Knight protect)
+    const playerField = document.getElementById('player-field');
+    playerField.querySelectorAll('.card').forEach(card => {
+        const cardId = card.dataset.cardId;
+        if (weapon && weapon.use_on && weapon.use_on.includes(cardId)) {
+            card.classList.add('valid-target');
+        }
+    });
 }
 
 function findCardById(cardId) {
@@ -607,34 +627,23 @@ function buildAttackSummary(weapon, target) {
 
 // Build summary for special power attacks
 function buildSpecialPowerSummary(specialPower, user, target) {
-    const powerName = getCardName(specialPower);
     const userName = getCardName(user);
     const targetName = getCardName(target);
     const targetHp = target?.value || 0;
 
     // Get the effect based on warrior type
     const userType = (user?.sub_type || '').toLowerCase();
-    let effect = '';
-    let emoji = '✨';
 
     switch (userType) {
         case 'archer':
-            effect = 'INSTANT KILL';
-            emoji = '🎯';
-            break;
+            return `🎯 ${userName} → INSTANT KILL → ${targetName}`;
         case 'knight':
-            effect = 'PROTECT';
-            emoji = '🛡️';
-            break;
+            return `🛡️ ${userName} → PROTECT → ${targetName} (${targetHp} HP)`;
         case 'mage':
-            effect = 'HEAL';
-            emoji = '💚';
-            break;
+            return `💚 ${userName} → HEAL → ${targetName} (${targetHp} HP)`;
         default:
-            effect = powerName;
+            return `✨ ${userName} → ${getCardName(specialPower)} → ${targetName}`;
     }
-
-    return `${emoji} ${userName} → ${effect} → ${targetName} (${targetHp} HP)`;
 }
 
 function resetActionState() {
