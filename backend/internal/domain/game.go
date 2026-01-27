@@ -332,13 +332,12 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 	return status, nil
 }
 
-// TODO: Spy debe devolver UI cards
 func (g *Game) Spy(playerName string, option int) (spiedCards []gamestatus.Card,
 	status gamestatus.GameStatus, err error) {
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return nil, status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return nil, status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	s := p.Spy()
@@ -369,21 +368,21 @@ func (g *Game) Spy(playerName string, option int) (spiedCards []gamestatus.Card,
 }
 
 func (g *Game) Steal(playerName string, cardPosition int) (
-	status gamestatus.GameStatus, err error) {
+	stolenCardResult gamestatus.Card, status gamestatus.GameStatus, err error) {
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return stolenCardResult, status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	t := p.Thief()
 	if t == nil {
-		return status, errors.New("player does not have a thief to steal with")
+		return stolenCardResult, status, errors.New("player does not have a thief to steal with")
 	}
 
 	stolenCard, err := e.CardStolenFromHand(cardPosition)
 	if err != nil {
-		return status, fmt.Errorf("stealing card failed: %w", err)
+		return stolenCardResult, status, fmt.Errorf("stealing card failed: %w", err)
 	}
 
 	g.OnCardMovedToPile(t)
@@ -395,7 +394,7 @@ func (g *Game) Steal(playerName string, cardPosition int) (
 
 	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, stolenCard)
 
-	return status, nil
+	return gamestatus.FromDomainCard(stolenCard), status, nil
 
 }
 
@@ -423,16 +422,17 @@ func (g *Game) Buy(playerName, cardID string) (
 
 	val := r.Value()
 	p.GiveCards(resourceCard.GetID())
-	g.OnCardMovedToPile(resourceCard)
 
 	cardsToBuy := val / 2
 	cards, err := g.drawCards(p, cardsToBuy)
 	if err != nil {
+		p.TakeCards(resourceCard)
 		return status, fmt.Errorf("drawing card for buying failed: %w", err)
 	}
 
 	p.TakeCards(cards...)
 
+	g.OnCardMovedToPile(resourceCard)
 	g.addToHistory(fmt.Sprintf("%s bought %d card(s) using %s",
 		p.Name(), cardsToBuy, resourceCard.String()))
 

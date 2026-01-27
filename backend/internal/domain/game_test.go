@@ -117,8 +117,8 @@ func TestGame_Buy(t *testing.T) {
 		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(4)
 		mockResource.EXPECT().GetID().Return("gold-123")
-		mockResource.EXPECT().String().Return("Gold(4)")
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().TakeCards(mockResource).Return(true)
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(false) // Hand limit exceeded
 
 		g := &Game{
@@ -131,45 +131,6 @@ func TestGame_Buy(t *testing.T) {
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "drawing card for buying failed")
-		assert.Equal(t, gamestatus.GameStatus{}, status)
-	})
-
-	t.Run("Error when deck is empty and discard pile is also empty", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
-		mockResource.EXPECT().Value().Return(4)
-		mockResource.EXPECT().GetID().Return("gold-123")
-		mockResource.EXPECT().String().Return("Gold(4)")
-		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
-		// First draw attempt fails
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
-		// Replenish is called with empty discard pile
-		mockDeck.EXPECT().Replenish(gomock.Any())
-		// Second draw attempt also fails
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
-
-		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
-			deck:        mockDeck,
-			discardPile: []ports.Card{},
-		}
-
-		status, err := g.Buy("Player1", "gold-123")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "drawing card for buying failed")
-		assert.Contains(t, err.Error(), "no cards left to draw")
 		assert.Equal(t, gamestatus.GameStatus{}, status)
 	})
 

@@ -236,9 +236,33 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
-		return g.Steal(client.PlayerName, p.CardPosition)
+	room, exists := h.getGameRoom(client)
+	if !exists || room.Game == nil {
+		client.SendError("Game not found")
+		return
+	}
+
+	room.mutex.Lock()
+	stolenCard, status, err := room.Game.Steal(client.PlayerName, p.CardPosition)
+	room.mutex.Unlock()
+
+	if err != nil {
+		client.SendError(err.Error())
+		return
+	}
+
+	// Send the stolen card only to the client who used steal
+	client.SendMessage("steal_result", map[string]interface{}{
+		"card": stolenCard,
 	})
+
+	// Send updated game state with the returned status
+	h.sendGameStateWithStatus(client.GameID, status)
+
+	// Check if game ended
+	if room.Game.IsGameEnded() {
+		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
+	}
 }
 
 func (h *Hub) handleCatapult(client *Client, payload interface{}) {

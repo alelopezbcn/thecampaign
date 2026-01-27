@@ -135,6 +135,9 @@ function handleMessage(message) {
         case 'spy_result':
             handleSpyResult(message.payload);
             break;
+        case 'steal_result':
+            handleStealResult(message.payload);
+            break;
         default:
             console.log('Unknown message type:', message.type);
     }
@@ -215,6 +218,13 @@ function handleGameEnded() {
 function handleSpyResult(payload) {
     const cards = payload.cards || [];
     showSpyResultModal(cards);
+}
+
+function handleStealResult(payload) {
+    const card = payload.card;
+    if (card) {
+        showStealResultModal(card);
+    }
 }
 
 // Screen management
@@ -1157,6 +1167,11 @@ function showSpyResultModal(cards) {
     showCardsModal(cards, 'Spied Cards', 'These are the cards you revealed');
 }
 
+// Steal Result Modal
+function showStealResultModal(card) {
+    showCardsModal([card], 'Card Stolen!', 'You stole this card from your opponent');
+}
+
 // Bought Cards Modal
 function showBoughtCardsModal(cards) {
     showCardsModal(cards, 'Cards Bought!', `You bought ${cards.length} card${cards.length > 1 ? 's' : ''}`);
@@ -1167,6 +1182,22 @@ function showTradedCardsModal(cards) {
     showCardsModal(cards, 'Card Received!', 'You traded 3 cards for this');
 }
 
+// Normalize card from gamestatus.Card format to UI format
+function normalizeCard(card) {
+    // If card has card_type object (new gamestatus.Card format), normalize it
+    if (card.card_type) {
+        return {
+            id: card.card_id,
+            type: card.card_type.name,
+            sub_type: card.card_type.sub_name,
+            color: card.card_type.color,
+            value: card.value
+        };
+    }
+    // Already in UI format
+    return card;
+}
+
 // Generic Cards Modal
 function showCardsModal(cards, title, subtitle) {
     let content = '';
@@ -1174,7 +1205,8 @@ function showCardsModal(cards, title, subtitle) {
     if (cards.length === 0) {
         content = '<p style="color: #b0b0b0;">No cards to show</p>';
     } else {
-        cards.forEach(card => {
+        cards.forEach(rawCard => {
+            const card = normalizeCard(rawCard);
             const cardType = getCardType(card);
             const cardName = getCardName(card);
             const bgColor = card.color ? hexToRgba(card.color, 0.3) : '';
