@@ -9,7 +9,7 @@ type Cemetery struct {
 	LastCorp Card `json:"last_corp"`
 }
 
-func newCemetery(cementery ports.Cemetery) Cemetery {
+func NewCemetery(cementery ports.Cemetery) Cemetery {
 	c := Cemetery{
 		Corps: cementery.Count(),
 	}

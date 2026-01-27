@@ -1,8 +1,6 @@
 package gamestatus
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -13,7 +11,7 @@ type FieldCard struct {
 	ProtectedBy Card   `json:"protected_by"`
 }
 
-func newFieldCard(warrior ports.Warrior) FieldCard {
+func NewFieldCard(warrior ports.Warrior) FieldCard {
 
 	var aCardType CardType
 	switch warrior.Type() {
@@ -52,24 +50,4 @@ func newFieldCard(warrior ports.Warrior) FieldCard {
 		AttackedBy:  attackedByCards,
 		ProtectedBy: protectedByCard,
 	}
-}
-
-func (c FieldCard) String() string {
-	return fmt.Sprintf("%s - %s (%d)%s%s",
-		c.CardID,
-		c.CardType.String(),
-		c.Value,
-		func() string {
-			if len(c.AttackedBy) > 0 {
-				return fmt.Sprintf(" | AttackedBy: %v", c.AttackedBy)
-			}
-			return ""
-		}(),
-		func() string {
-			if c.ProtectedBy.CardID != "" {
-				return fmt.Sprintf(" | ProtectedBy: %v", c.ProtectedBy)
-			}
-			return ""
-		}(),
-	)
 }

@@ -25,7 +25,7 @@ func newHandCard(cardID string, cardType CardType, value int,
 	}
 }
 
-func newWarriorHandCard(warrior ports.Warrior) HandCard {
+func NewWarriorHandCard(warrior ports.Warrior) HandCard {
 	var aCardType CardType
 	switch warrior.Type() {
 	case types.KnightWarriorType:
@@ -42,7 +42,7 @@ func newWarriorHandCard(warrior ports.Warrior) HandCard {
 		warrior.Health(), []string{}, true)
 }
 
-func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
+func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 	enemyField ports.Field, castleConstructed bool,
 	action types.ActionType) HandCard {
 
@@ -77,7 +77,7 @@ func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 		weapon.DamageAmount(), enemyField.AttackableIDs(), canBeUsed)
 }
 
-func newSpecialPowerHandCard(specialPower ports.SpecialPower,
+func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 	myField ports.Field, enemyField ports.Field,
 	action types.ActionType) HandCard {
 
@@ -119,7 +119,7 @@ func newSpecialPowerHandCard(specialPower ports.SpecialPower,
 		0, canBeUsedOnIDs, true)
 }
 
-func newCatapultHandCard(cardID string, enemyCastleCanBeAttacked bool,
+func NewCatapultHandCard(cardID string, enemyCastleCanBeAttacked bool,
 	action types.ActionType) HandCard {
 
 	if action != types.ActionTypeAttack {
@@ -130,17 +130,17 @@ func newCatapultHandCard(cardID string, enemyCastleCanBeAttacked bool,
 		enemyCastleCanBeAttacked)
 }
 
-func newSpyHandCard(cardID string, action types.ActionType) HandCard {
+func NewSpyHandCard(cardID string, action types.ActionType) HandCard {
 	return newHandCard(cardID, CardTypeSpy, 0, []string{},
 		action == types.ActionTypeSpySteal)
 }
 
-func newThiefHandCard(cardID string, action types.ActionType) HandCard {
+func NewThiefHandCard(cardID string, action types.ActionType) HandCard {
 	return newHandCard(cardID, CardTypeThief, 0, []string{},
 		action == types.ActionTypeSpySteal)
 }
 
-func newResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
+func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
 	action types.ActionType) HandCard {
 
 	if action != types.ActionTypeBuy && action != types.ActionTypeConstruct {

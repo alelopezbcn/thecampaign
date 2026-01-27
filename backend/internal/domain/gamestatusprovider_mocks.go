@@ -12,7 +12,6 @@ package domain
 import (
 	reflect "reflect"
 
-	gamestatus "github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	ports "github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
@@ -42,14 +41,14 @@ func (m *MockGameStatusProvider) EXPECT() *MockGameStatusProviderMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGameStatusProvider) Get(currentPlayer, enemy ports.Player, action types.ActionType, canMove, canTrade bool, cemetery ports.Cemetery, newCards ...ports.Card) gamestatus.GameStatus {
+func (m *MockGameStatusProvider) Get(currentPlayer, enemy ports.Player, action types.ActionType, canMove, canTrade bool, cemetery ports.Cemetery, newCards ...ports.Card) GameStatus {
 	m.ctrl.T.Helper()
 	varargs := []any{currentPlayer, enemy, action, canMove, canTrade, cemetery}
 	for _, a := range newCards {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Get", varargs...)
-	ret0, _ := ret[0].(gamestatus.GameStatus)
+	ret0, _ := ret[0].(GameStatus)
 	return ret0
 }
 

@@ -1,6 +1,7 @@
-package gamestatus
+package domain
 
 import (
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -12,17 +13,17 @@ type GameStatus struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand          []HandCard  `json:"current_player_hand"`
-	CurrentPlayerField         []FieldCard `json:"current_player_field"`
-	CurrentPlayerCastle        Castle      `json:"current_player_castle"`
-	EnemyField                 []FieldCard `json:"enemy_field"`
-	EnemyCastle                Castle      `json:"enemy_castle"`
-	CardsInEnemyHand           int         `json:"cards_in_enemy_hand"`
-	ResourceCardsInEnemyCastle int         `json:"resource_cards_in_enemy_castle"`
-	Cemetery                   Cemetery
+	CurrentPlayerHand          []gamestatus.HandCard  `json:"current_player_hand"`
+	CurrentPlayerField         []gamestatus.FieldCard `json:"current_player_field"`
+	CurrentPlayerCastle        gamestatus.Castle      `json:"current_player_castle"`
+	EnemyField                 []gamestatus.FieldCard `json:"enemy_field"`
+	EnemyCastle                gamestatus.Castle      `json:"enemy_castle"`
+	CardsInEnemyHand           int                    `json:"cards_in_enemy_hand"`
+	ResourceCardsInEnemyCastle int                    `json:"resource_cards_in_enemy_castle"`
+	Cemetery                   gamestatus.Cemetery    `json:"cemetery"`
 }
 
-func NewGameStatus(currentPlayer ports.Player,
+func newGameStatus(currentPlayer ports.Player,
 	enemy ports.Player, action types.ActionType,
 	canMove bool, canTrade bool, cemetery ports.Cemetery,
 	newCards ...ports.Card) GameStatus {
@@ -31,15 +32,15 @@ func NewGameStatus(currentPlayer ports.Player,
 		CurrentPlayer:              currentPlayer.Name(),
 		CurrentAction:              string(action),
 		NewCards:                   []string{},
-		CurrentPlayerHand:          []HandCard{},
-		CurrentPlayerField:         []FieldCard{},
-		CurrentPlayerCastle:        newCastle(currentPlayer.Castle()),
+		CurrentPlayerHand:          []gamestatus.HandCard{},
+		CurrentPlayerField:         []gamestatus.FieldCard{},
+		CurrentPlayerCastle:        gamestatus.NewCastle(currentPlayer.Castle()),
 		CardsInEnemyHand:           enemy.CardsInHand(),
-		EnemyField:                 []FieldCard{},
-		EnemyCastle:                newCastle(enemy.Castle()),
+		EnemyField:                 []gamestatus.FieldCard{},
+		EnemyCastle:                gamestatus.NewCastle(enemy.Castle()),
 		ResourceCardsInEnemyCastle: enemy.Castle().ResourceCards(),
 		CanTrade:                   canTrade && len(currentPlayer.Hand().ShowCards()) >= 3,
-		Cemetery:                   newCemetery(cemetery),
+		Cemetery:                   gamestatus.NewCemetery(cemetery),
 	}
 
 	if len(newCards) > 0 {
@@ -52,41 +53,41 @@ func NewGameStatus(currentPlayer ports.Player,
 		switch ct := card.(type) {
 		case ports.Warrior:
 			gs.CanMoveWarrior = canMove
-			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, newWarriorHandCard(ct))
+			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, gamestatus.NewWarriorHandCard(ct))
 		case ports.Weapon:
 			if ct.Type() == types.SpecialPowerWeaponType {
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					newSpecialPowerHandCard(ct.(ports.SpecialPower), currentPlayer.Field(),
+					gamestatus.NewSpecialPowerHandCard(ct.(ports.SpecialPower), currentPlayer.Field(),
 						enemy.Field(), action))
 				continue
 			}
 
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newWeaponHandCard(ct, currentPlayer.Field(),
+				gamestatus.NewWeaponHandCard(ct, currentPlayer.Field(),
 					enemy.Field(), currentPlayer.Castle().IsConstructed(), action))
 
 		case ports.Catapult:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newCatapultHandCard(ct.GetID(), enemy.Castle().CanBeAttacked(),
+				gamestatus.NewCatapultHandCard(ct.GetID(), enemy.Castle().CanBeAttacked(),
 					action))
 
 		case ports.Spy:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newSpyHandCard(ct.GetID(), action))
+				gamestatus.NewSpyHandCard(ct.GetID(), action))
 		case ports.Thief:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newThiefHandCard(ct.GetID(), action))
+				gamestatus.NewThiefHandCard(ct.GetID(), action))
 		case ports.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				newResourceHandCard(ct, currentPlayer.Castle().IsConstructed(), action))
+				gamestatus.NewResourceHandCard(ct, currentPlayer.Castle().IsConstructed(), action))
 		}
 	}
 
 	for _, warrior := range currentPlayer.Field().Warriors() {
-		gs.CurrentPlayerField = append(gs.CurrentPlayerField, newFieldCard(warrior))
+		gs.CurrentPlayerField = append(gs.CurrentPlayerField, gamestatus.NewFieldCard(warrior))
 	}
 	for _, warrior := range enemy.Field().Warriors() {
-		gs.EnemyField = append(gs.EnemyField, newFieldCard(warrior))
+		gs.EnemyField = append(gs.EnemyField, gamestatus.NewFieldCard(warrior))
 	}
 
 	return gs

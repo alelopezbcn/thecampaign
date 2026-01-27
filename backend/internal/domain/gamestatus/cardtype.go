@@ -6,10 +6,6 @@ type CardType struct {
 	Color   string `json:"color"`
 }
 
-func (c CardType) String() string {
-	return c.Name
-}
-
 var (
 	CardTypeKnight       = CardType{"Warrior", "Knight", "#0000FF"} // Blue
 	CardTypeSword        = CardType{"Weapon", "Sword", "#ADD8E6"}   // Light Blue
