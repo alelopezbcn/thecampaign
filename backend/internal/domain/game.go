@@ -24,7 +24,7 @@ type Game struct {
 	CanMoveWarrior     bool
 	CanTrade           bool
 	deck               ports.Deck
-	discardPile        []ports.Card
+	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
 	history            []string
 	dealer             ports.Dealer
@@ -43,7 +43,7 @@ func NewGame(player1, player2 string,
 	g := &Game{
 		id:                 uuid.NewString(),
 		CurrentTurn:        0,
-		discardPile:        []ports.Card{},
+		discardPile:        newDiscardPile(),
 		cemetery:           newCemetery(),
 		history:            []string{},
 		dealer:             dealer,
@@ -504,8 +504,7 @@ func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err err
 }
 
 func (g *Game) shuffleDiscardPileIntoDeck() {
-	g.deck.Replenish(g.discardPile)
-	g.discardPile = []ports.Card{}
+	g.deck.Replenish(g.discardPile.Empty())
 	g.addToHistory("Shuffled discard pile into deck")
 }
 
@@ -519,9 +518,9 @@ func (g *Game) addToHistory(msg string) {
 }
 
 func (g *Game) OnCardMovedToPile(card ports.Card) {
-	g.discardPile = append(g.discardPile, card)
+	g.discardPile.Discard(card)
 	g.addToHistory(fmt.Sprintf("card moved to discard pile (%d): %s",
-		len(g.discardPile), card.String()))
+		g.discardPile.Count(), card.String()))
 }
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {

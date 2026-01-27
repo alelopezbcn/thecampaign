@@ -830,6 +830,9 @@ function renderGameBoard(status) {
     renderCastle('enemy-castle', status.enemy_castle);
     renderCastle('player-castle', status.current_player_castle);
 
+    // Render cemetery
+    renderCemetery(status.cemetery);
+
     // Update enemy hand count
     document.getElementById('enemy-hand-count').textContent =
         `${status.cards_in_enemy_hand} cards in hand`;
@@ -960,6 +963,31 @@ function renderCastle(containerId, castle) {
             </div>
         ` : ''}
     `;
+}
+
+function renderCemetery(cemetery) {
+    const countElement = document.getElementById('cemetery-corps-count');
+    const lastCorpContainer = document.getElementById('cemetery-last-corp');
+
+    if (!cemetery) {
+        countElement.textContent = '0';
+        lastCorpContainer.innerHTML = '';
+        return;
+    }
+
+    countElement.textContent = cemetery.corps || 0;
+
+    if (cemetery.last_corp) {
+        const card = cemetery.last_corp;
+        const cardColor = card.color || '#666';
+        lastCorpContainer.innerHTML = `
+            <div class="cemetery-card" style="background: linear-gradient(135deg, ${cardColor}40, ${cardColor}20); border-color: ${cardColor};">
+                <div class="card-type" style="color: ${cardColor};">${card.sub_type || card.type}</div>
+            </div>
+        `;
+    } else {
+        lastCorpContainer.innerHTML = '';
+    }
 }
 
 // Helper functions

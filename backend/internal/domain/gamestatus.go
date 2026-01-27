@@ -21,13 +21,13 @@ type GameStatus struct {
 	CardsInEnemyHand           int                    `json:"cards_in_enemy_hand"`
 	ResourceCardsInEnemyCastle int                    `json:"resource_cards_in_enemy_castle"`
 	Cemetery                   gamestatus.Cemetery    `json:"cemetery"`
+	DiscardPile                gamestatus.DiscardPile `json:"discard_pile"`
 }
 
 func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game, newCards ...ports.Card) GameStatus {
 	action := game.currentAction
 	canMove := game.CanMoveWarrior
 	canTrade := game.CanTrade
-	cemetery := game.cemetery
 
 	gs := GameStatus{
 		CurrentPlayer:              currentPlayer.Name(),
@@ -41,7 +41,8 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game, n
 		EnemyCastle:                gamestatus.NewCastle(enemy.Castle()),
 		ResourceCardsInEnemyCastle: enemy.Castle().ResourceCards(),
 		CanTrade:                   canTrade && len(currentPlayer.Hand().ShowCards()) >= 3,
-		Cemetery:                   gamestatus.NewCemetery(cemetery),
+		Cemetery:                   gamestatus.NewCemetery(game.cemetery),
+		DiscardPile:                gamestatus.NewDiscardPile(game.discardPile),
 	}
 
 	if len(newCards) > 0 {

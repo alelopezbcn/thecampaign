@@ -21,6 +21,12 @@ type CastleDTO struct {
 	Value         int  `json:"value"`
 }
 
+// CemeteryDTO represents the cemetery for JSON serialization
+type CemeteryDTO struct {
+	Corps    int      `json:"corps"`
+	LastCorp *CardDTO `json:"last_corp,omitempty"`
+}
+
 // ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
 func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 	return GameStatusDTO{
@@ -37,6 +43,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		EnemyCastle:                convertCastle(status.EnemyCastle),
 		CardsInEnemyHand:           status.CardsInEnemyHand,
 		ResourceCardsInEnemyCastle: status.ResourceCardsInEnemyCastle,
+		Cemetery:                   convertCemetery(status.Cemetery),
 	}
 }
 
@@ -105,4 +112,22 @@ func convertCastle(castle gamestatus.Castle) CastleDTO {
 		ResourceCards: castle.ResourceCards,
 		Value:         castle.Value,
 	}
+}
+
+func convertCemetery(cemetery gamestatus.Cemetery) CemeteryDTO {
+	dto := CemeteryDTO{
+		Corps: cemetery.Corps,
+	}
+
+	if cemetery.LastCorp.CardID != "" {
+		dto.LastCorp = &CardDTO{
+			ID:      cemetery.LastCorp.CardID,
+			Type:    cemetery.LastCorp.CardType.Name,
+			SubType: cemetery.LastCorp.CardType.SubName,
+			Color:   cemetery.LastCorp.CardType.Color,
+			Value:   cemetery.LastCorp.Value,
+		}
+	}
+
+	return dto
 }

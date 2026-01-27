@@ -118,6 +118,7 @@ type GameStatusDTO struct {
 	EnemyCastle                CastleDTO      `json:"enemy_castle"`
 	CardsInEnemyHand           int            `json:"cards_in_enemy_hand"`
 	ResourceCardsInEnemyCastle int            `json:"resource_cards_in_enemy_castle"`
+	Cemetery                   CemeteryDTO    `json:"cemetery"`
 }
 
 // HandCardDTO represents a card in the player's hand
