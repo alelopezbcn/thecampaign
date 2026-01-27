@@ -13,7 +13,6 @@ import (
 	reflect "reflect"
 
 	ports "github.com/alelopezbcn/thecampaign/internal/domain/ports"
-	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,9 +40,9 @@ func (m *MockGameStatusProvider) EXPECT() *MockGameStatusProviderMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGameStatusProvider) Get(currentPlayer, enemy ports.Player, action types.ActionType, canMove, canTrade bool, cemetery ports.Cemetery, newCards ...ports.Card) GameStatus {
+func (m *MockGameStatusProvider) Get(p, e ports.Player, game *Game, newCards ...ports.Card) GameStatus {
 	m.ctrl.T.Helper()
-	varargs := []any{currentPlayer, enemy, action, canMove, canTrade, cemetery}
+	varargs := []any{p, e, game}
 	for _, a := range newCards {
 		varargs = append(varargs, a)
 	}
@@ -53,8 +52,8 @@ func (m *MockGameStatusProvider) Get(currentPlayer, enemy ports.Player, action t
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockGameStatusProviderMockRecorder) Get(currentPlayer, enemy, action, canMove, canTrade, cemetery any, newCards ...any) *gomock.Call {
+func (mr *MockGameStatusProviderMockRecorder) Get(p, e, game any, newCards ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{currentPlayer, enemy, action, canMove, canTrade, cemetery}, newCards...)
+	varargs := append([]any{p, e, game}, newCards...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockGameStatusProvider)(nil).Get), varargs...)
 }

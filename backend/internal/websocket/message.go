@@ -27,6 +27,7 @@ const (
 	MsgWaitingForPlayer MessageType = "waiting_for_player"
 	MsgPlayerJoined     MessageType = "player_joined"
 	MsgGameEnded        MessageType = "game_ended"
+	MsgInitialWarriors  MessageType = "initial_warriors"
 )
 
 // Message is the base WebSocket message structure
@@ -148,4 +149,10 @@ type GameStartedPayload struct {
 // PlayerJoinedPayload when a player joins
 type PlayerJoinedPayload struct {
 	PlayerName string `json:"player_name"`
+}
+
+// InitialWarriorsPayload sent to players to choose their initial warriors
+type InitialWarriorsPayload struct {
+	Warriors  []CardDTO `json:"warriors"`
+	IsYourTurn bool     `json:"is_your_turn"`
 }

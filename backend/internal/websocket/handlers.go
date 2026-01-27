@@ -5,7 +5,6 @@ import (
 	"log"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
-	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
 func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
@@ -43,7 +42,7 @@ func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
 	log.Printf("SetInitialWarriors: currentPlayer=%s, currentPlayerField=%d, enemyField=%d, bothHaveWarriors=%v",
 		currentPlayer.Name(), len(currentPlayer.Field().Warriors()), len(enemyPlayer.Field().Warriors()), bothHaveWarriors)
 
-	var status gamestatus.GameStatus
+	var status domain.GameStatus
 	if bothHaveWarriors {
 		// Setup complete - auto draw for the current player
 		log.Printf("Setup complete! Drawing card for %s", currentPlayer.Name())
@@ -60,16 +59,17 @@ func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
 
 	room.mutex.Unlock()
 
-	// Send updated game state
 	if bothHaveWarriors {
+		// Setup complete - send game state
 		h.sendGameStateWithStatus(client.GameID, status)
-	} else {
-		h.sendGameState(client.GameID)
-	}
 
-	// Check if game ended
-	if room.Game.IsGameEnded() {
-		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
+		// Check if game ended
+		if room.Game.IsGameEnded() {
+			h.broadcastToGame(client.GameID, MsgGameEnded, nil)
+		}
+	} else {
+		// Still waiting for second player - send updated initial warriors
+		h.sendInitialWarriors(client.GameID)
 	}
 }
 
@@ -86,7 +86,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.Attack(client.PlayerName, p.TargetID, p.WeaponID)
 	})
 }
@@ -104,7 +104,7 @@ func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.SpecialPower(client.PlayerName, p.UserID, p.TargetID, p.WeaponID)
 	})
 }
@@ -122,7 +122,7 @@ func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.MoveWarriorToField(client.PlayerName, p.WarriorID)
 	})
 }
@@ -140,7 +140,7 @@ func (h *Hub) handleTrade(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.Trade(client.PlayerName, p.CardIDs)
 	})
 }
@@ -158,7 +158,7 @@ func (h *Hub) handleBuy(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.Buy(client.PlayerName, p.CardID)
 	})
 }
@@ -176,7 +176,7 @@ func (h *Hub) handleConstruct(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.Construct(client.PlayerName, p.CardID)
 	})
 }
@@ -211,7 +211,8 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 
 	// Send the revealed cards only to the client who used spy
 	client.SendMessage("spy_result", map[string]interface{}{
-		"cards": cards,
+		"cards":   cards,
+		"source":  p.Option, // 1 = deck, 2 = enemy hand
 	})
 
 	// Send updated game state with the returned status
@@ -278,7 +279,7 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.Catapult(client.PlayerName, p.CardPosition)
 	})
 }
@@ -332,7 +333,7 @@ func (h *Hub) handleEndTurn(client *Client) {
 func (h *Hub) handleSkipPhase(client *Client) {
 	log.Printf("handleSkipPhase called by %s", client.PlayerName)
 
-	h.executeGameAction(client, func(g *domain.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
 		return g.SkipPhase(client.PlayerName)
 	})
 }

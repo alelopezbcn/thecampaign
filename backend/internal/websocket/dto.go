@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
@@ -21,7 +22,7 @@ type CastleDTO struct {
 }
 
 // ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
-func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
+func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 	return GameStatusDTO{
 		CurrentPlayer:  status.CurrentPlayer,
 		CurrentAction:  status.CurrentAction,

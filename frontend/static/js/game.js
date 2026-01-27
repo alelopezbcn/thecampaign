@@ -138,6 +138,9 @@ function handleMessage(message) {
         case 'steal_result':
             handleStealResult(message.payload);
             break;
+        case 'initial_warriors':
+            handleInitialWarriors(message.payload);
+            break;
         default:
             console.log('Unknown message type:', message.type);
     }
@@ -161,6 +164,30 @@ function handleGameStarted(payload) {
     document.getElementById('current-game-id').textContent = payload.game_id;
     document.getElementById('player-name-display').textContent = payload.your_name;
     document.getElementById('game-id-display').textContent = `Game: ${payload.game_id}`;
+}
+
+function handleInitialWarriors(payload) {
+    console.log('Initial warriors received:', payload);
+    gameState.isYourTurn = payload.is_your_turn;
+    gameState.selectedCards = [];
+
+    // Store warriors for rendering
+    gameState.initialWarriors = payload.warriors;
+
+    // Show setup screen and render warriors
+    showScreen('setup');
+    renderInitialWarriors(payload.warriors);
+    updateSetupTurnIndicator();
+}
+
+function renderInitialWarriors(warriors) {
+    const container = document.getElementById('setup-hand');
+    container.innerHTML = '';
+
+    warriors.forEach(warrior => {
+        const cardElement = createCardElement(warrior, 'setup');
+        container.appendChild(cardElement);
+    });
 }
 
 function handleGameState(payload) {
@@ -217,7 +244,8 @@ function handleGameEnded() {
 
 function handleSpyResult(payload) {
     const cards = payload.cards || [];
-    showSpyResultModal(cards);
+    const source = payload.source; // 1 = deck, 2 = enemy hand
+    showSpyResultModal(cards, source);
 }
 
 function handleStealResult(payload) {
@@ -1163,8 +1191,14 @@ function selectSpyOption(option) {
 }
 
 // Spy Result Modal
-function showSpyResultModal(cards) {
-    showCardsModal(cards, 'Spied Cards', 'These are the cards you revealed');
+function showSpyResultModal(cards, source) {
+    if (source === 1) {
+        // Deck cards - show with position indicator
+        showCardsModal(cards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
+    } else {
+        // Enemy hand
+        showCardsModal(cards, 'Enemy Hand', 'These are the cards in your opponent\'s hand');
+    }
 }
 
 // Steal Result Modal
@@ -1199,23 +1233,34 @@ function normalizeCard(card) {
 }
 
 // Generic Cards Modal
-function showCardsModal(cards, title, subtitle) {
+function showCardsModal(cards, title, subtitle, showPositionIndicators = false) {
     let content = '';
 
     if (cards.length === 0) {
         content = '<p style="color: #b0b0b0;">No cards to show</p>';
     } else {
-        cards.forEach(rawCard => {
+        cards.forEach((rawCard, index) => {
             const card = normalizeCard(rawCard);
             const cardType = getCardType(card);
             const cardName = getCardName(card);
             const bgColor = card.color ? hexToRgba(card.color, 0.3) : '';
             const borderColor = card.color || '';
 
+            // Position indicator for deck cards
+            let positionBadge = '';
+            if (showPositionIndicators) {
+                const positionLabel = index === 0 ? 'TOP' : `#${index + 1}`;
+                const badgeStyle = index === 0
+                    ? 'background: #4CAF50; color: white;'
+                    : 'background: #666; color: #ccc;';
+                positionBadge = `<span class="position-badge" style="${badgeStyle} padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px;">${positionLabel}</span>`;
+            }
+
             content += `
                 <div class="card ${cardType}" style="${bgColor ? `background: ${bgColor};` : ''} ${borderColor ? `border-color: ${borderColor};` : ''}">
                     <div class="card-header">
                         <span class="card-type ${cardType}">${card.type || cardType}</span>
+                        ${positionBadge}
                     </div>
                     <div class="card-content">
                         <div class="card-name">${cardName}</div>

@@ -23,10 +23,11 @@ type GameStatus struct {
 	Cemetery                   gamestatus.Cemetery    `json:"cemetery"`
 }
 
-func newGameStatus(currentPlayer ports.Player,
-	enemy ports.Player, action types.ActionType,
-	canMove bool, canTrade bool, cemetery ports.Cemetery,
-	newCards ...ports.Card) GameStatus {
+func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game, newCards ...ports.Card) GameStatus {
+	action := game.currentAction
+	canMove := game.CanMoveWarrior
+	canTrade := game.CanTrade
+	cemetery := game.cemetery
 
 	gs := GameStatus{
 		CurrentPlayer:              currentPlayer.Name(),
