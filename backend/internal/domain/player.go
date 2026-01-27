@@ -200,6 +200,62 @@ func (p *player) UseSpecialPower(usedBy ports.Card, usedOn ports.Card,
 	return nil
 }
 
+func (p *player) CanAttack() bool {
+	for _, c := range p.hand.ShowCards() {
+		if w, ok := c.(ports.Weapon); ok {
+			if p.field.HasDragon() {
+				return true
+			}
+
+			switch w.Type() {
+			case types.ArrowWeaponType:
+				if p.Field().HasArcher() {
+					return true
+				}
+			case types.PoisonWeaponType:
+				if p.field.HasMage() {
+					return true
+				}
+			case types.SwordWeaponType:
+				if p.field.HasKnight() {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *player) CanBuy() bool {
+	for _, c := range p.hand.ShowCards() {
+		if r, ok := c.(ports.Resource); ok {
+			if r.CanBuy() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *player) CanConstruct() bool {
+	for _, c := range p.hand.ShowCards() {
+		if r, ok := c.(ports.Resource); ok {
+			if r.CanConstruct() {
+				return true
+			}
+		}
+		if w, ok := c.(ports.Weapon); ok {
+			if w.CanConstruct() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
 func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Thief); ok {

@@ -111,14 +111,15 @@ type GameStatusDTO struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand          []HandCardDTO  `json:"current_player_hand"`
-	CurrentPlayerField         []FieldCardDTO `json:"current_player_field"`
-	CurrentPlayerCastle        CastleDTO      `json:"current_player_castle"`
-	EnemyField                 []FieldCardDTO `json:"enemy_field"`
-	EnemyCastle                CastleDTO      `json:"enemy_castle"`
-	CardsInEnemyHand           int            `json:"cards_in_enemy_hand"`
-	ResourceCardsInEnemyCastle int            `json:"resource_cards_in_enemy_castle"`
-	Cemetery                   CemeteryDTO    `json:"cemetery"`
+	CurrentPlayerHand   []HandCardDTO  `json:"current_player_hand"`
+	CurrentPlayerField  []FieldCardDTO `json:"current_player_field"`
+	CurrentPlayerCastle CastleDTO      `json:"current_player_castle"`
+	EnemyField          []FieldCardDTO `json:"enemy_field"`
+	EnemyCastle         CastleDTO      `json:"enemy_castle"`
+	CardsInEnemyHand    int            `json:"cards_in_enemy_hand"`
+	Cemetery            CemeteryDTO    `json:"cemetery"`
+	DiscardPile         DiscardPileDTO `json:"discard_pile"`
+	CardsInDeck         int            `json:"cards_in_deck"`
 }
 
 // HandCardDTO represents a card in the player's hand
@@ -154,6 +155,6 @@ type PlayerJoinedPayload struct {
 
 // InitialWarriorsPayload sent to players to choose their initial warriors
 type InitialWarriorsPayload struct {
-	Warriors  []CardDTO `json:"warriors"`
-	IsYourTurn bool     `json:"is_your_turn"`
+	Warriors   []CardDTO `json:"warriors"`
+	IsYourTurn bool      `json:"is_your_turn"`
 }

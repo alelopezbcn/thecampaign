@@ -27,6 +27,12 @@ type CemeteryDTO struct {
 	LastCorp *CardDTO `json:"last_corp,omitempty"`
 }
 
+// DiscardPileDTO represents the discard pile for JSON serialization
+type DiscardPileDTO struct {
+	Cards    int      `json:"cards"`
+	LastCard *CardDTO `json:"last_card,omitempty"`
+}
+
 // ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
 func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 	return GameStatusDTO{
@@ -36,14 +42,15 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CanMoveWarrior: status.CanMoveWarrior,
 		CanTrade:       status.CanTrade,
 
-		CurrentPlayerHand:          convertHandCards(status.CurrentPlayerHand),
-		CurrentPlayerField:         convertFieldCards(status.CurrentPlayerField),
-		CurrentPlayerCastle:        convertCastle(status.CurrentPlayerCastle),
-		EnemyField:                 convertFieldCards(status.EnemyField),
-		EnemyCastle:                convertCastle(status.EnemyCastle),
-		CardsInEnemyHand:           status.CardsInEnemyHand,
-		ResourceCardsInEnemyCastle: status.ResourceCardsInEnemyCastle,
-		Cemetery:                   convertCemetery(status.Cemetery),
+		CurrentPlayerHand:   convertHandCards(status.CurrentPlayerHand),
+		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
+		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
+		EnemyField:          convertFieldCards(status.EnemyField),
+		EnemyCastle:         convertCastle(status.EnemyCastle),
+		CardsInEnemyHand:    status.CardsInEnemyHand,
+		Cemetery:            convertCemetery(status.Cemetery),
+		DiscardPile:         convertDiscardPile(status.DiscardPile),
+		CardsInDeck:         status.CardsInDeck,
 	}
 }
 
@@ -126,6 +133,24 @@ func convertCemetery(cemetery gamestatus.Cemetery) CemeteryDTO {
 			SubType: cemetery.LastCorp.CardType.SubName,
 			Color:   cemetery.LastCorp.CardType.Color,
 			Value:   cemetery.LastCorp.Value,
+		}
+	}
+
+	return dto
+}
+
+func convertDiscardPile(discardPile gamestatus.DiscardPile) DiscardPileDTO {
+	dto := DiscardPileDTO{
+		Cards: discardPile.Cards,
+	}
+
+	if discardPile.LastCard.CardID != "" {
+		dto.LastCard = &CardDTO{
+			ID:      discardPile.LastCard.CardID,
+			Type:    discardPile.LastCard.CardType.Name,
+			SubType: discardPile.LastCard.CardType.SubName,
+			Color:   discardPile.LastCard.CardType.Color,
+			Value:   discardPile.LastCard.Value,
 		}
 	}
 

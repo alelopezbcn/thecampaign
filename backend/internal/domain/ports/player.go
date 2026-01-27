@@ -15,6 +15,9 @@ type Player interface {
 	UseSpecialPower(warriorCard Card, targetCard Card, specialPowerCard Card) error
 	CardStolenFromHand(position int) (Card, error)
 	Construct(cardID string) error
+	CanAttack() bool
+	CanBuy() bool
+	CanConstruct() bool
 	Thief() Thief
 	Spy() Spy
 	Catapult() Catapult

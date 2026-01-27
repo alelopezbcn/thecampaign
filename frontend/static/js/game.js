@@ -833,6 +833,12 @@ function renderGameBoard(status) {
     // Render cemetery
     renderCemetery(status.cemetery);
 
+    // Render discard pile
+    renderDiscardPile(status.discard_pile);
+
+    // Render deck
+    renderDeck(status.cards_in_deck);
+
     // Update enemy hand count
     document.getElementById('enemy-hand-count').textContent =
         `${status.cards_in_enemy_hand} cards in hand`;
@@ -987,6 +993,46 @@ function renderCemetery(cemetery) {
         `;
     } else {
         lastCorpContainer.innerHTML = '';
+    }
+}
+
+function renderDiscardPile(discardPile) {
+    const countElement = document.getElementById('discard-pile-cards-count');
+    const lastCardContainer = document.getElementById('discard-pile-last-card');
+
+    if (!discardPile) {
+        countElement.textContent = '0';
+        lastCardContainer.innerHTML = '';
+        return;
+    }
+
+    countElement.textContent = discardPile.cards || 0;
+
+    if (discardPile.last_card) {
+        lastCardContainer.innerHTML = '';
+        const cardElement = createCardElement(discardPile.last_card, 'discard-pile');
+        lastCardContainer.appendChild(cardElement);
+    } else {
+        lastCardContainer.innerHTML = '';
+    }
+}
+
+function renderDeck(cardsInDeck) {
+    const countElement = document.getElementById('deck-cards-count');
+    const deckElement = document.getElementById('deck');
+
+    if (countElement) {
+        countElement.textContent = cardsInDeck || 0;
+    }
+
+    // Add visual effect for low deck count
+    if (deckElement) {
+        deckElement.classList.remove('deck-low', 'deck-empty');
+        if (cardsInDeck === 0) {
+            deckElement.classList.add('deck-empty');
+        } else if (cardsInDeck <= 5) {
+            deckElement.classList.add('deck-low');
+        }
     }
 }
 

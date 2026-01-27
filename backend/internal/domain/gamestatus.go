@@ -13,16 +13,15 @@ type GameStatus struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand          []gamestatus.HandCard  `json:"current_player_hand"`
-	CurrentPlayerField         []gamestatus.FieldCard `json:"current_player_field"`
-	CurrentPlayerCastle        gamestatus.Castle      `json:"current_player_castle"`
-	EnemyField                 []gamestatus.FieldCard `json:"enemy_field"`
-	EnemyCastle                gamestatus.Castle      `json:"enemy_castle"`
-	CardsInEnemyHand           int                    `json:"cards_in_enemy_hand"`
-	ResourceCardsInEnemyCastle int                    `json:"resource_cards_in_enemy_castle"`
-	Cemetery                   gamestatus.Cemetery    `json:"cemetery"`
-	DiscardPile                gamestatus.DiscardPile `json:"discard_pile"`
-	CardsInDeck                int                    `json:"deck"`
+	CurrentPlayerHand   []gamestatus.HandCard  `json:"current_player_hand"`
+	CurrentPlayerField  []gamestatus.FieldCard `json:"current_player_field"`
+	CurrentPlayerCastle gamestatus.Castle      `json:"current_player_castle"`
+	EnemyField          []gamestatus.FieldCard `json:"enemy_field"`
+	EnemyCastle         gamestatus.Castle      `json:"enemy_castle"`
+	CardsInEnemyHand    int                    `json:"cards_in_enemy_hand"`
+	Cemetery            gamestatus.Cemetery    `json:"cemetery"`
+	DiscardPile         gamestatus.DiscardPile `json:"discard_pile"`
+	CardsInDeck         int                    `json:"deck"`
 }
 
 func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game, newCards ...ports.Card) GameStatus {
@@ -31,20 +30,19 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game, n
 	canTrade := game.CanTrade
 
 	gs := GameStatus{
-		CurrentPlayer:              currentPlayer.Name(),
-		CurrentAction:              string(action),
-		NewCards:                   []string{},
-		CurrentPlayerHand:          []gamestatus.HandCard{},
-		CurrentPlayerField:         []gamestatus.FieldCard{},
-		CurrentPlayerCastle:        gamestatus.NewCastle(currentPlayer.Castle()),
-		CardsInEnemyHand:           enemy.CardsInHand(),
-		EnemyField:                 []gamestatus.FieldCard{},
-		EnemyCastle:                gamestatus.NewCastle(enemy.Castle()),
-		ResourceCardsInEnemyCastle: enemy.Castle().ResourceCards(),
-		CanTrade:                   canTrade && len(currentPlayer.Hand().ShowCards()) >= 3,
-		Cemetery:                   gamestatus.NewCemetery(game.cemetery),
-		DiscardPile:                gamestatus.NewDiscardPile(game.discardPile),
-		CardsInDeck:                game.deck.Count(),
+		CurrentPlayer:       currentPlayer.Name(),
+		CurrentAction:       string(action),
+		NewCards:            []string{},
+		CurrentPlayerHand:   []gamestatus.HandCard{},
+		CurrentPlayerField:  []gamestatus.FieldCard{},
+		CurrentPlayerCastle: gamestatus.NewCastle(currentPlayer.Castle()),
+		CardsInEnemyHand:    enemy.CardsInHand(),
+		EnemyField:          []gamestatus.FieldCard{},
+		EnemyCastle:         gamestatus.NewCastle(enemy.Castle()),
+		CanTrade:            canTrade && len(currentPlayer.Hand().ShowCards()) >= 3,
+		Cemetery:            gamestatus.NewCemetery(game.cemetery),
+		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
+		CardsInDeck:         game.deck.Count(),
 	}
 
 	if len(newCards) > 0 {

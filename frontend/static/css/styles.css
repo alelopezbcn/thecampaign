@@ -481,6 +481,184 @@ body {
     font-style: italic;
 }
 
+/* Discard Pile Styles */
+.discard-pile-area {
+    text-align: center;
+    padding: 10px;
+}
+
+.discard-pile-area h3 {
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #888;
+}
+
+.discard-pile {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    background: rgba(80, 80, 80, 0.2);
+    border: 1px solid rgba(100, 100, 100, 0.3);
+    border-radius: 8px;
+    padding: 10px 20px;
+}
+
+.discard-pile-count {
+    font-size: 1.1em;
+    color: #999;
+}
+
+.discard-pile-count span {
+    font-weight: bold;
+    font-size: 1.3em;
+    color: #c0c0c0;
+}
+
+.discard-pile-last-card {
+    display: flex;
+    justify-content: center;
+}
+
+.discard-pile-last-card .card {
+    transform: scale(0.85);
+    cursor: default;
+}
+
+.discard-pile-last-card .card:hover {
+    transform: scale(0.85);
+}
+
+/* Deck and Discard Pile Container */
+.deck-discard-container {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    padding: 10px 0;
+}
+
+/* Deck Styles */
+.deck-area {
+    text-align: center;
+    padding: 10px;
+}
+
+.deck-area h3 {
+    margin-bottom: 10px;
+    font-size: 1em;
+    color: #888;
+}
+
+.deck {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.deck-count {
+    font-size: 1.1em;
+    color: #c0c0c0;
+    font-weight: bold;
+}
+
+/* Card Back Design */
+.card-back {
+    width: 120px;
+    height: 168px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    padding: 6px;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-back::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(255, 215, 0, 0.1) 0%, transparent 30%),
+        radial-gradient(circle at 80% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 30%);
+    pointer-events: none;
+}
+
+.card-back-design {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-back-border {
+    width: 100%;
+    height: 100%;
+    border: 2px solid #d4af37;
+    border-radius: 4px;
+    padding: 4px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, transparent 50%, rgba(212, 175, 55, 0.1) 100%);
+}
+
+.card-back-inner {
+    width: 100%;
+    height: 100%;
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-back-pattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(212, 175, 55, 0.05) 10px, rgba(212, 175, 55, 0.05) 20px),
+        repeating-linear-gradient(-45deg, transparent, transparent 10px, rgba(212, 175, 55, 0.05) 10px, rgba(212, 175, 55, 0.05) 20px);
+}
+
+.card-back-emblem {
+    font-size: 2.5em;
+    color: #d4af37;
+    text-shadow:
+        0 0 10px rgba(212, 175, 55, 0.5),
+        0 2px 4px rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+/* Deck state indicators */
+.deck.deck-low .card-back {
+    box-shadow:
+        0 4px 8px rgba(0, 0, 0, 0.4),
+        0 0 15px rgba(255, 165, 0, 0.3);
+}
+
+.deck.deck-low .deck-count {
+    color: #ffa500;
+}
+
+.deck.deck-empty .card-back {
+    opacity: 0.4;
+    filter: grayscale(50%);
+}
+
+.deck.deck-empty .deck-count {
+    color: #666;
+}
+
 .field {
     background: rgba(255, 255, 255, 0.03);
     border: 2px dashed rgba(255, 255, 255, 0.1);
