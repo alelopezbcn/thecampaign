@@ -9,17 +9,19 @@ import (
 type GameStatusProvider interface {
 	Get(currentPlayer ports.Player,
 		enemy ports.Player, action types.ActionType,
-		canMove bool, canTrade bool, newCards ...ports.Card) gamestatus.GameStatus
+		canMove bool, canTrade bool,
+		cemetery ports.Cemetery, newCards ...ports.Card) gamestatus.GameStatus
 }
 
 type gameStatusProvider struct{}
 
 func (gsp *gameStatusProvider) Get(currentPlayer ports.Player,
 	enemy ports.Player, action types.ActionType,
-	canMove bool, canTrade bool, newCards ...ports.Card) gamestatus.GameStatus {
+	canMove bool, canTrade bool,
+	cemetery ports.Cemetery, newCards ...ports.Card) gamestatus.GameStatus {
 
 	return gamestatus.NewGameStatus(currentPlayer, enemy,
-		action, canMove, canTrade, newCards...)
+		action, canMove, canTrade, cemetery, newCards...)
 
 }
 

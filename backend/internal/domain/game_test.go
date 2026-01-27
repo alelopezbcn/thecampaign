@@ -142,7 +142,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
@@ -190,7 +190,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
 
@@ -239,7 +239,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
 		mockDrawnCard3 := mocks.NewMockCard(ctrl)
@@ -290,7 +290,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 		mockDiscardedCard := mocks.NewMockCard(ctrl)
 
@@ -342,7 +342,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
@@ -391,7 +391,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
 
@@ -439,7 +439,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
@@ -485,7 +485,7 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
@@ -584,7 +584,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
@@ -624,7 +624,8 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockCemetery := mocks.NewMockCemetery(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
 			CurrentPlayer: "Player1",
@@ -636,7 +637,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockProvider.EXPECT().Get(
 			mockPlayer1, mockPlayer2,
 			types.ActionTypeAttack,
-			false, false,
+			false, false, mockCemetery,
 		).Return(expectedStatus)
 
 		g := &Game{
@@ -661,7 +662,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 		mockDiscardedCard := mocks.NewMockCard(ctrl)
 
@@ -706,7 +707,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
@@ -744,11 +745,11 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(gamestatus.GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(gamestatus.GameStatus{})
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
@@ -779,7 +780,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
@@ -820,8 +821,9 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockProvider(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockCemetery := mocks.NewMockCemetery(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{
 			CurrentPlayer: "Player2",
@@ -844,6 +846,7 @@ func TestGame_DrawCard(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        []ports.Card{},
 			GameStatusProvider: mockProvider,
+			cemetery:           mockCemetery,
 		}
 
 		status, err := g.DrawCard("Player2")
@@ -1878,14 +1881,14 @@ func findInAttackedBy(cards []ports.Weapon, id string) bool {
 	return false
 }
 
-func foundInCemetery(g *Game, a ports.Warrior) bool {
-	for _, w := range g.cemetery {
-		if w == a || (w != nil && w.GetID() == a.GetID()) {
-			return true
-		}
-	}
-	return false
-}
+// func foundInCemetery(g *Game, a ports.Warrior) bool {
+// 	for _, w := range g.cemetery {
+// 		if w == a || (w != nil && w.GetID() == a.GetID()) {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
 
 func foundInDiscardPile(g *Game, a ports.Card) bool {
 	for _, w := range g.discardPile {

@@ -25,7 +25,7 @@ type Game struct {
 	CanTrade           bool
 	deck               ports.Deck
 	discardPile        []ports.Card
-	cemetery           []ports.Warrior
+	cemetery           ports.Cemetery
 	history            []string
 	dealer             ports.Dealer
 	GameStatusProvider GameStatusProvider
@@ -44,7 +44,7 @@ func NewGame(player1, player2 string,
 		id:                 uuid.NewString(),
 		CurrentTurn:        0,
 		discardPile:        []ports.Card{},
-		cemetery:           []ports.Warrior{},
+		cemetery:           newCemetery(),
 		history:            []string{},
 		dealer:             dealer,
 		GameStatusProvider: gameStatusProvider,
@@ -167,7 +167,7 @@ func (g *Game) DrawCard(playerName string) (status gamestatus.GameStatus, err er
 
 	g.currentAction = types.ActionTypeAttack
 
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, cards...)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery, cards...)
 
 	return status, nil
 }
@@ -188,7 +188,7 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 	g.addToHistory(fmt.Sprintf("%s moved warrior %s to field",
 		p.Name(), warriorID))
 	g.CanMoveWarrior = false
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 
 	return status, nil
 }
@@ -222,7 +222,7 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 
 	g.addToHistory(fmt.Sprintf("%s traded cards", p.Name()))
 	g.CanTrade = false
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, cards...)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery, cards...)
 
 	return status, nil
 }
@@ -253,7 +253,7 @@ func (g *Game) Attack(playerName, targetID, weaponID string) (
 		targetCard.String(), targetCard.String()))
 
 	g.currentAction = types.ActionTypeSpySteal
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 	return status, nil
 }
 
@@ -292,7 +292,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		warriorCard.String(), targetCard.String()))
 
 	g.currentAction = types.ActionTypeSpySteal
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 
 	return status, nil
 }
@@ -321,7 +321,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 		p.Name(), e.Name()))
 
 	g.currentAction = types.ActionTypeSpySteal
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 
 	return status, nil
 }
@@ -342,7 +342,7 @@ func (g *Game) Spy(playerName string, option int) (spiedCards []gamestatus.Card,
 	g.OnCardMovedToPile(s)
 
 	g.currentAction = types.ActionTypeBuy
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 
 	switch option {
 	case 1:
@@ -386,7 +386,7 @@ func (g *Game) Steal(playerName string, cardPosition int) (
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), e.Name()))
 
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, stolenCard)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery, stolenCard)
 
 	return gamestatus.FromDomainCard(stolenCard), status, nil
 
@@ -432,7 +432,7 @@ func (g *Game) Buy(playerName, cardID string) (
 
 	g.currentAction = types.ActionTypeConstruct
 
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, cards...)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery, cards...)
 
 	return status, nil
 }
@@ -453,7 +453,7 @@ func (g *Game) Construct(playerName, cardID string) (
 		p.Name(), cardID))
 
 	g.currentAction = types.ActionTypeEndTurn
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 	return status, nil
 
 }
@@ -467,7 +467,7 @@ func (g *Game) EndTurn(player string) (status gamestatus.GameStatus, err error) 
 	g.switchTurn()
 	p, e := g.WhoIsCurrent()
 	g.currentAction = types.ActionTypeDrawCard
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 
 	return status, nil
 }
@@ -525,9 +525,9 @@ func (g *Game) OnCardMovedToPile(card ports.Card) {
 }
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
-	g.cemetery = append(g.cemetery, warrior)
+	g.cemetery.AddCorp(warrior)
 	g.addToHistory(fmt.Sprintf("warrior died and moved to cemetery (%d): %s",
-		len(g.cemetery), warrior.String()))
+		g.cemetery.Count(), warrior.String()))
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
@@ -574,6 +574,6 @@ func (g *Game) SkipPhase(playerName string) (status gamestatus.GameStatus, err e
 	}
 
 	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
-	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade)
+	status = g.GameStatusProvider.Get(p, e, g.currentAction, g.CanMoveWarrior, g.CanTrade, g.cemetery)
 	return status, nil
 }

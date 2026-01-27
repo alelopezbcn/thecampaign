@@ -1,1 +1,6 @@
 poder enviar un mensaje a travez de game status
+agregar cementerio y la ultima carta visible a game status
+agregar discard pile, y la ultima carta visible a game status
+agregar cementerio y discard pile en UI
+agregar escudo que proteje en game status
+mostrar escudo y health en UI

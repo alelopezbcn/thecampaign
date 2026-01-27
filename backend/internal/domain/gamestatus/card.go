@@ -1,8 +1,6 @@
 package gamestatus
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -19,10 +17,6 @@ func newCard(cardID string, cardType CardType, value int) Card {
 		CardType: cardType,
 		Value:    value,
 	}
-}
-
-func (c Card) String() string {
-	return fmt.Sprintf("%s - %s (%d)", c.CardID, c.CardType.String(), c.Value)
 }
 
 func FromDomainCards(dcs []ports.Card) []Card {

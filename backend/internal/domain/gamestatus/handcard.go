@@ -1,8 +1,6 @@
 package gamestatus
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -164,8 +162,4 @@ func newResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
 	// Buy action - use resource's CanBuy method
 	return newHandCard(resource.GetID(), CardTypeResource,
 		resource.Value(), []string{}, resource.CanBuy())
-}
-
-func (c HandCard) String() string {
-	return fmt.Sprintf("%s | CanAffect: %v", c.Card.String(), c.CanBeUsedOnIDs)
 }
