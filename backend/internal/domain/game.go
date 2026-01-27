@@ -23,13 +23,13 @@ type Game struct {
 	currentAction      types.ActionType
 	CanMoveWarrior     bool
 	CanTrade           bool
-	state              GameState
 	deck               ports.Deck
 	discardPile        []ports.Card
 	cemetery           []ports.Warrior
 	history            []string
 	dealer             ports.Dealer
 	GameStatusProvider GameStatusProvider
+	gameOver           bool
 }
 
 func NewGame(player1, player2 string,
@@ -84,8 +84,6 @@ func (g *Game) deal() {
 
 	deckCards = deckCards[otherIdx:]
 	g.deck = NewDeck(deckCards)
-
-	g.state = StateSettingInitialWarriors
 }
 
 func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Card) {
@@ -110,12 +108,9 @@ func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Car
 func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error {
 	p, _ := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return fmt.Errorf("%s not your turn", playerName)
 	}
 
-	if g.state != StateSettingInitialWarriors {
-		return errors.New("not in initial warrior setting phase")
-	}
 	if len(warriorIDs) < 1 {
 		return errors.New("must place at least 1 warrior")
 	}
@@ -140,7 +135,6 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 		}
 	}
 	if allSet {
-		g.state = StateWaitingDraw
 		g.addToHistory("Both players have set their initial warriors.")
 		return nil
 	}
@@ -183,7 +177,7 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	err = p.MoveCardToField(warriorID)
@@ -204,7 +198,7 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	if len(cardIDs) != 3 {
@@ -238,7 +232,7 @@ func (g *Game) Attack(playerName, targetID, weaponID string) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	targetCard, ok := e.GetCardFromField(targetID)
@@ -268,7 +262,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	warriorCard, ok := p.GetCardFromField(userID)
@@ -308,7 +302,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	t := p.Catapult()
@@ -403,7 +397,7 @@ func (g *Game) Buy(playerName, cardID string) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	resourceCard, ok := p.GetCardFromHand(cardID)
@@ -448,7 +442,7 @@ func (g *Game) Construct(playerName, cardID string) (
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	if err := p.Construct(cardID); err != nil {
@@ -467,7 +461,7 @@ func (g *Game) Construct(playerName, cardID string) (
 func (g *Game) EndTurn(player string) (status gamestatus.GameStatus, err error) {
 	p, _ := g.WhoIsCurrent()
 	if p.Name() != player {
-		return status, errors.New(fmt.Sprintf("%s not your turn", player))
+		return status, fmt.Errorf("%s not your turn", player)
 	}
 
 	g.switchTurn()
@@ -479,7 +473,7 @@ func (g *Game) EndTurn(player string) (status gamestatus.GameStatus, err error) 
 }
 
 func (g *Game) IsGameEnded() bool {
-	return g.state == StateGameEnded
+	return g.gameOver
 }
 
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
@@ -537,12 +531,12 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
-	g.state = StateGameEnded
+	g.gameOver = true
 	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name()))
 }
 
 func (g *Game) OnFieldWithoutWarriors(p ports.Player) {
-	g.state = StateGameEnded
+	g.gameOver = true
 	g.addToHistory(fmt.Sprintf("%s loses: No more warriors in field", p.Name()))
 }
 
@@ -563,7 +557,7 @@ func (g *Game) CurrentAction() types.ActionType {
 func (g *Game) SkipPhase(playerName string) (status gamestatus.GameStatus, err error) {
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return status, errors.New(fmt.Sprintf("%s not your turn", playerName))
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	switch g.currentAction {
