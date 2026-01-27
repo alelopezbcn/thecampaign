@@ -1,9 +1,6 @@
 package gamestatus
 
 import (
-	"fmt"
-	"strings"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -24,36 +21,10 @@ type GameStatus struct {
 	ResourceCardsInEnemyCastle int         `json:"resource_cards_in_enemy_castle"`
 }
 
-func (g *GameStatus) ShowBoard() string {
-	sb := strings.Builder{}
+func NewGameStatus(currentPlayer ports.Player,
+	enemy ports.Player, action types.ActionType,
+	canMove bool, canTrade bool, newCards ...ports.Card) GameStatus {
 
-	sb.WriteString(fmt.Sprintf("%s \n", g.EnemyCastle.String()))
-	sb.WriteString("Enemy's field: \n")
-	for _, c := range g.EnemyField {
-		sb.WriteString("  - " + c.String() + "\n")
-	}
-	sb.WriteString("--------\n")
-
-	sb.WriteString("Your field: \n")
-	for _, c := range g.CurrentPlayerField {
-		sb.WriteString("  - " + c.String() + "\n")
-	}
-
-	sb.WriteString(fmt.Sprintf("%s \n", g.CurrentPlayerCastle.String()))
-	sb.WriteString("--------\n")
-
-	sb.WriteString("Your hand: \n")
-	for _, c := range g.CurrentPlayerHand {
-		sb.WriteString("  - " + c.String() + "\n")
-	}
-	sb.WriteString("\n--------")
-	return sb.String()
-}
-
-func NewGameStatus(currentPlayer ports.Player, enemy ports.Player,
-	action types.ActionType, canMove bool, canTrade bool, newCards ...ports.Card) GameStatus {
-
-	// Cache castle info with nil checks
 	gs := GameStatus{
 		CurrentPlayer:              currentPlayer.Name(),
 		CurrentAction:              string(action),

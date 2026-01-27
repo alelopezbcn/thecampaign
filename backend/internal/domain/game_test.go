@@ -1,1027 +1,1912 @@
 package domain
 
 import (
+	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
+	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
-func TestAttacks(t *testing.T) {
-	t.Run("Knight attacks Archer causing double damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		sword := cards.NewSword("s1", dmgAmnt)
+func TestGame_Buy(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{sword},
-			[]ports.Warrior{k},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{a},
-		)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
 		g := &Game{
-			Players: []ports.Player{p1, p2},
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
 		}
 
-		err := g.Attack(p1.Name(), a.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, a.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), sword)
-	})
-	t.Run("Knight attacks Mage causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		m := cards.NewMage("m1")
-		sword := cards.NewSword("s1", dmgAmnt)
+		status, err := g.Buy("Player2", "card-123")
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{sword},
-			[]ports.Warrior{k},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{m},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), m.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, m.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), sword)
-	})
-	t.Run("Knight attacks Knight causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		k2 := cards.NewKnight("k2")
-		sword := cards.NewSword("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{sword},
-			[]ports.Warrior{k},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{k2},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), k2.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, k2.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), sword)
-	})
-	t.Run("Knight attacks Dragon causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		d := cards.NewDragon("d1")
-		sword := cards.NewSword("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{sword},
-			[]ports.Warrior{k},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{d},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), d.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, d.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), sword)
-	})
-	t.Run("Knight cant attack with wrong weapon", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		poison := cards.NewPoison("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{poison},
-			[]ports.Warrior{k},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{a},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), a.GetID(), poison.GetID())
 		assert.Error(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth, a.Health())
-		assert.Contains(t, p1.Hand().ShowCards(), poison)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
 	})
 
-	t.Run("Archer attacks Mage causing double damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewMage("a1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
+	t.Run("Error when card not in hand", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(nil, false)
+
 		g := &Game{
-			Players: []ports.Player{p1, p2},
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
 		}
 
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Archer attacks Knight causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
+		status, err := g.Buy("Player1", "card-123")
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Archer attacks Archer causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewArcher("a2")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Archer attacks Dragon causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewDragon("d1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Archer cant attack with wrong weapon", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewSword("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
-		assert.Contains(t, p1.Hand().ShowCards(), weapon)
+		assert.Contains(t, err.Error(), "Resource card not in hand: card-123")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
 	})
 
-	t.Run("Mage attacks Knight causing double damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
+	t.Run("Error when card is not a Resource type", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockCard := mocks.NewMockCard(ctrl) // Not a Resource
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(mockCard, true)
+
 		g := &Game{
-			Players: []ports.Player{p1, p2},
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
 		}
 
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Mage attacks Archer causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
+		status, err := g.Buy("Player1", "card-123")
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Mage attacks Mage causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewMage("m2")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Mage attacks Dragon causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewDragon("d1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Mage cant attack with wrong weapon", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
 		assert.Error(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
-		assert.Contains(t, p1.Hand().ShowCards(), weapon)
+		assert.Contains(t, err.Error(), "only gold cards can be used to buy")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
 	})
 
-	t.Run("Player cant attack with non existing cards", func(t *testing.T) {
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		sword := cards.NewSword("s1", 4)
+	t.Run("Error when Resource cannot buy (CanBuy returns false)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{sword},
-			[]ports.Warrior{k},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{a},
-		)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(false)
+
 		g := &Game{
-			Players: []ports.Player{p1, p2},
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
 		}
 
-		err := g.Attack(p1.Name(), "non-existent-target", sword.GetID())
+		status, err := g.Buy("Player1", "gold-123")
+
 		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot buy with gold card")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
+	})
 
-		err = g.Attack(p1.Name(), a.GetID(), "non-existent-weapon")
+	t.Run("Error when player cannot take more cards (hand limit exceeded)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(4)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockResource.EXPECT().String().Return("Gold(4)")
+		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(2).Return(false) // Hand limit exceeded
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			deck:        mockDeck,
+		}
+
+		status, err := g.Buy("Player1", "gold-123")
+
 		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "drawing card for buying failed")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
 	})
 
-	t.Run("Dragon attacks Knight with Sword causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewSword("s1", dmgAmnt)
+	t.Run("Error when deck is empty and discard pile is also empty", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(4)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockResource.EXPECT().String().Return("Gold(4)")
+		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
+		// First draw attempt fails
+		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		// Replenish is called with empty discard pile
+		mockDeck.EXPECT().Replenish(gomock.Any())
+		// Second draw attempt also fails
+		mockDeck.EXPECT().DrawCard().Return(nil, false)
+
 		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Knight with Arrow causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Knight with Poison causing double damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Archer with Sword causing double damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewSword("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Archer with Arrow causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Archer with Poison causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Mage with Sword causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewSword("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Mage with Arrow causing double damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Dragon attacks Mage with Poison causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{weapon},
-			[]ports.Warrior{attacker},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
-
-		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
-		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
-	})
-	t.Run("Warrior dead on second attack", func(t *testing.T) {
-		dmgAmnt := 5
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		a2 := cards.NewArcher("a2")
-		sword1 := cards.NewSword("s1", dmgAmnt)
-		sword2 := cards.NewSword("s2", dmgAmnt)
-		g := &Game{}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{sword1, sword2},
-			[]ports.Warrior{k},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{a, a2},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		err := g.Attack(p1.Name(), a.GetID(), sword1.GetID())
-		assert.NoError(t, err)
-		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
-
-		err = g.Attack(p1.Name(), a.GetID(), sword2.GetID())
-		assert.NoError(t, err)
-		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
-
-		assert.Equal(t, 0, a.Health())
-		_, ok := p2.GetCardFromField(a.GetID())
-		assert.False(t, ok, "Archer should have been removed from field after death")
-		_, ok = p2.GetCardFromField(a2.GetID())
-		assert.True(t, ok, "Second Archer should still be on the field")
-		assert.True(t, foundInCemetery(g, a), "Cemetery should contain the dead archer")
-		assert.True(t, foundInDiscardPile(g, sword1), "Discard pile should contain the used sword")
-		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
-	})
-	t.Run("Dragon dead on multiple attacks", func(t *testing.T) {
-		dmgAmnt := 5
-		m1 := cards.NewMage("m1")
-		k2 := cards.NewKnight("k2")
-		a3 := cards.NewArcher("a3")
-
-		target := cards.NewDragon("d1")
-		a2 := cards.NewArcher("a2")
-
-		poison1 := cards.NewPoison("p1", dmgAmnt)
-		sword2 := cards.NewSword("s2", dmgAmnt)
-		arrow3 := cards.NewArrow("a3", dmgAmnt)
-		sword4 := cards.NewSword("s4", dmgAmnt)
-
-		g := &Game{}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{poison1, sword2, arrow3, sword4},
-			[]ports.Warrior{m1, k2, a3},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target, a2},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		err := g.Attack(p1.Name(), target.GetID(), poison1.GetID())
-		assert.NoError(t, err)
-		err = g.Attack(p1.Name(), target.GetID(), sword2.GetID())
-		assert.NoError(t, err)
-		err = g.Attack(p1.Name(), target.GetID(), arrow3.GetID())
-		assert.NoError(t, err)
-		err = g.Attack(p1.Name(), target.GetID(), sword4.GetID())
-		assert.NoError(t, err)
-
-		assert.Equal(t, 0, target.Health())
-		_, ok := p1.GetCardFromField(m1.GetID())
-		assert.True(t, ok, "Mage should still be on the field")
-		_, ok = p1.GetCardFromField(k2.GetID())
-		assert.True(t, ok, "Knight should still be on the field")
-		_, ok = p1.GetCardFromField(a3.GetID())
-		assert.True(t, ok, "Archer should still be on the field")
-
-		_, ok = p2.GetCardFromField(target.GetID())
-		assert.False(t, ok, "Dragon should have been removed from field after death")
-		_, ok = p2.GetCardFromField(a2.GetID())
-		assert.True(t, ok, "Archer should still be on the field")
-
-		_, ok = p1.GetCardFromHand(poison1.GetID())
-		assert.False(t, ok, "Poison should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(sword2.GetID())
-		assert.False(t, ok, "Sword should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(arrow3.GetID())
-		assert.False(t, ok, "Arrow should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(sword4.GetID())
-		assert.False(t, ok, "Sword should have been discarded after attack")
-
-		assert.True(t, foundInCemetery(g, target), "Cemetery should contain the dead dragon")
-		assert.True(t, foundInDiscardPile(g, poison1), "Discard pile should contain the used poison")
-		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
-		assert.True(t, foundInDiscardPile(g, arrow3), "Discard pile should contain the used arrow")
-		assert.True(t, foundInDiscardPile(g, sword4), "Discard pile should contain the used sword")
-	})
-}
-
-func TestGame_SpecialPower(t *testing.T) {
-	t.Run("Use special power of Archer (Instant Kill) on warrior", func(t *testing.T) {
-		a := cards.NewArcher("a1")
-		target := cards.NewArcher("a2")
-		sp := cards.NewSpecialPower("sp")
-		g := &Game{}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{sp},
-			[]ports.Warrior{a},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
-		assert.NoError(t, err)
-
-		assert.Equal(t, 0, target.Health())
-		_, ok := p2.GetCardFromField(target.GetID())
-		assert.False(t, ok, "Target should have been removed from field after death")
-		_, ok = p1.GetCardFromHand(sp.GetID())
-		assert.False(t, ok, "Special Power should have been discarded after attack")
-		assert.True(t, foundInCemetery(g, target), "Cemetery should contain the dead target")
-		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
-	})
-	t.Run("Use special power of Archer (Instant Kill) on dragon", func(t *testing.T) {
-		a := cards.NewArcher("a1")
-		target := cards.NewDragon("dr")
-		sp := cards.NewSpecialPower("sp")
-		g := &Game{}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{sp},
-			[]ports.Warrior{a},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
-		assert.NoError(t, err)
-
-		assert.Equal(t, cards.DragonMaxHealth-cards.SpecialPowerDamage, target.Health())
-		_, ok := p2.GetCardFromField(target.GetID())
-		assert.True(t, ok, "Dragon should still be on the field")
-
-		assert.True(t, findInAttackedBy(target.AttackedBy(), sp.GetID()), "Target should have been marked as attacked by special power")
-	})
-	t.Run("Use special power of Mage (Heal) on warrior", func(t *testing.T) {
-		m := cards.NewMage("m1")
-		target := cards.NewKnight("k1")
-		attacker := cards.NewArcher("a1")
-		arrow := cards.NewArrow("s1", 4)
-
-		sp := cards.NewSpecialPower("sp")
-		g := &Game{}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{arrow},
-			[]ports.Warrior{attacker},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{sp},
-			[]ports.Warrior{m, target},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		_ = g.Attack(p1.Name(), target.GetID(), arrow.GetID())
-		assert.Equal(t, cards.WarriorMaxHealth-4, target.Health())
-		err := g.EndTurn(p1.Name())
-		assert.NoError(t, err)
-		err = g.SpecialPower(p2.Name(), m.GetID(), target.GetID(), sp.GetID())
-		assert.NoError(t, err)
-
-		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
-		_, ok := p2.GetCardFromHand(sp.GetID())
-		assert.False(t, ok, "Special Power should have been discarded after use")
-		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
-
-	})
-	t.Run("Use special power of Knight (Protection) on warrior", func(t *testing.T) {
-		user := cards.NewKnight("k1")
-		target := cards.NewKnight("k2")
-		attacker := cards.NewArcher("a1")
-		arrow := cards.NewArrow("a1", 4)
-		arrow2 := cards.NewArrow("a2", 8)
-
-		sp := cards.NewSpecialPower("sp")
-		g := &Game{}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{sp},
-			[]ports.Warrior{user, target},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{arrow, arrow2},
-			[]ports.Warrior{attacker},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		err := g.SpecialPower(p1.Name(), user.GetID(), target.GetID(), sp.GetID())
-		assert.NoError(t, err)
-		assert.NotContains(t, p1.Hand().ShowCards(), sp)
-		isProtected, card := target.IsProtected()
-		assert.True(t, isProtected)
-		assert.Equal(t, card, sp)
-		_ = g.EndTurn(p1.Name())
-
-		_ = g.Attack(p2.Name(), target.GetID(), arrow.GetID())
-		assert.Equal(t, cards.SpecialPowerMaxHealth-4, sp.Health())
-		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
-
-		_ = g.Attack(p2.Name(), target.GetID(), arrow2.GetID())
-		assert.Equal(t, cards.SpecialPowerMaxHealth-4-8, sp.Health())
-		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
-
-		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
-
-	})
-}
-
-func TestDrawCards(t *testing.T) {
-	t.Run("Take card when deck is empty", func(t *testing.T) {
-		p := newPlayerWithCards("Player1", []ports.Card{}, []ports.Warrior{})
-		g := &Game{
-			Players: []ports.Player{p},
-			deck:    NewDeck([]ports.Card{}),
-			discardPile: []ports.Card{
-				cards.NewSword("s1", 4),
-				cards.NewArrow("a1", 3),
-				cards.NewPoison("p1", 4),
-			},
-			cemetery: []ports.Warrior{},
-		}
-
-		err := g.DrawCards(p.Name(), 1)
-		assert.NoError(t, err)
-		assert.Equal(t, 1, p.CardsInHand(), "Player should have drawn one card from reshuffled deck")
-		assert.Equal(t, 2, len(g.deck.(*deck).cards), "Deck should have two cards remaining after drawing one")
-		assert.Equal(t, 0, len(g.discardPile), "Discard pile should be empty after reshuffling into deck")
-	})
-	t.Run("Take card from deck to hand", func(t *testing.T) {
-		p := newPlayerWithCards("Player1",
-			[]ports.Card{cards.NewGold("g1", 5)},
-			[]ports.Warrior{})
-		g := &Game{
-			Players: []ports.Player{p},
-			deck: NewDeck([]ports.Card{
-				cards.NewSword("s1", 4),
-				cards.NewArrow("a1", 3),
-				cards.NewPoison("p1", 4),
-			}),
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			deck:        mockDeck,
 			discardPile: []ports.Card{},
-			cemetery:    []ports.Warrior{},
 		}
 
-		err := g.DrawCards(p.Name(), 1)
+		status, err := g.Buy("Player1", "gold-123")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "drawing card for buying failed")
+		assert.Contains(t, err.Error(), "no cards left to draw")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
+	})
+
+	t.Run("Success buying with gold value 2 (draws 1 card)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(2)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeConstruct,
+			false, false,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.Buy("Player1", "gold-123")
+
 		assert.NoError(t, err)
-		assert.Equal(t, 2, p.CardsInHand(), "Player should have drawn two cards from deck")
-		assert.Equal(t, 2, len(g.deck.(*deck).cards), "Deck should have one card remaining after drawing two")
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
+		assert.Contains(t, g.discardPile, mockResource)
 	})
-}
 
-func TestNewGame(t *testing.T) {
-	t.Run("Create new game with two players getting expected number of cards", func(t *testing.T) {
-		p1 := "Alice"
-		p2 := "Bob"
-		g := NewGame(p1, p2, cards.NewDealer())
+	t.Run("Success buying with gold value 4 (draws 2 cards)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
 
-		assert.Equal(t, 2, len(g.Players), "Game should have two players")
-		assert.Equal(t, 7, g.Players[0].CardsInHand(), "Each player should start with 7 cards in hand")
-		assert.Equal(t, 7, g.Players[1].CardsInHand(), "Each player should start with 7 cards in hand")
-		assert.Equal(t, 46, len(g.deck.(*deck).cards), "Deck should start with 40 cards")
-		assert.Equal(t, g.state, StateSettingInitialWarriors)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard1 := mocks.NewMockCard(ctrl)
+		mockDrawnCard2 := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-456").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(4)
+		mockResource.EXPECT().GetID().Return("gold-456")
+		mockResource.EXPECT().String().Return("Gold(4)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-456").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeConstruct,
+			false, false,
+			mockDrawnCard1, mockDrawnCard2,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.Buy("Player1", "gold-456")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
 	})
-	t.Run("Set initial warriors for players", func(t *testing.T) {
-		p1 := "Alice"
-		p2 := "Bob"
-		g := NewGame(p1, p2, cards.NewDealer())
 
-		current, _ := g.WhoIsCurrent()
-		cont := 0
-		var warriors1 []string
-		for _, card := range current.Hand().ShowCards() {
-			if _, ok := card.(ports.Warrior); ok {
-				cont++
-				warriors1 = append(warriors1, card.GetID())
-				if cont == 3 {
-					break
-				}
+	t.Run("Success buying with gold value 6 (draws 3 cards)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard1 := mocks.NewMockCard(ctrl)
+		mockDrawnCard2 := mocks.NewMockCard(ctrl)
+		mockDrawnCard3 := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-789").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(6)
+		mockResource.EXPECT().GetID().Return("gold-789")
+		mockResource.EXPECT().String().Return("Gold(6)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-789").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(3).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard3, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2, mockDrawnCard3).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeConstruct,
+			false, false,
+			mockDrawnCard1, mockDrawnCard2, mockDrawnCard3,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.Buy("Player1", "gold-789")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
+	})
+
+	t.Run("Success buying when deck needs replenishing from discard pile", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardedCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(2)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		// First draw fails - deck is empty
+		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		// Replenish is called
+		mockDeck.EXPECT().Replenish(gomock.Any())
+		// Second draw succeeds after replenish
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeConstruct,
+			false, false,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{mockDiscardedCard},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.Buy("Player1", "gold-123")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
+
+	t.Run("Success buying with CanMoveWarrior and CanTrade flags set", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(2)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		// Note: CanMoveWarrior=true and CanTrade=true should be passed
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeConstruct,
+			true, true,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+			CanMoveWarrior:     true,
+			CanTrade:           true,
+		}
+
+		status, err := g.Buy("Player1", "gold-123")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
+
+	t.Run("Buy with gold value 5 draws 2 cards (integer division)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard1 := mocks.NewMockCard(ctrl)
+		mockDrawnCard2 := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-5").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(5) // 5/2 = 2 cards
+		mockResource.EXPECT().GetID().Return("gold-5")
+		mockResource.EXPECT().String().Return("Gold(5)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-5").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeConstruct,
+			false, false,
+			mockDrawnCard1, mockDrawnCard2,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.Buy("Player1", "gold-5")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
+
+	t.Run("Verify history is updated after successful buy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(4)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockResource.EXPECT().String().Return("Gold(4)").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
+		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true).Times(2)
+		mockPlayer1.EXPECT().TakeCards(gomock.Any(), gomock.Any()).Return(true)
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(gamestatus.GameStatus{})
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			history:            []string{},
+			GameStatusProvider: mockProvider,
+		}
+
+		_, err := g.Buy("Player1", "gold-123")
+
+		assert.NoError(t, err)
+		// Check that history contains the buy action
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "bought") && strings.Contains(h, "Player1") {
+				found = true
+				break
 			}
 		}
+		assert.True(t, found, "History should contain the buy action")
+	})
 
-		err := g.SetInitialWarriors(current.Name(), warriors1)
+	t.Run("Player 2 can buy on their turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player2",
+		}
+
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromHand("gold-p2").Return(mockResource, true)
+		mockResource.EXPECT().CanBuy().Return(true)
+		mockResource.EXPECT().Value().Return(2)
+		mockResource.EXPECT().GetID().Return("gold-p2")
+		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
+		mockPlayer2.EXPECT().GiveCards("gold-p2").Return(nil, nil)
+		mockPlayer2.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer2.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer2, mockPlayer1,
+			types.ActionTypeConstruct,
+			false, false,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        1, // Player 2's turn
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.Buy("Player2", "gold-p2")
+
 		assert.NoError(t, err)
-		assert.Equal(t, len(current.Field().Warriors()), len(warriors1))
-		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[0]), "Field should contain the warrior with the given ID")
-		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[1]), "Field should contain the warrior with the given ID")
-		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[2]), "Field should contain the warrior with the given ID")
-		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[0]), "Hand should not contain the warrior with the given ID")
-		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[1]), "Hand should not contain the warrior with the given ID")
-		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[2]), "Hand should not contain the warrior with the given ID")
-		assert.Equal(t, 4, current.CardsInHand(), "Player should have 4 cards left in hand after setting 3 warriors")
+		assert.Equal(t, expectedStatus, status)
+	})
+}
 
-		current, _ = g.WhoIsCurrent()
-		cont = 0
-		var warriors2 []string
-		for _, card := range current.Hand().ShowCards() {
-			if _, ok := card.(ports.Warrior); ok {
-				cont++
-				warriors2 = append(warriors2, card.GetID())
-				if cont == 2 {
-					break
-				}
+func TestGame_DrawCard(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.DrawCard("Player2")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
+	})
+
+	t.Run("Error when deck is empty and discard pile is also empty", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		// First draw attempt fails
+		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		// Replenish is called with empty discard pile
+		mockDeck.EXPECT().Replenish(gomock.Any())
+		// Second draw attempt also fails
+		mockDeck.EXPECT().DrawCard().Return(nil, false)
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			deck:        mockDeck,
+			discardPile: []ports.Card{},
+		}
+
+		status, err := g.DrawCard("Player1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "no cards left to draw")
+		assert.Equal(t, gamestatus.GameStatus{}, status)
+	})
+
+	t.Run("Success drawing card normally", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeAttack,
+			false, false,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.DrawCard("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
+	})
+
+	t.Run("Success when hand limit exceeded - continues but doesn't take card", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
+		// Note: TakeCards should NOT be called when hand limit exceeded
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeAttack,
+			false, false,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.DrawCard("Player1")
+
+		assert.NoError(t, err) // No error returned - game continues
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
+	})
+
+	t.Run("Success with deck replenishing from discard pile", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardedCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		// First draw fails - deck is empty
+		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		// Replenish is called
+		mockDeck.EXPECT().Replenish(gomock.Any())
+		// Second draw succeeds after replenish
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeAttack,
+			false, false,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{mockDiscardedCard},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.DrawCard("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
+
+	t.Run("Verify history is updated on successful draw", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(gamestatus.GameStatus{})
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			history:            []string{},
+			GameStatusProvider: mockProvider,
+		}
+
+		_, err := g.DrawCard("Player1")
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "drew") && strings.Contains(h, "Player1") {
+				found = true
+				break
 			}
 		}
+		assert.True(t, found, "History should contain the draw action")
+	})
 
-		err = g.SetInitialWarriors(current.Name(), warriors2)
+	t.Run("Verify history is updated when hand limit exceeded", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(gamestatus.GameStatus{})
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			history:            []string{},
+			GameStatusProvider: mockProvider,
+		}
+
+		_, err := g.DrawCard("Player1")
+
 		assert.NoError(t, err)
-		assert.Equal(t, len(current.Field().Warriors()), len(warriors2))
-		assert.True(t, fieldContainsCardWithID(current.Field(), warriors2[0]), "Field should contain the warrior with the given ID")
-		assert.True(t, fieldContainsCardWithID(current.Field(), warriors2[1]), "Field should contain the warrior with the given ID")
-		assert.False(t, handContainsCardWithID(current.Hand(), warriors2[0]), "Hand should not contain the warrior with the given ID")
-		assert.False(t, handContainsCardWithID(current.Hand(), warriors2[1]), "Hand should not contain the warrior with the given ID")
-		assert.Equal(t, 5, current.CardsInHand(), "Player should have 5 cards left in hand after setting 2 warriors")
-		assert.Equal(t, StateWaitingDraw, g.state)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "can't take more cards") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain hand limit exceeded message")
+	})
+
+	t.Run("Success with CanMoveWarrior and CanTrade flags set", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			types.ActionTypeAttack,
+			true, true,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+			CanMoveWarrior:     true,
+			CanTrade:           true,
+		}
+
+		status, err := g.DrawCard("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
+
+	t.Run("Player 2 can draw on their turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockProvider := NewMockProvider(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := gamestatus.GameStatus{
+			CurrentPlayer: "Player2",
+		}
+
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer2.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer2.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockProvider.EXPECT().Get(
+			mockPlayer2, mockPlayer1,
+			types.ActionTypeAttack,
+			false, false,
+			mockDrawnCard,
+		).Return(expectedStatus)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        1, // Player 2's turn
+			deck:               mockDeck,
+			discardPile:        []ports.Card{},
+			GameStatusProvider: mockProvider,
+		}
+
+		status, err := g.DrawCard("Player2")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
 	})
 }
 
-func TestGame_Spy(t *testing.T) {
-	t.Run("Spy reveals top cards of deck", func(t *testing.T) {
-		spy := cards.NewSpy("s1")
+// func TestAttacks(t *testing.T) {
+// 	t.Run("Knight attacks Archer causing double damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		k := cards.NewKnight("k1")
+// 		a := cards.NewArcher("a1")
+// 		sword := cards.NewSword("s1", dmgAmnt)
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{spy},
-			[]ports.Warrior{},
-		)
-		p2 := newPlayerWithCards("Player2", nil, nil)
-		deckCards := []ports.Card{
-			cards.NewGold("g1", 5),
-			cards.NewSword("sw1", 4),
-			cards.NewArrow("a1", 3),
-			cards.NewArrow("a2", 5),
-			cards.NewDragon("d1"),
-		}
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-			deck:    NewDeck(deckCards),
-		}
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{sword},
+// 			[]ports.Warrior{k},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{a},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
 
-		revealedCards, err := g.Spy(p1.Name(), 1)
-		assert.NoError(t, err)
-		assert.Len(t, revealedCards, 5, "Spy should reveal five cards from the top of the deck")
-		assert.Contains(t, revealedCards, deckCards[0], "Revealed cards should contain the first top card of the deck")
-		assert.Contains(t, revealedCards, deckCards[1], "Revealed cards should contain the second top card of the deck")
-		assert.Contains(t, revealedCards, deckCards[2], "Revealed cards should contain the third top card of the deck")
-		assert.Contains(t, revealedCards, deckCards[3], "Revealed cards should contain the fourth top card of the deck")
-		assert.Contains(t, revealedCards, deckCards[4], "Revealed cards should contain the fifth top card of the deck")
-		_, hasSpy := p1.Hand().GetCard(spy.GetID())
-		assert.False(t, hasSpy)
-	})
-	t.Run("Spy reveals opponent's hand", func(t *testing.T) {
-		spy := cards.NewSpy("s1")
-		enemyCard1 := cards.NewGold("g1", 5)
-		enemyCard2 := cards.NewSword("sw1", 4)
+// 		err := g.Attack(p1.Name(), a.GetID(), sword.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, a.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
+// 	})
+// 	t.Run("Knight attacks Mage causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		k := cards.NewKnight("k1")
+// 		m := cards.NewMage("m1")
+// 		sword := cards.NewSword("s1", dmgAmnt)
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{spy},
-			[]ports.Warrior{},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{enemyCard1, enemyCard2},
-			[]ports.Warrior{},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{sword},
+// 			[]ports.Warrior{k},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{m},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
 
-		revealedCards, err := g.Spy(p1.Name(), 2)
-		assert.NoError(t, err)
-		assert.Len(t, revealedCards, 2, "Spy should reveal two cards from opponent's hand")
-		assert.Contains(t, revealedCards, enemyCard1, "Revealed cards should contain the first enemy card")
-		assert.Contains(t, revealedCards, enemyCard2, "Revealed cards should contain the second enemy card")
-		_, hasSpy := p1.Hand().GetCard(spy.GetID())
-		assert.False(t, hasSpy)
-	})
-}
+// 		err := g.Attack(p1.Name(), m.GetID(), sword.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, m.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
+// 	})
+// 	t.Run("Knight attacks Knight causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		k := cards.NewKnight("k1")
+// 		k2 := cards.NewKnight("k2")
+// 		sword := cards.NewSword("s1", dmgAmnt)
 
-func TestGame_Steal(t *testing.T) {
-	t.Run("Steal a card from opponent's hand", func(t *testing.T) {
-		stealCard := cards.NewThief("t1")
-		enemyCard1 := cards.NewGold("g1", 5)
-		enemyCard2 := cards.NewSword("sw1", 4)
-		enemyCard3 := cards.NewSword("sw2", 7)
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{sword},
+// 			[]ports.Warrior{k},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{k2},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
 
-		p1 := newPlayerWithCards("Player1",
-			[]ports.Card{stealCard},
-			[]ports.Warrior{},
-		)
-		p2 := newPlayerWithCards("Player2",
-			[]ports.Card{enemyCard1, enemyCard2, enemyCard3},
-			[]ports.Warrior{},
-		)
-		g := &Game{
-			Players: []ports.Player{p1, p2},
-		}
+// 		err := g.Attack(p1.Name(), k2.GetID(), sword.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, k2.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
+// 	})
+// 	t.Run("Knight attacks Dragon causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		k := cards.NewKnight("k1")
+// 		d := cards.NewDragon("d1")
+// 		sword := cards.NewSword("s1", dmgAmnt)
 
-		err := g.Steal(p1.Name(), 2)
-		assert.NoError(t, err)
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{sword},
+// 			[]ports.Warrior{k},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{d},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
 
-		_, hasSteal := p1.Hand().GetCard(stealCard.GetID())
-		assert.False(t, hasSteal, "Steal card should be discarded after use")
-		assert.Len(t, p1.Hand().ShowCards(), 1, "Player should have one more card in hand after stealing")
-		assert.Len(t, p2.Hand().ShowCards(), 2, "Enemy should have one less card in hand after being stolen from")
-	})
-}
+// 		err := g.Attack(p1.Name(), d.GetID(), sword.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, d.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sword)
+// 	})
+// 	t.Run("Knight cant attack with wrong weapon", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		k := cards.NewKnight("k1")
+// 		a := cards.NewArcher("a1")
+// 		poison := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{poison},
+// 			[]ports.Warrior{k},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{a},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), a.GetID(), poison.GetID())
+// 		assert.Error(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth, a.Health())
+// 		assert.Contains(t, p1.Hand().ShowCards(), poison)
+// 	})
+
+// 	t.Run("Archer attacks Mage causing double damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewArcher("a1")
+// 		target := cards.NewMage("a1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Archer attacks Knight causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewArcher("a1")
+// 		target := cards.NewKnight("k1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Archer attacks Archer causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewArcher("a1")
+// 		target := cards.NewArcher("a2")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Archer attacks Dragon causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewArcher("a1")
+// 		target := cards.NewDragon("d1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Archer cant attack with wrong weapon", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewArcher("a1")
+// 		target := cards.NewMage("m1")
+// 		weapon := cards.NewSword("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.Error(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+// 		assert.Contains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+
+// 	t.Run("Mage attacks Knight causing double damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewMage("m1")
+// 		target := cards.NewKnight("k1")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Mage attacks Archer causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewMage("m1")
+// 		target := cards.NewArcher("a1")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Mage attacks Mage causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewMage("m1")
+// 		target := cards.NewMage("m2")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Mage attacks Dragon causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewMage("m1")
+// 		target := cards.NewDragon("d1")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.DragonMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Mage cant attack with wrong weapon", func(t *testing.T) {
+// 		dmgAmnt := 4
+// 		attacker := cards.NewMage("m1")
+// 		target := cards.NewKnight("k1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.Error(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+// 		assert.Contains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+
+// 	t.Run("Player cant attack with non existing cards", func(t *testing.T) {
+// 		k := cards.NewKnight("k1")
+// 		a := cards.NewArcher("a1")
+// 		sword := cards.NewSword("s1", 4)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{sword},
+// 			[]ports.Warrior{k},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{a},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), "non-existent-target", sword.GetID())
+// 		assert.Error(t, err)
+
+// 		err = g.Attack(p1.Name(), a.GetID(), "non-existent-weapon")
+// 		assert.Error(t, err)
+// 	})
+
+// 	t.Run("Dragon attacks Knight with Sword causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewKnight("k1")
+// 		weapon := cards.NewSword("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Knight with Arrow causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewKnight("k1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Knight with Poison causing double damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewKnight("k1")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Archer with Sword causing double damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewArcher("a1")
+// 		weapon := cards.NewSword("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Archer with Arrow causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewArcher("a1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Archer with Poison causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewArcher("a1")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Mage with Sword causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewMage("m1")
+// 		weapon := cards.NewSword("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Mage with Arrow causing double damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewMage("m1")
+// 		weapon := cards.NewArrow("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*2, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Dragon attacks Mage with Poison causing normal damage", func(t *testing.T) {
+// 		dmgAmnt := 6
+// 		attacker := cards.NewDragon("d1")
+// 		target := cards.NewMage("m1")
+// 		weapon := cards.NewPoison("s1", dmgAmnt)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{weapon},
+// 			[]ports.Warrior{attacker},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), weapon.GetID())
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, cards.WarriorMaxHealth-dmgAmnt*1, target.Health())
+// 		assert.NotContains(t, p1.Hand().ShowCards(), weapon)
+// 	})
+// 	t.Run("Warrior dead on second attack", func(t *testing.T) {
+// 		dmgAmnt := 5
+// 		k := cards.NewKnight("k1")
+// 		a := cards.NewArcher("a1")
+// 		a2 := cards.NewArcher("a2")
+// 		sword1 := cards.NewSword("s1", dmgAmnt)
+// 		sword2 := cards.NewSword("s2", dmgAmnt)
+// 		g := &Game{}
+// 		p1 := newPlayerWithCardAndObserver("Player1",
+// 			[]ports.Card{sword1, sword2},
+// 			[]ports.Warrior{k},
+// 			g,
+// 		)
+// 		p2 := newPlayerWithCardAndObserver("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{a, a2},
+// 			g,
+// 		)
+
+// 		g.Players = []ports.Player{p1, p2}
+
+// 		err := g.Attack(p1.Name(), a.GetID(), sword1.GetID())
+// 		assert.NoError(t, err)
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
+
+// 		err = g.Attack(p1.Name(), a.GetID(), sword2.GetID())
+// 		assert.NoError(t, err)
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
+
+// 		assert.Equal(t, 0, a.Health())
+// 		_, ok := p2.GetCardFromField(a.GetID())
+// 		assert.False(t, ok, "Archer should have been removed from field after death")
+// 		_, ok = p2.GetCardFromField(a2.GetID())
+// 		assert.True(t, ok, "Second Archer should still be on the field")
+// 		assert.True(t, foundInCemetery(g, a), "Cemetery should contain the dead archer")
+// 		assert.True(t, foundInDiscardPile(g, sword1), "Discard pile should contain the used sword")
+// 		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
+// 	})
+// 	t.Run("Dragon dead on multiple attacks", func(t *testing.T) {
+// 		dmgAmnt := 5
+// 		m1 := cards.NewMage("m1")
+// 		k2 := cards.NewKnight("k2")
+// 		a3 := cards.NewArcher("a3")
+
+// 		target := cards.NewDragon("d1")
+// 		a2 := cards.NewArcher("a2")
+
+// 		poison1 := cards.NewPoison("p1", dmgAmnt)
+// 		sword2 := cards.NewSword("s2", dmgAmnt)
+// 		arrow3 := cards.NewArrow("a3", dmgAmnt)
+// 		sword4 := cards.NewSword("s4", dmgAmnt)
+
+// 		g := &Game{}
+// 		p1 := newPlayerWithCardAndObserver("Player1",
+// 			[]ports.Card{poison1, sword2, arrow3, sword4},
+// 			[]ports.Warrior{m1, k2, a3},
+// 			g,
+// 		)
+// 		p2 := newPlayerWithCardAndObserver("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target, a2},
+// 			g,
+// 		)
+
+// 		g.Players = []ports.Player{p1, p2}
+
+// 		err := g.Attack(p1.Name(), target.GetID(), poison1.GetID())
+// 		assert.NoError(t, err)
+// 		err = g.Attack(p1.Name(), target.GetID(), sword2.GetID())
+// 		assert.NoError(t, err)
+// 		err = g.Attack(p1.Name(), target.GetID(), arrow3.GetID())
+// 		assert.NoError(t, err)
+// 		err = g.Attack(p1.Name(), target.GetID(), sword4.GetID())
+// 		assert.NoError(t, err)
+
+// 		assert.Equal(t, 0, target.Health())
+// 		_, ok := p1.GetCardFromField(m1.GetID())
+// 		assert.True(t, ok, "Mage should still be on the field")
+// 		_, ok = p1.GetCardFromField(k2.GetID())
+// 		assert.True(t, ok, "Knight should still be on the field")
+// 		_, ok = p1.GetCardFromField(a3.GetID())
+// 		assert.True(t, ok, "Archer should still be on the field")
+
+// 		_, ok = p2.GetCardFromField(target.GetID())
+// 		assert.False(t, ok, "Dragon should have been removed from field after death")
+// 		_, ok = p2.GetCardFromField(a2.GetID())
+// 		assert.True(t, ok, "Archer should still be on the field")
+
+// 		_, ok = p1.GetCardFromHand(poison1.GetID())
+// 		assert.False(t, ok, "Poison should have been discarded after attack")
+// 		_, ok = p1.GetCardFromHand(sword2.GetID())
+// 		assert.False(t, ok, "Sword should have been discarded after attack")
+// 		_, ok = p1.GetCardFromHand(arrow3.GetID())
+// 		assert.False(t, ok, "Arrow should have been discarded after attack")
+// 		_, ok = p1.GetCardFromHand(sword4.GetID())
+// 		assert.False(t, ok, "Sword should have been discarded after attack")
+
+// 		assert.True(t, foundInCemetery(g, target), "Cemetery should contain the dead dragon")
+// 		assert.True(t, foundInDiscardPile(g, poison1), "Discard pile should contain the used poison")
+// 		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
+// 		assert.True(t, foundInDiscardPile(g, arrow3), "Discard pile should contain the used arrow")
+// 		assert.True(t, foundInDiscardPile(g, sword4), "Discard pile should contain the used sword")
+// 	})
+// }
+
+// func TestGame_SpecialPower(t *testing.T) {
+// 	t.Run("Use special power of Archer (Instant Kill) on warrior", func(t *testing.T) {
+// 		a := cards.NewArcher("a1")
+// 		target := cards.NewArcher("a2")
+// 		sp := cards.NewSpecialPower("sp")
+// 		g := &Game{}
+// 		p1 := newPlayerWithCardAndObserver("Player1",
+// 			[]ports.Card{sp},
+// 			[]ports.Warrior{a},
+// 			g,
+// 		)
+// 		p2 := newPlayerWithCardAndObserver("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 			g,
+// 		)
+
+// 		g.Players = []ports.Player{p1, p2}
+
+// 		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
+// 		assert.NoError(t, err)
+
+// 		assert.Equal(t, 0, target.Health())
+// 		_, ok := p2.GetCardFromField(target.GetID())
+// 		assert.False(t, ok, "Target should have been removed from field after death")
+// 		_, ok = p1.GetCardFromHand(sp.GetID())
+// 		assert.False(t, ok, "Special Power should have been discarded after attack")
+// 		assert.True(t, foundInCemetery(g, target), "Cemetery should contain the dead target")
+// 		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
+// 	})
+// 	t.Run("Use special power of Archer (Instant Kill) on dragon", func(t *testing.T) {
+// 		a := cards.NewArcher("a1")
+// 		target := cards.NewDragon("dr")
+// 		sp := cards.NewSpecialPower("sp")
+// 		g := &Game{}
+// 		p1 := newPlayerWithCardAndObserver("Player1",
+// 			[]ports.Card{sp},
+// 			[]ports.Warrior{a},
+// 			g,
+// 		)
+// 		p2 := newPlayerWithCardAndObserver("Player2",
+// 			[]ports.Card{},
+// 			[]ports.Warrior{target},
+// 			g,
+// 		)
+
+// 		g.Players = []ports.Player{p1, p2}
+
+// 		err := g.SpecialPower(p1.Name(), a.GetID(), target.GetID(), sp.GetID())
+// 		assert.NoError(t, err)
+
+// 		assert.Equal(t, cards.DragonMaxHealth-cards.SpecialPowerDamage, target.Health())
+// 		_, ok := p2.GetCardFromField(target.GetID())
+// 		assert.True(t, ok, "Dragon should still be on the field")
+
+// 		assert.True(t, findInAttackedBy(target.AttackedBy(), sp.GetID()), "Target should have been marked as attacked by special power")
+// 	})
+// 	t.Run("Use special power of Mage (Heal) on warrior", func(t *testing.T) {
+// 		m := cards.NewMage("m1")
+// 		target := cards.NewKnight("k1")
+// 		attacker := cards.NewArcher("a1")
+// 		arrow := cards.NewArrow("s1", 4)
+
+// 		sp := cards.NewSpecialPower("sp")
+// 		g := &Game{}
+// 		p1 := newPlayerWithCardAndObserver("Player1",
+// 			[]ports.Card{arrow},
+// 			[]ports.Warrior{attacker},
+// 			g,
+// 		)
+// 		p2 := newPlayerWithCardAndObserver("Player2",
+// 			[]ports.Card{sp},
+// 			[]ports.Warrior{m, target},
+// 			g,
+// 		)
+
+// 		g.Players = []ports.Player{p1, p2}
+
+// 		_ = g.Attack(p1.Name(), target.GetID(), arrow.GetID())
+// 		assert.Equal(t, cards.WarriorMaxHealth-4, target.Health())
+// 		err := g.EndTurn(p1.Name())
+// 		assert.NoError(t, err)
+// 		err = g.SpecialPower(p2.Name(), m.GetID(), target.GetID(), sp.GetID())
+// 		assert.NoError(t, err)
+
+// 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+// 		_, ok := p2.GetCardFromHand(sp.GetID())
+// 		assert.False(t, ok, "Special Power should have been discarded after use")
+// 		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
+
+// 	})
+// 	t.Run("Use special power of Knight (Protection) on warrior", func(t *testing.T) {
+// 		user := cards.NewKnight("k1")
+// 		target := cards.NewKnight("k2")
+// 		attacker := cards.NewArcher("a1")
+// 		arrow := cards.NewArrow("a1", 4)
+// 		arrow2 := cards.NewArrow("a2", 8)
+
+// 		sp := cards.NewSpecialPower("sp")
+// 		g := &Game{}
+// 		p1 := newPlayerWithCardAndObserver("Player1",
+// 			[]ports.Card{sp},
+// 			[]ports.Warrior{user, target},
+// 			g,
+// 		)
+// 		p2 := newPlayerWithCardAndObserver("Player2",
+// 			[]ports.Card{arrow, arrow2},
+// 			[]ports.Warrior{attacker},
+// 			g,
+// 		)
+
+// 		g.Players = []ports.Player{p1, p2}
+
+// 		err := g.SpecialPower(p1.Name(), user.GetID(), target.GetID(), sp.GetID())
+// 		assert.NoError(t, err)
+// 		assert.NotContains(t, p1.Hand().ShowCards(), sp)
+// 		isProtected, card := target.IsProtected()
+// 		assert.True(t, isProtected)
+// 		assert.Equal(t, card, sp)
+// 		_ = g.EndTurn(p1.Name())
+
+// 		_ = g.Attack(p2.Name(), target.GetID(), arrow.GetID())
+// 		assert.Equal(t, cards.SpecialPowerMaxHealth-4, sp.Health())
+// 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+
+// 		_ = g.Attack(p2.Name(), target.GetID(), arrow2.GetID())
+// 		assert.Equal(t, cards.SpecialPowerMaxHealth-4-8, sp.Health())
+// 		assert.Equal(t, cards.WarriorMaxHealth, target.Health())
+
+// 		assert.True(t, foundInDiscardPile(g, sp), "Discard pile should contain the used special power")
+
+// 	})
+// }
+
+// func TestDrawCards(t *testing.T) {
+// 	t.Run("Take card when deck is empty", func(t *testing.T) {
+// 		p := newPlayerWithCards("Player1", []ports.Card{}, []ports.Warrior{})
+// 		g := &Game{
+// 			Players: []ports.Player{p},
+// 			deck:    NewDeck([]ports.Card{}),
+// 			discardPile: []ports.Card{
+// 				cards.NewSword("s1", 4),
+// 				cards.NewArrow("a1", 3),
+// 				cards.NewPoison("p1", 4),
+// 			},
+// 			cemetery: []ports.Warrior{},
+// 		}
+
+// 		err := g.DrawCards(p.Name(), 1)
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, 1, p.CardsInHand(), "Player should have drawn one card from reshuffled deck")
+// 		assert.Equal(t, 2, len(g.deck.(*deck).cards), "Deck should have two cards remaining after drawing one")
+// 		assert.Equal(t, 0, len(g.discardPile), "Discard pile should be empty after reshuffling into deck")
+// 	})
+// 	t.Run("Take card from deck to hand", func(t *testing.T) {
+// 		p := newPlayerWithCards("Player1",
+// 			[]ports.Card{cards.NewGold("g1", 5)},
+// 			[]ports.Warrior{})
+// 		g := &Game{
+// 			Players: []ports.Player{p},
+// 			deck: NewDeck([]ports.Card{
+// 				cards.NewSword("s1", 4),
+// 				cards.NewArrow("a1", 3),
+// 				cards.NewPoison("p1", 4),
+// 			}),
+// 			discardPile: []ports.Card{},
+// 			cemetery:    []ports.Warrior{},
+// 		}
+
+// 		err := g.DrawCards(p.Name(), 1)
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, 2, p.CardsInHand(), "Player should have drawn two cards from deck")
+// 		assert.Equal(t, 2, len(g.deck.(*deck).cards), "Deck should have one card remaining after drawing two")
+// 	})
+// }
+
+// func TestNewGame(t *testing.T) {
+// 	t.Run("Create new game with two players getting expected number of cards", func(t *testing.T) {
+// 		p1 := "Alice"
+// 		p2 := "Bob"
+// 		g := NewGame(p1, p2, cards.NewDealer())
+
+// 		assert.Equal(t, 2, len(g.Players), "Game should have two players")
+// 		assert.Equal(t, 7, g.Players[0].CardsInHand(), "Each player should start with 7 cards in hand")
+// 		assert.Equal(t, 7, g.Players[1].CardsInHand(), "Each player should start with 7 cards in hand")
+// 		assert.Equal(t, 46, len(g.deck.(*deck).cards), "Deck should start with 40 cards")
+// 		assert.Equal(t, g.state, StateSettingInitialWarriors)
+// 	})
+// 	t.Run("Set initial warriors for players", func(t *testing.T) {
+// 		p1 := "Alice"
+// 		p2 := "Bob"
+// 		g := NewGame(p1, p2, cards.NewDealer())
+
+// 		current, _ := g.WhoIsCurrent()
+// 		cont := 0
+// 		var warriors1 []string
+// 		for _, card := range current.Hand().ShowCards() {
+// 			if _, ok := card.(ports.Warrior); ok {
+// 				cont++
+// 				warriors1 = append(warriors1, card.GetID())
+// 				if cont == 3 {
+// 					break
+// 				}
+// 			}
+// 		}
+
+// 		err := g.SetInitialWarriors(current.Name(), warriors1)
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, len(current.Field().Warriors()), len(warriors1))
+// 		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[0]), "Field should contain the warrior with the given ID")
+// 		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[1]), "Field should contain the warrior with the given ID")
+// 		assert.True(t, fieldContainsCardWithID(current.Field(), warriors1[2]), "Field should contain the warrior with the given ID")
+// 		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[0]), "Hand should not contain the warrior with the given ID")
+// 		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[1]), "Hand should not contain the warrior with the given ID")
+// 		assert.False(t, handContainsCardWithID(current.Hand(), warriors1[2]), "Hand should not contain the warrior with the given ID")
+// 		assert.Equal(t, 4, current.CardsInHand(), "Player should have 4 cards left in hand after setting 3 warriors")
+
+// 		current, _ = g.WhoIsCurrent()
+// 		cont = 0
+// 		var warriors2 []string
+// 		for _, card := range current.Hand().ShowCards() {
+// 			if _, ok := card.(ports.Warrior); ok {
+// 				cont++
+// 				warriors2 = append(warriors2, card.GetID())
+// 				if cont == 2 {
+// 					break
+// 				}
+// 			}
+// 		}
+
+// 		err = g.SetInitialWarriors(current.Name(), warriors2)
+// 		assert.NoError(t, err)
+// 		assert.Equal(t, len(current.Field().Warriors()), len(warriors2))
+// 		assert.True(t, fieldContainsCardWithID(current.Field(), warriors2[0]), "Field should contain the warrior with the given ID")
+// 		assert.True(t, fieldContainsCardWithID(current.Field(), warriors2[1]), "Field should contain the warrior with the given ID")
+// 		assert.False(t, handContainsCardWithID(current.Hand(), warriors2[0]), "Hand should not contain the warrior with the given ID")
+// 		assert.False(t, handContainsCardWithID(current.Hand(), warriors2[1]), "Hand should not contain the warrior with the given ID")
+// 		assert.Equal(t, 5, current.CardsInHand(), "Player should have 5 cards left in hand after setting 2 warriors")
+// 		assert.Equal(t, StateWaitingDraw, g.state)
+// 	})
+// }
+
+// func TestGame_Spy(t *testing.T) {
+// 	t.Run("Spy reveals top cards of deck", func(t *testing.T) {
+// 		spy := cards.NewSpy("s1")
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{spy},
+// 			[]ports.Warrior{},
+// 		)
+// 		p2 := newPlayerWithCards("Player2", nil, nil)
+// 		deckCards := []ports.Card{
+// 			cards.NewGold("g1", 5),
+// 			cards.NewSword("sw1", 4),
+// 			cards.NewArrow("a1", 3),
+// 			cards.NewArrow("a2", 5),
+// 			cards.NewDragon("d1"),
+// 		}
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 			deck:    NewDeck(deckCards),
+// 		}
+
+// 		revealedCards, err := g.Spy(p1.Name(), 1)
+// 		assert.NoError(t, err)
+// 		assert.Len(t, revealedCards, 5, "Spy should reveal five cards from the top of the deck")
+// 		assert.Contains(t, revealedCards, deckCards[0], "Revealed cards should contain the first top card of the deck")
+// 		assert.Contains(t, revealedCards, deckCards[1], "Revealed cards should contain the second top card of the deck")
+// 		assert.Contains(t, revealedCards, deckCards[2], "Revealed cards should contain the third top card of the deck")
+// 		assert.Contains(t, revealedCards, deckCards[3], "Revealed cards should contain the fourth top card of the deck")
+// 		assert.Contains(t, revealedCards, deckCards[4], "Revealed cards should contain the fifth top card of the deck")
+// 		_, hasSpy := p1.Hand().GetCard(spy.GetID())
+// 		assert.False(t, hasSpy)
+// 	})
+// 	t.Run("Spy reveals opponent's hand", func(t *testing.T) {
+// 		spy := cards.NewSpy("s1")
+// 		enemyCard1 := cards.NewGold("g1", 5)
+// 		enemyCard2 := cards.NewSword("sw1", 4)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{spy},
+// 			[]ports.Warrior{},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{enemyCard1, enemyCard2},
+// 			[]ports.Warrior{},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		revealedCards, err := g.Spy(p1.Name(), 2)
+// 		assert.NoError(t, err)
+// 		assert.Len(t, revealedCards, 2, "Spy should reveal two cards from opponent's hand")
+// 		assert.Contains(t, revealedCards, enemyCard1, "Revealed cards should contain the first enemy card")
+// 		assert.Contains(t, revealedCards, enemyCard2, "Revealed cards should contain the second enemy card")
+// 		_, hasSpy := p1.Hand().GetCard(spy.GetID())
+// 		assert.False(t, hasSpy)
+// 	})
+// }
+
+// func TestGame_Steal(t *testing.T) {
+// 	t.Run("Steal a card from opponent's hand", func(t *testing.T) {
+// 		stealCard := cards.NewThief("t1")
+// 		enemyCard1 := cards.NewGold("g1", 5)
+// 		enemyCard2 := cards.NewSword("sw1", 4)
+// 		enemyCard3 := cards.NewSword("sw2", 7)
+
+// 		p1 := newPlayerWithCards("Player1",
+// 			[]ports.Card{stealCard},
+// 			[]ports.Warrior{},
+// 		)
+// 		p2 := newPlayerWithCards("Player2",
+// 			[]ports.Card{enemyCard1, enemyCard2, enemyCard3},
+// 			[]ports.Warrior{},
+// 		)
+// 		g := &Game{
+// 			Players: []ports.Player{p1, p2},
+// 		}
+
+// 		err := g.Steal(p1.Name(), 2)
+// 		assert.NoError(t, err)
+
+// 		_, hasSteal := p1.Hand().GetCard(stealCard.GetID())
+// 		assert.False(t, hasSteal, "Steal card should be discarded after use")
+// 		assert.Len(t, p1.Hand().ShowCards(), 1, "Player should have one more card in hand after stealing")
+// 		assert.Len(t, p2.Hand().ShowCards(), 2, "Enemy should have one less card in hand after being stolen from")
+// 	})
+// }
 
 func findInAttackedBy(cards []ports.Weapon, id string) bool {
 	for _, c := range cards {
