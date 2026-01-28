@@ -213,6 +213,24 @@
                 </div>
             </div>
         </div>
+
+        <!-- Game Over Modal -->
+        <div id="gameover-modal" class="modal hidden">
+            <div class="gameover-modal-content">
+                <div class="gameover-modal-icon" id="gameover-modal-icon"></div>
+                <h1 id="gameover-modal-title" class="gameover-modal-title">Victory!</h1>
+                <p id="gameover-modal-message" class="gameover-modal-message"></p>
+                <div class="gameover-modal-decoration">
+                    <span class="decoration-sword">⚔</span>
+                    <span class="decoration-crown">👑</span>
+                    <span class="decoration-sword">⚔</span>
+                </div>
+                <button id="gameover-modal-btn" class="btn btn-primary btn-large">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Error Toast Container -->
+        <div id="error-toast-container" class="error-toast-container"></div>
     </div>
 
     <script src="/static/js/game.js"></script>

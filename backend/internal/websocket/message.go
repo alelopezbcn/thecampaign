@@ -99,7 +99,6 @@ type CatapultPayload struct {
 type GameStatePayload struct {
 	GameStatus GameStatusDTO `json:"game_status"`
 	IsYourTurn bool          `json:"is_your_turn"`
-	GameEnded  bool          `json:"game_ended"`
 	History    []string      `json:"history,omitempty"`
 }
 
@@ -121,6 +120,8 @@ type GameStatusDTO struct {
 	DiscardPile         DiscardPileDTO `json:"discard_pile"`
 	CardsInDeck         int            `json:"cards_in_deck"`
 	ModalCards          []CardDTO      `json:"modal_cards,omitempty"`
+	GameOverMsg         string         `json:"game_over_msg,omitempty"`
+	ErrorMsg            string         `json:"error_msg,omitempty"`
 }
 
 // HandCardDTO represents a card in the player's hand

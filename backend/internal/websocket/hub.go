@@ -309,7 +309,6 @@ func (h *Hub) sendGameStateWithStatus(gameID string, currentPlayerStatus domain.
 		payload := GameStatePayload{
 			GameStatus: ConvertGameStatus(status),
 			IsYourTurn: isCurrentPlayer,
-			GameEnded:  room.Game.IsGameOver(),
 		}
 
 		log.Printf("sendGameStateWithStatus to %s: isYourTurn=%v, currentAction=%s, newCards=%v",
@@ -365,9 +364,4 @@ func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (domai
 
 	// Send updated game state to all players using the returned status
 	h.sendGameStateWithStatus(client.GameID, status)
-
-	// Check if game ended
-	if room.Game.IsGameOver() {
-		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
-	}
 }

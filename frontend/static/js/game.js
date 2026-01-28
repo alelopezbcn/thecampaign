@@ -61,6 +61,9 @@ function setupEventListeners() {
 
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
+
+    // Game over modal
+    document.getElementById('gameover-modal-btn').addEventListener('click', () => location.reload());
 }
 
 function handleSkipPhase() {
@@ -250,6 +253,19 @@ function handleGameState(payload) {
             showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
         }
         gameState.pendingModalAction = null; // Clear after handling
+    }
+
+    // Check for game over message
+    const gameOverMsg = payload.game_status.game_over_msg;
+    if (gameOverMsg && gameOverMsg.length > 0) {
+        const isWinner = gameOverMsg.toLowerCase().includes(gameState.playerName.toLowerCase());
+        showGameOverModal(isWinner, gameOverMsg);
+    }
+
+    // Check for error message
+    const errorMsg = payload.game_status.error_msg;
+    if (errorMsg && errorMsg.length > 0) {
+        showErrorToast(errorMsg);
     }
 }
 
@@ -1420,4 +1436,49 @@ function showCardsModal(cards, title, subtitle, showPositionIndicators = false) 
     }
 
     showGameModal(title, subtitle, content, true);
+}
+
+// Game Over Modal
+function showGameOverModal(isWinner, message) {
+    const modal = document.getElementById('gameover-modal');
+    const iconElement = document.getElementById('gameover-modal-icon');
+    const titleElement = document.getElementById('gameover-modal-title');
+    const messageElement = document.getElementById('gameover-modal-message');
+
+    if (isWinner) {
+        iconElement.textContent = '🏆';
+        titleElement.textContent = 'Victory!';
+        titleElement.className = 'gameover-modal-title victory';
+    } else {
+        iconElement.textContent = '💀';
+        titleElement.textContent = 'Defeat';
+        titleElement.className = 'gameover-modal-title defeat';
+    }
+
+    messageElement.textContent = message;
+    modal.classList.remove('hidden');
+}
+
+// Error Toast
+function showErrorToast(message) {
+    const container = document.getElementById('error-toast-container');
+
+    const toast = document.createElement('div');
+    toast.className = 'error-toast';
+    toast.innerHTML = `
+        <span class="error-toast-icon">⚠️</span>
+        <div class="error-toast-content">
+            <div class="error-toast-title">Error</div>
+            <div class="error-toast-message">${message}</div>
+        </div>
+        <button class="error-toast-close" onclick="this.parentElement.remove()">×</button>
+    `;
+
+    container.appendChild(toast);
+
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
