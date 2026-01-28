@@ -62,11 +62,6 @@ func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
 	if bothHaveWarriors {
 		// Setup complete - send game state
 		h.sendGameStateWithStatus(client.GameID, status)
-
-		// Check if game ended
-		if room.Game.IsGameEnded() {
-			h.broadcastToGame(client.GameID, MsgGameEnded, nil)
-		}
 	} else {
 		// Still waiting for second player - send updated initial warriors
 		h.sendInitialWarriors(client.GameID)
@@ -274,11 +269,6 @@ func (h *Hub) handleEndTurn(client *Client) {
 
 	// Send updated game state with the status from DrawCard
 	h.sendGameStateWithStatus(client.GameID, status)
-
-	// Check if game ended
-	if room.Game.IsGameEnded() {
-		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
-	}
 }
 
 func (h *Hub) handleSkipPhase(client *Client) {

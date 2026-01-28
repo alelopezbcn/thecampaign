@@ -23,6 +23,8 @@ type GameStatus struct {
 	DiscardPile         gamestatus.DiscardPile `json:"discard_pile"`
 	CardsInDeck         int                    `json:"deck"`
 	ModalCards          []gamestatus.Card      `json:"modal_cards"`
+	GameOverMgs         string                 `json:"game_over_msg"`
+	ErrorMsg            string                 `json:"error_msg,omitempty"`
 }
 
 func newGameStatusWithModalCards(currentPlayer ports.Player, enemy ports.Player,
@@ -79,12 +81,10 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				gamestatus.NewWeaponHandCard(ct, currentPlayer.Field(),
 					enemy.Field(), currentPlayer.Castle().IsConstructed(), action))
-
 		case ports.Catapult:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				gamestatus.NewCatapultHandCard(ct.GetID(), enemy.Castle().CanBeAttacked(),
 					action))
-
 		case ports.Spy:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				gamestatus.NewSpyHandCard(ct.GetID(), action))
@@ -102,6 +102,10 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 	}
 	for _, warrior := range enemy.Field().Warriors() {
 		gs.EnemyField = append(gs.EnemyField, gamestatus.NewFieldCard(warrior))
+	}
+
+	if over, winner := game.IsGameOver(); over {
+		gs.GameOverMgs = "Game over! The winner is " + winner
 	}
 
 	return gs

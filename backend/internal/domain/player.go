@@ -66,7 +66,7 @@ func (p *player) GiveCards(cardIDs ...string) ([]ports.Card, error) {
 	for _, cardID := range cardIDs {
 		c, ok := p.GetCardFromHand(cardID)
 		if !ok {
-			return nil, fmt.Errorf("cardBase with ID %s not found in hand", cardID)
+			return nil, fmt.Errorf("card with ID %s not found in hand", cardID)
 		}
 
 		cards = append(cards, c)

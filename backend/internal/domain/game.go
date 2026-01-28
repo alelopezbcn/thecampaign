@@ -30,6 +30,7 @@ type Game struct {
 	dealer             ports.Dealer
 	GameStatusProvider GameStatusProvider
 	gameOver           bool
+	winner             string
 }
 
 func NewGame(player1, player2 string,
@@ -473,6 +474,37 @@ func (g *Game) Construct(playerName, cardID string) (
 	return status, nil
 }
 
+func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
+	p, e := g.WhoIsCurrent()
+	if p.Name() != playerName {
+		return status, fmt.Errorf("%s not your turn", playerName)
+	}
+
+	var nextAction types.ActionType
+
+	switch g.currentAction {
+	case types.ActionTypeAttack:
+		nextAction = types.ActionTypeSpySteal
+	case types.ActionTypeSpySteal:
+		nextAction = types.ActionTypeBuy
+	case types.ActionTypeBuy:
+		nextAction = types.ActionTypeConstruct
+	case types.ActionTypeConstruct:
+		nextAction = types.ActionTypeEndTurn
+	default:
+		return status, errors.New("cannot skip this phase")
+	}
+
+	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
+
+	status = g.nextAction(nextAction,
+		func() GameStatus {
+			return g.GameStatusProvider.Get(p, e, g)
+		})
+
+	return status, nil
+}
+
 func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 	p, _ := g.WhoIsCurrent()
 	if p.Name() != player {
@@ -489,8 +521,8 @@ func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 	return status, nil
 }
 
-func (g *Game) IsGameEnded() bool {
-	return g.gameOver
+func (g *Game) IsGameOver() (bool, string) {
+	return g.gameOver, g.winner
 }
 
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
@@ -548,12 +580,15 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.gameOver = true
+	g.winner = p.Name()
 	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name()))
 }
 
-func (g *Game) OnFieldWithoutWarriors(p ports.Player) {
+func (g *Game) OnFieldWithoutWarriors() {
 	g.gameOver = true
-	g.addToHistory(fmt.Sprintf("%s loses: No more warriors in field", p.Name()))
+	p, _ := g.WhoIsCurrent()
+	g.winner = p.Name()
+	g.addToHistory(fmt.Sprintf("%s wins: Enemy has no more warriors in field", p.Name()))
 }
 
 func (g *Game) OnMessage(msg string) {
@@ -571,39 +606,10 @@ func (g *Game) CurrentAction() types.ActionType {
 	return g.currentAction
 }
 
-func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	var nextAction types.ActionType
-
-	switch g.currentAction {
-	case types.ActionTypeAttack:
-		nextAction = types.ActionTypeSpySteal
-	case types.ActionTypeSpySteal:
-		nextAction = types.ActionTypeBuy
-	case types.ActionTypeBuy:
-		nextAction = types.ActionTypeConstruct
-	case types.ActionTypeConstruct:
-		nextAction = types.ActionTypeEndTurn
-	default:
-		return status, errors.New("cannot skip this phase")
-	}
-
-	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
-
-	g.currentAction = g.nextAction(nextAction)
-	status = g.GameStatusProvider.Get(p, e, g)
-
-	return status, nil
-}
-
 func (g *Game) nextAction(expectedAction types.ActionType,
 	gameStatusFn func() GameStatus) GameStatus {
 
-	p, e := g.WhoIsCurrent()
+	p, _ := g.WhoIsCurrent()
 
 	if expectedAction == types.ActionTypeAttack {
 		if p.CanAttack() {
@@ -633,14 +639,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 		expectedAction = types.ActionTypeEndTurn
 	}
-	if expectedAction == types.ActionTypeEndTurn {
-		g.EndTurn(p.Name())
 
-		g.switchTurn()
-		p, e = g.WhoIsCurrent()
-
-		g.DrawCard(p.Name())
-	}
-
-	return expectedAction
+	g.currentAction = types.ActionTypeDrawCard
+	return gameStatusFn()
 }

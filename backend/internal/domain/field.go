@@ -89,6 +89,9 @@ func (h *field) RemoveWarrior(card ports.Warrior) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)
+			if len(h.cards) == 0 {
+				h.gameEndedObserver.OnFieldWithoutWarriors()
+			}
 			return true
 		}
 	}
