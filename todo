@@ -1,3 +1,3 @@
 poder enviar un mensaje a traves de game status
 mostrat historial
-todos los metodos deberian devolver un game status y ya. El error dentro como mensaje, y los que tengan cartas en popo up tambien dentro de game status
+refactr next action ahora que todo devuelve lo mismo
