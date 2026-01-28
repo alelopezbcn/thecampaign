@@ -48,7 +48,7 @@ type Warrior interface {
 	Card
 	Attackable
 	Protect(powerCard SpecialPower) error
-	IsProtected() (bool, Card)
+	IsProtected() (bool, SpecialPower)
 	Heal(powerCard SpecialPower)
 	InstantKill(sp SpecialPower)
 	AddWarriorDeadObserver(o WarriorDeadObserver)

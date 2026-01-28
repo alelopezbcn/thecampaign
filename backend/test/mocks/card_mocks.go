@@ -919,11 +919,11 @@ func (mr *MockWarriorMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockWarrior) IsProtected() (bool, ports.Card) {
+func (m *MockWarrior) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1264,11 +1264,11 @@ func (mr *MockDragonMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockDragon) IsProtected() (bool, ports.Card) {
+func (m *MockDragon) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1490,11 +1490,11 @@ func (mr *MockKnightMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockKnight) IsProtected() (bool, ports.Card) {
+func (m *MockKnight) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1716,11 +1716,11 @@ func (mr *MockArcherMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockArcher) IsProtected() (bool, ports.Card) {
+func (m *MockArcher) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1942,11 +1942,11 @@ func (mr *MockMageMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockMage) IsProtected() (bool, ports.Card) {
+func (m *MockMage) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 

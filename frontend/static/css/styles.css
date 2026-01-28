@@ -919,6 +919,61 @@ body {
     }
 }
 
+/* Protected card with shield */
+.card.protected {
+    border-color: #4ecdc4;
+    box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+}
+
+.card-shield {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #4ecdc4 0%, #2a9d8f 100%);
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    z-index: 10;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    animation: shieldGlow 2s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.shield-icon {
+    font-size: 0.9em;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.shield-value {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    background: #1a1a2e;
+    color: #4ecdc4;
+    font-size: 0.65em;
+    font-weight: bold;
+    padding: 1px 4px;
+    border-radius: 8px;
+    border: 1px solid #4ecdc4;
+    min-width: 14px;
+    text-align: center;
+}
+
+@keyframes shieldGlow {
+    0%, 100% {
+        box-shadow: 0 2px 8px rgba(78, 205, 196, 0.4);
+    }
+    50% {
+        box-shadow: 0 2px 15px rgba(78, 205, 196, 0.7);
+    }
+}
+
 .confirm-action-buttons {
     display: flex;
     gap: 10px;

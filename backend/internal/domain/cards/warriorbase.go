@@ -57,7 +57,7 @@ func (w *warriorBase) Protect(powerCard ports.SpecialPower) error {
 
 	return nil
 }
-func (w *warriorBase) IsProtected() (bool, ports.Card) {
+func (w *warriorBase) IsProtected() (bool, ports.SpecialPower) {
 	if w.protectedBy != nil {
 		return true, w.protectedBy
 	}
@@ -91,9 +91,9 @@ func (w *warriorBase) String() string {
 			sb.WriteString(fmt.Sprintf("\n     * %s", card.String()))
 		}
 	}
-	isProtected, card := w.IsProtected()
+	isProtected, shield := w.IsProtected()
 	if isProtected {
-		sb.WriteString(fmt.Sprintf("\n     ~ Protected by: %s", card.String()))
+		sb.WriteString(fmt.Sprintf("\n     ~ Protected by: %s", shield.String()))
 	}
 	return sb.String()
 }

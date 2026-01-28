@@ -90,8 +90,8 @@ func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 
 	if myField.HasArcher() {
 		for _, warrior := range enemyField.Warriors() {
-			if ok, card := warrior.IsProtected(); ok {
-				canBeUsedOnIDs = append(canBeUsedOnIDs, card.GetID())
+			if ok, shield := warrior.IsProtected(); ok {
+				canBeUsedOnIDs = append(canBeUsedOnIDs, shield.GetID())
 			} else {
 				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 			}

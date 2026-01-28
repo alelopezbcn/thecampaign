@@ -99,12 +99,7 @@ func (h *field) RemoveWarrior(card ports.Warrior) bool {
 func (h *field) AttackableIDs() []string {
 	var ids []string
 	for _, target := range h.cards {
-		isProtected, sp := target.IsProtected()
-		if isProtected {
-			ids = append(ids, sp.String())
-		} else {
-			ids = append(ids, target.GetID())
-		}
+		ids = append(ids, target.GetID())
 	}
 
 	return ids

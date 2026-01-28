@@ -372,6 +372,8 @@ function startAction(actionType) {
 
 // Card selection
 function handleCardClick(cardID, cardType, context, card = null) {
+    console.log('Card clicked:', { cardID, cardType, context, isProtected: card?.protected_by?.id });
+
     if (!gameState.isYourTurn) return;
 
     const action = gameState.currentAction;
@@ -532,7 +534,10 @@ function handleAttackPhaseUserClick(cardID) {
 function handleAttackPhaseTargetClick(cardID, side) {
     // Check if this is a valid target
     const weapon = findCardById(gameState.actionState.weaponId);
+    console.log('Attack target click:', { cardID, side, weaponUseOn: weapon?.use_on, isValidTarget: weapon?.use_on?.includes(cardID) });
+
     if (weapon && weapon.use_on && !weapon.use_on.includes(cardID)) {
+        console.log('Target rejected - not in use_on list');
         return; // Not a valid target
     }
 
@@ -925,8 +930,18 @@ function createCardElement(card, context) {
         }, 2000);
     }
 
+    // Check if card is protected (field cards only)
+    const isProtected = card.protected_by && card.protected_by.id;
+    const shieldHtml = isProtected ? `
+        <div class="card-shield">
+            <span class="shield-icon">🛡️</span>
+            <span class="shield-value">${card.protected_by.value || '?'}</span>
+        </div>
+    ` : '';
+
     // Create card HTML
     div.innerHTML = `
+        ${shieldHtml}
         <div class="card-header">
             <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
             <span class="card-type ${cardType}">${card.type || cardType}</span>
@@ -936,6 +951,11 @@ function createCardElement(card, context) {
             ${getCardStats(card, cardType)}
         </div>
     `;
+
+    // Add protected class for styling
+    if (isProtected) {
+        div.classList.add('protected');
+    }
 
     // Add click handler
     if (context === 'setup' || context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {

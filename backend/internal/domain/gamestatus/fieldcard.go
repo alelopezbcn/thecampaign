@@ -41,8 +41,8 @@ func NewFieldCard(warrior ports.Warrior) FieldCard {
 	}
 
 	var protectedByCard Card
-	if ok, protector := warrior.IsProtected(); ok {
-		protectedByCard = newCard(protector.GetID(), CardTypeSpecialPower, 0)
+	if ok, shield := warrior.IsProtected(); ok {
+		protectedByCard = newCard(shield.GetID(), CardTypeSpecialPower, shield.Health())
 	}
 
 	return FieldCard{

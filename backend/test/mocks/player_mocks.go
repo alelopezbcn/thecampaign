@@ -53,6 +53,48 @@ func (mr *MockPlayerMockRecorder) Attack(targetCard, weaponCard any) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockPlayer)(nil).Attack), targetCard, weaponCard)
 }
 
+// CanAttack mocks base method.
+func (m *MockPlayer) CanAttack() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanAttack")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanAttack indicates an expected call of CanAttack.
+func (mr *MockPlayerMockRecorder) CanAttack() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanAttack", reflect.TypeOf((*MockPlayer)(nil).CanAttack))
+}
+
+// CanBuy mocks base method.
+func (m *MockPlayer) CanBuy() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBuy")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBuy indicates an expected call of CanBuy.
+func (mr *MockPlayerMockRecorder) CanBuy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBuy", reflect.TypeOf((*MockPlayer)(nil).CanBuy))
+}
+
+// CanConstruct mocks base method.
+func (m *MockPlayer) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockPlayerMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockPlayer)(nil).CanConstruct))
+}
+
 // CanTakeCards mocks base method.
 func (m *MockPlayer) CanTakeCards(count int) bool {
 	m.ctrl.T.Helper()
