@@ -315,6 +315,10 @@ function confirmInitialWarriors() {
     });
 
     gameState.selectedCards = [];
+
+    // After confirming, it's now the opponent's turn to select
+    gameState.isYourTurn = false;
+    updateSetupTurnIndicator();
 }
 
 function sendAction(actionType, payload = null) {
