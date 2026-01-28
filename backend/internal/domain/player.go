@@ -256,6 +256,15 @@ func (p *player) CanConstruct() bool {
 	return false
 }
 
+func (p *player) HasThief() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Thief); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Thief); ok {
@@ -264,6 +273,15 @@ func (p *player) Thief() ports.Thief {
 		}
 	}
 	return nil
+}
+
+func (p *player) HasSpy() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Spy); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *player) Spy() ports.Spy {

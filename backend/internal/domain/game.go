@@ -326,57 +326,58 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 	return status, nil
 }
 
-func (g *Game) Spy(playerName string, option int) (spiedCards []gamestatus.Card,
-	status GameStatus, err error) {
+func (g *Game) Spy(playerName string, option int) (status GameStatus, err error) {
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return nil, status, fmt.Errorf("%s not your turn", playerName)
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	s := p.Spy()
 	if s == nil {
-		return nil, status, errors.New("player does not have a Spy to use")
+		return status, errors.New("player does not have a Spy to use")
 	}
 
 	g.OnCardMovedToPile(s)
 
 	g.currentAction = g.nextAction(types.ActionTypeBuy)
-	status = g.GameStatusProvider.Get(p, e, g)
+
+	var spiedCards []ports.Card
 
 	switch option {
 	case 1:
 		// Reveal top 5 cards from deck
 		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()))
-
-		return gamestatus.FromDomainCards(g.deck.Reveal(5)), status, nil
+		spiedCards = g.deck.Reveal(5)
 	case 2:
 		// Reveal enemy's cards
 		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
 			p.Name(), e.Name()))
-
-		return gamestatus.FromDomainCards(e.Hand().ShowCards()), status, nil
+		spiedCards = e.Hand().ShowCards()
 	default:
-		return nil, status, errors.New("invalid Spy option")
+		return status, errors.New("invalid Spy option")
 	}
+
+	status = g.GameStatusProvider.GetWithModal(p, e, g, spiedCards)
+	return status, nil
 }
 
 func (g *Game) Steal(playerName string, cardPosition int) (
-	stolenCardResult gamestatus.Card, status GameStatus, err error) {
+	status GameStatus, err error) {
 
 	p, e := g.WhoIsCurrent()
 	if p.Name() != playerName {
-		return stolenCardResult, status, fmt.Errorf("%s not your turn", playerName)
+		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
 	t := p.Thief()
 	if t == nil {
-		return stolenCardResult, status, errors.New("player does not have a thief to steal with")
+		return status, errors.New("player does not have a thief to steal with")
 	}
 
 	stolenCard, err := e.CardStolenFromHand(cardPosition)
 	if err != nil {
-		return stolenCardResult, status, fmt.Errorf("stealing card failed: %w", err)
+		return status, fmt.Errorf("stealing card failed: %w", err)
 	}
 
 	g.OnCardMovedToPile(t)
@@ -386,9 +387,9 @@ func (g *Game) Steal(playerName string, cardPosition int) (
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), e.Name()))
 
-	status = g.GameStatusProvider.Get(p, e, g, stolenCard)
+	status = g.GameStatusProvider.GetWithModal(p, e, g, []ports.Card{stolenCard})
 
-	return gamestatus.FromDomainCard(stolenCard), status, nil
+	return status, nil
 
 }
 
@@ -591,7 +592,7 @@ func (g *Game) nextAction(expectedAction types.ActionType) types.ActionType {
 		expectedAction = types.ActionTypeSpySteal
 	}
 	if expectedAction == types.ActionTypeSpySteal {
-		if p.Spy() != nil || p.Thief() != nil {
+		if p.HasSpy() || p.HasThief() {
 			return types.ActionTypeSpySteal
 		}
 		expectedAction = types.ActionTypeBuy

@@ -51,7 +51,25 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		Cemetery:            convertCemetery(status.Cemetery),
 		DiscardPile:         convertDiscardPile(status.DiscardPile),
 		CardsInDeck:         status.CardsInDeck,
+		ModalCards:          convertModalCards(status.ModalCards),
 	}
+}
+
+func convertModalCards(cards []gamestatus.Card) []CardDTO {
+	if cards == nil {
+		return nil
+	}
+	dtos := make([]CardDTO, len(cards))
+	for i, card := range cards {
+		dtos[i] = CardDTO{
+			ID:      card.CardID,
+			Type:    card.CardType.Name,
+			SubType: card.CardType.SubName,
+			Color:   card.CardType.Color,
+			Value:   card.Value,
+		}
+	}
+	return dtos
 }
 
 func convertHandCards(cards []gamestatus.HandCard) []HandCardDTO {

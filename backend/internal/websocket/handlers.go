@@ -194,34 +194,9 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 		return
 	}
 
-	room, exists := h.getGameRoom(client)
-	if !exists || room.Game == nil {
-		client.SendError("Game not found")
-		return
-	}
-
-	room.mutex.Lock()
-	cards, status, err := room.Game.Spy(client.PlayerName, p.Option)
-	room.mutex.Unlock()
-
-	if err != nil {
-		client.SendError(err.Error())
-		return
-	}
-
-	// Send the revealed cards only to the client who used spy
-	client.SendMessage("spy_result", map[string]interface{}{
-		"cards":   cards,
-		"source":  p.Option, // 1 = deck, 2 = enemy hand
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
+		return g.Spy(client.PlayerName, p.Option)
 	})
-
-	// Send updated game state with the returned status
-	h.sendGameStateWithStatus(client.GameID, status)
-
-	// Check if game ended
-	if room.Game.IsGameEnded() {
-		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
-	}
 }
 
 func (h *Hub) handleSteal(client *Client, payload interface{}) {
@@ -237,33 +212,9 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 		return
 	}
 
-	room, exists := h.getGameRoom(client)
-	if !exists || room.Game == nil {
-		client.SendError("Game not found")
-		return
-	}
-
-	room.mutex.Lock()
-	stolenCard, status, err := room.Game.Steal(client.PlayerName, p.CardPosition)
-	room.mutex.Unlock()
-
-	if err != nil {
-		client.SendError(err.Error())
-		return
-	}
-
-	// Send the stolen card only to the client who used steal
-	client.SendMessage("steal_result", map[string]interface{}{
-		"card": stolenCard,
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
+		return g.Steal(client.PlayerName, p.CardPosition)
 	})
-
-	// Send updated game state with the returned status
-	h.sendGameStateWithStatus(client.GameID, status)
-
-	// Check if game ended
-	if room.Game.IsGameEnded() {
-		h.broadcastToGame(client.GameID, MsgGameEnded, nil)
-	}
 }
 
 func (h *Hub) handleCatapult(client *Client, payload interface{}) {

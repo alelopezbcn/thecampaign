@@ -8,6 +8,7 @@ let gameState = {
     selectedCards: [],
     currentAction: null,
     pendingAction: null, // Track last action sent to detect results (trade, buy, etc.)
+    pendingModalAction: null, // Track spy/steal to show correct modal title
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -230,6 +231,25 @@ function handleGameState(payload) {
             }
         }
         gameState.pendingAction = null; // Clear after handling
+    }
+
+    // Check if we have modal cards from spy/steal action
+    const modalCards = payload.game_status.modal_cards || [];
+    console.log('Modal cards check:', {
+        modalCards: modalCards,
+        modalCardsLength: modalCards.length,
+        isYourTurn: payload.is_your_turn,
+        pendingModalAction: gameState.pendingModalAction
+    });
+    if (modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction) {
+        if (gameState.pendingModalAction === 'spy_deck') {
+            showCardsModal(modalCards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
+        } else if (gameState.pendingModalAction === 'spy_hand') {
+            showCardsModal(modalCards, 'Enemy Hand', "These are the cards in your opponent's hand");
+        } else if (gameState.pendingModalAction === 'steal') {
+            showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
+        }
+        gameState.pendingModalAction = null; // Clear after handling
     }
 }
 
@@ -1291,6 +1311,7 @@ function showStealModal() {
 }
 
 function selectStealPosition(position) {
+    gameState.pendingModalAction = 'steal';
     sendAction('steal', { card_position: position });
     hideGameModal();
 }
@@ -1313,6 +1334,7 @@ function showSpyOptionsModal() {
 
 function selectSpyOption(option) {
     hideGameModal();
+    gameState.pendingModalAction = option === 1 ? 'spy_deck' : 'spy_hand';
     sendAction('spy', { option: option });
 }
 

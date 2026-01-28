@@ -22,9 +22,21 @@ type GameStatus struct {
 	Cemetery            gamestatus.Cemetery    `json:"cemetery"`
 	DiscardPile         gamestatus.DiscardPile `json:"discard_pile"`
 	CardsInDeck         int                    `json:"deck"`
+	ModalCards          []gamestatus.Card      `json:"modal_cards"`
 }
 
-func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game, newCards ...ports.Card) GameStatus {
+func newGameStatusWithModalCards(currentPlayer ports.Player, enemy ports.Player,
+	game *Game, modalCards []ports.Card) GameStatus {
+	gs := newGameStatus(currentPlayer, enemy, game)
+
+	gs.ModalCards = gamestatus.FromDomainCards(modalCards)
+
+	return gs
+}
+
+func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
+	newCards ...ports.Card) GameStatus {
+
 	action := game.currentAction
 	canMove := game.CanMoveWarrior
 	canTrade := game.CanTrade

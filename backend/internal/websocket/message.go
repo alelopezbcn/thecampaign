@@ -120,6 +120,7 @@ type GameStatusDTO struct {
 	Cemetery            CemeteryDTO    `json:"cemetery"`
 	DiscardPile         DiscardPileDTO `json:"discard_pile"`
 	CardsInDeck         int            `json:"cards_in_deck"`
+	ModalCards          []CardDTO      `json:"modal_cards,omitempty"`
 }
 
 // HandCardDTO represents a card in the player's hand
