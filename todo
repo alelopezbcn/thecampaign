@@ -1,6 +1,7 @@
-poder enviar un mensaje a travez de game status
-agregar discard pile, y la ultima carta visible a game status
-agregar cementerio y discard pile en UI
+poder enviar un mensaje a traves de game status
 agregar escudo que proteje en game status
 mostrar escudo y health en UI
-set initial wrriors que muestre solo 3
+mostrat historial
+mejorar el aspecto del boton Skip, y cambiar el color del boton Pass a rojo
+skip button no va a la siguiente accion posible, sino que va a la siguiente accion y ya
+todos los metodos deberian devolver un game status y ya. El error dentro como mensaje, y los que tengan cartas en popo up tambien dentro de game status

@@ -53,14 +53,45 @@
 
         <!-- Game Screen -->
         <div id="game-screen" class="screen hidden">
+            <!-- Phase Tracker (Top Left) -->
+            <div class="phase-tracker">
+                <div id="phase-turn-status" class="phase-turn-status">
+                    <span class="turn-dot"></span>
+                    <span class="turn-text">Waiting...</span>
+                </div>
+                <ul class="phase-list">
+                    <li class="phase-item" data-phase="draw">
+                        <span class="phase-icon">🎴</span>
+                        <span class="phase-name">Draw Card</span>
+                        <span class="phase-check">✓</span>
+                    </li>
+                    <li class="phase-item" data-phase="attack">
+                        <span class="phase-icon">⚔️</span>
+                        <span class="phase-name">Attack</span>
+                        <span class="phase-check">✓</span>
+                    </li>
+                    <li class="phase-item" data-phase="spy/steal">
+                        <span class="phase-icon">🎭</span>
+                        <span class="phase-name">Spy / Steal</span>
+                        <span class="phase-check">✓</span>
+                    </li>
+                    <li class="phase-item" data-phase="buy">
+                        <span class="phase-icon">💰</span>
+                        <span class="phase-name">Buy</span>
+                        <span class="phase-check">✓</span>
+                    </li>
+                    <li class="phase-item" data-phase="construct">
+                        <span class="phase-icon">🏰</span>
+                        <span class="phase-name">Construct</span>
+                        <span class="phase-check">✓</span>
+                    </li>
+                </ul>
+            </div>
+
             <!-- Top Bar -->
             <div class="game-header">
                 <div class="player-info">
                     <span id="player-name-display" class="player-name"></span>
-                    <span id="turn-indicator" class="turn-indicator"></span>
-                </div>
-                <div class="phase-indicator">
-                    <span id="current-phase" class="phase-badge"></span>
                 </div>
                 <div class="game-info">
                     <span id="game-id-display"></span>
@@ -151,8 +182,8 @@
                 <div class="action-buttons">
                     <button id="move-warrior-btn" class="btn btn-action" disabled>Move Warrior</button>
                     <button id="trade-btn" class="btn btn-action" disabled>Trade (3 cards)</button>
-                    <button id="skip-phase-btn" class="btn btn-secondary" disabled>Skip Phase</button>
-                    <button id="end-turn-btn" class="btn btn-primary" disabled>End Turn</button>
+                    <button id="skip-phase-btn" class="btn btn-skip" disabled>Skip Phase</button>
+                    <button id="end-turn-btn" class="btn btn-danger" disabled>End Turn</button>
                 </div>
                 <div id="action-prompt" class="action-prompt"></div>
                 <div id="confirm-action-buttons" class="confirm-action-buttons hidden">

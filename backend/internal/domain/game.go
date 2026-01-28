@@ -165,7 +165,7 @@ func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
 		g.addToHistory(fmt.Sprintf("%s can't take more cards.", p.Name()))
 	}
 
-	g.currentAction = types.ActionTypeAttack
+	g.currentAction = g.nextAction(types.ActionTypeAttack)
 
 	status = g.GameStatusProvider.Get(p, e, g, cards...)
 
@@ -252,7 +252,7 @@ func (g *Game) Attack(playerName, targetID, weaponID string) (
 	g.addToHistory(fmt.Sprintf("%s\nwas attacked with \n%s",
 		targetCard.String(), targetCard.String()))
 
-	g.currentAction = types.ActionTypeSpySteal
+	g.currentAction = g.nextAction(types.ActionTypeSpySteal)
 	status = g.GameStatusProvider.Get(p, e, g)
 	return status, nil
 }
@@ -291,7 +291,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 	g.addToHistory(fmt.Sprintf("%s\nattacked\n%s",
 		warriorCard.String(), targetCard.String()))
 
-	g.currentAction = types.ActionTypeSpySteal
+	g.currentAction = g.nextAction(types.ActionTypeSpySteal)
 	status = g.GameStatusProvider.Get(p, e, g)
 
 	return status, nil
@@ -320,7 +320,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 	g.addToHistory(fmt.Sprintf("%s used catapult to steal gold from %s's castle",
 		p.Name(), e.Name()))
 
-	g.currentAction = types.ActionTypeSpySteal
+	g.currentAction = g.nextAction(types.ActionTypeSpySteal)
 	status = g.GameStatusProvider.Get(p, e, g)
 
 	return status, nil
@@ -341,7 +341,7 @@ func (g *Game) Spy(playerName string, option int) (spiedCards []gamestatus.Card,
 
 	g.OnCardMovedToPile(s)
 
-	g.currentAction = types.ActionTypeBuy
+	g.currentAction = g.nextAction(types.ActionTypeBuy)
 	status = g.GameStatusProvider.Get(p, e, g)
 
 	switch option {
@@ -381,7 +381,7 @@ func (g *Game) Steal(playerName string, cardPosition int) (
 
 	g.OnCardMovedToPile(t)
 	p.TakeCards(stolenCard)
-	g.currentAction = types.ActionTypeBuy
+	g.currentAction = g.nextAction(types.ActionTypeBuy)
 
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), e.Name()))
@@ -430,7 +430,7 @@ func (g *Game) Buy(playerName, cardID string) (
 	g.addToHistory(fmt.Sprintf("%s bought %d card(s) using %s",
 		p.Name(), cardsToBuy, resourceCard.String()))
 
-	g.currentAction = types.ActionTypeConstruct
+	g.currentAction = g.nextAction(types.ActionTypeConstruct)
 
 	status = g.GameStatusProvider.Get(p, e, g, cards...)
 
@@ -452,7 +452,7 @@ func (g *Game) Construct(playerName, cardID string) (
 	g.addToHistory(fmt.Sprintf("%s constructed castle with card %s",
 		p.Name(), cardID))
 
-	g.currentAction = types.ActionTypeEndTurn
+	g.currentAction = g.nextAction(types.ActionTypeEndTurn)
 	status = g.GameStatusProvider.Get(p, e, g)
 	return status, nil
 
@@ -466,7 +466,7 @@ func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 
 	g.switchTurn()
 	p, e := g.WhoIsCurrent()
-	g.currentAction = types.ActionTypeDrawCard
+	g.currentAction = g.nextAction(types.ActionTypeDrawCard)
 	status = g.GameStatusProvider.Get(p, e, g)
 
 	return status, nil
@@ -559,20 +559,55 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
+	var nextAction types.ActionType
+
 	switch g.currentAction {
 	case types.ActionTypeAttack:
-		g.currentAction = types.ActionTypeSpySteal
+		nextAction = types.ActionTypeSpySteal
 	case types.ActionTypeSpySteal:
-		g.currentAction = types.ActionTypeBuy
+		nextAction = types.ActionTypeBuy
 	case types.ActionTypeBuy:
-		g.currentAction = types.ActionTypeConstruct
+		nextAction = types.ActionTypeConstruct
 	case types.ActionTypeConstruct:
-		g.currentAction = types.ActionTypeEndTurn
+		nextAction = types.ActionTypeEndTurn
 	default:
 		return status, errors.New("cannot skip this phase")
 	}
 
+	g.currentAction = g.nextAction(nextAction)
+
 	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
 	status = g.GameStatusProvider.Get(p, e, g)
 	return status, nil
+}
+
+func (g *Game) nextAction(expectedAction types.ActionType) types.ActionType {
+
+	p, _ := g.WhoIsCurrent()
+	if expectedAction == types.ActionTypeAttack {
+		if p.CanAttack() {
+			return types.ActionTypeAttack
+		}
+		expectedAction = types.ActionTypeSpySteal
+	}
+	if expectedAction == types.ActionTypeSpySteal {
+		if p.Spy() != nil || p.Thief() != nil {
+			return types.ActionTypeSpySteal
+		}
+		expectedAction = types.ActionTypeBuy
+	}
+	if expectedAction == types.ActionTypeBuy {
+		if p.CanBuy() {
+			return types.ActionTypeBuy
+		}
+		expectedAction = types.ActionTypeConstruct
+	}
+	if expectedAction == types.ActionTypeConstruct {
+		if p.CanConstruct() {
+			return types.ActionTypeConstruct
+		}
+		expectedAction = types.ActionTypeEndTurn
+	}
+
+	return expectedAction
 }

@@ -1105,14 +1105,8 @@ function isSetupComplete(status) {
 }
 
 function updateTurnIndicator() {
-    const indicator = document.getElementById('turn-indicator');
-    if (gameState.isYourTurn) {
-        indicator.textContent = 'YOUR TURN';
-        indicator.className = 'turn-indicator your-turn';
-    } else {
-        indicator.textContent = 'ENEMY TURN';
-        indicator.className = 'turn-indicator enemy-turn';
-    }
+    // Update the phase tracker turn status
+    updatePhaseTracker();
 }
 
 function updateSetupTurnIndicator() {
@@ -1156,27 +1150,61 @@ function updateActionButtons() {
     document.getElementById('end-turn-btn').disabled = false;
 }
 
-function updatePhaseIndicator() {
-    const phaseElement = document.getElementById('current-phase');
+function updatePhaseTracker() {
     const status = gameState.currentState;
+    const turnStatusElement = document.getElementById('phase-turn-status');
+    const turnTextElement = turnStatusElement?.querySelector('.turn-text');
 
-    if (!status || !status.current_action) {
-        phaseElement.textContent = '';
-        return;
+    // Update turn status
+    if (turnStatusElement && turnTextElement) {
+        turnStatusElement.classList.remove('your-turn', 'enemy-turn');
+        if (gameState.isYourTurn) {
+            turnStatusElement.classList.add('your-turn');
+            turnTextElement.textContent = 'Your Turn';
+        } else {
+            turnStatusElement.classList.add('enemy-turn');
+            turnTextElement.textContent = 'Enemy Turn';
+        }
     }
 
-    const phaseNames = {
-        'draw': 'Draw Card',
-        'attack': 'Attack Phase',
-        'spy/steal': 'Spy/Steal Phase',
-        'buy': 'Buy Phase',
-        'construct': 'Construct Phase',
-        'endturn': 'End Turn'
-    };
+    // Phase order
+    const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct'];
+    const currentAction = status?.current_action || '';
 
-    const phaseName = phaseNames[status.current_action] || status.current_action;
-    phaseElement.textContent = phaseName;
-    phaseElement.className = `phase-badge phase-${status.current_action.replace('/', '-')}`;
+    // Find the index of the current action
+    let currentIndex = phaseOrder.indexOf(currentAction);
+
+    // If endturn, all phases are completed
+    if (currentAction === 'endturn') {
+        currentIndex = phaseOrder.length;
+    }
+
+    // Update each phase item
+    phaseOrder.forEach((phase, index) => {
+        const phaseItem = document.querySelector(`.phase-item[data-phase="${phase}"]`);
+        if (!phaseItem) return;
+
+        phaseItem.classList.remove('completed', 'current', 'skipped');
+
+        if (currentIndex === -1) {
+            // No current action, reset all
+            return;
+        }
+
+        if (index < currentIndex) {
+            // This phase has been completed or skipped
+            phaseItem.classList.add('completed');
+        } else if (index === currentIndex) {
+            // This is the current phase
+            phaseItem.classList.add('current');
+        }
+        // Phases after current index remain in default (pending) state
+    });
+}
+
+// Keep old function name for compatibility
+function updatePhaseIndicator() {
+    updatePhaseTracker();
 }
 
 function updateActionPrompt(text) {
