@@ -1,4 +1,4 @@
 poder enviar un mensaje de error a traves de game status, para esto poner defers en todos los metodos
 mostrat historial
 refactr next action ahora que todo devuelve lo mismo
-show winner and block game when game is over
+agregar indicador de damage multiplier

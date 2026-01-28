@@ -640,6 +640,11 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		expectedAction = types.ActionTypeEndTurn
 	}
 
+	if expectedAction == types.ActionTypeEndTurn {
+		g.currentAction = types.ActionTypeEndTurn
+		return gameStatusFn()
+	}
+
 	g.currentAction = types.ActionTypeDrawCard
 	return gameStatusFn()
 }

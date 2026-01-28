@@ -425,17 +425,16 @@ body {
 
 /* Completed phase */
 .phase-item.completed {
-    color: #666;
+    color: #4cd964;
 }
 
 .phase-item.completed .phase-name {
-    text-decoration: line-through;
-    text-decoration-color: #4cd964;
+    opacity: 0.7;
 }
 
 .phase-item.completed .phase-icon {
-    filter: grayscale(50%);
-    opacity: 0.4;
+    filter: grayscale(30%);
+    opacity: 0.6;
 }
 
 .phase-item.completed .phase-check {
@@ -444,22 +443,21 @@ body {
 
 /* Skipped phase */
 .phase-item.skipped {
-    color: #555;
+    color: #f0ad4e;
 }
 
 .phase-item.skipped .phase-name {
-    text-decoration: line-through;
-    text-decoration-color: #666;
+    opacity: 0.8;
 }
 
 .phase-item.skipped .phase-icon {
-    filter: grayscale(100%);
-    opacity: 0.3;
+    filter: sepia(100%) saturate(300%) hue-rotate(350deg);
+    opacity: 0.7;
 }
 
 .phase-item.skipped .phase-check {
-    opacity: 0.5;
-    color: #666;
+    opacity: 1;
+    color: #f0ad4e;
 }
 
 @keyframes phasePulse {
@@ -1011,20 +1009,30 @@ body {
 .card-type {
     font-weight: 600;
     text-transform: uppercase;
-    padding: 2px 6px;
+    padding: 2px 4px;
     border-radius: 4px;
-    font-size: 0.65em;
+    font-size: 0.6em;
+    max-width: 60px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .card-content {
-    margin: 10px 0;
+    margin: 6px 0;
+    overflow: hidden;
+    flex: 1;
 }
 
 .card-name {
-    font-size: 1em;
+    font-size: 0.85em;
     font-weight: 600;
     margin-bottom: 8px;
     text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    line-height: 1.2;
 }
 
 .card-stats {

@@ -9,6 +9,8 @@ let gameState = {
     currentAction: null,
     pendingAction: null, // Track last action sent to detect results (trade, buy, etc.)
     pendingModalAction: null, // Track spy/steal to show correct modal title
+    executedPhases: [], // Track phases that were actually executed this turn
+    lastTurnPlayer: null, // Track whose turn it was to detect turn changes
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -197,6 +199,24 @@ function renderInitialWarriors(warriors) {
 function handleGameState(payload) {
     console.log('Game state updated:', payload);
     console.log('New cards from payload:', payload.game_status.new_cards);
+
+    // Detect turn change and reset executed phases
+    const currentPlayer = payload.game_status.current_player;
+    if (gameState.lastTurnPlayer !== currentPlayer) {
+        gameState.executedPhases = [];
+        gameState.lastTurnPlayer = currentPlayer;
+    }
+
+    // Track executed phases based on current action transitions
+    const currentAction = payload.game_status.current_action;
+    const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct', 'endturn'];
+    const currentIndex = phaseOrder.indexOf(currentAction);
+
+    // If we're past draw phase and it's our turn, draw was executed
+    if (payload.is_your_turn && currentIndex > 0 && !gameState.executedPhases.includes('draw')) {
+        gameState.executedPhases.push('draw');
+    }
+
     gameState.isYourTurn = payload.is_your_turn;
     gameState.currentState = payload.game_status;
     // Use the first card from new_cards array for highlighting
@@ -362,6 +382,23 @@ function sendAction(actionType, payload = null) {
     if (actionType === 'trade' || actionType === 'buy') {
         gameState.pendingAction = actionType;
     }
+
+    // Track executed phases based on action type
+    const actionToPhase = {
+        'draw_card': 'draw',
+        'attack': 'attack',
+        'special_power': 'attack',
+        'spy': 'spy/steal',
+        'steal': 'spy/steal',
+        'catapult': 'spy/steal',
+        'buy': 'buy',
+        'construct': 'construct'
+    };
+    const phase = actionToPhase[actionType];
+    if (phase && !gameState.executedPhases.includes(phase)) {
+        gameState.executedPhases.push(phase);
+    }
+
     sendMessage(actionType, payload);
     clearSelections();
     gameState.currentAction = null;
@@ -932,8 +969,12 @@ function createCardElement(card, context) {
     const currentAction = gameState.currentAction;
 
     if (context === 'player-hand' && gameState.isYourTurn) {
+        // During endturn phase, all cards are disabled
+        if (status && status.current_action === 'endturn') {
+            div.classList.add('unusable');
+        }
         // During trade action, all cards are usable
-        if (currentAction === 'trade') {
+        else if (currentAction === 'trade') {
             // All cards enabled for trade
         }
         // During move_warrior action, only warriors are usable
@@ -1199,6 +1240,12 @@ function updateActionButtons() {
 
     if (!isYourTurn || !status) return;
 
+    // In endturn phase, only End Turn button is enabled
+    if (status.current_action === 'endturn') {
+        document.getElementById('end-turn-btn').disabled = false;
+        return;
+    }
+
     // Move Warrior - enabled if can_move_warrior is true
     document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
 
@@ -1228,16 +1275,11 @@ function updatePhaseTracker() {
     }
 
     // Phase order
-    const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct'];
+    const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct', 'endturn'];
     const currentAction = status?.current_action || '';
 
     // Find the index of the current action
     let currentIndex = phaseOrder.indexOf(currentAction);
-
-    // If endturn, all phases are completed
-    if (currentAction === 'endturn') {
-        currentIndex = phaseOrder.length;
-    }
 
     // Update each phase item
     phaseOrder.forEach((phase, index) => {
@@ -1252,8 +1294,12 @@ function updatePhaseTracker() {
         }
 
         if (index < currentIndex) {
-            // This phase has been completed or skipped
-            phaseItem.classList.add('completed');
+            // Check if this phase was actually executed
+            if (gameState.executedPhases.includes(phase)) {
+                phaseItem.classList.add('completed');
+            } else {
+                phaseItem.classList.add('skipped');
+            }
         } else if (index === currentIndex) {
             // This is the current phase
             phaseItem.classList.add('current');

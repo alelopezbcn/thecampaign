@@ -220,6 +220,11 @@ func (p *player) CanAttack() bool {
 				if p.field.HasKnight() {
 					return true
 				}
+			case types.SpecialPowerWeaponType:
+				// SpecialPower can be used by Archer, Knight, or Mage
+				if p.field.HasArcher() || p.field.HasKnight() || p.field.HasMage() {
+					return true
+				}
 			}
 		}
 	}
