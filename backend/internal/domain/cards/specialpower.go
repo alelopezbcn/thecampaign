@@ -24,6 +24,10 @@ func NewSpecialPower(id string) ports.SpecialPower {
 		weaponBase:     newWeaponBase(SpecialPowerDamage, types.SpecialPowerWeaponType),
 	}
 }
+
+func (s *specialPower) MultiplierFactor(_ ports.Warrior) int {
+	return 1
+}
 func (s *specialPower) BeAttacked(w ports.Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")

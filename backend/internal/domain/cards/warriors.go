@@ -25,12 +25,7 @@ func (k *knight) BeAttacked(w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	multiplier := 1
-	if w.Type() == types.PoisonWeaponType {
-		multiplier = 2
-	}
-
-	k.ReceiveDamage(w, multiplier)
+	k.ReceiveDamage(w, w.MultiplierFactor(k))
 
 	return nil
 }
@@ -53,12 +48,7 @@ func (a *archer) BeAttacked(w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	multiplier := 1
-	if w.Type() == types.SwordWeaponType {
-		multiplier = 2
-	}
-
-	a.ReceiveDamage(w, multiplier)
+	a.ReceiveDamage(w, w.MultiplierFactor(a))
 
 	return nil
 }
@@ -81,12 +71,7 @@ func (m *mage) BeAttacked(w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	multiplier := 1
-	if w.Type() == types.ArrowWeaponType {
-		multiplier = 2
-	}
-
-	m.ReceiveDamage(w, multiplier)
+	m.ReceiveDamage(w, w.MultiplierFactor(m))
 
 	return nil
 }

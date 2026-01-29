@@ -180,13 +180,13 @@ func (m *MockFieldWithoutWarriorsObserver) EXPECT() *MockFieldWithoutWarriorsObs
 }
 
 // OnFieldWithoutWarriors mocks base method.
-func (m *MockFieldWithoutWarriorsObserver) OnFieldWithoutWarriors(p ports.Player) {
+func (m *MockFieldWithoutWarriorsObserver) OnFieldWithoutWarriors() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnFieldWithoutWarriors", p)
+	m.ctrl.Call(m, "OnFieldWithoutWarriors")
 }
 
 // OnFieldWithoutWarriors indicates an expected call of OnFieldWithoutWarriors.
-func (mr *MockFieldWithoutWarriorsObserverMockRecorder) OnFieldWithoutWarriors(p any) *gomock.Call {
+func (mr *MockFieldWithoutWarriorsObserverMockRecorder) OnFieldWithoutWarriors() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnFieldWithoutWarriors", reflect.TypeOf((*MockFieldWithoutWarriorsObserver)(nil).OnFieldWithoutWarriors), p)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnFieldWithoutWarriors", reflect.TypeOf((*MockFieldWithoutWarriorsObserver)(nil).OnFieldWithoutWarriors))
 }

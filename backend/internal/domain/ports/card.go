@@ -61,6 +61,7 @@ type Weapon interface {
 	DamageAmount() int
 	Type() types.WeaponType
 	CanConstruct() bool
+	MultiplierFactor(target Warrior) int
 }
 
 type Dragon interface {

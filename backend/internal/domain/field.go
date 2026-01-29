@@ -98,12 +98,3 @@ func (h *field) RemoveWarrior(card ports.Warrior) bool {
 
 	return false
 }
-
-func (h *field) AttackableIDs() []string {
-	var ids []string
-	for _, target := range h.cards {
-		ids = append(ids, target.GetID())
-	}
-
-	return ids
-}

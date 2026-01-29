@@ -18,6 +18,14 @@ func NewSword(id string, damageAmount int) ports.Sword {
 		weaponBase: newWeaponBase(damageAmount, types.SwordWeaponType),
 	}
 }
+func (s *sword) MultiplierFactor(target ports.Warrior) int {
+	if target.Type() == types.ArcherWarriorType {
+		return 2
+	}
+
+	return 1
+}
+
 func (s *sword) String() string {
 	return fmt.Sprintf("%d %s (%s)", s.damageAmount, s.name, s.id)
 }
@@ -32,6 +40,13 @@ func NewArrow(id string, damageAmount int) ports.Arrow {
 		cardBase:   newCardBase(id, "Arrow"),
 		weaponBase: newWeaponBase(damageAmount, types.ArrowWeaponType),
 	}
+}
+func (s *arrow) MultiplierFactor(target ports.Warrior) int {
+	if target.Type() == types.MageWarriorType {
+		return 2
+	}
+
+	return 1
 }
 func (a *arrow) String() string {
 	return fmt.Sprintf("%d %s (%s)", a.damageAmount, a.name, a.id)
@@ -49,6 +64,13 @@ func NewPoison(id string, damageAmount int) ports.Poison {
 			weaponBase: newWeaponBase(damageAmount, types.PoisonWeaponType),
 		}
 	}
+}
+func (s *poison) MultiplierFactor(target ports.Warrior) int {
+	if target.Type() == types.KnightWarriorType {
+		return 2
+	}
+
+	return 1
 }
 func (p *poison) String() string {
 	return fmt.Sprintf("%d %s (%s)", p.damageAmount, p.name, p.id)

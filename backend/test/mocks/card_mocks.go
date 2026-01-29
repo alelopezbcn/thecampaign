@@ -529,6 +529,20 @@ func (mr *MockSpecialPowerMockRecorder) Health() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Health", reflect.TypeOf((*MockSpecialPower)(nil).Health))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockSpecialPower) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockSpecialPowerMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockSpecialPower)(nil).MultiplierFactor), target)
+}
+
 // ReceiveDamage mocks base method.
 func (m *MockSpecialPower) ReceiveDamage(weapon ports.Weapon, multiplier int) bool {
 	m.ctrl.T.Helper()
@@ -1078,6 +1092,20 @@ func (m *MockWeapon) GetID() string {
 func (mr *MockWeaponMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockWeapon)(nil).GetID))
+}
+
+// MultiplierFactor mocks base method.
+func (m *MockWeapon) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockWeaponMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockWeapon)(nil).MultiplierFactor), target)
 }
 
 // String mocks base method.
@@ -2103,6 +2131,20 @@ func (mr *MockSwordMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockSword)(nil).GetID))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockSword) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockSwordMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockSword)(nil).MultiplierFactor), target)
+}
+
 // String mocks base method.
 func (m *MockSword) String() string {
 	m.ctrl.T.Helper()
@@ -2222,6 +2264,20 @@ func (mr *MockArrowMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockArrow)(nil).GetID))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockArrow) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockArrowMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockArrow)(nil).MultiplierFactor), target)
+}
+
 // String mocks base method.
 func (m *MockArrow) String() string {
 	m.ctrl.T.Helper()
@@ -2339,6 +2395,20 @@ func (m *MockPoison) GetID() string {
 func (mr *MockPoisonMockRecorder) GetID() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockPoison)(nil).GetID))
+}
+
+// MultiplierFactor mocks base method.
+func (m *MockPoison) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockPoisonMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockPoison)(nil).MultiplierFactor), target)
 }
 
 // String mocks base method.

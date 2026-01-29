@@ -7,8 +7,9 @@ import (
 
 type HandCard struct {
 	Card
-	CanBeUsedOnIDs []string `json:"use_on"`
-	CanBeUsed      bool     `json:"can_be_used"`
+	CanBeUsedOnIDs []string       `json:"use_on"`
+	CanBeUsed      bool           `json:"can_be_used"`
+	DmgMultiplier  map[string]int `json:"dmg_mult"`
 }
 
 func newHandCard(cardID string, cardType CardType, value int,
@@ -73,8 +74,18 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 			weapon.DamageAmount(), []string{}, canBeUsed)
 	}
 
-	return newHandCard(weapon.GetID(), aCardType,
-		weapon.DamageAmount(), enemyField.AttackableIDs(), canBeUsed)
+	mults := map[string]int{}
+	attackableIDs := []string{}
+	for _, v := range enemyField.Warriors() {
+		mults[v.GetID()] = weapon.MultiplierFactor(v)
+		attackableIDs = append(attackableIDs, v.GetID())
+	}
+
+	nh := newHandCard(weapon.GetID(), aCardType,
+		weapon.DamageAmount(), attackableIDs, canBeUsed)
+	nh.DmgMultiplier = mults
+
+	return nh
 }
 
 func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
@@ -90,11 +101,7 @@ func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 
 	if myField.HasArcher() {
 		for _, warrior := range enemyField.Warriors() {
-			if ok, shield := warrior.IsProtected(); ok {
-				canBeUsedOnIDs = append(canBeUsedOnIDs, shield.GetID())
-			} else {
-				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
-			}
+			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 		}
 	}
 	if myField.HasKnight() {
