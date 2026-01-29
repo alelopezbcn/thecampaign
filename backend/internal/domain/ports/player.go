@@ -20,6 +20,7 @@ type Player interface {
 	CanConstruct() bool
 	HasThief() bool
 	HasSpy() bool
+	HasCatapult() bool
 	Thief() Thief
 	Spy() Spy
 	Catapult() Catapult

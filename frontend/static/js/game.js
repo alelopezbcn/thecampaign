@@ -47,6 +47,7 @@ function setupEventListeners() {
 
     // Setup screen
     document.getElementById('confirm-warriors-btn').addEventListener('click', confirmInitialWarriors);
+    document.getElementById('select-all-warriors-btn').addEventListener('click', selectAllWarriors);
 
     // Game screen actions - only 4 buttons
     document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
@@ -350,6 +351,30 @@ function joinGame() {
     }, 500);
 }
 
+function selectAllWarriors() {
+    // Get all warrior cards in setup hand
+    const setupHand = document.getElementById('setup-hand');
+    const cards = setupHand.querySelectorAll('.card');
+
+    // Clear current selection
+    gameState.selectedCards = [];
+    document.querySelectorAll('.card.selected').forEach(card => {
+        card.classList.remove('selected');
+    });
+
+    // Select all (max 3)
+    cards.forEach((card, index) => {
+        if (index < 3) {
+            const cardId = card.dataset.cardId;
+            gameState.selectedCards.push(cardId);
+            card.classList.add('selected');
+        }
+    });
+
+    // Enable confirm button
+    document.getElementById('confirm-warriors-btn').disabled = gameState.selectedCards.length < 1;
+}
+
 function confirmInitialWarriors() {
     const selectedWarriors = gameState.selectedCards;
 
@@ -547,10 +572,9 @@ function handleAttackPhaseHandClick(cardID, card) {
         showConfirmButtons();
     } else if (cardType === 'catapult') {
         gameState.actionState.type = 'catapult';
+        gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
-        const catapultDmg = card?.value || 0;
-        updateActionPrompt(`🏰 Catapult (${catapultDmg} DMG) → Enemy Castle - Confirm to fire!`);
-        showConfirmButtons();
+        showCatapultModal();
     } else if (cardType === 'weapon') {
         gameState.actionState.type = 'attack';
         highlightSelectedCard(cardID);
@@ -833,12 +857,7 @@ function confirmAction() {
         return;
     }
 
-    // Handle catapult
-    if (actionState.type === 'catapult' && actionState.weaponId) {
-        sendAction('catapult', { card_position: 0 });
-        resetActionState();
-        return;
-    }
+    // Catapult is handled through modal, not confirm button
 
     // Handle special power
     if (actionState.type === 'specialpower') {
@@ -1421,6 +1440,38 @@ function selectSpyOption(option) {
     hideGameModal();
     gameState.pendingModalAction = option === 1 ? 'spy_deck' : 'spy_hand';
     sendAction('spy', { option: option });
+}
+
+// Catapult Modal
+function showCatapultModal() {
+    const enemyCastle = gameState.currentState?.enemy_castle;
+    const resourceCount = enemyCastle?.resource_cards || 0;
+
+    if (resourceCount === 0) {
+        updateActionPrompt('Enemy castle has no resources to attack!');
+        resetActionState();
+        return;
+    }
+
+    let content = '<div class="catapult-cards-grid">';
+    for (let i = 1; i <= resourceCount; i++) {
+        content += `
+            <div class="card-face-down catapult-target" data-position="${i}" onclick="selectCatapultPosition(${i})">
+                <div class="card-back-design">
+                    <span class="card-back-icon">💰</span>
+                </div>
+                <span class="card-position">#${i}</span>
+            </div>
+        `;
+    }
+    content += '</div>';
+
+    showGameModal('🏰 Catapult Attack', 'Select a resource card to destroy', content, true);
+}
+
+function selectCatapultPosition(position) {
+    hideGameModal();
+    sendAction('catapult', { card_position: position });
 }
 
 // Spy Result Modal

@@ -30,30 +30,24 @@ func (d *dealer) WarriorsCards() (warriors []ports.Card) {
 }
 
 func (d *dealer) OtherCards() (other []ports.Card) {
-	dr := NewDragon("d")
-
 	other = []ports.Card{
-		dr,
+		NewDragon("d"),
+		NewDragon("d1"),
+		NewDragon("d2"),
+		NewDragon("d3"),
+		NewDragon("d4"),
+		NewDragon("d5"),
 		NewSpecialPower("s1"),
 		NewSpecialPower("s2"),
 		NewSpecialPower("s3"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewSpy("s"),
-		NewThief("t"),
-		NewCatapultCard("c"),
+		NewSpecialPower("s4"),
+		NewSpecialPower("s5"),
+		NewSpecialPower("s6"),
+		NewSpecialPower("s7"),
+		NewSpecialPower("s8"),
+		NewSpy("spy1"),
+		NewThief("t1"),
+		NewCatapultCard("c1"),
 	}
 
 	for i := 1; i < 10; i++ {

@@ -74,6 +74,7 @@ func (w *warriorBase) Heal(sp ports.SpecialPower) {
 func (w *warriorBase) InstantKill(sp ports.SpecialPower) {
 	if w.protectedBy != nil {
 		w.protectedBy.Destroyed()
+		w.protectedBy = nil
 		return
 	}
 	w.health = 0

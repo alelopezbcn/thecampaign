@@ -248,6 +248,13 @@ body {
     gap: 15px;
 }
 
+.setup-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
 /* Game Screen */
 #game-screen {
     display: flex;
@@ -1357,6 +1364,46 @@ body {
     bottom: 8px;
     font-size: 0.8em;
     color: rgba(255, 255, 255, 0.4);
+}
+
+/* Catapult Target Cards */
+.catapult-cards-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    padding: 10px;
+}
+
+.catapult-target {
+    background: linear-gradient(135deg, #4a3728 0%, #2d2418 100%);
+    border-color: #c9a227;
+}
+
+.catapult-target::after {
+    content: none;
+}
+
+.catapult-target .card-back-design {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.catapult-target .card-back-icon {
+    font-size: 2.5em;
+    opacity: 0.6;
+}
+
+.catapult-target:hover {
+    border-color: #ff6b6b;
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.4);
+}
+
+.catapult-target:hover .card-back-icon {
+    opacity: 1;
 }
 
 /* Game Over Modal */

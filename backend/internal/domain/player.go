@@ -247,7 +247,8 @@ func (p *player) CanBuy() bool {
 func (p *player) CanConstruct() bool {
 	for _, c := range p.hand.ShowCards() {
 		if r, ok := c.(ports.Resource); ok {
-			if r.CanConstruct() {
+			// If castle is already constructed, any resource can be added
+			if p.castle.IsConstructed() || r.CanConstruct() {
 				return true
 			}
 		}
@@ -264,6 +265,15 @@ func (p *player) CanConstruct() bool {
 func (p *player) HasThief() bool {
 	for _, c := range p.hand.ShowCards() {
 		if _, ok := c.(ports.Thief); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *player) HasCatapult() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Catapult); ok {
 			return true
 		}
 	}

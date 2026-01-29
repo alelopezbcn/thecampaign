@@ -609,10 +609,12 @@ func (g *Game) CurrentAction() types.ActionType {
 func (g *Game) nextAction(expectedAction types.ActionType,
 	gameStatusFn func() GameStatus) GameStatus {
 
-	p, _ := g.WhoIsCurrent()
+	p, enemy := g.WhoIsCurrent()
 
 	if expectedAction == types.ActionTypeAttack {
-		if p.CanAttack() {
+		// Check if player can attack with weapons OR catapult
+		canAttackWithCatapult := p.HasCatapult() && enemy.Castle().CanBeAttacked()
+		if p.CanAttack() || canAttackWithCatapult {
 			g.currentAction = types.ActionTypeAttack
 			return gameStatusFn()
 		}
