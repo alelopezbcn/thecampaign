@@ -87,6 +87,7 @@ func convertHandCards(cards []gamestatus.HandCard) []HandCardDTO {
 			},
 			CanBeUsedOnIDs: card.CanBeUsedOnIDs,
 			CanBeUsed:      card.CanBeUsed,
+			DmgMultiplier:  card.DmgMultiplier,
 		}
 	}
 	return dtos

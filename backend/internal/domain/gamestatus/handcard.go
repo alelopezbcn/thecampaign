@@ -81,11 +81,11 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 		attackableIDs = append(attackableIDs, v.GetID())
 	}
 
-	nh := newHandCard(weapon.GetID(), aCardType,
+	hc := newHandCard(weapon.GetID(), aCardType,
 		weapon.DamageAmount(), attackableIDs, canBeUsed)
-	nh.DmgMultiplier = mults
+	hc.DmgMultiplier = mults
 
-	return nh
+	return hc
 }
 
 func NewSpecialPowerHandCard(specialPower ports.SpecialPower,

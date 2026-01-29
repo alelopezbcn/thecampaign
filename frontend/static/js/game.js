@@ -200,24 +200,16 @@ function handleGameState(payload) {
     console.log('Game state updated:', payload);
     console.log('New cards from payload:', payload.game_status.new_cards);
 
-    // Detect turn change and reset executed phases
-    const currentPlayer = payload.game_status.current_player;
-    if (gameState.lastTurnPlayer !== currentPlayer) {
-        gameState.executedPhases = [];
-        gameState.lastTurnPlayer = currentPlayer;
+    // Detect when your turn starts (transition from not your turn to your turn)
+    const wasYourTurn = gameState.isYourTurn;
+    const isNowYourTurn = payload.is_your_turn;
+
+    if (!wasYourTurn && isNowYourTurn) {
+        // Your turn just started, reset executed phases
+        gameState.executedPhases = ['draw']; // Draw is always automatic
     }
 
-    // Track executed phases based on current action transitions
-    const currentAction = payload.game_status.current_action;
-    const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct', 'endturn'];
-    const currentIndex = phaseOrder.indexOf(currentAction);
-
-    // If we're past draw phase and it's our turn, draw was executed
-    if (payload.is_your_turn && currentIndex > 0 && !gameState.executedPhases.includes('draw')) {
-        gameState.executedPhases.push('draw');
-    }
-
-    gameState.isYourTurn = payload.is_your_turn;
+    gameState.isYourTurn = isNowYourTurn;
     gameState.currentState = payload.game_status;
     // Use the first card from new_cards array for highlighting
     gameState.newlyDrawnCards = payload.game_status.new_cards || [];
@@ -416,6 +408,13 @@ function clearSelections() {
     gameState.selectedCards = [];
     document.querySelectorAll('.card.selected').forEach(card => {
         card.classList.remove('selected');
+    });
+    // Remove valid-target highlights and multiplier badges
+    document.querySelectorAll('.card.valid-target').forEach(card => {
+        card.classList.remove('valid-target');
+    });
+    document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
+        badge.remove();
     });
 }
 
@@ -694,12 +693,18 @@ function highlightValidUserWarriors(weapon) {
 }
 
 function highlightValidTargets(weapon) {
+    const dmgMult = weapon?.dmg_mult || {};
+
     // Highlight valid targets on enemy field
     const enemyField = document.getElementById('enemy-field');
     enemyField.querySelectorAll('.card').forEach(card => {
         const cardId = card.dataset.cardId;
         if (weapon && weapon.use_on && weapon.use_on.includes(cardId)) {
             card.classList.add('valid-target');
+            // Show multiplier badge if > 1
+            if (dmgMult[cardId] && dmgMult[cardId] > 1) {
+                addMultiplierBadge(card, dmgMult[cardId]);
+            }
         }
     });
 
@@ -711,6 +716,17 @@ function highlightValidTargets(weapon) {
             card.classList.add('valid-target');
         }
     });
+}
+
+function addMultiplierBadge(cardElement, multiplier) {
+    // Remove existing badge if any
+    const existing = cardElement.querySelector('.dmg-multiplier-badge');
+    if (existing) existing.remove();
+
+    const badge = document.createElement('div');
+    badge.className = 'dmg-multiplier-badge';
+    badge.textContent = `x${multiplier}`;
+    cardElement.appendChild(badge);
 }
 
 function findCardById(cardId) {
@@ -741,7 +757,13 @@ function buildAttackSummary(weapon, target) {
     const weaponDmg = weapon?.value || 0;
     const targetName = getCardName(target);
     const targetHp = target?.value || 0;
+    const targetId = target?.id;
+    const multiplier = weapon?.dmg_mult?.[targetId] || 1;
+    const effectiveDmg = weaponDmg * multiplier;
 
+    if (multiplier > 1) {
+        return `⚔️ ${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG) → ${targetName} (${targetHp} HP)`;
+    }
     return `⚔️ ${weaponName} (${weaponDmg} DMG) → ${targetName} (${targetHp} HP)`;
 }
 
@@ -1294,8 +1316,9 @@ function updatePhaseTracker() {
         }
 
         if (index < currentIndex) {
-            // Check if this phase was actually executed
-            if (gameState.executedPhases.includes(phase)) {
+            // If it's enemy's turn, show all past phases as green
+            // If it's your turn, check if phase was actually executed
+            if (!gameState.isYourTurn || gameState.executedPhases.includes(phase)) {
                 phaseItem.classList.add('completed');
             } else {
                 phaseItem.classList.add('skipped');

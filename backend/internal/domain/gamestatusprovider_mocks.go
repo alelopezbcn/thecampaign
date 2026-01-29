@@ -57,3 +57,17 @@ func (mr *MockGameStatusProviderMockRecorder) Get(p, e, game any, newCards ...an
 	varargs := append([]any{p, e, game}, newCards...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockGameStatusProvider)(nil).Get), varargs...)
 }
+
+// GetWithModal mocks base method.
+func (m *MockGameStatusProvider) GetWithModal(p, e ports.Player, game *Game, modalCards []ports.Card) GameStatus {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWithModal", p, e, game, modalCards)
+	ret0, _ := ret[0].(GameStatus)
+	return ret0
+}
+
+// GetWithModal indicates an expected call of GetWithModal.
+func (mr *MockGameStatusProviderMockRecorder) GetWithModal(p, e, game, modalCards any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithModal", reflect.TypeOf((*MockGameStatusProvider)(nil).GetWithModal), p, e, game, modalCards)
+}

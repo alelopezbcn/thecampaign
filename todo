@@ -1,4 +1,3 @@
 poder enviar un mensaje de error a traves de game status, para esto poner defers en todos los metodos
 mostrat historial
-refactr next action ahora que todo devuelve lo mismo
-agregar indicador de damage multiplier
+ver como podemos saltarnos el hacer clic en EndTurn

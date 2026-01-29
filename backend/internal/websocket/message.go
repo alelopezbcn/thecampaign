@@ -127,8 +127,9 @@ type GameStatusDTO struct {
 // HandCardDTO represents a card in the player's hand
 type HandCardDTO struct {
 	CardDTO
-	CanBeUsedOnIDs []string `json:"use_on"`
-	CanBeUsed      bool     `json:"can_be_used"`
+	CanBeUsedOnIDs []string       `json:"use_on"`
+	CanBeUsed      bool           `json:"can_be_used"`
+	DmgMultiplier  map[string]int `json:"dmg_mult,omitempty"`
 }
 
 // FieldCardDTO represents a card on the battlefield
