@@ -3,10 +3,8 @@ package domain
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math/rand"
 	"strings"
-	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
@@ -27,6 +25,7 @@ type Game struct {
 	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
 	history            []string
+	historyTracker     int
 	dealer             ports.Dealer
 	GameStatusProvider GameStatusProvider
 	gameOver           bool
@@ -563,7 +562,16 @@ func (g *Game) addToHistory(msg string) {
 	}
 
 	g.history = append(g.history, msg)
-	log.Print(fmt.Sprintf("***********: %s %s", time.Now().Format("2006-01-02 15:04:05"), msg))
+}
+
+func (g *Game) GetHistory() []string {
+	if g.historyTracker == 0 {
+		g.historyTracker = len(g.history)
+		return g.history
+	}
+	newMessages := g.history[g.historyTracker:]
+	g.historyTracker = len(g.history)
+	return newMessages
 }
 
 func (g *Game) OnCardMovedToPile(card ports.Card) {

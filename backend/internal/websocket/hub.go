@@ -304,6 +304,8 @@ func (h *Hub) sendGameStateWithStatus(gameID string, currentPlayerStatus domain.
 		} else {
 			// Enemy sees their own hand and the current player's field
 			status = room.Game.GameStatusProvider.Get(enemyPlayer, currentPlayer, room.Game)
+			// Copy history from current player status so both players see the same history
+			status.History = currentPlayerStatus.History
 		}
 
 		payload := GameStatePayload{

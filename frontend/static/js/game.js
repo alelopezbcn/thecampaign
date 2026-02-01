@@ -11,6 +11,7 @@ let gameState = {
     pendingModalAction: null, // Track spy/steal to show correct modal title
     executedPhases: [], // Track phases that were actually executed this turn
     lastTurnPlayer: null, // Track whose turn it was to detect turn changes
+    historyMessages: [], // Accumulated history messages
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -1181,18 +1182,23 @@ function renderDeck(cardsInDeck) {
     }
 }
 
-function renderHistory(history) {
+function renderHistory(newMessages) {
     const container = document.getElementById('history-list');
     if (!container) return;
 
+    // Accumulate new messages
+    if (newMessages && newMessages.length > 0) {
+        gameState.historyMessages = gameState.historyMessages.concat(newMessages);
+    }
+
     container.innerHTML = '';
 
-    if (!history || history.length === 0) {
+    if (gameState.historyMessages.length === 0) {
         container.innerHTML = '<div class="history-empty">No events yet</div>';
         return;
     }
 
-    history.forEach(message => {
+    gameState.historyMessages.forEach(message => {
         const item = document.createElement('div');
         item.className = 'history-item';
         item.textContent = message;

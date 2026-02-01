@@ -58,7 +58,7 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
-		History:             game.history,
+		History:             game.GetHistory(),
 	}
 
 	if len(newCards) > 0 {
