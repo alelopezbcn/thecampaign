@@ -52,6 +52,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		DiscardPile:         convertDiscardPile(status.DiscardPile),
 		CardsInDeck:         status.CardsInDeck,
 		ModalCards:          convertModalCards(status.ModalCards),
+		History:             status.History,
 		GameOverMsg:         status.GameOverMgs,
 		ErrorMsg:            status.ErrorMsg,
 	}

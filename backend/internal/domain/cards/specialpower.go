@@ -88,7 +88,7 @@ func (s *specialPower) String() string {
 	if s.health > 0 {
 		sb.WriteString(fmt.Sprintf(" - Health: %d", s.health))
 	}
-	if s.attackedBy != nil && len(s.attackedBy) > 0 {
+	if len(s.attackedBy) > 0 {
 		for _, card := range s.attackedBy {
 			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
 		}

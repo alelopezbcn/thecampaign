@@ -120,6 +120,7 @@ type GameStatusDTO struct {
 	DiscardPile         DiscardPileDTO `json:"discard_pile"`
 	CardsInDeck         int            `json:"cards_in_deck"`
 	ModalCards          []CardDTO      `json:"modal_cards,omitempty"`
+	History             []string       `json:"history"`
 	GameOverMsg         string         `json:"game_over_msg,omitempty"`
 	ErrorMsg            string         `json:"error_msg,omitempty"`
 }

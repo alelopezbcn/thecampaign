@@ -962,6 +962,9 @@ function renderGameBoard(status) {
     // Render deck
     renderDeck(status.cards_in_deck);
 
+    // Render history
+    renderHistory(status.history);
+
     // Update enemy hand count
     document.getElementById('enemy-hand-count').textContent =
         `${status.cards_in_enemy_hand} cards in hand`;
@@ -1176,6 +1179,28 @@ function renderDeck(cardsInDeck) {
             deckElement.classList.add('deck-low');
         }
     }
+}
+
+function renderHistory(history) {
+    const container = document.getElementById('history-list');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (!history || history.length === 0) {
+        container.innerHTML = '<div class="history-empty">No events yet</div>';
+        return;
+    }
+
+    history.forEach(message => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        item.textContent = message;
+        container.appendChild(item);
+    });
+
+    // Scroll to bottom to show latest message
+    container.scrollTop = container.scrollHeight;
 }
 
 // Helper functions

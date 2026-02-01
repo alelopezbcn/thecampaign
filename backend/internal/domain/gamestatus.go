@@ -23,6 +23,7 @@ type GameStatus struct {
 	DiscardPile         gamestatus.DiscardPile `json:"discard_pile"`
 	CardsInDeck         int                    `json:"deck"`
 	ModalCards          []gamestatus.Card      `json:"modal_cards"`
+	History             []string               `json:"history"`
 	GameOverMgs         string                 `json:"game_over_msg"`
 	ErrorMsg            string                 `json:"error_msg,omitempty"`
 }
@@ -57,6 +58,7 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
+		History:             game.history,
 	}
 
 	if len(newCards) > 0 {
