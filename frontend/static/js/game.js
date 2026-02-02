@@ -1070,7 +1070,7 @@ function createCardElement(card, context) {
         // Remove the highlight after animation completes
         setTimeout(() => {
             div.classList.remove('newly-drawn');
-        }, 2000);
+        }, 5000);
     }
 
     // Check if card is protected (field cards only)
@@ -1313,7 +1313,7 @@ function updateSetupTurnIndicator() {
         document.getElementById('setup-hand').style.opacity = '1';
         document.getElementById('confirm-warriors-btn').style.display = 'block';
     } else {
-        indicator.textContent = 'WAITING - Opponent Selecting';
+        indicator.textContent = 'WAITING - Opponent selecting Warriors';
         indicator.className = 'turn-indicator enemy-turn';
         document.getElementById('setup-hand').style.opacity = '0.5';
         document.getElementById('confirm-warriors-btn').style.display = 'none';

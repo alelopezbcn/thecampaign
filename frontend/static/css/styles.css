@@ -585,12 +585,47 @@ body {
     padding: 10px;
 }
 
+/* Board Wrappers */
+.board {
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.board-label {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 0.7em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.4;
+}
+
+.enemy-board {
+    background: linear-gradient(180deg, rgba(255, 80, 80, 0.06) 0%, rgba(255, 80, 80, 0.02) 100%);
+    border: 1px solid rgba(255, 80, 80, 0.15);
+}
+
+.enemy-board .board-label {
+    color: #ff6b6b;
+}
+
+.player-board {
+    background: linear-gradient(0deg, rgba(76, 217, 100, 0.06) 0%, rgba(76, 217, 100, 0.02) 100%);
+    border: 1px solid rgba(76, 217, 100, 0.15);
+}
+
+.player-board .board-label {
+    color: #4cd964;
+}
+
 /* Enemy Area */
 .enemy-area {
     display: grid;
     grid-template-columns: 1fr 3fr;
     gap: 15px;
-    margin-bottom: 5px;
     align-items: stretch;
 }
 
@@ -673,7 +708,6 @@ body {
     display: grid;
     grid-template-columns: 3fr 1fr;
     gap: 15px;
-    margin-bottom: 10px;
     align-items: stretch;
 }
 
@@ -1029,7 +1063,7 @@ body {
 
 /* Hand Area */
 .hand-area {
-    margin-bottom: 10px;
+    margin-top: 15px;
 }
 
 .hand-area h3 {
@@ -1083,28 +1117,35 @@ body {
 }
 
 .card.newly-drawn {
-    animation: newCardPulse 2s ease-out;
-    border-color: #ffd700;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3);
+    animation: newCardPulse 1s ease-out, newCardGlow 1.5s ease-in-out infinite 1s;
+    border-color: #ffd700 !important;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.4), inset 0 0 15px rgba(255, 215, 0, 0.1) !important;
+    z-index: 10;
 }
 
 @keyframes newCardPulse {
     0% {
         transform: scale(0.8) translateY(20px);
         opacity: 0;
-        box-shadow: 0 0 0 rgba(255, 215, 0, 0);
     }
-    30% {
-        transform: scale(1.1) translateY(-10px);
+    40% {
+        transform: scale(1.15) translateY(-10px);
         opacity: 1;
-        box-shadow: 0 0 30px rgba(255, 215, 0, 0.8), 0 0 60px rgba(255, 215, 0, 0.4);
     }
-    50% {
-        transform: scale(1.05) translateY(-5px);
+    70% {
+        transform: scale(1.05) translateY(-3px);
     }
     100% {
         transform: scale(1) translateY(0);
-        box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+}
+
+@keyframes newCardGlow {
+    0%, 100% {
+        box-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.4), inset 0 0 15px rgba(255, 215, 0, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 35px rgba(255, 215, 0, 1), 0 0 70px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.2);
     }
 }
 
@@ -1118,8 +1159,9 @@ body {
 }
 
 .card.unusable {
-    opacity: 0.25;
+    opacity: 0.55;
     pointer-events: none;
+    filter: saturate(0.5);
 }
 
 .card.unusable:hover {
@@ -1238,12 +1280,16 @@ body {
 }
 
 .btn-secondary {
-    background: rgba(150, 150, 150, 0.3);
-    border: 1px solid rgba(150, 150, 150, 0.5);
+    background: rgba(100, 180, 255, 0.2);
+    border: 1px solid rgba(100, 180, 255, 0.5);
+    color: #8bc4ff;
 }
 
-.btn-secondary:hover {
-    background: rgba(150, 150, 150, 0.5);
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(100, 180, 255, 0.35);
+    border-color: rgba(100, 180, 255, 0.7);
+    color: #fff;
+    transform: translateY(-1px);
 }
 
 .card-header {

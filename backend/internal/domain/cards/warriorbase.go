@@ -82,21 +82,7 @@ func (w *warriorBase) InstantKill(sp ports.SpecialPower) {
 	w.dead()
 }
 func (w *warriorBase) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%s (%s)", w.name, w.id))
-	if w.health > 0 {
-		sb.WriteString(fmt.Sprintf(" - Health: %d", w.health))
-	}
-	if w.attackedBy != nil && len(w.attackedBy) > 0 {
-		for _, card := range w.attackedBy {
-			sb.WriteString(fmt.Sprintf("\n     * %s", card.String()))
-		}
-	}
-	isProtected, shield := w.IsProtected()
-	if isProtected {
-		sb.WriteString(fmt.Sprintf("\n     ~ Protected by: %s", shield.String()))
-	}
-	return sb.String()
+	return strings.TrimSpace(fmt.Sprintf("%s (%d)", w.warriorType, w.Health()))
 }
 func (w *warriorBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o

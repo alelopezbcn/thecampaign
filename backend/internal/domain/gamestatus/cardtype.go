@@ -7,14 +7,14 @@ type CardType struct {
 }
 
 var (
-	CardTypeKnight       = CardType{"Warrior", "Knight", "#0000FF"} // Blue
+	CardTypeKnight       = CardType{"Warrior", "Knight", "#0969bd"} // Blue
 	CardTypeSword        = CardType{"Weapon", "Sword", "#ADD8E6"}   // Light Blue
 	CardTypeArcher       = CardType{"Warrior", "Archer", "#008000"} // Green
 	CardTypeArrow        = CardType{"Weapon", "Arrow", "#90EE90"}   // Light Green
-	CardTypeMage         = CardType{"Warrior", "Mage", "#800080"}   // Purple
+	CardTypeMage         = CardType{"Warrior", "Mage", "#811d81"}   // Purple
 	CardTypePoison       = CardType{"Weapon", "Poison", "#D8BFD8"}  // Light Purple (Thistle)
 	CardTypeDragon       = CardType{"Warrior", "Dragon", "#FF0000"} // Red
-	CardTypeResource     = CardType{"Resource", "", "#FFFF00"}      // Yellow
+	CardTypeResource     = CardType{"Resource", "", "#fbfbae"}      // Yellow
 	CardTypeSpecialPower = CardType{"SpecialPower", "", "#FFA500"}  // Orange
 	CardTypeSpy          = CardType{"Spy", "", "#D3D3D3"}           // Light Gray
 	CardTypeThief        = CardType{"Thief", "", "#D3D3D3"}         // Light Gray

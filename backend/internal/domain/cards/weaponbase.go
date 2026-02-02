@@ -1,6 +1,8 @@
 package cards
 
 import (
+	"fmt"
+
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -26,4 +28,8 @@ func (s *weaponBase) Type() types.WeaponType {
 
 func (s *weaponBase) CanConstruct() bool {
 	return s.DamageAmount() == 1
+}
+
+func (s *weaponBase) String() string {
+	return fmt.Sprintf("%s (%d)", s.weaponType, s.damageAmount)
 }
