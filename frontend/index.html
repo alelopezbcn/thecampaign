@@ -57,7 +57,7 @@
         <!-- Game Screen -->
         <div id="game-screen" class="screen hidden">
             <!-- Phase Tracker (Top Left) -->
-            <div class="phase-tracker">
+            <div id="phase-tracker" class="phase-tracker">
                 <div id="phase-turn-status" class="phase-turn-status">
                     <span class="turn-dot"></span>
                     <span class="turn-text">Waiting...</span>
@@ -108,10 +108,8 @@
             <!-- Top Bar -->
             <div class="game-header">
                 <div class="player-info">
+                    <span class="player-label">Commander</span>
                     <span id="player-name-display" class="player-name"></span>
-                </div>
-                <div class="game-info">
-                    <span id="game-id-display"></span>
                 </div>
             </div>
 
@@ -127,21 +125,13 @@
                     <h3>Enemy Field</h3>
                     <div id="enemy-field" class="field card-container"></div>
                 </div>
-                <div class="enemy-hand-info">
-                    <span id="enemy-hand-count">0 cards in hand</span>
+                <div class="enemy-hand-area">
+                    <h3>Enemy Hand</h3>
+                    <div id="enemy-hand" class="enemy-hand"></div>
                 </div>
             </div>
 
-            <!-- Cemetery -->
-            <div class="cemetery-area">
-                <h3>Cemetery</h3>
-                <div id="cemetery" class="cemetery">
-                    <div class="cemetery-count"><span id="cemetery-corps-count">0</span> fallen</div>
-                    <div id="cemetery-last-corp" class="cemetery-last-corp"></div>
-                </div>
-            </div>
-
-            <!-- Deck and Discard Pile Container -->
+            <!-- Deck, Discard Pile and Cemetery Container -->
             <div class="deck-discard-container">
                 <!-- Deck -->
                 <div class="deck-area">
@@ -167,6 +157,15 @@
                     <div id="discard-pile" class="discard-pile">
                         <div class="discard-pile-count"><span id="discard-pile-cards-count">0</span> cards</div>
                         <div id="discard-pile-last-card" class="discard-pile-last-card"></div>
+                    </div>
+                </div>
+
+                <!-- Cemetery -->
+                <div class="cemetery-area">
+                    <h3>Cemetery</h3>
+                    <div id="cemetery" class="cemetery">
+                        <div class="cemetery-count"><span id="cemetery-corps-count">0</span> fallen</div>
+                        <div id="cemetery-last-corp" class="cemetery-last-corp"></div>
                     </div>
                 </div>
             </div>

@@ -618,7 +618,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 	if expectedAction == types.ActionTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := p.HasCatapult() && enemy.Castle().CanBeAttacked()
-		if p.CanAttack() || canAttackWithCatapult {
+		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
 			g.currentAction = types.ActionTypeAttack
 			return gameStatusFn()
 		}

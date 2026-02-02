@@ -1,2 +1,1 @@
 poder enviar un mensaje de error a traves de game status, para esto poner defers en todos los metodos
-move warrior deberia ser una fase antes de atacar, o permitir atacar si hay la posibilidad de mover warrior. lo que pasa ahora es que si no podes atacar por tener solo un guerrero, se va directamente a pasar turno

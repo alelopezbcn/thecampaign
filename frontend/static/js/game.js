@@ -171,7 +171,6 @@ function handleGameStarted(payload) {
 
     document.getElementById('current-game-id').textContent = payload.game_id;
     document.getElementById('player-name-display').textContent = payload.your_name;
-    document.getElementById('game-id-display').textContent = `Game: ${payload.game_id}`;
 }
 
 function handleInitialWarriors(payload) {
@@ -966,9 +965,8 @@ function renderGameBoard(status) {
     // Render history
     renderHistory(status.history);
 
-    // Update enemy hand count
-    document.getElementById('enemy-hand-count').textContent =
-        `${status.cards_in_enemy_hand} cards in hand`;
+    // Render enemy hand as card backs
+    renderEnemyHand(status.cards_in_enemy_hand);
 }
 
 function renderCards(containerId, cards) {
@@ -984,6 +982,29 @@ function renderCards(containerId, cards) {
         const cardElement = createCardElement(card, containerId);
         container.appendChild(cardElement);
     });
+}
+
+function renderEnemyHand(cardCount) {
+    const container = document.getElementById('enemy-hand');
+    container.innerHTML = '';
+
+    if (!cardCount || cardCount === 0) {
+        container.innerHTML = '<div style="color: #666; font-size: 0.85em;">No cards</div>';
+        return;
+    }
+
+    for (let i = 0; i < cardCount; i++) {
+        const cardBack = document.createElement('div');
+        cardBack.className = 'enemy-hand-card';
+        cardBack.innerHTML = `
+            <div class="card-back-mini">
+                <div class="card-back-mini-inner">
+                    <span class="card-back-mini-emblem">⚔</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(cardBack);
+    }
 }
 
 function createCardElement(card, context) {
@@ -1107,10 +1128,12 @@ function renderCastle(containerId, castle) {
     }
 
     container.innerHTML = `
+        <div class="castle-icon"></div>
         <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
         ${isConstructed ? `
             <div class="castle-info">
-                <div class="castle-value">Value: ${castleValue}</div>
+                <div class="castle-value">${castleValue}</div>
+                <div class="castle-value-label">Value</div>
                 <div class="castle-resources">${resourceCount} resource cards</div>
             </div>
         ` : ''}
@@ -1130,13 +1153,9 @@ function renderCemetery(cemetery) {
     countElement.textContent = cemetery.corps || 0;
 
     if (cemetery.last_corp) {
-        const card = cemetery.last_corp;
-        const cardColor = card.color || '#666';
-        lastCorpContainer.innerHTML = `
-            <div class="cemetery-card" style="background: linear-gradient(135deg, ${cardColor}40, ${cardColor}20); border-color: ${cardColor};">
-                <div class="card-type" style="color: ${cardColor};">${card.sub_type || card.type}</div>
-            </div>
-        `;
+        lastCorpContainer.innerHTML = '';
+        const cardElement = createCardElement(cemetery.last_corp, 'cemetery');
+        lastCorpContainer.appendChild(cardElement);
     } else {
         lastCorpContainer.innerHTML = '';
     }
@@ -1331,17 +1350,21 @@ function updateActionButtons() {
 
 function updatePhaseTracker() {
     const status = gameState.currentState;
+    const phaseTracker = document.getElementById('phase-tracker');
     const turnStatusElement = document.getElementById('phase-turn-status');
     const turnTextElement = turnStatusElement?.querySelector('.turn-text');
 
     // Update turn status
     if (turnStatusElement && turnTextElement) {
         turnStatusElement.classList.remove('your-turn', 'enemy-turn');
+        phaseTracker?.classList.remove('your-turn', 'enemy-turn');
         if (gameState.isYourTurn) {
             turnStatusElement.classList.add('your-turn');
+            phaseTracker?.classList.add('your-turn');
             turnTextElement.textContent = 'Your Turn';
         } else {
             turnStatusElement.classList.add('enemy-turn');
+            phaseTracker?.classList.add('enemy-turn');
             turnTextElement.textContent = 'Enemy Turn';
         }
     }
