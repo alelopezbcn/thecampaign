@@ -285,6 +285,20 @@ func (mr *MockPlayerMockRecorder) HasThief() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasThief", reflect.TypeOf((*MockPlayer)(nil).HasThief))
 }
 
+// HasWarriorsInHand mocks base method.
+func (m *MockPlayer) HasWarriorsInHand() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasWarriorsInHand")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasWarriorsInHand indicates an expected call of HasWarriorsInHand.
+func (mr *MockPlayerMockRecorder) HasWarriorsInHand() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorsInHand", reflect.TypeOf((*MockPlayer)(nil).HasWarriorsInHand))
+}
+
 // MoveCardToField mocks base method.
 func (m *MockPlayer) MoveCardToField(cardID string) error {
 	m.ctrl.T.Helper()

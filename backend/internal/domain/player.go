@@ -267,6 +267,28 @@ func (p *player) HasCatapult() bool {
 	return false
 }
 
+func (p *player) HasWarriorsInHand() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Warrior); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *player) CanTradeCards() bool {
+	count := 0
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Weapon); ok {
+			count++
+			if count >= 3 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Thief); ok {

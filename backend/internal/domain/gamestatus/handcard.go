@@ -10,6 +10,7 @@ type HandCard struct {
 	CanBeUsedOnIDs []string       `json:"use_on"`
 	CanBeUsed      bool           `json:"can_be_used"`
 	DmgMultiplier  map[string]int `json:"dmg_mult"`
+	CanBeTraded    bool           `json:"can_be_traded"`
 }
 
 func newHandCard(cardID string, cardType CardType, value int,
@@ -64,14 +65,18 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 
 	if action != types.ActionTypeConstruct &&
 		action != types.ActionTypeAttack {
-		return newHandCard(weapon.GetID(), aCardType,
+		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, false)
+		hc.CanBeTraded = true
+		return hc
 	}
 
 	if action == types.ActionTypeConstruct {
 		canBeUsed = !castleConstructed && weapon.CanConstruct()
-		return newHandCard(weapon.GetID(), aCardType,
+		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, canBeUsed)
+		hc.CanBeTraded = true
+		return hc
 	}
 
 	mults := map[string]int{}
@@ -84,6 +89,7 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 	hc := newHandCard(weapon.GetID(), aCardType,
 		weapon.DamageAmount(), attackableIDs, canBeUsed)
 	hc.DmgMultiplier = mults
+	hc.CanBeTraded = true
 
 	return hc
 }

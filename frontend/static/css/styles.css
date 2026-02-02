@@ -861,12 +861,11 @@ body {
 }
 
 .cemetery-last-corp .card {
-    transform: scale(0.8);
     cursor: default;
 }
 
 .cemetery-last-corp .card:hover {
-    transform: scale(0.8);
+    transform: none;
 }
 
 /* Discard Pile Styles */
@@ -909,12 +908,11 @@ body {
 }
 
 .discard-pile-last-card .card {
-    transform: scale(0.8);
     cursor: default;
 }
 
 .discard-pile-last-card .card:hover {
-    transform: scale(0.8);
+    transform: none;
 }
 
 /* Deck and Discard Pile Container */
@@ -1374,6 +1372,7 @@ body {
 
 /* Action Panel */
 .action-panel {
+    position: relative;
     background: rgba(255, 255, 255, 0.05);
     backdrop-filter: blur(10px);
     border-radius: 10px;
@@ -1899,4 +1898,73 @@ body {
 
 .error-toast-close:hover {
     opacity: 1;
+}
+
+/* End Turn Popup */
+.endturn-popup {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(20, 20, 35, 0.98);
+    border-radius: 10px;
+    animation: endturnFadeIn 0.3s ease-out;
+}
+
+.endturn-popup.hidden {
+    display: none;
+}
+
+.endturn-popup-content {
+    background: linear-gradient(135deg, rgba(30, 30, 50, 0.98), rgba(20, 20, 35, 0.98));
+    border: 2px solid rgba(255, 107, 107, 0.3);
+    border-radius: 10px;
+    padding: 20px 50px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.endturn-popup .endturn-icon {
+    font-size: 2em;
+    animation: endturnPulse 2s ease-in-out infinite;
+}
+
+.endturn-popup-text h2 {
+    font-size: 1.1em;
+    color: #ff6b6b;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.endturn-popup-text p {
+    color: #888;
+    font-size: 0.8em;
+    margin: 0;
+}
+
+.endturn-popup .btn {
+    padding: 12px 30px;
+    font-size: 1em;
+}
+
+@keyframes endturnFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes endturnPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
 }

@@ -20,7 +20,9 @@ type Game struct {
 	CurrentTurn        int
 	currentAction      types.ActionType
 	CanMoveWarrior     bool
+	hasMovedWarrior    bool
 	CanTrade           bool
+	hasTraded          bool
 	deck               ports.Deck
 	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
@@ -157,7 +159,7 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 	}
 
 	g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()))
-	g.CanMoveWarrior = false
+	g.hasMovedWarrior = true
 	status = g.GameStatusProvider.Get(p, e, g)
 
 	return status, nil
@@ -191,7 +193,7 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 	p.TakeCards(cards...)
 
 	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()))
-	g.CanTrade = false
+	g.hasTraded = true
 	status = g.GameStatusProvider.Get(p, e, g, cards...)
 
 	return status, nil
@@ -589,8 +591,7 @@ func (g *Game) OnCardMovedToPile(card ports.Card) {
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 	g.cemetery.AddCorp(warrior)
-	g.addToHistory(fmt.Sprintf("warrior died and moved to cemetery (%d): %s",
-		g.cemetery.Count(), warrior.String()))
+	g.addToHistory("warrior buried in cemetery")
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
@@ -605,8 +606,8 @@ func (g *Game) OnFieldWithoutWarriors() {
 }
 
 func (g *Game) switchTurn() {
-	g.CanMoveWarrior = true
-	g.CanTrade = true
+	g.hasMovedWarrior = false
+	g.hasTraded = false
 	g.currentAction = types.ActionTypeDrawCard
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }
@@ -619,10 +620,13 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 	gameStatusFn func() GameStatus) GameStatus {
 
 	p, enemy := g.WhoIsCurrent()
+	g.CanMoveWarrior = !g.hasMovedWarrior && p.HasWarriorsInHand()
+	g.CanTrade = !g.hasTraded && p.CanTradeCards()
 
 	if expectedAction == types.ActionTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := p.HasCatapult() && enemy.Castle().CanBeAttacked()
+
 		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
 			g.currentAction = types.ActionTypeAttack
 			return gameStatusFn()

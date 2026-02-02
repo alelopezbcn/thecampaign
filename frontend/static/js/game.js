@@ -55,6 +55,7 @@ function setupEventListeners() {
     document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
+    document.getElementById('endturn-popup-btn').addEventListener('click', () => sendAction('end_turn'));
 
     // Confirm/Cancel action buttons
     document.getElementById('confirm-action-btn').addEventListener('click', confirmAction);
@@ -1039,9 +1040,11 @@ function createCardElement(card, context) {
         if (status && status.current_action === 'endturn') {
             div.classList.add('unusable');
         }
-        // During trade action, all cards are usable
+        // During trade action, only cards that can be traded are usable
         else if (currentAction === 'trade') {
-            // All cards enabled for trade
+            if (card.can_be_traded === false) {
+                div.classList.add('unusable');
+            }
         }
         // During move_warrior action, only warriors are usable
         else if (currentAction === 'move_warrior') {
@@ -1312,11 +1315,13 @@ function updateSetupTurnIndicator() {
         indicator.className = 'turn-indicator your-turn';
         document.getElementById('setup-hand').style.opacity = '1';
         document.getElementById('confirm-warriors-btn').style.display = 'block';
+        document.getElementById('select-all-warriors-btn').style.display = 'block';
     } else {
         indicator.textContent = 'WAITING - Opponent selecting Warriors';
         indicator.className = 'turn-indicator enemy-turn';
         document.getElementById('setup-hand').style.opacity = '0.5';
         document.getElementById('confirm-warriors-btn').style.display = 'none';
+        document.getElementById('select-all-warriors-btn').style.display = 'none';
     }
 }
 
@@ -1329,11 +1334,16 @@ function updateActionButtons() {
         btn.disabled = true;
     });
 
+    // Hide endturn popup by default
+    const endturnPopup = document.getElementById('endturn-popup');
+    endturnPopup.classList.add('hidden');
+
     if (!isYourTurn || !status) return;
 
-    // In endturn phase, only End Turn button is enabled
+    // In endturn phase, show the popup and enable only End Turn button
     if (status.current_action === 'endturn') {
         document.getElementById('end-turn-btn').disabled = false;
+        endturnPopup.classList.remove('hidden');
         return;
     }
 

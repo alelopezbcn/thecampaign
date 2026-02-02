@@ -23,6 +23,8 @@ type Player interface {
 	HasThief() bool
 	HasSpy() bool
 	HasCatapult() bool
+	HasWarriorsInHand() bool
+	CanTradeCards() bool
 	Thief() Thief
 	Spy() Spy
 	Catapult() Catapult
