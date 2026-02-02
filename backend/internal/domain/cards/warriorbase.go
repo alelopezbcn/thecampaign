@@ -6,18 +6,19 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type warriorBase struct {
 	*cardBase
 	*attackableBase
 	protectedBy         ports.SpecialPower
-	warriorType         ports.WarriorType
+	warriorType         types.WarriorType
 	WarriorDeadObserver ports.WarriorDeadObserver
 }
 
 func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
-	warriorType ports.WarriorType) *warriorBase {
+	warriorType types.WarriorType) *warriorBase {
 	return &warriorBase{
 		cardBase:       cardBase,
 		attackableBase: attackableCardBase,
@@ -56,7 +57,7 @@ func (w *warriorBase) Protect(powerCard ports.SpecialPower) error {
 
 	return nil
 }
-func (w *warriorBase) IsProtected() (bool, ports.Card) {
+func (w *warriorBase) IsProtected() (bool, ports.SpecialPower) {
 	if w.protectedBy != nil {
 		return true, w.protectedBy
 	}
@@ -73,6 +74,7 @@ func (w *warriorBase) Heal(sp ports.SpecialPower) {
 func (w *warriorBase) InstantKill(sp ports.SpecialPower) {
 	if w.protectedBy != nil {
 		w.protectedBy.Destroyed()
+		w.protectedBy = nil
 		return
 	}
 	w.health = 0
@@ -90,16 +92,16 @@ func (w *warriorBase) String() string {
 			sb.WriteString(fmt.Sprintf("\n     * %s", card.String()))
 		}
 	}
-	isProtected, card := w.IsProtected()
+	isProtected, shield := w.IsProtected()
 	if isProtected {
-		sb.WriteString(fmt.Sprintf("\n     ~ Protected by: %s", card.String()))
+		sb.WriteString(fmt.Sprintf("\n     ~ Protected by: %s", shield.String()))
 	}
 	return sb.String()
 }
 func (w *warriorBase) AddWarriorDeadObserver(o ports.WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
-func (w *warriorBase) Type() ports.WarriorType {
+func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
 func (w *warriorBase) IsDamaged() bool {

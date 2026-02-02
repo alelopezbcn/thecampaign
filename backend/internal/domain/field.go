@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type field struct {
@@ -15,7 +16,7 @@ type field struct {
 func (h *field) HasArcher() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.ArcherWarriorType:
+		case types.ArcherWarriorType:
 			return true
 		}
 	}
@@ -27,7 +28,7 @@ func (h *field) HasArcher() bool {
 func (h *field) HasDragon() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.DragonWarriorType:
+		case types.DragonWarriorType:
 			return true
 		}
 	}
@@ -39,7 +40,7 @@ func (h *field) HasDragon() bool {
 func (h *field) HasKnight() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.KnightWarriorType:
+		case types.KnightWarriorType:
 			return true
 		}
 	}
@@ -51,7 +52,7 @@ func (h *field) HasKnight() bool {
 func (h *field) HasMage() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
-		case ports.MageWarriorType:
+		case types.MageWarriorType:
 			return true
 		}
 	}
@@ -88,23 +89,12 @@ func (h *field) RemoveWarrior(card ports.Warrior) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)
+			if len(h.cards) == 0 {
+				h.gameEndedObserver.OnFieldWithoutWarriors()
+			}
 			return true
 		}
 	}
 
 	return false
-}
-
-func (h *field) AttackableIDs() []string {
-	var ids []string
-	for _, target := range h.cards {
-		isProtected, sp := target.IsProtected()
-		if isProtected {
-			ids = append(ids, sp.String())
-		} else {
-			ids = append(ids, target.GetID())
-		}
-	}
-
-	return ids
 }

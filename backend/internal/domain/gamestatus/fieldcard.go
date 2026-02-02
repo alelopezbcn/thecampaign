@@ -1,9 +1,8 @@
 package gamestatus
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type FieldCard struct {
@@ -12,17 +11,17 @@ type FieldCard struct {
 	ProtectedBy Card   `json:"protected_by"`
 }
 
-func newFieldCard(warrior ports.Warrior) FieldCard {
+func NewFieldCard(warrior ports.Warrior) FieldCard {
 
 	var aCardType CardType
 	switch warrior.Type() {
-	case ports.KnightWarriorType:
+	case types.KnightWarriorType:
 		aCardType = CardTypeKnight
-	case ports.ArcherWarriorType:
+	case types.ArcherWarriorType:
 		aCardType = CardTypeArcher
-	case ports.MageWarriorType:
+	case types.MageWarriorType:
 		aCardType = CardTypeMage
-	case ports.DragonWarriorType:
+	case types.DragonWarriorType:
 		aCardType = CardTypeDragon
 	}
 
@@ -30,11 +29,11 @@ func newFieldCard(warrior ports.Warrior) FieldCard {
 	for _, attacker := range warrior.AttackedBy() {
 		var weaponCardType CardType
 		switch attacker.Type() {
-		case ports.SwordWeaponType:
+		case types.SwordWeaponType:
 			weaponCardType = CardTypeSword
-		case ports.ArrowWeaponType:
+		case types.ArrowWeaponType:
 			weaponCardType = CardTypeArrow
-		case ports.PoisonWeaponType:
+		case types.PoisonWeaponType:
 			weaponCardType = CardTypePoison
 		}
 		attackedByCards = append(attackedByCards, newCard(attacker.GetID(),
@@ -42,8 +41,8 @@ func newFieldCard(warrior ports.Warrior) FieldCard {
 	}
 
 	var protectedByCard Card
-	if ok, protector := warrior.IsProtected(); ok {
-		protectedByCard = newCard(protector.GetID(), CardTypeSpecialPower, 0)
+	if ok, shield := warrior.IsProtected(); ok {
+		protectedByCard = newCard(shield.GetID(), CardTypeSpecialPower, shield.Health())
 	}
 
 	return FieldCard{
@@ -51,24 +50,4 @@ func newFieldCard(warrior ports.Warrior) FieldCard {
 		AttackedBy:  attackedByCards,
 		ProtectedBy: protectedByCard,
 	}
-}
-
-func (c FieldCard) String() string {
-	return fmt.Sprintf("%s - %s (%d)%s%s",
-		c.CardID,
-		c.CardType.String(),
-		c.Value,
-		func() string {
-			if len(c.AttackedBy) > 0 {
-				return fmt.Sprintf(" | AttackedBy: %v", c.AttackedBy)
-			}
-			return ""
-		}(),
-		func() string {
-			if c.ProtectedBy.CardID != "" {
-				return fmt.Sprintf(" | ProtectedBy: %v", c.ProtectedBy)
-			}
-			return ""
-		}(),
-	)
 }
