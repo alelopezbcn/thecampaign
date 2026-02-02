@@ -17,8 +17,7 @@ func (d *discardPile) Count() int {
 }
 
 func (d *discardPile) Empty() []ports.Card {
-	c := []ports.Card{}
-	copy(c, d.cards)
+	c := d.cards
 	d.cards = []ports.Card{}
 	return c
 }

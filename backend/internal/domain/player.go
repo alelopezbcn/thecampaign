@@ -253,7 +253,7 @@ func (p *player) CanConstruct() bool {
 			}
 		}
 		if w, ok := c.(ports.Weapon); ok {
-			if w.CanConstruct() {
+			if !p.castle.IsConstructed() && w.CanConstruct() {
 				return true
 			}
 		}
