@@ -1,8 +1,6 @@
 package cards
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
@@ -17,7 +15,3 @@ func NewSpy(id string) ports.Spy {
 }
 
 func (s *spy) CanSpy() {}
-
-func (s *spy) String() string {
-	return fmt.Sprintf("%s (%s)", s.name, s.id)
-}

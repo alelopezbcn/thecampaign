@@ -137,17 +137,8 @@ func (p *player) MoveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *player) Attack(targetCard ports.Card,
-	weaponCard ports.Card) error {
-
-	target, ok := targetCard.(ports.Attackable)
-	if !ok {
-		return fmt.Errorf("the target cardBase cannot be attacked")
-	}
-	weapon, ok := weaponCard.(ports.Weapon)
-	if !ok {
-		return fmt.Errorf("the card is not a weapon")
-	}
+func (p *player) Attack(target ports.Attackable,
+	weapon ports.Weapon) error {
 
 	switch weapon.Type() {
 	case types.SwordWeaponType:
@@ -174,23 +165,10 @@ func (p *player) Attack(targetCard ports.Card,
 	return nil
 }
 
-func (p *player) UseSpecialPower(usedBy ports.Card, usedOn ports.Card,
-	specialPowerCard ports.Card) error {
+func (p *player) UseSpecialPower(usedBy ports.Warrior, usedOn ports.Warrior,
+	specialPowerCard ports.SpecialPower) error {
 
-	s, ok := specialPowerCard.(ports.SpecialPower)
-	if !ok {
-		return fmt.Errorf("the card is not a special power")
-	}
-	w, ok := usedBy.(ports.Warrior)
-	if !ok {
-		return fmt.Errorf("the attacking card is not a warrior")
-	}
-	t, ok := usedOn.(ports.Warrior)
-	if !ok {
-		return fmt.Errorf("the target card is not a warrior")
-	}
-
-	err := s.Use(w, t)
+	err := specialPowerCard.Use(usedBy, usedOn)
 	if err != nil {
 		return fmt.Errorf("special power failed: %w", err)
 	}
@@ -284,6 +262,28 @@ func (p *player) HasCatapult() bool {
 	for _, c := range p.hand.ShowCards() {
 		if _, ok := c.(ports.Catapult); ok {
 			return true
+		}
+	}
+	return false
+}
+
+func (p *player) HasWarriorsInHand() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Warrior); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *player) CanTradeCards() bool {
+	count := 0
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Weapon); ok {
+			count++
+			if count >= 3 {
+				return true
+			}
 		}
 	}
 	return false

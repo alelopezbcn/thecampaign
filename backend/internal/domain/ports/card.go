@@ -4,7 +4,6 @@ import "github.com/alelopezbcn/thecampaign/internal/domain/types"
 
 type Card interface {
 	GetID() string
-	String() string
 	AddCardMovedToPileObserver(observer CardMovedToPileObserver)
 	GetCardMovedToPileObserver() CardMovedToPileObserver
 }
@@ -14,6 +13,7 @@ type Attackable interface {
 	ReceiveDamage(weapon Weapon, multiplier int) (isDefeated bool)
 	BeAttacked(weapon Weapon) error
 	AttackedBy() []Weapon
+	String() string
 }
 
 type Catapult interface {
@@ -61,6 +61,7 @@ type Weapon interface {
 	Type() types.WeaponType
 	CanConstruct() bool
 	MultiplierFactor(target Warrior) int
+	String() string
 }
 
 type Dragon interface {

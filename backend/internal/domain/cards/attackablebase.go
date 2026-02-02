@@ -15,6 +15,10 @@ func newAttackableBase(health int) *attackableBase {
 }
 
 func (a *attackableBase) Health() int {
+	if a.health < 0 {
+		return 0
+	}
+
 	return a.health
 }
 

@@ -57,7 +57,7 @@
         <!-- Game Screen -->
         <div id="game-screen" class="screen hidden">
             <!-- Phase Tracker (Top Left) -->
-            <div class="phase-tracker">
+            <div id="phase-tracker" class="phase-tracker">
                 <div id="phase-turn-status" class="phase-turn-status">
                     <span class="turn-dot"></span>
                     <span class="turn-text">Waiting...</span>
@@ -108,40 +108,33 @@
             <!-- Top Bar -->
             <div class="game-header">
                 <div class="player-info">
+                    <span class="player-label">Commander</span>
                     <span id="player-name-display" class="player-name"></span>
                 </div>
-                <div class="game-info">
-                    <span id="game-id-display"></span>
-                </div>
             </div>
 
-            <!-- Enemy Area -->
-            <div class="enemy-area">
-                <div class="castle-area">
-                    <h3>Enemy Castle</h3>
-                    <div id="enemy-castle" class="castle">
-                        <div class="castle-status">Not Constructed</div>
+            <!-- Enemy Board -->
+            <div class="board enemy-board">
+                <div class="board-label">Enemy Territory</div>
+                <div class="enemy-area">
+                    <div class="castle-area">
+                        <h3>Enemy Castle</h3>
+                        <div id="enemy-castle" class="castle">
+                            <div class="castle-status">Not Constructed</div>
+                        </div>
+                    </div>
+                    <div class="field-area">
+                        <h3>Enemy Field</h3>
+                        <div id="enemy-field" class="field card-container"></div>
+                    </div>
+                    <div class="enemy-hand-area">
+                        <h3>Enemy Hand</h3>
+                        <div id="enemy-hand" class="enemy-hand"></div>
                     </div>
                 </div>
-                <div class="field-area">
-                    <h3>Enemy Field</h3>
-                    <div id="enemy-field" class="field card-container"></div>
-                </div>
-                <div class="enemy-hand-info">
-                    <span id="enemy-hand-count">0 cards in hand</span>
-                </div>
             </div>
 
-            <!-- Cemetery -->
-            <div class="cemetery-area">
-                <h3>Cemetery</h3>
-                <div id="cemetery" class="cemetery">
-                    <div class="cemetery-count"><span id="cemetery-corps-count">0</span> fallen</div>
-                    <div id="cemetery-last-corp" class="cemetery-last-corp"></div>
-                </div>
-            </div>
-
-            <!-- Deck and Discard Pile Container -->
+            <!-- Deck, Discard Pile and Cemetery Container -->
             <div class="deck-discard-container">
                 <!-- Deck -->
                 <div class="deck-area">
@@ -169,29 +162,40 @@
                         <div id="discard-pile-last-card" class="discard-pile-last-card"></div>
                     </div>
                 </div>
+
+                <!-- Cemetery -->
+                <div class="cemetery-area">
+                    <h3>Cemetery</h3>
+                    <div id="cemetery" class="cemetery">
+                        <div class="cemetery-count"><span id="cemetery-corps-count">0</span> fallen</div>
+                        <div id="cemetery-last-corp" class="cemetery-last-corp"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Divider -->
             <div class="battlefield-divider"></div>
 
-            <!-- Player Area -->
-            <div class="player-area">
-                <div class="field-area">
-                    <h3>Your Field</h3>
-                    <div id="player-field" class="field card-container"></div>
-                </div>
-                <div class="castle-area">
-                    <h3>Your Castle</h3>
-                    <div id="player-castle" class="castle">
-                        <div class="castle-status">Not Constructed</div>
+            <!-- Player Board -->
+            <div class="board player-board">
+                <div class="player-area">
+                    <div class="field-area">
+                        <h3>Your Field</h3>
+                        <div id="player-field" class="field card-container"></div>
+                    </div>
+                    <div class="castle-area">
+                        <h3>Your Castle</h3>
+                        <div id="player-castle" class="castle">
+                            <div class="castle-status">Not Constructed</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Player Hand -->
-            <div class="hand-area">
-                <h3>Your Hand</h3>
-                <div id="player-hand" class="hand card-container"></div>
+                <!-- Player Hand -->
+                <div class="hand-area">
+                    <h3>Your Hand</h3>
+                    <div id="player-hand" class="hand card-container"></div>
+                </div>
             </div>
 
             <!-- Action Panel -->
@@ -206,6 +210,18 @@
                 <div id="confirm-action-buttons" class="confirm-action-buttons hidden">
                     <button id="confirm-action-btn" class="btn btn-primary">Confirm</button>
                     <button id="cancel-action-btn" class="btn btn-secondary">Cancel</button>
+                </div>
+
+                <!-- End Turn Popup (overlays action panel) -->
+                <div id="endturn-popup" class="endturn-popup hidden">
+                    <div class="endturn-popup-content">
+                        <div class="endturn-icon">⏳</div>
+                        <div class="endturn-popup-text">
+                            <h2>End of Turn</h2>
+                            <p>All phases completed</p>
+                        </div>
+                        <button id="endturn-popup-btn" class="btn btn-danger">End Turn</button>
+                    </div>
                 </div>
             </div>
         </div>

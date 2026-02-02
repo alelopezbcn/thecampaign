@@ -1,2 +1,37 @@
 poder enviar un mensaje de error a traves de game status, para esto poner defers en todos los metodos
-move warrior deberia ser una fase antes de atacar, o permitir atacar si hay la posibilidad de mover warrior. lo que pasa ahora es que si no podes atacar por tener solo un guerrero, se va directamente a pasar turno
+hacer lobby
+
+🎨 UI/UX
+Animaciones de combate - Cuando un arma ataca, mostrar una animación visual (la carta "vuela" hacia el objetivo)
+
+Feedback de daño - Números flotantes que muestran el daño (-8 HP) cuando un warrior es atacado
+
+Tooltips en cartas - Al hacer hover, mostrar descripción de qué hace cada carta (ej: "Poison: Solo usable por Mage")
+
+Preview de daño - Antes de confirmar ataque, mostrar el HP resultante del enemigo
+
+Historial mejorado - Hacer clickeable el historial para ver detalles de cada acción
+
+🎮 Gameplay
+Modo vs IA - Un oponente controlado por computadora para jugar solo
+
+Timer de turno - Límite de tiempo por turno para partidas más dinámicas
+
+Efectos especiales visuales - Cuando el Dragon entra al campo, cuando el castillo se completa, etc.
+
+Sistema de chat - Comunicación entre jugadores
+
+Emotes/reacciones rápidas - "Good game", "Well played", etc.
+
+✨ Calidad de Vida
+Tutorial interactivo - Para nuevos jugadores
+
+Guía de cartas - Referencia de todas las cartas y sus efectos
+
+Reconexión automática - Si se pierde la conexión
+
+Sonidos - Efectos de sonido para acciones (robar carta, atacar, etc.)
+
+Atajos de teclado - Espacio para skip, Enter para confirmar, etc.
+
+¿Cuál te interesa más? Puedo ayudarte a implementar cualquiera de estas mejoras.

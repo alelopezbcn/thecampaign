@@ -20,7 +20,9 @@ type Game struct {
 	CurrentTurn        int
 	currentAction      types.ActionType
 	CanMoveWarrior     bool
+	hasMovedWarrior    bool
 	CanTrade           bool
+	hasTraded          bool
 	deck               ports.Deck
 	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
@@ -63,8 +65,6 @@ func NewGame(player1, player2 string,
 }
 
 func (g *Game) deal() {
-	g.addToHistory("Dealing Cards")
-
 	warriorCards := shuffle(g.dealer.WarriorsCards())
 
 	// Each player gets 3 Warrior cards
@@ -123,7 +123,6 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 			return err
 		}
 	}
-	g.addToHistory(p.Name() + " has set their initial warriors.")
 	g.switchTurn()
 
 	// Check if both players have set their warriors
@@ -135,7 +134,6 @@ func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error 
 		}
 	}
 	if allSet {
-		g.addToHistory("Both players have set their initial warriors.")
 		return nil
 	}
 
@@ -160,9 +158,8 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 		return status, fmt.Errorf("moving warrior to field failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s moved warrior %s to field",
-		p.Name(), warriorID))
-	g.CanMoveWarrior = false
+	g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()))
+	g.hasMovedWarrior = true
 	status = g.GameStatusProvider.Get(p, e, g)
 
 	return status, nil
@@ -195,8 +192,8 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 
 	p.TakeCards(cards...)
 
-	g.addToHistory(fmt.Sprintf("%s traded cards", p.Name()))
-	g.CanTrade = false
+	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()))
+	g.hasTraded = true
 	status = g.GameStatusProvider.Get(p, e, g, cards...)
 
 	return status, nil
@@ -209,16 +206,14 @@ func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
 	}
 
 	cards, err := g.drawCards(p, 1)
-	if err != nil && !errors.Is(err, ErrHandLimitExceeded) {
-		return status, err
+	if err != nil {
+		if errors.Is(err, ErrHandLimitExceeded) {
+			return
+		}
+		return status, fmt.Errorf("drawing card failed: %w", err)
 	}
 
-	if err == nil {
-		p.TakeCards(cards...)
-		g.addToHistory(fmt.Sprintf("%s drew %d card(s).", p.Name(), 1))
-	} else {
-		g.addToHistory(fmt.Sprintf("%s can't take more cards.", p.Name()))
-	}
+	p.TakeCards(cards...)
 
 	status = g.nextAction(types.ActionTypeAttack,
 		func() GameStatus {
@@ -246,12 +241,21 @@ func (g *Game) Attack(playerName, targetID, weaponID string) (
 		return status, errors.New("weapon card not in hand: " + weaponID)
 	}
 
-	if err := p.Attack(targetCard, weaponCard); err != nil {
+	t, ok := targetCard.(ports.Attackable)
+	if !ok {
+		return status, fmt.Errorf("the target cardBase cannot be attacked")
+	}
+	w, ok := weaponCard.(ports.Weapon)
+	if !ok {
+		return status, fmt.Errorf("the card is not a weapon")
+	}
+
+	if err := p.Attack(t, w); err != nil {
 		return status, fmt.Errorf("attack action failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s\nwas attacked with \n%s",
-		targetCard.String(), targetCard.String()))
+	g.addToHistory(fmt.Sprintf("%s attacked %s with %s",
+		playerName, t.String(), w.String()))
 
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
@@ -269,7 +273,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	warriorCard, ok := p.GetCardFromField(userID)
+	userCard, ok := p.GetCardFromField(userID)
 	if !ok {
 		return status, errors.New("warrior card not in field: " + userID)
 	}
@@ -288,12 +292,25 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, errors.New("weapon card not in hand: " + weaponID)
 	}
 
-	if err := p.UseSpecialPower(warriorCard, targetCard, weaponCard); err != nil {
+	s, ok := weaponCard.(ports.SpecialPower)
+	if !ok {
+		return status, fmt.Errorf("the card is not a special power")
+	}
+	w, ok := userCard.(ports.Warrior)
+	if !ok {
+		return status, fmt.Errorf("the attacking card is not a warrior")
+	}
+	t, ok := targetCard.(ports.Warrior)
+	if !ok {
+		return status, fmt.Errorf("the target card is not a warrior")
+	}
+
+	if err := p.UseSpecialPower(w, t, s); err != nil {
 		return status, fmt.Errorf("special power action failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s\nattacked\n%s",
-		warriorCard.String(), targetCard.String()))
+	g.addToHistory(fmt.Sprintf("%s used special power on %s",
+		playerName, t.String()))
 
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
@@ -323,7 +340,7 @@ func (g *Game) Catapult(playerName string, cardPosition int) (
 
 	g.OnCardMovedToPile(stolenGold)
 
-	g.addToHistory(fmt.Sprintf("%s used catapult to steal gold from %s's castle",
+	g.addToHistory(fmt.Sprintf("%s used catapult on %s's castle",
 		p.Name(), e.Name()))
 
 	status = g.nextAction(types.ActionTypeSpySteal,
@@ -435,8 +452,7 @@ func (g *Game) Buy(playerName, cardID string) (
 	p.TakeCards(cards...)
 
 	g.OnCardMovedToPile(resourceCard)
-	g.addToHistory(fmt.Sprintf("%s bought %d card(s) using %s",
-		p.Name(), cardsToBuy, resourceCard.String()))
+	g.addToHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy))
 
 	status = g.nextAction(types.ActionTypeConstruct,
 		func() GameStatus {
@@ -458,8 +474,7 @@ func (g *Game) Construct(playerName, cardID string) (
 		return status, fmt.Errorf("constructing card failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s constructed castle with card %s",
-		p.Name(), cardID))
+	g.addToHistory(fmt.Sprintf("%s constructed", p.Name()))
 
 	status = g.nextAction(types.ActionTypeEndTurn,
 		func() GameStatus {
@@ -513,6 +528,8 @@ func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 			return g.GameStatusProvider.Get(p, e, g)
 		})
 
+	g.addToHistory(fmt.Sprintf("is %s's turn", p.Name()))
+
 	return status, nil
 }
 
@@ -532,7 +549,6 @@ func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err err
 	for i := 0; i < count; i++ {
 		c, ok := g.deck.DrawCard()
 		if !ok {
-			g.addToHistory("deck is empty, shuffling discard pile into deck")
 			g.shuffleDiscardPileIntoDeck()
 
 			c, ok = g.deck.DrawCard()
@@ -549,7 +565,6 @@ func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err err
 
 func (g *Game) shuffleDiscardPileIntoDeck() {
 	g.deck.Replenish(g.discardPile.Empty())
-	g.addToHistory("Shuffled discard pile into deck")
 }
 
 func (g *Game) addToHistory(msg string) {
@@ -572,36 +587,27 @@ func (g *Game) GetHistory() []string {
 
 func (g *Game) OnCardMovedToPile(card ports.Card) {
 	g.discardPile.Discard(card)
-	g.addToHistory(fmt.Sprintf("card moved to discard pile (%d): %s",
-		g.discardPile.Count(), card.String()))
 }
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 	g.cemetery.AddCorp(warrior)
-	g.addToHistory(fmt.Sprintf("warrior died and moved to cemetery (%d): %s",
-		g.cemetery.Count(), warrior.String()))
+	g.addToHistory("warrior buried in cemetery")
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.gameOver = true
 	g.winner = p.Name()
-	g.addToHistory(fmt.Sprintf("%s wins: Castle completed", p.Name()))
 }
 
 func (g *Game) OnFieldWithoutWarriors() {
 	g.gameOver = true
 	p, _ := g.WhoIsCurrent()
 	g.winner = p.Name()
-	g.addToHistory(fmt.Sprintf("%s wins: Enemy has no more warriors in field", p.Name()))
-}
-
-func (g *Game) OnMessage(msg string) {
-	g.addToHistory(msg)
 }
 
 func (g *Game) switchTurn() {
-	g.CanMoveWarrior = true
-	g.CanTrade = true
+	g.hasMovedWarrior = false
+	g.hasTraded = false
 	g.currentAction = types.ActionTypeDrawCard
 	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
 }
@@ -614,11 +620,14 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 	gameStatusFn func() GameStatus) GameStatus {
 
 	p, enemy := g.WhoIsCurrent()
+	g.CanMoveWarrior = !g.hasMovedWarrior && p.HasWarriorsInHand()
+	g.CanTrade = !g.hasTraded && p.CanTradeCards()
 
 	if expectedAction == types.ActionTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := p.HasCatapult() && enemy.Castle().CanBeAttacked()
-		if p.CanAttack() || canAttackWithCatapult {
+
+		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
 			g.currentAction = types.ActionTypeAttack
 			return gameStatusFn()
 		}

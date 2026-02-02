@@ -1,8 +1,6 @@
 package cards
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -26,10 +24,6 @@ func (s *sword) MultiplierFactor(target ports.Warrior) int {
 	return 1
 }
 
-func (s *sword) String() string {
-	return fmt.Sprintf("%d %s (%s)", s.damageAmount, s.name, s.id)
-}
-
 type arrow struct {
 	*cardBase
 	*weaponBase
@@ -47,9 +41,6 @@ func (s *arrow) MultiplierFactor(target ports.Warrior) int {
 	}
 
 	return 1
-}
-func (a *arrow) String() string {
-	return fmt.Sprintf("%d %s (%s)", a.damageAmount, a.name, a.id)
 }
 
 type poison struct {
@@ -71,7 +62,4 @@ func (s *poison) MultiplierFactor(target ports.Warrior) int {
 	}
 
 	return 1
-}
-func (p *poison) String() string {
-	return fmt.Sprintf("%d %s (%s)", p.damageAmount, p.name, p.id)
 }

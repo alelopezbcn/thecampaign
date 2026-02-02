@@ -2,8 +2,6 @@ package cards
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -81,17 +79,4 @@ func (s *specialPower) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool) {
 	}
 
 	return false
-}
-func (s *specialPower) String() string {
-	sb := strings.Builder{}
-	sb.WriteString(fmt.Sprintf("%s (%s)", s.name, s.id))
-	if s.health > 0 {
-		sb.WriteString(fmt.Sprintf(" - Health: %d", s.health))
-	}
-	if len(s.attackedBy) > 0 {
-		for _, card := range s.attackedBy {
-			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
-		}
-	}
-	return sb.String()
 }

@@ -55,6 +55,7 @@ function setupEventListeners() {
     document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
+    document.getElementById('endturn-popup-btn').addEventListener('click', () => sendAction('end_turn'));
 
     // Confirm/Cancel action buttons
     document.getElementById('confirm-action-btn').addEventListener('click', confirmAction);
@@ -171,7 +172,6 @@ function handleGameStarted(payload) {
 
     document.getElementById('current-game-id').textContent = payload.game_id;
     document.getElementById('player-name-display').textContent = payload.your_name;
-    document.getElementById('game-id-display').textContent = `Game: ${payload.game_id}`;
 }
 
 function handleInitialWarriors(payload) {
@@ -966,9 +966,8 @@ function renderGameBoard(status) {
     // Render history
     renderHistory(status.history);
 
-    // Update enemy hand count
-    document.getElementById('enemy-hand-count').textContent =
-        `${status.cards_in_enemy_hand} cards in hand`;
+    // Render enemy hand as card backs
+    renderEnemyHand(status.cards_in_enemy_hand);
 }
 
 function renderCards(containerId, cards) {
@@ -984,6 +983,29 @@ function renderCards(containerId, cards) {
         const cardElement = createCardElement(card, containerId);
         container.appendChild(cardElement);
     });
+}
+
+function renderEnemyHand(cardCount) {
+    const container = document.getElementById('enemy-hand');
+    container.innerHTML = '';
+
+    if (!cardCount || cardCount === 0) {
+        container.innerHTML = '<div style="color: #666; font-size: 0.85em;">No cards</div>';
+        return;
+    }
+
+    for (let i = 0; i < cardCount; i++) {
+        const cardBack = document.createElement('div');
+        cardBack.className = 'enemy-hand-card';
+        cardBack.innerHTML = `
+            <div class="card-back-mini">
+                <div class="card-back-mini-inner">
+                    <span class="card-back-mini-emblem">⚔</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(cardBack);
+    }
 }
 
 function createCardElement(card, context) {
@@ -1018,9 +1040,11 @@ function createCardElement(card, context) {
         if (status && status.current_action === 'endturn') {
             div.classList.add('unusable');
         }
-        // During trade action, all cards are usable
+        // During trade action, only cards that can be traded are usable
         else if (currentAction === 'trade') {
-            // All cards enabled for trade
+            if (card.can_be_traded === false) {
+                div.classList.add('unusable');
+            }
         }
         // During move_warrior action, only warriors are usable
         else if (currentAction === 'move_warrior') {
@@ -1049,7 +1073,7 @@ function createCardElement(card, context) {
         // Remove the highlight after animation completes
         setTimeout(() => {
             div.classList.remove('newly-drawn');
-        }, 2000);
+        }, 5000);
     }
 
     // Check if card is protected (field cards only)
@@ -1107,10 +1131,12 @@ function renderCastle(containerId, castle) {
     }
 
     container.innerHTML = `
+        <div class="castle-icon"></div>
         <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
         ${isConstructed ? `
             <div class="castle-info">
-                <div class="castle-value">Value: ${castleValue}</div>
+                <div class="castle-value">${castleValue}</div>
+                <div class="castle-value-label">Value</div>
                 <div class="castle-resources">${resourceCount} resource cards</div>
             </div>
         ` : ''}
@@ -1130,13 +1156,9 @@ function renderCemetery(cemetery) {
     countElement.textContent = cemetery.corps || 0;
 
     if (cemetery.last_corp) {
-        const card = cemetery.last_corp;
-        const cardColor = card.color || '#666';
-        lastCorpContainer.innerHTML = `
-            <div class="cemetery-card" style="background: linear-gradient(135deg, ${cardColor}40, ${cardColor}20); border-color: ${cardColor};">
-                <div class="card-type" style="color: ${cardColor};">${card.sub_type || card.type}</div>
-            </div>
-        `;
+        lastCorpContainer.innerHTML = '';
+        const cardElement = createCardElement(cemetery.last_corp, 'cemetery');
+        lastCorpContainer.appendChild(cardElement);
     } else {
         lastCorpContainer.innerHTML = '';
     }
@@ -1293,11 +1315,13 @@ function updateSetupTurnIndicator() {
         indicator.className = 'turn-indicator your-turn';
         document.getElementById('setup-hand').style.opacity = '1';
         document.getElementById('confirm-warriors-btn').style.display = 'block';
+        document.getElementById('select-all-warriors-btn').style.display = 'block';
     } else {
-        indicator.textContent = 'WAITING - Opponent Selecting';
+        indicator.textContent = 'WAITING - Opponent selecting Warriors';
         indicator.className = 'turn-indicator enemy-turn';
         document.getElementById('setup-hand').style.opacity = '0.5';
         document.getElementById('confirm-warriors-btn').style.display = 'none';
+        document.getElementById('select-all-warriors-btn').style.display = 'none';
     }
 }
 
@@ -1310,11 +1334,16 @@ function updateActionButtons() {
         btn.disabled = true;
     });
 
+    // Hide endturn popup by default
+    const endturnPopup = document.getElementById('endturn-popup');
+    endturnPopup.classList.add('hidden');
+
     if (!isYourTurn || !status) return;
 
-    // In endturn phase, only End Turn button is enabled
+    // In endturn phase, show the popup and enable only End Turn button
     if (status.current_action === 'endturn') {
         document.getElementById('end-turn-btn').disabled = false;
+        endturnPopup.classList.remove('hidden');
         return;
     }
 
@@ -1331,17 +1360,21 @@ function updateActionButtons() {
 
 function updatePhaseTracker() {
     const status = gameState.currentState;
+    const phaseTracker = document.getElementById('phase-tracker');
     const turnStatusElement = document.getElementById('phase-turn-status');
     const turnTextElement = turnStatusElement?.querySelector('.turn-text');
 
     // Update turn status
     if (turnStatusElement && turnTextElement) {
         turnStatusElement.classList.remove('your-turn', 'enemy-turn');
+        phaseTracker?.classList.remove('your-turn', 'enemy-turn');
         if (gameState.isYourTurn) {
             turnStatusElement.classList.add('your-turn');
+            phaseTracker?.classList.add('your-turn');
             turnTextElement.textContent = 'Your Turn';
         } else {
             turnStatusElement.classList.add('enemy-turn');
+            phaseTracker?.classList.add('enemy-turn');
             turnTextElement.textContent = 'Enemy Turn';
         }
     }
