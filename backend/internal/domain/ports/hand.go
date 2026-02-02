@@ -6,4 +6,5 @@ type Hand interface {
 	AddCards(cards ...Card) error
 	RemoveCard(card Card) bool
 	CanAddCards(count int) bool
+	Count() int
 }

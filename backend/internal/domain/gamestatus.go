@@ -95,7 +95,8 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 				gamestatus.NewThiefHandCard(ct.GetID(), action))
 		case ports.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				gamestatus.NewResourceHandCard(ct, currentPlayer.Castle().IsConstructed(), action))
+				gamestatus.NewResourceHandCard(ct, currentPlayer.Castle().IsConstructed(),
+					currentPlayer.CanBuyWith(ct), action))
 		}
 	}
 

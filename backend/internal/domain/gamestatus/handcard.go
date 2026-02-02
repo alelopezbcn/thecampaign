@@ -148,7 +148,7 @@ func NewThiefHandCard(cardID string, action types.ActionType) HandCard {
 }
 
 func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
-	action types.ActionType) HandCard {
+	canBuy bool, action types.ActionType) HandCard {
 
 	if action != types.ActionTypeBuy && action != types.ActionTypeConstruct {
 		return newHandCard(resource.GetID(), CardTypeResource,
@@ -166,7 +166,6 @@ func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
 			resource.Value(), []string{}, resource.CanConstruct())
 	}
 
-	// Buy action - use resource's CanBuy method
 	return newHandCard(resource.GetID(), CardTypeResource,
-		resource.Value(), []string{}, resource.CanBuy())
+		resource.Value(), []string{}, canBuy)
 }

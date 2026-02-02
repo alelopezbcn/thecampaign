@@ -25,7 +25,6 @@ type Resource interface {
 	Card
 	Value() int
 	CanConstruct() bool
-	CanBuy() bool
 }
 
 type SpecialPower interface {

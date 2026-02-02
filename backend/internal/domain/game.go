@@ -422,10 +422,6 @@ func (g *Game) Buy(playerName, cardID string) (
 		return status, errors.New("only gold cards can be used to buy")
 	}
 
-	if !r.CanBuy() {
-		return status, errors.New("cannot buy with gold card")
-	}
-
 	val := r.Value()
 	p.GiveCards(resourceCard.GetID())
 

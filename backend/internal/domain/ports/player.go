@@ -17,6 +17,7 @@ type Player interface {
 	Construct(cardID string) error
 	CanAttack() bool
 	CanBuy() bool
+	CanBuyWith(resource Resource) bool
 	CanConstruct() bool
 	HasThief() bool
 	HasSpy() bool

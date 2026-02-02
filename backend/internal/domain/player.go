@@ -235,13 +235,22 @@ func (p *player) CanAttack() bool {
 func (p *player) CanBuy() bool {
 	for _, c := range p.hand.ShowCards() {
 		if r, ok := c.(ports.Resource); ok {
-			if r.CanBuy() {
+			if p.CanBuyWith(r) {
 				return true
 			}
 		}
 	}
 
 	return false
+}
+
+func (p *player) CanBuyWith(resource ports.Resource) bool {
+	cardsToBuy := resource.Value() / 2
+	if p.Hand().Count()+cardsToBuy > maxCardsInHand {
+		return false
+	}
+
+	return true
 }
 
 func (p *player) CanConstruct() bool {
