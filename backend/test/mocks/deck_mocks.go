@@ -39,6 +39,20 @@ func (m *MockDeck) EXPECT() *MockDeckMockRecorder {
 	return m.recorder
 }
 
+// Count mocks base method.
+func (m *MockDeck) Count() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Count")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Count indicates an expected call of Count.
+func (mr *MockDeckMockRecorder) Count() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Count", reflect.TypeOf((*MockDeck)(nil).Count))
+}
+
 // DrawCard mocks base method.
 func (m *MockDeck) DrawCard() (ports.Card, bool) {
 	m.ctrl.T.Helper()

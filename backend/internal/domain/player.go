@@ -6,6 +6,7 @@ import (
 	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type player struct {
@@ -65,7 +66,7 @@ func (p *player) GiveCards(cardIDs ...string) ([]ports.Card, error) {
 	for _, cardID := range cardIDs {
 		c, ok := p.GetCardFromHand(cardID)
 		if !ok {
-			return nil, fmt.Errorf("cardBase with ID %s not found in hand", cardID)
+			return nil, fmt.Errorf("card with ID %s not found in hand", cardID)
 		}
 
 		cards = append(cards, c)
@@ -149,15 +150,15 @@ func (p *player) Attack(targetCard ports.Card,
 	}
 
 	switch weapon.Type() {
-	case ports.SwordWeaponType:
+	case types.SwordWeaponType:
 		if !p.Field().HasKnight() && !p.Field().HasDragon() {
 			return fmt.Errorf("sword weapon cannot be used")
 		}
-	case ports.ArrowWeaponType:
+	case types.ArrowWeaponType:
 		if !p.Field().HasArcher() && !p.Field().HasDragon() {
 			return fmt.Errorf("arrow weapon cannot be used")
 		}
-	case ports.PoisonWeaponType:
+	case types.PoisonWeaponType:
 		if !p.Field().HasMage() && !p.Field().HasDragon() {
 			return fmt.Errorf("poison weapon cannot be used")
 		}
@@ -199,6 +200,95 @@ func (p *player) UseSpecialPower(usedBy ports.Card, usedOn ports.Card,
 	return nil
 }
 
+func (p *player) CanAttack() bool {
+	for _, c := range p.hand.ShowCards() {
+		if w, ok := c.(ports.Weapon); ok {
+			if p.field.HasDragon() {
+				return true
+			}
+
+			switch w.Type() {
+			case types.ArrowWeaponType:
+				if p.Field().HasArcher() {
+					return true
+				}
+			case types.PoisonWeaponType:
+				if p.field.HasMage() {
+					return true
+				}
+			case types.SwordWeaponType:
+				if p.field.HasKnight() {
+					return true
+				}
+			case types.SpecialPowerWeaponType:
+				// SpecialPower can be used by Archer, Knight, or Mage
+				if p.field.HasArcher() || p.field.HasKnight() || p.field.HasMage() {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *player) CanBuy() bool {
+	for _, c := range p.hand.ShowCards() {
+		if r, ok := c.(ports.Resource); ok {
+			if p.CanBuyWith(r) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *player) CanBuyWith(resource ports.Resource) bool {
+	cardsToBuy := resource.Value() / 2
+	if p.Hand().Count()+cardsToBuy > maxCardsInHand {
+		return false
+	}
+
+	return true
+}
+
+func (p *player) CanConstruct() bool {
+	for _, c := range p.hand.ShowCards() {
+		if r, ok := c.(ports.Resource); ok {
+			// If castle is already constructed, any resource can be added
+			if p.castle.IsConstructed() || r.CanConstruct() {
+				return true
+			}
+		}
+		if w, ok := c.(ports.Weapon); ok {
+			if !p.castle.IsConstructed() && w.CanConstruct() {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (p *player) HasThief() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Thief); ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *player) HasCatapult() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Catapult); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *player) Thief() ports.Thief {
 	for _, c := range p.hand.ShowCards() {
 		if t, ok := c.(ports.Thief); ok {
@@ -207,6 +297,15 @@ func (p *player) Thief() ports.Thief {
 		}
 	}
 	return nil
+}
+
+func (p *player) HasSpy() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(ports.Spy); ok {
+			return true
+		}
+	}
+	return false
 }
 
 func (p *player) Spy() ports.Spy {

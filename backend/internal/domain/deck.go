@@ -34,6 +34,10 @@ func (d *deck) Reveal(n int) []ports.Card {
 	return d.cards[:n]
 }
 
+func (d *deck) Count() int {
+	return len(d.cards)
+}
+
 func shuffle(cards []ports.Card) []ports.Card {
 	if len(cards) == 0 {
 		return cards

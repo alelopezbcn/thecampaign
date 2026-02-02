@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
@@ -20,27 +21,58 @@ type CastleDTO struct {
 	Value         int  `json:"value"`
 }
 
-// ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
-func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
-	return GameStatusDTO{
-		CurrentPlayer:     status.CurrentPlayer,
-		CanMoveWarrior:    status.CanMoveWarrior,
-		CanAttack:         status.CanAttack,
-		CanCatapult:       status.CanCatapult,
-		CanSpy:            status.CanSpy,
-		CanSteal:          status.CanSteal,
-		CanBuy:            status.CanBuy,
-		CanInitiateCastle: status.CanInitiateCastle,
-		CanGrowCastle:     status.CanGrowCastle,
+// CemeteryDTO represents the cemetery for JSON serialization
+type CemeteryDTO struct {
+	Corps    int      `json:"corps"`
+	LastCorp *CardDTO `json:"last_corp,omitempty"`
+}
 
-		CurrentPlayerHand:          convertHandCards(status.CurrentPlayerHand),
-		CurrentPlayerField:         convertFieldCards(status.CurrentPlayerField),
-		CurrentPlayerCastle:        convertCastle(status.CurrentPlayerCastle),
-		EnemyField:                 convertFieldCards(status.EnemyField),
-		EnemyCastle:                convertCastle(status.EnemyCastle),
-		CardsInEnemyHand:           status.CardsInEnemyHand,
-		ResourceCardsInEnemyCastle: status.ResourceCardsInEnemyCastle,
+// DiscardPileDTO represents the discard pile for JSON serialization
+type DiscardPileDTO struct {
+	Cards    int      `json:"cards"`
+	LastCard *CardDTO `json:"last_card,omitempty"`
+}
+
+// ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
+func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
+	return GameStatusDTO{
+		CurrentPlayer:  status.CurrentPlayer,
+		CurrentAction:  status.CurrentAction,
+		NewCards:       status.NewCards,
+		CanMoveWarrior: status.CanMoveWarrior,
+		CanTrade:       status.CanTrade,
+
+		CurrentPlayerHand:   convertHandCards(status.CurrentPlayerHand),
+		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
+		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
+		EnemyField:          convertFieldCards(status.EnemyField),
+		EnemyCastle:         convertCastle(status.EnemyCastle),
+		CardsInEnemyHand:    status.CardsInEnemyHand,
+		Cemetery:            convertCemetery(status.Cemetery),
+		DiscardPile:         convertDiscardPile(status.DiscardPile),
+		CardsInDeck:         status.CardsInDeck,
+		ModalCards:          convertModalCards(status.ModalCards),
+		History:             status.History,
+		GameOverMsg:         status.GameOverMgs,
+		ErrorMsg:            status.ErrorMsg,
 	}
+}
+
+func convertModalCards(cards []gamestatus.Card) []CardDTO {
+	if cards == nil {
+		return nil
+	}
+	dtos := make([]CardDTO, len(cards))
+	for i, card := range cards {
+		dtos[i] = CardDTO{
+			ID:      card.CardID,
+			Type:    card.CardType.Name,
+			SubType: card.CardType.SubName,
+			Color:   card.CardType.Color,
+			Value:   card.Value,
+		}
+	}
+	return dtos
 }
 
 func convertHandCards(cards []gamestatus.HandCard) []HandCardDTO {
@@ -55,7 +87,8 @@ func convertHandCards(cards []gamestatus.HandCard) []HandCardDTO {
 				Value:   card.Card.Value,
 			},
 			CanBeUsedOnIDs: card.CanBeUsedOnIDs,
-			CanConstruct:   card.CanConstruct,
+			CanBeUsed:      card.CanBeUsed,
+			DmgMultiplier:  card.DmgMultiplier,
 		}
 	}
 	return dtos
@@ -108,4 +141,40 @@ func convertCastle(castle gamestatus.Castle) CastleDTO {
 		ResourceCards: castle.ResourceCards,
 		Value:         castle.Value,
 	}
+}
+
+func convertCemetery(cemetery gamestatus.Cemetery) CemeteryDTO {
+	dto := CemeteryDTO{
+		Corps: cemetery.Corps,
+	}
+
+	if cemetery.LastCorp.CardID != "" {
+		dto.LastCorp = &CardDTO{
+			ID:      cemetery.LastCorp.CardID,
+			Type:    cemetery.LastCorp.CardType.Name,
+			SubType: cemetery.LastCorp.CardType.SubName,
+			Color:   cemetery.LastCorp.CardType.Color,
+			Value:   cemetery.LastCorp.Value,
+		}
+	}
+
+	return dto
+}
+
+func convertDiscardPile(discardPile gamestatus.DiscardPile) DiscardPileDTO {
+	dto := DiscardPileDTO{
+		Cards: discardPile.Cards,
+	}
+
+	if discardPile.LastCard.CardID != "" {
+		dto.LastCard = &CardDTO{
+			ID:      discardPile.LastCard.CardID,
+			Type:    discardPile.LastCard.CardType.Name,
+			SubType: discardPile.LastCard.CardType.SubName,
+			Color:   discardPile.LastCard.CardType.Color,
+			Value:   discardPile.LastCard.Value,
+		}
+	}
+
+	return dto
 }

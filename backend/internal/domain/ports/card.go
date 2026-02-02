@@ -1,5 +1,7 @@
 package ports
 
+import "github.com/alelopezbcn/thecampaign/internal/domain/types"
+
 type Card interface {
 	GetID() string
 	String() string
@@ -23,7 +25,6 @@ type Resource interface {
 	Card
 	Value() int
 	CanConstruct() bool
-	CanBuy() bool
 }
 
 type SpecialPower interface {
@@ -46,19 +47,20 @@ type Warrior interface {
 	Card
 	Attackable
 	Protect(powerCard SpecialPower) error
-	IsProtected() (bool, Card)
+	IsProtected() (bool, SpecialPower)
 	Heal(powerCard SpecialPower)
 	InstantKill(sp SpecialPower)
 	AddWarriorDeadObserver(o WarriorDeadObserver)
-	Type() WarriorType
+	Type() types.WarriorType
 	IsDamaged() bool
 }
 
 type Weapon interface {
 	Card
 	DamageAmount() int
-	Type() WeaponType
+	Type() types.WeaponType
 	CanConstruct() bool
+	MultiplierFactor(target Warrior) int
 }
 
 type Dragon interface {

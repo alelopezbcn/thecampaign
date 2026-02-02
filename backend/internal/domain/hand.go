@@ -59,3 +59,7 @@ func (h *hand) RemoveCard(card ports.Card) bool {
 func (h *hand) CanAddCards(count int) bool {
 	return len(h.cards)+count <= maxCardsInHand
 }
+
+func (h *hand) Count() int {
+	return len(h.cards)
+}

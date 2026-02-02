@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type knight struct {
@@ -15,7 +16,7 @@ func NewKnight(id string) ports.Knight {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.KnightWarriorType,
+			types.KnightWarriorType,
 		),
 	}
 }
@@ -24,12 +25,7 @@ func (k *knight) BeAttacked(w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	multiplier := 1
-	if w.Type() == ports.PoisonWeaponType {
-		multiplier = 2
-	}
-
-	k.ReceiveDamage(w, multiplier)
+	k.ReceiveDamage(w, w.MultiplierFactor(k))
 
 	return nil
 }
@@ -43,7 +39,7 @@ func NewArcher(id string) ports.Archer {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.ArcherWarriorType,
+			types.ArcherWarriorType,
 		),
 	}
 }
@@ -52,12 +48,7 @@ func (a *archer) BeAttacked(w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	multiplier := 1
-	if w.Type() == ports.SwordWeaponType {
-		multiplier = 2
-	}
-
-	a.ReceiveDamage(w, multiplier)
+	a.ReceiveDamage(w, w.MultiplierFactor(a))
 
 	return nil
 }
@@ -71,7 +62,7 @@ func NewMage(id string) ports.Mage {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
 			newAttackableBase(WarriorMaxHealth),
-			ports.MageWarriorType,
+			types.MageWarriorType,
 		),
 	}
 }
@@ -80,12 +71,7 @@ func (m *mage) BeAttacked(w ports.Weapon) error {
 		return errors.New("weapon cannot be nil")
 	}
 
-	multiplier := 1
-	if w.Type() == ports.ArrowWeaponType {
-		multiplier = 2
-	}
-
-	m.ReceiveDamage(w, multiplier)
+	m.ReceiveDamage(w, w.MultiplierFactor(m))
 
 	return nil
 }
@@ -99,7 +85,7 @@ func NewDragon(id string) ports.Dragon {
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
 			newAttackableBase(DragonMaxHealth),
-			ports.DragonWarriorType,
+			types.DragonWarriorType,
 		),
 	}
 }

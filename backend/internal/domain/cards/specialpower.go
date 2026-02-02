@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 const SpecialPowerDamage = 10
@@ -20,8 +21,12 @@ func NewSpecialPower(id string) ports.SpecialPower {
 	return &specialPower{
 		cardBase:       newCardBase(id, "Special Power"),
 		attackableBase: newAttackableBase(SpecialPowerMaxHealth),
-		weaponBase:     newWeaponBase(SpecialPowerDamage, ports.SpecialPowerWeaponType),
+		weaponBase:     newWeaponBase(SpecialPowerDamage, types.SpecialPowerWeaponType),
 	}
+}
+
+func (s *specialPower) MultiplierFactor(_ ports.Warrior) int {
+	return 1
 }
 func (s *specialPower) BeAttacked(w ports.Weapon) error {
 	if w == nil {
@@ -83,7 +88,7 @@ func (s *specialPower) String() string {
 	if s.health > 0 {
 		sb.WriteString(fmt.Sprintf(" - Health: %d", s.health))
 	}
-	if s.attackedBy != nil && len(s.attackedBy) > 0 {
+	if len(s.attackedBy) > 0 {
 		for _, card := range s.attackedBy {
 			sb.WriteString(fmt.Sprintf("\n  * %s", card.String()))
 		}

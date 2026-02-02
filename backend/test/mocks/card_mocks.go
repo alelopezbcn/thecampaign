@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	ports "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -528,6 +529,20 @@ func (mr *MockSpecialPowerMockRecorder) Health() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Health", reflect.TypeOf((*MockSpecialPower)(nil).Health))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockSpecialPower) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockSpecialPowerMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockSpecialPower)(nil).MultiplierFactor), target)
+}
+
 // ReceiveDamage mocks base method.
 func (m *MockSpecialPower) ReceiveDamage(weapon ports.Weapon, multiplier int) bool {
 	m.ctrl.T.Helper()
@@ -557,10 +572,10 @@ func (mr *MockSpecialPowerMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockSpecialPower) Type() ports.WeaponType {
+func (m *MockSpecialPower) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -918,11 +933,11 @@ func (mr *MockWarriorMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockWarrior) IsProtected() (bool, ports.Card) {
+func (m *MockWarrior) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -975,10 +990,10 @@ func (mr *MockWarriorMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockWarrior) Type() ports.WarriorType {
+func (m *MockWarrior) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1079,6 +1094,20 @@ func (mr *MockWeaponMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockWeapon)(nil).GetID))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockWeapon) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockWeaponMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockWeapon)(nil).MultiplierFactor), target)
+}
+
 // String mocks base method.
 func (m *MockWeapon) String() string {
 	m.ctrl.T.Helper()
@@ -1094,10 +1123,10 @@ func (mr *MockWeaponMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockWeapon) Type() ports.WeaponType {
+func (m *MockWeapon) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -1263,11 +1292,11 @@ func (mr *MockDragonMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockDragon) IsProtected() (bool, ports.Card) {
+func (m *MockDragon) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1320,10 +1349,10 @@ func (mr *MockDragonMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockDragon) Type() ports.WarriorType {
+func (m *MockDragon) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1489,11 +1518,11 @@ func (mr *MockKnightMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockKnight) IsProtected() (bool, ports.Card) {
+func (m *MockKnight) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1546,10 +1575,10 @@ func (mr *MockKnightMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockKnight) Type() ports.WarriorType {
+func (m *MockKnight) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1715,11 +1744,11 @@ func (mr *MockArcherMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockArcher) IsProtected() (bool, ports.Card) {
+func (m *MockArcher) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1772,10 +1801,10 @@ func (mr *MockArcherMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockArcher) Type() ports.WarriorType {
+func (m *MockArcher) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -1941,11 +1970,11 @@ func (mr *MockMageMockRecorder) IsDamaged() *gomock.Call {
 }
 
 // IsProtected mocks base method.
-func (m *MockMage) IsProtected() (bool, ports.Card) {
+func (m *MockMage) IsProtected() (bool, ports.SpecialPower) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "IsProtected")
 	ret0, _ := ret[0].(bool)
-	ret1, _ := ret[1].(ports.Card)
+	ret1, _ := ret[1].(ports.SpecialPower)
 	return ret0, ret1
 }
 
@@ -1998,10 +2027,10 @@ func (mr *MockMageMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockMage) Type() ports.WarriorType {
+func (m *MockMage) Type() types.WarriorType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WarriorType)
+	ret0, _ := ret[0].(types.WarriorType)
 	return ret0
 }
 
@@ -2102,6 +2131,20 @@ func (mr *MockSwordMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockSword)(nil).GetID))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockSword) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockSwordMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockSword)(nil).MultiplierFactor), target)
+}
+
 // String mocks base method.
 func (m *MockSword) String() string {
 	m.ctrl.T.Helper()
@@ -2117,10 +2160,10 @@ func (mr *MockSwordMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockSword) Type() ports.WeaponType {
+func (m *MockSword) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -2221,6 +2264,20 @@ func (mr *MockArrowMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockArrow)(nil).GetID))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockArrow) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockArrowMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockArrow)(nil).MultiplierFactor), target)
+}
+
 // String mocks base method.
 func (m *MockArrow) String() string {
 	m.ctrl.T.Helper()
@@ -2236,10 +2293,10 @@ func (mr *MockArrowMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockArrow) Type() ports.WeaponType {
+func (m *MockArrow) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 
@@ -2340,6 +2397,20 @@ func (mr *MockPoisonMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockPoison)(nil).GetID))
 }
 
+// MultiplierFactor mocks base method.
+func (m *MockPoison) MultiplierFactor(target ports.Warrior) int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MultiplierFactor", target)
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// MultiplierFactor indicates an expected call of MultiplierFactor.
+func (mr *MockPoisonMockRecorder) MultiplierFactor(target any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockPoison)(nil).MultiplierFactor), target)
+}
+
 // String mocks base method.
 func (m *MockPoison) String() string {
 	m.ctrl.T.Helper()
@@ -2355,10 +2426,10 @@ func (mr *MockPoisonMockRecorder) String() *gomock.Call {
 }
 
 // Type mocks base method.
-func (m *MockPoison) Type() ports.WeaponType {
+func (m *MockPoison) Type() types.WeaponType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Type")
-	ret0, _ := ret[0].(ports.WeaponType)
+	ret0, _ := ret[0].(types.WeaponType)
 	return ret0
 }
 

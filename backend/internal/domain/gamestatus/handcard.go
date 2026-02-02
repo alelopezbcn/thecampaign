@@ -1,19 +1,19 @@
 package gamestatus
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type HandCard struct {
 	Card
-	CanBeUsedOnIDs []string `json:"can_be_used_on_ids"`
-	CanConstruct   bool     `json:"can_construct"`
+	CanBeUsedOnIDs []string       `json:"use_on"`
+	CanBeUsed      bool           `json:"can_be_used"`
+	DmgMultiplier  map[string]int `json:"dmg_mult"`
 }
 
 func newHandCard(cardID string, cardType CardType, value int,
-	canBeUsedOnIDs []string, canConstruct bool) HandCard {
+	canBeUsedOnIDs []string, canBeUsed bool) HandCard {
 
 	return HandCard{
 		Card: Card{
@@ -22,71 +22,92 @@ func newHandCard(cardID string, cardType CardType, value int,
 			Value:    value,
 		},
 		CanBeUsedOnIDs: canBeUsedOnIDs,
-		CanConstruct:   canConstruct,
+		CanBeUsed:      canBeUsed,
 	}
 }
 
-func newWarriorHandCard(warrior ports.Warrior) HandCard {
+func NewWarriorHandCard(warrior ports.Warrior) HandCard {
 	var aCardType CardType
 	switch warrior.Type() {
-	case ports.KnightWarriorType:
+	case types.KnightWarriorType:
 		aCardType = CardTypeKnight
-	case ports.ArcherWarriorType:
+	case types.ArcherWarriorType:
 		aCardType = CardTypeArcher
-	case ports.MageWarriorType:
+	case types.MageWarriorType:
 		aCardType = CardTypeMage
-	case ports.DragonWarriorType:
+	case types.DragonWarriorType:
 		aCardType = CardTypeDragon
 	}
 
 	return newHandCard(warrior.GetID(), aCardType,
-		warrior.Health(), []string{}, false)
+		warrior.Health(), []string{}, true)
 }
 
-func newWeaponHandCard(weapon ports.Weapon, myField ports.Field,
-	attackableIDs []string) HandCard {
+func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
+	enemyField ports.Field, castleConstructed bool,
+	action types.ActionType) HandCard {
 
 	canBeUsed := false
 	var aCardType CardType
 
 	switch weapon.Type() {
-	case ports.SwordWeaponType:
+	case types.SwordWeaponType:
 		aCardType = CardTypeSword
 		canBeUsed = myField.HasKnight() || myField.HasDragon()
-	case ports.ArrowWeaponType:
+	case types.ArrowWeaponType:
 		aCardType = CardTypeArrow
 		canBeUsed = myField.HasArcher() || myField.HasDragon()
-	case ports.PoisonWeaponType:
+	case types.PoisonWeaponType:
 		aCardType = CardTypePoison
 		canBeUsed = myField.HasMage() || myField.HasDragon()
 	}
 
-	if !canBeUsed {
-		attackableIDs = []string{}
+	if action != types.ActionTypeConstruct &&
+		action != types.ActionTypeAttack {
+		return newHandCard(weapon.GetID(), aCardType,
+			weapon.DamageAmount(), []string{}, false)
 	}
 
-	return newHandCard(weapon.GetID(), aCardType,
-		weapon.DamageAmount(), attackableIDs, weapon.CanConstruct())
+	if action == types.ActionTypeConstruct {
+		canBeUsed = !castleConstructed && weapon.CanConstruct()
+		return newHandCard(weapon.GetID(), aCardType,
+			weapon.DamageAmount(), []string{}, canBeUsed)
+	}
+
+	mults := map[string]int{}
+	attackableIDs := []string{}
+	for _, v := range enemyField.Warriors() {
+		mults[v.GetID()] = weapon.MultiplierFactor(v)
+		attackableIDs = append(attackableIDs, v.GetID())
+	}
+
+	hc := newHandCard(weapon.GetID(), aCardType,
+		weapon.DamageAmount(), attackableIDs, canBeUsed)
+	hc.DmgMultiplier = mults
+
+	return hc
 }
 
-func newSpecialPowerHandCard(specialPower ports.SpecialPower,
-	myField ports.Field, enemyField ports.Field) HandCard {
+func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
+	myField ports.Field, enemyField ports.Field,
+	action types.ActionType) HandCard {
+
+	if action != types.ActionTypeAttack {
+		return newHandCard(specialPower.GetID(), CardTypeSpecialPower,
+			0, []string{}, false)
+	}
 
 	canBeUsedOnIDs := []string{}
 
 	if myField.HasArcher() {
 		for _, warrior := range enemyField.Warriors() {
-			if ok, card := warrior.IsProtected(); ok {
-				canBeUsedOnIDs = append(canBeUsedOnIDs, card.GetID())
-			} else {
-				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
-			}
+			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 		}
 	}
 	if myField.HasKnight() {
 		for _, warrior := range myField.Warriors() {
 			isProtected, _ := warrior.IsProtected()
-			if warrior.Type() == ports.DragonWarriorType || isProtected {
+			if warrior.Type() == types.DragonWarriorType || isProtected {
 				continue
 			}
 			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
@@ -94,7 +115,7 @@ func newSpecialPowerHandCard(specialPower ports.SpecialPower,
 	}
 	if myField.HasMage() {
 		for _, warrior := range myField.Warriors() {
-			if warrior.Type() == ports.DragonWarriorType || !warrior.IsDamaged() {
+			if warrior.Type() == types.DragonWarriorType || !warrior.IsDamaged() {
 				continue
 			}
 			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
@@ -102,34 +123,49 @@ func newSpecialPowerHandCard(specialPower ports.SpecialPower,
 	}
 
 	return newHandCard(specialPower.GetID(), CardTypeSpecialPower,
-		0, canBeUsedOnIDs, false)
+		0, canBeUsedOnIDs, true)
 }
 
-func newCatapultHandCard(cardID string, castleID string) HandCard {
-	canBeUsedOnIDs := []string{}
-	if castleID != "" {
-		canBeUsedOnIDs = append(canBeUsedOnIDs, castleID)
+func NewCatapultHandCard(cardID string, enemyCastleCanBeAttacked bool,
+	action types.ActionType) HandCard {
+
+	if action != types.ActionTypeAttack {
+		return newHandCard(cardID, CardTypeCatapult, 0, []string{}, false)
 	}
-	return newHandCard(cardID, CardTypeCatapult, 0, canBeUsedOnIDs, false)
+
+	return newHandCard(cardID, CardTypeCatapult, 0, []string{},
+		enemyCastleCanBeAttacked)
 }
 
-func newSpyHandCard(cardID string) HandCard {
-	return newHandCard(cardID, CardTypeSpy, 0, []string{}, false)
+func NewSpyHandCard(cardID string, action types.ActionType) HandCard {
+	return newHandCard(cardID, CardTypeSpy, 0, []string{},
+		action == types.ActionTypeSpySteal)
 }
 
-func newThiefHandCard(cardID string) HandCard {
-	return newHandCard(cardID, CardTypeThief, 0, []string{}, false)
+func NewThiefHandCard(cardID string, action types.ActionType) HandCard {
+	return newHandCard(cardID, CardTypeThief, 0, []string{},
+		action == types.ActionTypeSpySteal)
 }
 
-func newResourceHandCard(resource ports.Resource) HandCard {
+func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
+	canBuy bool, action types.ActionType) HandCard {
+
+	if action != types.ActionTypeBuy && action != types.ActionTypeConstruct {
+		return newHandCard(resource.GetID(), CardTypeResource,
+			resource.Value(), []string{}, false)
+	}
+
+	if action == types.ActionTypeConstruct {
+		// If player's castle is already constructed/started, any resource can be added
+		if playerCastleConstructed {
+			return newHandCard(resource.GetID(), CardTypeResource,
+				resource.Value(), []string{}, true)
+		}
+		// If player's castle hasn't started, only resources that can start construction
+		return newHandCard(resource.GetID(), CardTypeResource,
+			resource.Value(), []string{}, resource.CanConstruct())
+	}
+
 	return newHandCard(resource.GetID(), CardTypeResource,
-		resource.Value(), []string{}, resource.CanConstruct())
-}
-
-func (c HandCard) CanBeUsed() bool {
-	return len(c.CanBeUsedOnIDs) > 0
-}
-
-func (c HandCard) String() string {
-	return fmt.Sprintf("%s | CanAffect: %v", c.Card.String(), c.CanBeUsedOnIDs)
+		resource.Value(), []string{}, canBuy)
 }
