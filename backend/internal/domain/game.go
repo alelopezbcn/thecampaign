@@ -239,12 +239,21 @@ func (g *Game) Attack(playerName, targetID, weaponID string) (
 		return status, errors.New("weapon card not in hand: " + weaponID)
 	}
 
-	if err := p.Attack(targetCard, weaponCard); err != nil {
+	t, ok := targetCard.(ports.Attackable)
+	if !ok {
+		return status, fmt.Errorf("the target cardBase cannot be attacked")
+	}
+	w, ok := weaponCard.(ports.Weapon)
+	if !ok {
+		return status, fmt.Errorf("the card is not a weapon")
+	}
+
+	if err := p.Attack(t, w); err != nil {
 		return status, fmt.Errorf("attack action failed: %w", err)
 	}
 
 	g.addToHistory(fmt.Sprintf("%s attacked %s with %s",
-		playerName, targetCard.String(), weaponCard.String()))
+		playerName, t.String(), w.String()))
 
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
@@ -262,7 +271,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	warriorCard, ok := p.GetCardFromField(userID)
+	userCard, ok := p.GetCardFromField(userID)
 	if !ok {
 		return status, errors.New("warrior card not in field: " + userID)
 	}
@@ -281,12 +290,25 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, errors.New("weapon card not in hand: " + weaponID)
 	}
 
-	if err := p.UseSpecialPower(warriorCard, targetCard, weaponCard); err != nil {
+	s, ok := weaponCard.(ports.SpecialPower)
+	if !ok {
+		return status, fmt.Errorf("the card is not a special power")
+	}
+	w, ok := userCard.(ports.Warrior)
+	if !ok {
+		return status, fmt.Errorf("the attacking card is not a warrior")
+	}
+	t, ok := targetCard.(ports.Warrior)
+	if !ok {
+		return status, fmt.Errorf("the target card is not a warrior")
+	}
+
+	if err := p.UseSpecialPower(w, t, s); err != nil {
 		return status, fmt.Errorf("special power action failed: %w", err)
 	}
 
 	g.addToHistory(fmt.Sprintf("%s used special power on %s",
-		playerName, targetCard.String()))
+		playerName, t.String()))
 
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
@@ -450,7 +472,7 @@ func (g *Game) Construct(playerName, cardID string) (
 		return status, fmt.Errorf("constructing card failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s constructed castle", p.Name()))
+	g.addToHistory(fmt.Sprintf("%s constructed", p.Name()))
 
 	status = g.nextAction(types.ActionTypeEndTurn,
 		func() GameStatus {
@@ -504,7 +526,7 @@ func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 			return g.GameStatusProvider.Get(p, e, g)
 		})
 
-	g.addToHistory(fmt.Sprintf("it's %s turn", p.Name()))
+	g.addToHistory(fmt.Sprintf("is %s's turn", p.Name()))
 
 	return status, nil
 }

@@ -1,8 +1,6 @@
 package cards
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
@@ -17,7 +15,3 @@ func NewThief(id string) ports.Thief {
 }
 
 func (t *thief) CanSteal() {}
-
-func (t *thief) String() string {
-	return fmt.Sprintf("%s (%s)", t.name, t.id)
-}

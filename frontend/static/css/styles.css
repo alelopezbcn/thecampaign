@@ -1078,6 +1078,7 @@ body {
     border-radius: 8px;
     padding: 10px;
     min-height: 120px;
+    justify-content: center;
 }
 
 /* Card Container */
@@ -1162,6 +1163,8 @@ body {
     opacity: 0.55;
     pointer-events: none;
     filter: saturate(0.5);
+    border-style: dashed !important;
+    border-color: rgba(150, 150, 150, 0.5) !important;
 }
 
 .card.unusable:hover {

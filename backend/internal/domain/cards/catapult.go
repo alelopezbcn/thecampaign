@@ -1,8 +1,6 @@
 package cards
 
 import (
-	"fmt"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
@@ -22,7 +20,4 @@ func (c *catapult) Attack(castle ports.Castle, position int) (ports.Resource, er
 	}
 
 	return g, nil
-}
-func (c *catapult) String() string {
-	return fmt.Sprintf("%s (%s)", c.name, c.id)
 }
