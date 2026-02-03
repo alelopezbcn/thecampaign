@@ -205,6 +205,9 @@ function handleGameState(payload) {
     console.log('Game state updated:', payload);
     console.log('New cards from payload:', payload.game_status.new_cards);
 
+    // Save previous state for damage detection
+    const previousState = gameState.currentState;
+
     // Detect when your turn starts (transition from not your turn to your turn)
     const wasYourTurn = gameState.isYourTurn;
     const isNowYourTurn = payload.is_your_turn;
@@ -216,6 +219,11 @@ function handleGameState(payload) {
 
     gameState.isYourTurn = isNowYourTurn;
     gameState.currentState = payload.game_status;
+
+    // Schedule damage feedback after render (needs DOM elements to exist)
+    if (previousState) {
+        setTimeout(() => showDamageFeedback(previousState, payload.game_status), 50);
+    }
     // Use the first card from new_cards array for highlighting
     gameState.newlyDrawnCards = payload.game_status.new_cards || [];
     console.log('gameState.newlyDrawnCards set to:', gameState.newlyDrawnCards);
@@ -703,6 +711,8 @@ function showAttackConfirmModal(weapon, target) {
     const targetId = target?.id;
     const multiplier = weapon?.dmg_mult?.[targetId] || 1;
     const effectiveDmg = weaponDmg * multiplier;
+    const resultingHp = Math.max(0, targetHp - effectiveDmg);
+    const willDie = resultingHp <= 0;
 
     const hasDoubleDamage = multiplier > 1;
 
@@ -711,10 +721,14 @@ function showAttackConfirmModal(weapon, target) {
     cardsHtml += renderCardForModal(target);
 
     let description;
+    const hpPreview = willDie
+        ? `<span class="hp-preview hp-fatal">💀 FATAL</span>`
+        : `<span class="hp-preview">${targetHp} → ${resultingHp} HP</span>`;
+
     if (hasDoubleDamage) {
-        description = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG) will attack ${targetName} (${targetHp} HP)`;
+        description = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG) → ${targetName} ${hpPreview}`;
     } else {
-        description = `${weaponName} (${weaponDmg} DMG) will attack ${targetName} (${targetHp} HP)`;
+        description = `${weaponName} (${weaponDmg} DMG) → ${targetName} ${hpPreview}`;
     }
 
     showActionConfirmModal({
@@ -1151,6 +1165,70 @@ function renderSetupHand(status) {
     });
 }
 
+// Extract HP values from field cards for damage detection
+function extractFieldHP(status) {
+    const hpMap = {};
+    if (status) {
+        (status.current_player_field || []).forEach(card => {
+            hpMap[card.id] = card.value;
+        });
+        (status.enemy_field || []).forEach(card => {
+            hpMap[card.id] = card.value;
+        });
+    }
+    return hpMap;
+}
+
+// Show floating damage numbers when warriors take damage
+function showDamageFeedback(previousState, newState) {
+    const previousHP = extractFieldHP(previousState);
+    const newHP = extractFieldHP(newState);
+
+    // Check for HP changes
+    for (const cardId in previousHP) {
+        if (newHP[cardId] !== undefined && newHP[cardId] < previousHP[cardId]) {
+            const damage = previousHP[cardId] - newHP[cardId];
+            showFloatingDamage(cardId, damage);
+        }
+    }
+
+    // Check for healed warriors (HP increased)
+    for (const cardId in previousHP) {
+        if (newHP[cardId] !== undefined && newHP[cardId] > previousHP[cardId]) {
+            const healed = newHP[cardId] - previousHP[cardId];
+            showFloatingHeal(cardId, healed);
+        }
+    }
+}
+
+// Display floating damage number on a card
+function showFloatingDamage(cardId, damage) {
+    const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+    if (!cardElement) return;
+
+    const floatingNum = document.createElement('div');
+    floatingNum.className = 'floating-damage';
+    floatingNum.textContent = `-${damage}`;
+    cardElement.appendChild(floatingNum);
+
+    // Remove after animation completes
+    setTimeout(() => floatingNum.remove(), 3500);
+}
+
+// Display floating heal number on a card
+function showFloatingHeal(cardId, amount) {
+    const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+    if (!cardElement) return;
+
+    const floatingNum = document.createElement('div');
+    floatingNum.className = 'floating-heal';
+    floatingNum.textContent = `+${amount}`;
+    cardElement.appendChild(floatingNum);
+
+    // Remove after animation completes
+    setTimeout(() => floatingNum.remove(), 3500);
+}
+
 function renderGameBoard(status) {
     // Render enemy field
     renderCards('enemy-field', status.enemy_field);
@@ -1346,7 +1424,7 @@ function renderCastle(containerId, castle) {
         <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
         ${isConstructed ? `
             <div class="castle-info">
-                <div class="castle-value">${castleValue}</div>
+                <div class="castle-value">${castleValue}/25</div>
                 <div class="castle-value-label">Value</div>
                 <div class="castle-resources">${resourceCount} resource cards</div>
             </div>
@@ -1691,7 +1769,7 @@ function showActionConfirmModal(config) {
     const modal = document.getElementById('action-confirm-modal');
     document.getElementById('action-confirm-title').textContent = config.title || 'Confirm Action';
     document.getElementById('action-confirm-cards').innerHTML = config.cardsHtml || '';
-    document.getElementById('action-confirm-description').textContent = config.description || '';
+    document.getElementById('action-confirm-description').innerHTML = config.description || '';
 
     actionConfirmCallback = config.onConfirm || null;
 

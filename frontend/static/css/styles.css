@@ -1176,6 +1176,81 @@ body {
     }
 }
 
+/* Floating damage numbers - positioned above the card */
+.floating-damage {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+    pointer-events: none;
+    z-index: 100;
+    animation: floatUpDamage 3s ease-out forwards;
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5);
+}
+
+.floating-heal {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #fff;
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+    pointer-events: none;
+    z-index: 100;
+    animation: floatUpHeal 3s ease-out forwards;
+    background: linear-gradient(135deg, #44ff44, #00aa00);
+    padding: 6px 14px;
+    border-radius: 20px;
+    box-shadow: 0 4px 15px rgba(0, 255, 0, 0.5);
+}
+
+@keyframes floatUpDamage {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px) scale(0.5);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1.2);
+    }
+    30% {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-50px) scale(1);
+    }
+}
+
+@keyframes floatUpHeal {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(10px) scale(0.5);
+    }
+    15% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0) scale(1.2);
+    }
+    30% {
+        transform: translateX(-50%) translateY(0) scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-50px) scale(1);
+    }
+}
+
 .card.newly-drawn {
     animation: newCardPulse 1s ease-out, newCardGlow 1.5s ease-in-out infinite 1s;
     border-color: #ffd700 !important;
@@ -1832,6 +1907,22 @@ body {
 @keyframes pulseBadge {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
+}
+
+/* HP preview in description */
+.hp-preview {
+    font-weight: bold;
+    color: #ffaa00;
+}
+
+.hp-preview.hp-fatal {
+    color: #ff4444;
+    animation: fatalPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes fatalPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
 }
 
 /* Card back for modal (smaller version) */
