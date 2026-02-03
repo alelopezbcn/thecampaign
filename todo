@@ -1,5 +1,11 @@
 poder enviar un mensaje de error a traves de game status, para esto poner defers en todos los metodos
 hacer lobby
+contador de turnos
+drag and drop?
+HANDLE ERROR when buying more than allowed cards in hand
+una vez que ataca al castillo, devolver en el modal la carta qe le quitamos, para que la muestre, y que en el historial se muestre que carta se robo
+
+
 
 🎨 UI/UX
 Animaciones de combate - Cuando un arma ataca, mostrar una animación visual (la carta "vuela" hacia el objetivo)

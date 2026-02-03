@@ -57,12 +57,15 @@ function setupEventListeners() {
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
     document.getElementById('endturn-popup-btn').addEventListener('click', () => sendAction('end_turn'));
 
-    // Confirm/Cancel action buttons
-    document.getElementById('confirm-action-btn').addEventListener('click', confirmAction);
+    // Cancel action button
     document.getElementById('cancel-action-btn').addEventListener('click', cancelAction);
 
     // Game modal close button
     document.getElementById('modal-close-btn').addEventListener('click', hideGameModal);
+
+    // Action confirm modal buttons
+    document.getElementById('action-confirm-yes').addEventListener('click', onActionConfirmYes);
+    document.getElementById('action-confirm-no').addEventListener('click', onActionConfirmNo);
 
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
@@ -439,6 +442,9 @@ function clearSelections() {
     document.querySelectorAll('.card.valid-target').forEach(card => {
         card.classList.remove('valid-target');
     });
+    // Remove selection mode classes from fields
+    document.getElementById('player-field')?.classList.remove('selecting-ally');
+    document.getElementById('enemy-field')?.classList.remove('selecting-target');
     document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
         badge.remove();
     });
@@ -490,7 +496,20 @@ function handleCardClick(cardID, cardType, context, card = null) {
         clearSelections();
         gameState.actionState.warriorId = cardID;
         highlightSelectedCard(cardID);
-        updateActionPrompt('Warrior selected - confirm to move to field');
+
+        // Show action confirm modal with the warrior card
+        const warriorCard = findCardById(cardID);
+        const cardHtml = renderCardForModal(warriorCard);
+
+        showActionConfirmModal({
+            title: 'Move Warrior',
+            cardsHtml: cardHtml,
+            description: `${getCardName(warriorCard)} will move to your field`,
+            onConfirm: () => {
+                sendAction('move_warrior', { warrior_id: cardID });
+                resetActionState();
+            }
+        });
         return;
     }
 
@@ -498,7 +517,8 @@ function handleCardClick(cardID, cardType, context, card = null) {
     if (action === 'trade' && context === 'player-hand') {
         toggleCardSelection(cardID, 'player-hand');
         if (gameState.selectedCards.length === 3) {
-            updateActionPrompt('3 cards selected - confirm to trade');
+            // Show trade confirmation popup with 3 selected cards + 1 card back
+            showTradeConfirmModal();
         } else {
             updateActionPrompt(`Selected ${gameState.selectedCards.length}/3 cards for trade`);
         }
@@ -531,6 +551,18 @@ function handleCardClick(cardID, cardType, context, card = null) {
 
     // Handle target selection for attack phase (enemy field)
     if (gameState.actionState.weaponId && context === 'enemy-field') {
+        // For special powers, only Archer (Instant Kill) can target enemies
+        if (gameState.actionState.type === 'specialpower') {
+            const userId = gameState.actionState.userId;
+            if (userId) {
+                const user = findCardById(userId);
+                const userType = (user?.sub_type || '').toLowerCase();
+                // Only archer can target enemies with special power
+                if (userType !== 'archer') {
+                    return; // Mage and Knight can only target allies
+                }
+            }
+        }
         handleAttackPhaseTargetClick(cardID, 'enemy');
         return;
     }
@@ -545,6 +577,13 @@ function handleCardClick(cardID, cardType, context, card = null) {
     // Handle target selection for special power on own field (Mage heal, Knight protect)
     if (gameState.actionState.weaponId && gameState.actionState.type === 'specialpower' &&
         gameState.actionState.userId && context === 'player-field') {
+        const userId = gameState.actionState.userId;
+        const user = findCardById(userId);
+        const userType = (user?.sub_type || '').toLowerCase();
+        // Only Mage and Knight can target allies with special power
+        if (userType === 'archer') {
+            return; // Archer can only target enemies
+        }
         handleAttackPhaseTargetClick(cardID, 'player');
         return;
     }
@@ -625,7 +664,9 @@ function handleAttackPhaseUserClick(cardID) {
 
     updateActionPrompt(`${emoji} ${userName} will use ${effect} - ${targetHint}`);
 
-    highlightValidTargets(weapon);
+    // Enable target selection on the appropriate field based on warrior type
+    // Don't pre-highlight targets - only the selected one will be highlighted
+    enableSpecialPowerTargetSelection(userType);
 }
 
 function handleAttackPhaseTargetClick(cardID, side) {
@@ -645,13 +686,121 @@ function handleAttackPhaseTargetClick(cardID, side) {
     const target = findCardById(cardID);
 
     if (actionType === 'attack') {
-        const summary = buildAttackSummary(weapon, target);
-        updateActionPrompt(summary);
+        // Show attack confirmation popup
+        showAttackConfirmModal(weapon, target);
     } else if (actionType === 'specialpower') {
+        // Show special power confirmation popup
         const user = findCardById(gameState.actionState.userId);
-        const summary = buildSpecialPowerSummary(weapon, user, target);
-        updateActionPrompt(summary);
+        showSpecialPowerConfirmModal(weapon, user, target);
     }
+}
+
+function showAttackConfirmModal(weapon, target) {
+    const weaponName = getCardName(weapon);
+    const weaponDmg = weapon?.value || 0;
+    const targetName = getCardName(target);
+    const targetHp = target?.value || 0;
+    const targetId = target?.id;
+    const multiplier = weapon?.dmg_mult?.[targetId] || 1;
+    const effectiveDmg = weaponDmg * multiplier;
+
+    const hasDoubleDamage = multiplier > 1;
+
+    let cardsHtml = renderCardForModal(weapon, { showDoubleDamage: hasDoubleDamage });
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardForModal(target);
+
+    let description;
+    if (hasDoubleDamage) {
+        description = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG) will attack ${targetName} (${targetHp} HP)`;
+    } else {
+        description = `${weaponName} (${weaponDmg} DMG) will attack ${targetName} (${targetHp} HP)`;
+    }
+
+    showActionConfirmModal({
+        title: 'Attack',
+        cardsHtml: cardsHtml,
+        description: description,
+        onConfirm: () => {
+            sendAction('attack', {
+                weapon_id: gameState.actionState.weaponId,
+                target_id: gameState.actionState.targetId
+            });
+            resetActionState();
+        }
+    });
+}
+
+function showSpecialPowerConfirmModal(specialPower, user, target) {
+    const userName = getCardName(user);
+    const targetName = getCardName(target);
+    const targetHp = target?.value || 0;
+    const userType = (user?.sub_type || '').toLowerCase();
+
+    let title = 'Special Power';
+    let description = '';
+
+    switch (userType) {
+        case 'archer':
+            title = 'Instant Kill';
+            description = `${userName} will instantly kill ${targetName}`;
+            break;
+        case 'knight':
+            title = 'Protect';
+            description = `${userName} will protect ${targetName} (${targetHp} HP)`;
+            break;
+        case 'mage':
+            title = 'Heal';
+            description = `${userName} will heal ${targetName} (${targetHp} HP)`;
+            break;
+        default:
+            description = `${userName} will use ${getCardName(specialPower)} on ${targetName}`;
+    }
+
+    let cardsHtml = renderCardForModal(user);
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardForModal(target);
+
+    showActionConfirmModal({
+        title: title,
+        cardsHtml: cardsHtml,
+        description: description,
+        onConfirm: () => {
+            sendAction('special_power', {
+                weapon_id: gameState.actionState.weaponId,
+                user_id: gameState.actionState.userId,
+                target_id: gameState.actionState.targetId
+            });
+            resetActionState();
+        }
+    });
+}
+
+// Trade confirmation modal
+function showTradeConfirmModal() {
+    // Get the 3 selected cards
+    const selectedCardIds = gameState.selectedCards;
+    let cardsHtml = '';
+
+    // Render each selected card
+    selectedCardIds.forEach((cardId, index) => {
+        const card = findCardById(cardId);
+        cardsHtml += renderCardForModal(card);
+    });
+
+    // Add arrow and 1 card back (the new card)
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardBacks(1);
+
+    showActionConfirmModal({
+        title: 'Trade Cards',
+        cardsHtml: cardsHtml,
+        description: 'Trade 3 cards for 1 new card from the deck',
+        onConfirm: () => {
+            sendAction('trade', { card_ids: selectedCardIds });
+            resetActionState();
+        }
+    });
 }
 
 // Spy/Steal phase handlers
@@ -687,8 +836,29 @@ function handleBuyPhaseHandClick(cardID, card) {
     gameState.actionState.weaponId = cardID;
     gameState.actionState.type = 'buy';
     highlightSelectedCard(cardID);
-    updateActionPrompt('Resource selected - confirm to buy a card');
-    showConfirmButtons();
+
+    // Show buy confirmation popup with resource and card backs
+    showBuyConfirmModal(card, cardID);
+}
+
+function showBuyConfirmModal(resource, cardID) {
+    const resourceValue = resource?.value || 0;
+    const cardsToReceive = Math.floor(resourceValue / 2);
+    const resourceName = getCardName(resource);
+
+    let cardsHtml = renderCardForModal(resource);
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardBacks(cardsToReceive);
+
+    showActionConfirmModal({
+        title: 'Buy Cards',
+        cardsHtml: cardsHtml,
+        description: `Trade ${resourceValue} coins for ${cardsToReceive} card${cardsToReceive !== 1 ? 's' : ''} from the deck`,
+        onConfirm: () => {
+            sendAction('buy', { card_id: cardID });
+            resetActionState();
+        }
+    });
 }
 
 // Construct phase handlers
@@ -702,19 +872,53 @@ function handleConstructPhaseHandClick(cardID, card) {
     gameState.selectedCards = [cardID];
     gameState.actionState.type = 'construct';
     highlightSelectedCard(cardID);
-    updateActionPrompt('Resource selected - confirm to construct castle');
-    showConfirmButtons();
+
+    // Show construct confirmation popup with resource and castle icon
+    showConstructConfirmModal(card, cardID);
+}
+
+function showConstructConfirmModal(resource, cardID) {
+    const resourceName = getCardName(resource);
+    const resourceValue = resource?.value || 0;
+
+    let cardsHtml = renderCardForModal(resource);
+    cardsHtml += renderArrow();
+    cardsHtml += renderCastleIcon();
+
+    showActionConfirmModal({
+        title: 'Construct Castle',
+        cardsHtml: cardsHtml,
+        description: `${resourceName} (${resourceValue} value) will be added to your castle`,
+        onConfirm: () => {
+            sendAction('construct', { card_id: cardID });
+            resetActionState();
+        }
+    });
 }
 
 function highlightValidUserWarriors(weapon) {
-    // For special powers, highlight warriors on player's field that can use the power
+    // For special powers, enable selection on player's field
+    // Don't highlight all warriors - only the selected one will be highlighted
     const playerField = document.getElementById('player-field');
-    playerField.querySelectorAll('.card').forEach(card => {
-        const cardId = card.dataset.cardId;
-        if (weapon && weapon.use_on && weapon.use_on.includes(cardId)) {
-            card.classList.add('valid-target');
-        }
-    });
+    // Enable hover/selection on player field for SpecialPower
+    playerField.classList.add('selecting-ally');
+    // Note: We don't add valid-target here anymore
+    // The user will click to select, and that will highlight with 'selected' class
+}
+
+function enableSpecialPowerTargetSelection(userType) {
+    // Enable target selection on the appropriate field based on warrior type
+    // Don't pre-highlight any targets - only the clicked one will be highlighted
+    const playerField = document.getElementById('player-field');
+    const enemyField = document.getElementById('enemy-field');
+
+    if (userType === 'archer') {
+        // Archer (Instant Kill) targets enemies
+        enemyField.classList.add('selecting-target');
+    } else {
+        // Mage (Heal) and Knight (Protect) target allies
+        playerField.classList.add('selecting-ally');
+    }
 }
 
 function highlightValidTargets(weapon) {
@@ -829,15 +1033,26 @@ function resetActionState() {
         card.classList.remove('selected', 'valid-target');
     });
 
+    // Remove selection mode classes from fields
+    document.getElementById('player-field')?.classList.remove('selecting-ally');
+    document.getElementById('enemy-field')?.classList.remove('selecting-target');
+
+    // Remove damage multiplier badges
+    document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
+        badge.remove();
+    });
+
     hideConfirmButtons();
 }
 
 function showConfirmButtons() {
-    document.getElementById('confirm-action-buttons').classList.remove('hidden');
+    // Show the action prompt container (which includes cancel button)
+    document.getElementById('action-prompt-container').classList.remove('hidden');
 }
 
 function hideConfirmButtons() {
-    document.getElementById('confirm-action-buttons').classList.add('hidden');
+    // Hide the action prompt container
+    document.getElementById('action-prompt-container').classList.add('hidden');
 }
 
 function confirmAction() {
@@ -901,11 +1116,7 @@ function confirmAction() {
 function cancelAction() {
     resetActionState();
     updateActionPrompt('');
-
-    // Re-render to clear highlights and restore normal state
-    if (gameState.currentState) {
-        renderGameBoard(gameState.currentState);
-    }
+    // resetActionState already clears visual selections (selected, valid-target classes)
 }
 
 function toggleCardSelection(cardID, context) {
@@ -1363,18 +1574,22 @@ function updatePhaseTracker() {
     const phaseTracker = document.getElementById('phase-tracker');
     const turnStatusElement = document.getElementById('phase-turn-status');
     const turnTextElement = turnStatusElement?.querySelector('.turn-text');
+    const gameScreen = document.getElementById('game-screen');
 
     // Update turn status
     if (turnStatusElement && turnTextElement) {
         turnStatusElement.classList.remove('your-turn', 'enemy-turn');
         phaseTracker?.classList.remove('your-turn', 'enemy-turn');
+        gameScreen?.classList.remove('your-turn', 'enemy-turn');
         if (gameState.isYourTurn) {
             turnStatusElement.classList.add('your-turn');
             phaseTracker?.classList.add('your-turn');
+            gameScreen?.classList.add('your-turn');
             turnTextElement.textContent = 'Your Turn';
         } else {
             turnStatusElement.classList.add('enemy-turn');
             phaseTracker?.classList.add('enemy-turn');
+            gameScreen?.classList.add('enemy-turn');
             turnTextElement.textContent = 'Enemy Turn';
         }
     }
@@ -1421,8 +1636,15 @@ function updatePhaseIndicator() {
 
 function updateActionPrompt(text) {
     const prompt = document.getElementById('action-prompt');
+    const container = document.getElementById('action-prompt-container');
     prompt.textContent = text;
-    prompt.className = 'action-prompt' + (text ? ' active' : '');
+
+    // Show/hide the prompt container based on whether there's text
+    if (text) {
+        container.classList.remove('hidden');
+    } else {
+        container.classList.add('hidden');
+    }
 }
 
 function showStatus(elementId, message, type) {
@@ -1460,6 +1682,111 @@ function hideGameModal() {
     modal.classList.add('hidden');
     resetActionState();
     updateActionPrompt('');
+}
+
+// Action Confirm Modal Functions
+let actionConfirmCallback = null;
+
+function showActionConfirmModal(config) {
+    const modal = document.getElementById('action-confirm-modal');
+    document.getElementById('action-confirm-title').textContent = config.title || 'Confirm Action';
+    document.getElementById('action-confirm-cards').innerHTML = config.cardsHtml || '';
+    document.getElementById('action-confirm-description').textContent = config.description || '';
+
+    actionConfirmCallback = config.onConfirm || null;
+
+    // Hide the bottom confirm buttons and clear the action prompt
+    hideConfirmButtons();
+    updateActionPrompt('');
+
+    modal.classList.remove('hidden');
+}
+
+function hideActionConfirmModal() {
+    const modal = document.getElementById('action-confirm-modal');
+    modal.classList.add('hidden');
+    actionConfirmCallback = null;
+}
+
+function onActionConfirmYes() {
+    if (actionConfirmCallback) {
+        actionConfirmCallback();
+    }
+    hideActionConfirmModal();
+}
+
+function onActionConfirmNo() {
+    hideActionConfirmModal();
+    resetActionState();
+    updateActionPrompt('');
+    // resetActionState already clears visual selections
+}
+
+// Render a card for the action confirm modal
+function renderCardForModal(card, options = {}) {
+    if (!card) return '';
+
+    const cardType = getCardType(card);
+    const cardName = getCardName(card);
+    const bgColor = card.color ? hexToRgba(card.color, 0.3) : '';
+    const borderColor = card.color || '';
+
+    let wrapperClass = 'card-wrapper';
+    let badgeHtml = '';
+
+    if (options.showDoubleDamage) {
+        badgeHtml = '<div class="double-damage-badge">x2 DMG</div>';
+    }
+
+    const cardHtml = `
+        <div class="card ${cardType}" style="${bgColor ? `background: ${bgColor};` : ''} ${borderColor ? `border-color: ${borderColor};` : ''}">
+            <div class="card-header">
+                <span class="card-type ${cardType}">${card.type || cardType}</span>
+            </div>
+            <div class="card-content">
+                <div class="card-name">${cardName}</div>
+                ${getCardStats(card, cardType)}
+            </div>
+        </div>
+    `;
+
+    if (badgeHtml) {
+        return `<div class="${wrapperClass}">${badgeHtml}${cardHtml}</div>`;
+    }
+    return cardHtml;
+}
+
+// Render card backs for the modal
+function renderCardBacks(count) {
+    if (count <= 0) return '';
+
+    let html = '<div class="cards-group">';
+    for (let i = 0; i < count; i++) {
+        html += `
+            <div class="card-back-modal">
+                <div class="card-back-modal-inner">
+                    <span class="card-back-modal-emblem">?</span>
+                </div>
+            </div>
+        `;
+    }
+    html += '</div>';
+    return html;
+}
+
+// Render castle for construct action (same style as board castle)
+function renderCastleIcon() {
+    return `
+        <div class="castle-modal">
+            <div class="castle-icon"></div>
+            <span class="castle-modal-label">Castle</span>
+        </div>
+    `;
+}
+
+// Arrow element for modal
+function renderArrow() {
+    return '<span class="action-confirm-arrow">→</span>';
 }
 
 // Steal Modal

@@ -208,7 +208,13 @@ func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
 	cards, err := g.drawCards(p, 1)
 	if err != nil {
 		if errors.Is(err, ErrHandLimitExceeded) {
-			return
+			// Player has max cards, skip drawing but continue to attack phase
+			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit)", p.Name()))
+			status = g.nextAction(types.ActionTypeAttack,
+				func() GameStatus {
+					return g.GameStatusProvider.Get(p, e, g)
+				})
+			return status, nil
 		}
 		return status, fmt.Errorf("drawing card failed: %w", err)
 	}
@@ -540,8 +546,6 @@ func (g *Game) IsGameOver() (bool, string) {
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
 
 	if !p.CanTakeCards(count) {
-		g.addToHistory(p.Name() + " exceeded max number of cards in hand.")
-
 		return nil, ErrHandLimitExceeded
 	}
 

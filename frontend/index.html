@@ -70,7 +70,7 @@
                     </li>
                     <li class="phase-item" data-phase="attack">
                         <span class="phase-icon">⚔️</span>
-                        <span class="phase-name">Attack</span>
+                        <span class="phase-name">Attack / Move Warrior</span>
                         <span class="phase-check">✓</span>
                     </li>
                     <li class="phase-item" data-phase="spy/steal">
@@ -200,16 +200,15 @@
 
             <!-- Action Panel -->
             <div class="action-panel">
+                <div id="action-prompt-container" class="action-prompt-container hidden">
+                    <span id="action-prompt" class="action-prompt"></span>
+                    <button id="cancel-action-btn" class="btn btn-cancel-inline">Cancel</button>
+                </div>
                 <div class="action-buttons">
                     <button id="move-warrior-btn" class="btn btn-action" disabled>Move Warrior</button>
-                    <button id="trade-btn" class="btn btn-action" disabled>Trade (3 cards)</button>
+                    <button id="trade-btn" class="btn btn-action" disabled>Trade</button>
                     <button id="skip-phase-btn" class="btn btn-skip" disabled>Skip Phase</button>
                     <button id="end-turn-btn" class="btn btn-danger" disabled>End Turn</button>
-                </div>
-                <div id="action-prompt" class="action-prompt"></div>
-                <div id="confirm-action-buttons" class="confirm-action-buttons hidden">
-                    <button id="confirm-action-btn" class="btn btn-primary">Confirm</button>
-                    <button id="cancel-action-btn" class="btn btn-secondary">Cancel</button>
                 </div>
 
                 <!-- End Turn Popup (overlays action panel) -->
@@ -243,6 +242,21 @@
                 <div id="modal-cards-container" class="modal-cards-container"></div>
                 <div id="modal-buttons" class="modal-buttons">
                     <button id="modal-close-btn" class="btn btn-secondary">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Confirm Modal -->
+        <div id="action-confirm-modal" class="modal hidden">
+            <div class="action-confirm-content">
+                <h2 id="action-confirm-title" class="action-confirm-title">Confirm Action</h2>
+                <div id="action-confirm-cards" class="action-confirm-cards">
+                    <!-- Cards will be rendered here -->
+                </div>
+                <p id="action-confirm-description" class="action-confirm-description"></p>
+                <div class="action-confirm-buttons">
+                    <button id="action-confirm-yes" class="btn btn-primary">Confirm</button>
+                    <button id="action-confirm-no" class="btn btn-secondary">Cancel</button>
                 </div>
             </div>
         </div>
