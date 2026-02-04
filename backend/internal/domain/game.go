@@ -541,12 +541,17 @@ func (g *Game) Buy(playerName, cardID string) (
 	}
 
 	val := r.Value()
-	p.GiveCards(resourceCard.GetID())
+	if _, err = p.GiveCards(resourceCard.GetID()); err != nil {
+		return status, fmt.Errorf("giving card for buying failed: %w", err)
+	}
 
 	cardsToBuy := val / 2
 	cards, err = g.drawCards(p, cardsToBuy)
 	if err != nil {
 		p.TakeCards(resourceCard)
+		if errors.Is(err, ErrHandLimitExceeded) {
+			return status, fmt.Errorf("cards in hand limit exceeded")
+		}
 		return status, fmt.Errorf("drawing card for buying failed: %w", err)
 	}
 
