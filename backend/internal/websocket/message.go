@@ -122,7 +122,6 @@ type GameStatusDTO struct {
 	ModalCards          []CardDTO      `json:"modal_cards,omitempty"`
 	History             []string       `json:"history"`
 	GameOverMsg         string         `json:"game_over_msg,omitempty"`
-	ErrorMsg            string         `json:"error_msg,omitempty"`
 }
 
 // HandCardDTO represents a card in the player's hand

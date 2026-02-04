@@ -25,7 +25,6 @@ type GameStatus struct {
 	ModalCards          []gamestatus.Card      `json:"modal_cards"`
 	History             []string               `json:"history"`
 	GameOverMgs         string                 `json:"game_over_msg"`
-	ErrorMsg            string                 `json:"error_msg,omitempty"`
 }
 
 func newGameStatusWithModalCards(currentPlayer ports.Player, enemy ports.Player,
@@ -42,7 +41,6 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 
 	action := game.currentAction
 	canMove := game.CanMoveWarrior
-	canTrade := game.CanTrade
 
 	gs := GameStatus{
 		CurrentPlayer:       currentPlayer.Name(),
@@ -54,7 +52,7 @@ func newGameStatus(currentPlayer ports.Player, enemy ports.Player, game *Game,
 		CardsInEnemyHand:    enemy.CardsInHand(),
 		EnemyField:          []gamestatus.FieldCard{},
 		EnemyCastle:         gamestatus.NewCastle(enemy.Castle()),
-		CanTrade:            canTrade && len(currentPlayer.Hand().ShowCards()) >= 3,
+		CanTrade:            game.CanTrade,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
