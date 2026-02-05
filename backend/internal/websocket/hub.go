@@ -169,6 +169,32 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	h.mutex.Unlock()
 
 	room.mutex.Lock()
+
+	// Check if this is a reconnection (player name already exists in this game)
+	if oldClient, exists := room.Players[playerName]; exists {
+		// Replace old client with new one
+		room.Players[playerName] = client
+		gameInProgress := room.Game != nil
+		room.mutex.Unlock()
+
+		// Close old client connection (outside lock)
+		h.mutex.Lock()
+		if _, ok := h.clients[oldClient]; ok {
+			delete(h.clients, oldClient)
+			close(oldClient.send)
+		}
+		h.mutex.Unlock()
+
+		log.Printf("Player %s reconnected to game %s", playerName, gameID)
+
+		if gameInProgress {
+			h.sendReconnectState(gameID, playerName)
+		} else {
+			client.SendMessage(MsgWaitingForPlayer, nil)
+		}
+		return
+	}
+
 	// Check if game is full
 	if len(room.Players) >= 2 {
 		room.mutex.Unlock()
@@ -176,14 +202,16 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		return
 	}
 
-	// Check if player name already exists in this game
-	if _, exists := room.Players[playerName]; exists {
+	room.Players[playerName] = client
+
+	// If a game already exists in this room, this is a reconnection
+	// (player was removed by unregister before the new client joined)
+	if room.Game != nil {
 		room.mutex.Unlock()
-		client.SendError("Player name already taken in this game")
+		log.Printf("Player %s rejoined existing game %s", playerName, gameID)
+		h.sendReconnectState(gameID, playerName)
 		return
 	}
-
-	room.Players[playerName] = client
 
 	// Notify player they joined
 	client.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
@@ -287,6 +315,55 @@ func (h *Hub) sendInitialWarriors(gameID string) {
 		log.Printf("Sent initial warriors to %s: isYourTurn=%v, warriors=%d",
 			playerName, isYourTurn, len(warriorDTOs))
 	}
+}
+
+// sendReconnectState sends the current game state to a reconnected player
+func (h *Hub) sendReconnectState(gameID, playerName string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists || room.Game == nil {
+		return
+	}
+
+	room.mutex.RLock()
+	defer room.mutex.RUnlock()
+
+	client, ok := room.Players[playerName]
+	if !ok {
+		return
+	}
+
+	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
+	isCurrentPlayer := playerName == currentPlayer.Name()
+
+	var status domain.GameStatus
+	if isCurrentPlayer {
+		status = room.Game.GameStatusProvider.Get(currentPlayer, enemyPlayer, room.Game)
+	} else {
+		status = room.Game.GameStatusProvider.Get(enemyPlayer, currentPlayer, room.Game)
+	}
+
+	// Send game_started so frontend transitions to the game screen
+	playerNames := make([]string, 0, 2)
+	for name := range room.Players {
+		playerNames = append(playerNames, name)
+	}
+	client.SendMessage(MsgGameStarted, GameStartedPayload{
+		GameID:   gameID,
+		Players:  playerNames,
+		YourName: playerName,
+	})
+
+	// Send current game state
+	client.SendMessage(MsgGameState, GameStatePayload{
+		GameStatus: ConvertGameStatus(status),
+		IsYourTurn: isCurrentPlayer,
+	})
+
+	log.Printf("Sent reconnect state to %s: isYourTurn=%v, currentAction=%s",
+		playerName, isCurrentPlayer, status.CurrentAction)
 }
 
 // sendGameStateWithStatus sends the game state using a pre-computed status for the current player
