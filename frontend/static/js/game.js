@@ -162,6 +162,7 @@ function handleError(payload) {
     console.error('Server error:', payload.message);
     showStatus('connection-status', payload.message, 'error');
     showStatus('setup-status', payload.message, 'error');
+    addErrorToHistory(payload.message);
 }
 
 function handlePlayerJoined(payload) {
@@ -894,15 +895,22 @@ function handleConstructPhaseHandClick(cardID, card) {
 function showConstructConfirmModal(resource, cardID) {
     const resourceName = getCardName(resource);
     const resourceValue = resource?.value || 0;
+    const castle = gameState.currentState?.current_player_castle;
+    const currentValue = castle?.value || 0;
+    const newValue = currentValue + resourceValue;
 
     let cardsHtml = renderCardForModal(resource);
     cardsHtml += renderArrow();
     cardsHtml += renderCastleIcon();
 
+    const description = castle?.constructed
+        ? `${resourceName} (${resourceValue} gold) → Castle value: ${currentValue} → ${newValue}/25`
+        : `${resourceName} (${resourceValue} value) will be added to your castle`;
+
     showActionConfirmModal({
-        title: 'Construct Castle',
+        title: castle?.constructed ? 'Add Gold to Castle' : 'Construct Castle',
         cardsHtml: cardsHtml,
-        description: `${resourceName} (${resourceValue} value) will be added to your castle`,
+        description: description,
         onConfirm: () => {
             sendAction('construct', { card_id: cardID });
             resetActionState();
@@ -1493,13 +1501,32 @@ function renderDeck(cardsInDeck) {
     }
 }
 
+function addErrorToHistory(message) {
+    const container = document.getElementById('history-list');
+    if (!container) return;
+
+    // Remove "No events yet" placeholder if present
+    const empty = container.querySelector('.history-empty');
+    if (empty) empty.remove();
+
+    gameState.historyMessages.push({ text: message, isError: true });
+
+    const item = document.createElement('div');
+    item.className = 'history-item history-error';
+    item.textContent = message;
+    container.appendChild(item);
+
+    container.scrollTop = container.scrollHeight;
+}
+
 function renderHistory(newMessages) {
     const container = document.getElementById('history-list');
     if (!container) return;
 
     // Accumulate new messages
     if (newMessages && newMessages.length > 0) {
-        gameState.historyMessages = gameState.historyMessages.concat(newMessages);
+        const wrapped = newMessages.map(m => ({ text: m, isError: false }));
+        gameState.historyMessages = gameState.historyMessages.concat(wrapped);
     }
 
     container.innerHTML = '';
@@ -1511,8 +1538,8 @@ function renderHistory(newMessages) {
 
     gameState.historyMessages.forEach(message => {
         const item = document.createElement('div');
-        item.className = 'history-item';
-        item.textContent = message;
+        item.className = 'history-item' + (message.isError ? ' history-error' : '');
+        item.textContent = message.text || message;
         container.appendChild(item);
     });
 

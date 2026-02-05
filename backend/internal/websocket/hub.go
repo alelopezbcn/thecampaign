@@ -60,6 +60,9 @@ func (h *Hub) Run() {
 			log.Printf("Client registered, total clients: %d", len(h.clients))
 
 		case client := <-h.unregister:
+			var disconnectedGameID string
+			var disconnectedPlayerName string
+
 			h.mutex.Lock()
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
@@ -68,19 +71,27 @@ func (h *Hub) Run() {
 
 				// Remove client from game room
 				if client.GameID != "" {
+					disconnectedGameID = client.GameID
+					disconnectedPlayerName = client.PlayerName
 					if room, exists := h.gameRooms[client.GameID]; exists {
 						room.mutex.Lock()
 						delete(room.Players, client.PlayerName)
+						if len(room.Players) == 0 {
+							delete(h.gameRooms, client.GameID)
+							log.Printf("Game room %s removed (empty)", client.GameID)
+						}
 						room.mutex.Unlock()
-
-						// Notify other players
-						h.broadcastToGame(client.GameID, MsgError, ErrorPayload{
-							Message: client.PlayerName + " disconnected",
-						})
 					}
 				}
 			}
 			h.mutex.Unlock()
+
+			// Notify other players AFTER releasing the lock to avoid deadlock
+			if disconnectedGameID != "" {
+				h.broadcastToGame(disconnectedGameID, MsgError, ErrorPayload{
+					Message: disconnectedPlayerName + " disconnected",
+				})
+			}
 
 		case clientMsg := <-h.handleMessage:
 			h.processMessage(clientMsg.client, clientMsg.message)

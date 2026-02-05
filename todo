@@ -1,8 +1,5 @@
-poder enviar un mensaje de error a traves de game status, para esto poner defers en todos los metodos - PROBAR
-can trade no esta funcionando bien, permite hacer mas de uno por turo, y no se bloquea cuando no tiene 3 cartas para hacer trade - PROBAR
-HANDLE ERROR when buying more than allowed cards in hand - PROBAR
-
 una vez que ataca al castillo, devolver en el modal la carta qe le quitamos, para que la muestre, y que en el historial se muestre que carta se robo
+hacer dockerfile
 
 Claude
 -hacer lobby

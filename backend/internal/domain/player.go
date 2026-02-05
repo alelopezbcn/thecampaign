@@ -223,8 +223,12 @@ func (p *player) CanBuy() bool {
 }
 
 func (p *player) CanBuyWith(resource ports.Resource) bool {
+	if resource.CanConstruct() {
+		return false
+	}
+
 	cardsToBuy := resource.Value() / 2
-	if p.Hand().Count()+cardsToBuy > maxCardsInHand {
+	if p.Hand().Count()+cardsToBuy-1 > maxCardsInHand {
 		return false
 	}
 

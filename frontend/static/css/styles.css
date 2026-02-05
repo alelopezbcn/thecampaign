@@ -577,6 +577,13 @@ body {
     color: #e0e0e0;
 }
 
+.history-error {
+    border-left-color: #ff3b30 !important;
+    background: rgba(255, 59, 48, 0.15) !important;
+    color: #ff6b6b !important;
+    font-weight: 600;
+}
+
 .history-empty {
     font-size: 0.75em;
     color: #666;
@@ -1163,7 +1170,15 @@ body {
 .card.selected {
     border-color: #667eea !important;
     box-shadow: 0 0 20px rgba(102, 126, 234, 0.7), 0 0 40px rgba(102, 126, 234, 0.4), inset 0 0 10px rgba(102, 126, 234, 0.1) !important;
-    animation: selectedCardGlow 1.5s ease-in-out infinite;
+    animation: selectedCardGlow 1.5s ease-in-out infinite !important;
+    z-index: 5;
+}
+
+#player-field .card.selected,
+#enemy-field .card.selected {
+    border-color: #667eea !important;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.7), 0 0 40px rgba(102, 126, 234, 0.4), inset 0 0 10px rgba(102, 126, 234, 0.1) !important;
+    animation: selectedCardGlow 1.5s ease-in-out infinite !important;
     z-index: 5;
 }
 

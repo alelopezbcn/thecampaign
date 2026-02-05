@@ -39,6 +39,14 @@ func (d *dealer) OtherCards() (other []ports.Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
+		NewCatapultCard("c1"),
 	}
 
 	for i := 1; i < 10; i++ {
@@ -47,6 +55,21 @@ func (d *dealer) OtherCards() (other []ports.Card) {
 		other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
 		other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
 		if i == 5 || i == 7 {
+			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
+		}
+
+		if i == 1 {
+			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
+			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
+			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
+			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
+			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
+			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
+			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
+			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
+			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
+			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
+			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
 			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
 		}
 	}
