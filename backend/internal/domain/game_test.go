@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -44,8 +45,9 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(nil, false)
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy,
 		}
 
 		status, err := g.Buy("Player1", "card-123")
@@ -67,8 +69,9 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(mockCard, true)
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy,
 		}
 
 		status, err := g.Buy("Player1", "card-123")
@@ -78,27 +81,25 @@ func TestGame_Buy(t *testing.T) {
 		assert.Equal(t, GameStatus{}, status)
 	})
 
-	t.Run("Error when Resource cannot buy (CanBuy returns false)", func(t *testing.T) {
+	t.Run("Error when not in Buy phase", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(false)
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack, // Not in Buy phase
 		}
 
 		status, err := g.Buy("Player1", "gold-123")
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot buy with gold card")
+		assert.Contains(t, err.Error(), "cannot buy in the")
 		assert.Equal(t, GameStatus{}, status)
 	})
 
@@ -113,7 +114,6 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(4)
 		mockResource.EXPECT().GetID().Return("gold-123")
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
@@ -121,15 +121,16 @@ func TestGame_Buy(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(false) // Hand limit exceeded
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
-			deck:        mockDeck,
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy,
+			deck:          mockDeck,
 		}
 
 		status, err := g.Buy("Player1", "gold-123")
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "drawing card for buying failed")
+		assert.Contains(t, err.Error(), "cards in hand limit exceeded")
 		assert.Equal(t, GameStatus{}, status)
 	})
 
@@ -143,6 +144,7 @@ func TestGame_Buy(t *testing.T) {
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -150,20 +152,24 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(2)
 		mockResource.EXPECT().GetID().Return("gold-123")
-		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
 
@@ -176,7 +182,6 @@ func TestGame_Buy(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
 		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
-		assert.Contains(t, g.discardPile, mockResource)
 	})
 
 	t.Run("Success buying with gold value 4 (draws 2 cards)", func(t *testing.T) {
@@ -190,6 +195,7 @@ func TestGame_Buy(t *testing.T) {
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -197,21 +203,25 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-456").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(4)
 		mockResource.EXPECT().GetID().Return("gold-456")
-		mockResource.EXPECT().String().Return("Gold(4)").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("gold-456").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
 		mockProvider.EXPECT().Get(
@@ -238,6 +248,7 @@ func TestGame_Buy(t *testing.T) {
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
 		mockDrawnCard3 := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -245,22 +256,26 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-789").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(6)
 		mockResource.EXPECT().GetID().Return("gold-789")
-		mockResource.EXPECT().String().Return("Gold(6)").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("gold-789").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(3).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard3, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2, mockDrawnCard3).Return(true)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
 		mockProvider.EXPECT().Get(
@@ -286,6 +301,7 @@ func TestGame_Buy(t *testing.T) {
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 		mockDiscardedCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -293,25 +309,30 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(2)
 		mockResource.EXPECT().GetID().Return("gold-123")
-		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		// First draw fails - deck is empty
 		mockDeck.EXPECT().DrawCard().Return(nil, false)
-		// Replenish is called
-		mockDeck.EXPECT().Replenish(gomock.Any())
+		// Replenish is called with cards from discard pile
+		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{mockDiscardedCard})
+		mockDeck.EXPECT().Replenish([]ports.Card{mockDiscardedCard})
 		// Second draw succeeds after replenish
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{mockDiscardedCard},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
 
@@ -336,6 +357,7 @@ func TestGame_Buy(t *testing.T) {
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -343,20 +365,24 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(2)
 		mockResource.EXPECT().GetID().Return("gold-123")
-		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 			CanMoveWarrior:     true,
 			CanTrade:           true,
@@ -384,6 +410,7 @@ func TestGame_Buy(t *testing.T) {
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -391,21 +418,25 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-5").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(5) // 5/2 = 2 cards
 		mockResource.EXPECT().GetID().Return("gold-5")
-		mockResource.EXPECT().String().Return("Gold(5)").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("gold-5").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
 
@@ -430,6 +461,7 @@ func TestGame_Buy(t *testing.T) {
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player2",
@@ -437,28 +469,32 @@ func TestGame_Buy(t *testing.T) {
 
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromHand("gold-p2").Return(mockResource, true)
-		mockResource.EXPECT().CanBuy().Return(true)
 		mockResource.EXPECT().Value().Return(2)
 		mockResource.EXPECT().GetID().Return("gold-p2")
-		mockResource.EXPECT().String().Return("Gold(2)").AnyTimes()
 		mockPlayer2.EXPECT().GiveCards("gold-p2").Return(nil, nil)
 		mockPlayer2.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer2.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockProvider.EXPECT().Get(
-			mockPlayer2, mockPlayer1,
-			types.ActionTypeConstruct,
-			false, false,
-			mockDrawnCard,
-		).Return(expectedStatus)
+		mockDiscardPile.EXPECT().Discard(mockResource)
+		// nextAction expectations
+		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer2.EXPECT().CanTradeCards().Return(false)
+		mockPlayer2.EXPECT().CanConstruct().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        1, // Player 2's turn
+			currentAction:      types.ActionTypeBuy,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
+
+		mockProvider.EXPECT().Get(
+			mockPlayer2, mockPlayer1,
+			g,
+			mockDrawnCard,
+		).Return(expectedStatus)
 
 		status, err := g.Buy("Player2", "gold-p2")
 
@@ -496,13 +532,15 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		// First draw attempt fails
 		mockDeck.EXPECT().DrawCard().Return(nil, false)
 		// Replenish is called with empty discard pile
-		mockDeck.EXPECT().Replenish(gomock.Any())
+		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{})
+		mockDeck.EXPECT().Replenish([]ports.Card{})
 		// Second draw attempt also fails
 		mockDeck.EXPECT().DrawCard().Return(nil, false)
 
@@ -510,7 +548,7 @@ func TestGame_DrawCard(t *testing.T) {
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			deck:        mockDeck,
-			discardPile: []ports.Card{},
+			discardPile: mockDiscardPile,
 		}
 
 		status, err := g.DrawCard("Player1")
@@ -529,6 +567,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -538,20 +577,26 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
-			types.ActionTypeAttack,
-			false, false,
-			mockDrawnCard,
-		).Return(expectedStatus)
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer1.EXPECT().CanAttack().Return(true) // Can attack
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
+
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			g,
+			mockDrawnCard,
+		).Return(expectedStatus)
 
 		status, err := g.DrawCard("Player1")
 
@@ -568,7 +613,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockCemetery := mocks.NewMockCemetery(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -577,19 +622,25 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
 		// Note: TakeCards should NOT be called when hand limit exceeded
-		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
-			types.ActionTypeAttack,
-			false, false, mockCemetery,
-		).Return(expectedStatus)
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer1.EXPECT().CanAttack().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
+
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			g,
+		).Return(expectedStatus)
 
 		status, err := g.DrawCard("Player1")
 
@@ -608,6 +659,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 		mockDiscardedCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -618,24 +670,31 @@ func TestGame_DrawCard(t *testing.T) {
 		// First draw fails - deck is empty
 		mockDeck.EXPECT().DrawCard().Return(nil, false)
 		// Replenish is called
-		mockDeck.EXPECT().Replenish(gomock.Any())
+		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{mockDiscardedCard})
+		mockDeck.EXPECT().Replenish([]ports.Card{mockDiscardedCard})
 		// Second draw succeeds after replenish
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
-			types.ActionTypeAttack,
-			false, false,
-			mockDrawnCard,
-		).Return(expectedStatus)
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer1.EXPECT().CanAttack().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{mockDiscardedCard},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}
+
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			g,
+			mockDrawnCard,
+		).Return(expectedStatus)
 
 		status, err := g.DrawCard("Player1")
 
@@ -652,21 +711,29 @@ func TestGame_DrawCard(t *testing.T) {
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer1.EXPECT().CanAttack().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			history:            []string{},
 			GameStatusProvider: mockProvider,
 		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.DrawCard("Player1")
 
@@ -689,19 +756,27 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer1.EXPECT().CanAttack().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			history:            []string{},
 			GameStatusProvider: mockProvider,
 		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.DrawCard("Player1")
 
@@ -725,6 +800,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockDeck := mocks.NewMockDeck(ctrl)
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player1",
@@ -734,22 +810,28 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
-			types.ActionTypeAttack,
-			true, true,
-			mockDrawnCard,
-		).Return(expectedStatus)
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(true) // Has warriors
+		mockPlayer1.EXPECT().CanTradeCards().Return(true)     // Can trade
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer1.EXPECT().CanAttack().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 			CanMoveWarrior:     true,
 			CanTrade:           true,
 		}
+
+		mockProvider.EXPECT().Get(
+			mockPlayer1, mockPlayer2,
+			g,
+			mockDrawnCard,
+		).Return(expectedStatus)
 
 		status, err := g.DrawCard("Player1")
 
@@ -767,6 +849,7 @@ func TestGame_DrawCard(t *testing.T) {
 		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 		mockCemetery := mocks.NewMockCemetery(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := GameStatus{
 			CurrentPlayer: "Player2",
@@ -776,21 +859,27 @@ func TestGame_DrawCard(t *testing.T) {
 		mockPlayer2.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
 		mockPlayer2.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockProvider.EXPECT().Get(
-			mockPlayer2, mockPlayer1,
-			types.ActionTypeAttack,
-			false, false,
-			mockDrawnCard,
-		).Return(expectedStatus)
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer2.EXPECT().CanTradeCards().Return(false)
+		mockPlayer2.EXPECT().HasCatapult().Return(false)
+		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
+		mockPlayer2.EXPECT().CanAttack().Return(true)
 
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        1, // Player 2's turn
 			deck:               mockDeck,
-			discardPile:        []ports.Card{},
+			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 			cemetery:           mockCemetery,
 		}
+
+		mockProvider.EXPECT().Get(
+			mockPlayer2, mockPlayer1,
+			g,
+			mockDrawnCard,
+		).Return(expectedStatus)
 
 		status, err := g.DrawCard("Player2")
 
@@ -1833,14 +1922,10 @@ func findInAttackedBy(cards []ports.Weapon, id string) bool {
 // 	return false
 // }
 
-func foundInDiscardPile(g *Game, a ports.Card) bool {
-	for _, w := range g.discardPile {
-		if w == a || (w != nil && w.GetID() == a.GetID()) {
-			return true
-		}
-	}
-	return false
-}
+// func foundInDiscardPile(g *Game, a ports.Card) bool {
+// 	// discardPile is now an interface, cannot range over it
+// 	return false
+// }
 
 func fieldContainsCardWithID(field ports.Field, id string) bool {
 	for _, c := range field.Warriors() {
@@ -1892,4 +1977,1814 @@ func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
 	}
 
 	return p
+}
+
+func TestGame_EndTurn(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0, // Player1's turn
+		}
+
+		status, err := g.EndTurn("Player2") // Player2 tries to end turn
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success ending turn switches to next player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{
+			CurrentPlayer: "Player2",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		// nextAction expectations for ActionTypeDrawCard -> checks capabilities
+		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer2.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0, // Player1's turn
+			currentAction:      types.ActionTypeEndTurn,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			hasMovedWarrior:    true, // These should be reset
+			hasTraded:          true,
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer2, mockPlayer1, g).Return(expectedStatus)
+
+		status, err := g.EndTurn("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, 1, g.CurrentTurn) // Turn switched to Player2
+		assert.False(t, g.hasMovedWarrior)
+		assert.False(t, g.hasTraded)
+		assert.Equal(t, types.ActionTypeDrawCard, g.currentAction)
+	})
+
+	t.Run("Turn wraps around from last player to first", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        1, // Player2's turn
+			currentAction:      types.ActionTypeEndTurn,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.EndTurn("Player2")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, 0, g.CurrentTurn) // Wrapped back to Player1
+	})
+
+	t.Run("History is updated when turn ends", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer2.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+
+		_, err := g.EndTurn("Player1")
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player2") && strings.Contains(h, "turn") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain turn change message")
+	})
+}
+
+func TestGame_Attack(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Attack("Player2", "targetID", "weaponID")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not in Attack phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy, // Not Attack phase
+		}
+
+		status, err := g.Attack("Player1", "targetID", "weaponID")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot attack in the")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when target card not in enemy field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Attack("Player1", "targetID", "weaponID")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "target card not in enemy field")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when weapon card not in hand", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Attack("Player1", "targetID", "weaponID")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "weapon card not in hand")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when card is not a weapon", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockResource := mocks.NewMockResource(ctrl) // Not a weapon
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromHand("resourceID").Return(mockResource, true)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Attack("Player1", "targetID", "resourceID")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "the card is not a weapon")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when attack action fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockWeapon := mocks.NewMockWeapon(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
+		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(errors.New("attack failed"))
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Attack("Player1", "targetID", "weaponID")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "attack action failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success attacking enemy warrior", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockWeapon := mocks.NewMockWeapon(ctrl)
+
+		expectedStatus := GameStatus{
+			CurrentPlayer: "Player1",
+		}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromHand("S1").Return(mockWeapon, true)
+		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(nil)
+		mockWarrior.EXPECT().String().Return("Knight (20)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+
+		// nextAction expectations for ActionTypeSpySteal
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.Attack("Player1", "K1", "S1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeBuy, g.currentAction) // Moved to Buy phase
+	})
+
+	t.Run("History is updated on successful attack", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockWeapon := mocks.NewMockWeapon(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromHand("S1").Return(mockWeapon, true)
+		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(nil)
+		mockWarrior.EXPECT().String().Return("Knight (20)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+
+		// nextAction expectations
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+
+		_, err := g.Attack("Player1", "K1", "S1")
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player1") && strings.Contains(h, "attacked") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain attack action")
+	})
+}
+
+func TestGame_SkipPhase(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.SkipPhase("Player2")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when trying to skip DrawCard phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeDrawCard,
+		}
+
+		status, err := g.SkipPhase("Player1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot skip this phase")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when trying to skip EndTurn phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeEndTurn,
+		}
+
+		status, err := g.SkipPhase("Player1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot skip this phase")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success skipping Attack phase moves to SpySteal", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		// nextAction expectations for ActionTypeSpySteal
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(true) // Has spy, stays in SpySteal
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.SkipPhase("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeSpySteal, g.currentAction)
+	})
+
+	t.Run("Success skipping SpySteal phase moves to Buy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		// nextAction expectations for ActionTypeBuy
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true) // Can buy, stays in Buy
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeSpySteal,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.SkipPhase("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeBuy, g.currentAction)
+	})
+
+	t.Run("Success skipping Buy phase moves to Construct", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		// nextAction expectations for ActionTypeConstruct
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true) // Can construct
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeBuy,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.SkipPhase("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
+	})
+
+	t.Run("Success skipping Construct phase moves to EndTurn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		// nextAction expectations for ActionTypeEndTurn
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeConstruct,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.SkipPhase("Player1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeEndTurn, g.currentAction)
+	})
+
+	t.Run("History is updated when phase is skipped", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+
+		_, err := g.SkipPhase("Player1")
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player1") && strings.Contains(h, "skipped") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain skip phase action")
+	})
+}
+
+func TestGame_MoveWarriorToField(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.MoveWarriorToField("Player2", "K1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when MoveCardToField fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().MoveCardToField("K1").Return(errors.New("card not found"))
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.MoveWarriorToField("Player1", "K1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "moving warrior to field failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success moving warrior to field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.MoveWarriorToField("Player1", "K1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.True(t, g.hasMovedWarrior)
+	})
+
+	t.Run("History is updated on success", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+
+		_, err := g.MoveWarriorToField("Player1", "K1")
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player1") && strings.Contains(h, "moved warrior") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain move warrior action")
+	})
+
+	t.Run("Player 2 can move warrior on their turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player2"}
+
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer2.EXPECT().MoveCardToField("A1").Return(nil)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        1,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer2, mockPlayer1, g).Return(expectedStatus)
+
+		status, err := g.MoveWarriorToField("Player2", "A1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.True(t, g.hasMovedWarrior)
+	})
+}
+
+func TestGame_Trade(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.Trade("Player2", []string{"C1", "C2", "C3"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when already traded this turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			hasTraded:   true,
+		}
+
+		status, err := g.Trade("Player1", []string{"C1", "C2", "C3"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "already traded this turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not exactly 3 cards", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.Trade("Player1", []string{"C1", "C2"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "must trade exactly 3 cards")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when GiveCards fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(nil, errors.New("card not found"))
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.Trade("Player1", []string{"C1", "C2", "C3"})
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "giving cards for trading failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success trading 3 cards for 1", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockCard1 := mocks.NewMockCard(ctrl)
+		mockCard2 := mocks.NewMockCard(ctrl)
+		mockCard3 := mocks.NewMockCard(ctrl)
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
+			[]ports.Card{mockCard1, mockCard2, mockCard3}, nil)
+
+		// Traded cards go to discard pile
+		mockDiscardPile.EXPECT().Discard(mockCard1)
+		mockDiscardPile.EXPECT().Discard(mockCard2)
+		mockDiscardPile.EXPECT().Discard(mockCard3)
+
+		// Draw 1 card
+		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
+		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			deck:               mockDeck,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g, mockDrawnCard).Return(expectedStatus)
+
+		status, err := g.Trade("Player1", []string{"C1", "C2", "C3"})
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.True(t, g.hasTraded)
+		assert.False(t, g.CanTrade)
+	})
+}
+
+func TestGame_Construct(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeConstruct,
+		}
+
+		status, err := g.Construct("Player2", "G1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not in Construct phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Construct("Player1", "G1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot construct in the")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when player Construct fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Construct("G1").Return(errors.New("invalid card"))
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeConstruct,
+		}
+
+		status, err := g.Construct("Player1", "G1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "constructing card failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success constructing transitions to EndTurn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Construct("G1").Return(nil)
+
+		// nextAction expectations for ActionTypeEndTurn
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeConstruct,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.Construct("Player1", "G1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeEndTurn, g.currentAction)
+	})
+
+	t.Run("History is updated on success", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Construct("G1").Return(nil)
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeConstruct,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+
+		_, err := g.Construct("Player1", "G1")
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player1") && strings.Contains(h, "constructed") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain construct action")
+	})
+}
+
+func TestGame_Spy(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeSpySteal,
+		}
+
+		status, err := g.Spy("Player2", 1)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not in SpySteal phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Spy("Player1", 1)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot use Spy in the")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when player has no spy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Spy().Return(nil) // No spy
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeSpySteal,
+		}
+
+		status, err := g.Spy("Player1", 1)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "player does not have a Spy")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when invalid spy option", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockSpy := mocks.NewMockSpy(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Spy().Return(mockSpy)
+		mockDiscardPile.EXPECT().Discard(mockSpy)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeSpySteal,
+			discardPile:   mockDiscardPile,
+		}
+
+		status, err := g.Spy("Player1", 3) // Invalid option
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid Spy option")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success spying top 5 cards from deck (option 1)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDeck := mocks.NewMockDeck(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockSpy := mocks.NewMockSpy(ctrl)
+		mockRevealedCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+		revealedCards := []ports.Card{mockRevealedCard}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Spy().Return(mockSpy)
+		mockDiscardPile.EXPECT().Discard(mockSpy)
+		mockDeck.EXPECT().Reveal(5).Return(revealedCards)
+
+		// nextAction expectations for ActionTypeBuy
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeSpySteal,
+			deck:               mockDeck,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().GetWithModal(mockPlayer1, mockPlayer2, g, revealedCards).Return(expectedStatus)
+
+		status, err := g.Spy("Player1", 1)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeBuy, g.currentAction)
+	})
+
+	t.Run("Success spying enemy hand (option 2)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockSpy := mocks.NewMockSpy(ctrl)
+		mockEnemyHand := mocks.NewMockHand(ctrl)
+		mockEnemyCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+		enemyCards := []ports.Card{mockEnemyCard}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().Spy().Return(mockSpy)
+		mockDiscardPile.EXPECT().Discard(mockSpy)
+		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
+		mockEnemyHand.EXPECT().ShowCards().Return(enemyCards)
+
+		// nextAction expectations for ActionTypeBuy
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeSpySteal,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().GetWithModal(mockPlayer1, mockPlayer2, g, enemyCards).Return(expectedStatus)
+
+		status, err := g.Spy("Player1", 2)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
+}
+
+func TestGame_Steal(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeSpySteal,
+		}
+
+		status, err := g.Steal("Player2", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not in SpySteal phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy,
+		}
+
+		status, err := g.Steal("Player1", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot use Steal in the")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when player has no thief", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Thief().Return(nil)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeSpySteal,
+		}
+
+		status, err := g.Steal("Player1", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "player does not have a thief")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when stealing fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockThief := mocks.NewMockThief(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(nil, errors.New("invalid position"))
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeSpySteal,
+		}
+
+		status, err := g.Steal("Player1", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "stealing card failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success stealing a card from enemy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockThief := mocks.NewMockThief(ctrl)
+		mockStolenCard := mocks.NewMockCard(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer2.EXPECT().CardStolenFromHand(2).Return(mockStolenCard, nil)
+		mockDiscardPile.EXPECT().Discard(mockThief) // Thief goes to discard
+		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
+
+		// nextAction expectations for ActionTypeBuy
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeSpySteal,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().GetWithModal(
+			mockPlayer1, mockPlayer2, g, []ports.Card{mockStolenCard},
+		).Return(expectedStatus)
+
+		status, err := g.Steal("Player1", 2)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeBuy, g.currentAction)
+	})
+
+	t.Run("History is updated on successful steal", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockThief := mocks.NewMockThief(ctrl)
+		mockStolenCard := mocks.NewMockCard(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(mockStolenCard, nil)
+		mockDiscardPile.EXPECT().Discard(mockThief)
+		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeSpySteal,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().GetWithModal(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+
+		_, err := g.Steal("Player1", 0)
+
+		assert.NoError(t, err)
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player1") && strings.Contains(h, "stole") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should contain steal action")
+	})
+}
+
+func TestGame_Catapult(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Catapult("Player2", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not in Attack phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy,
+		}
+
+		status, err := g.Catapult("Player1", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot use catapult in the")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when player has no catapult", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Catapult().Return(nil)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Catapult("Player1", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "player does not have a catapult")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when castle attack fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockCatapult := mocks.NewMockCatapult(ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockCatapult.EXPECT().Attack(mockCastle, 0).Return(nil, errors.New("invalid position"))
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.Catapult("Player1", 0)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "attacking castle failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success attacking castle with catapult", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockCatapult := mocks.NewMockCatapult(ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+		mockStolenGold := mocks.NewMockResource(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockCatapult.EXPECT().Attack(mockCastle, 2).Return(mockStolenGold, nil)
+		mockStolenGold.EXPECT().Value().Return(3)
+		mockDiscardPile.EXPECT().Discard(mockStolenGold)
+
+		// nextAction expectations for ActionTypeSpySteal
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.Catapult("Player1", 2)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeBuy, g.currentAction)
+	})
+}
+
+func TestGame_SpecialPower(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.SpecialPower("Player2", "K1", "EK1", "SP1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when not in Attack phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeBuy,
+		}
+
+		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot use special power in the")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when warrior not in field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromField("K1").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "warrior card not in field")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when target not in any field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		// Target not in player's field
+		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		// Target not in enemy's field either
+		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "target card not valid")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when weapon not in hand", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockTarget := mocks.NewMockWarrior(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
+		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "weapon card not in hand")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when card is not a special power", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockTarget := mocks.NewMockWarrior(ctrl)
+		mockResource := mocks.NewMockResource(ctrl) // Not a special power
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
+		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockResource, true)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeAttack,
+		}
+
+		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "the card is not a special power")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success using special power on enemy target", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockTarget := mocks.NewMockWarrior(ctrl)
+		mockSP := mocks.NewMockSpecialPower(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
+		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
+		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(nil)
+		mockTarget.EXPECT().String().Return("Knight (20)")
+
+		// nextAction expectations for ActionTypeSpySteal
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeBuy, g.currentAction)
+	})
+
+	t.Run("Success using special power on own target (protect/heal)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockTarget := mocks.NewMockWarrior(ctrl)
+		mockSP := mocks.NewMockSpecialPower(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		// Target found in own field
+		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockTarget, true)
+		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
+		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(nil)
+		mockTarget.EXPECT().String().Return("Archer (20)")
+
+		// nextAction expectations for ActionTypeSpySteal
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(true)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeAttack,
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+
+		status, err := g.SpecialPower("Player1", "K1", "A1", "SP1")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+	})
 }

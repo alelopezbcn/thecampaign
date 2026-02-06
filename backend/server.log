@@ -1,5 +1,0 @@
-2026/01/19 16:29:23 Starting The Campaign card game server...
-2026/01/19 16:29:23 Visit http://localhost:8080 to play
-2026/01/19 16:29:23 Server starting on :8080
-2026/01/19 16:29:23 Server error:listen tcp :8080: bind: Only one usage of each socket address (protocol/network address/port) is normally permitted.
-exit status 1
