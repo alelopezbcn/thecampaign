@@ -7,6 +7,7 @@ import (
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 // ClientMessage represents a message from a client
@@ -17,10 +18,12 @@ type ClientMessage struct {
 
 // GameRoom represents a game room with two players
 type GameRoom struct {
-	ID      string
-	Game    *domain.Game
-	Players map[string]*Client // playerName -> client
-	mutex   sync.RWMutex
+	ID         string
+	GameMode   string
+	MaxPlayers int
+	Game       *domain.Game
+	Players    map[string]*Client // playerName -> client
+	mutex      sync.RWMutex
 }
 
 // Hub maintains active clients and game rooms
@@ -196,7 +199,10 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	}
 
 	// Check if game is full
-	if len(room.Players) >= 2 {
+	if room.GameMode == string(types.GameMode1v1) && len(room.Players) >= 2 ||
+		room.GameMode == string(types.GameMode2v2) && len(room.Players) >= 4 ||
+		room.GameMode == string(types.GameModeFFA3) && len(room.Players) >= 3 ||
+		room.GameMode == string(types.GameModeFFA5) && len(room.Players) >= 5 {
 		room.mutex.Unlock()
 		client.SendError("Game is full")
 		return
@@ -215,13 +221,27 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 
 	// Notify player they joined
 	client.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
+		GameMode:   room.GameMode,
+		MaxPlayers: room.MaxPlayers,
 		PlayerName: playerName,
 	})
 
-	log.Printf("Player %s joined game %s (%d/2 players)", playerName, gameID, len(room.Players))
+	log.Printf("Player %s joined game %s (%d/%d players)", playerName,
+		gameID, len(room.Players), room.MaxPlayers)
 
 	// Check if we should start the game
-	shouldStartGame := len(room.Players) == 2
+	shouldStartGame := false
+	switch room.GameMode {
+	case string(types.GameMode1v1):
+		shouldStartGame = len(room.Players) == 2
+	case string(types.GameMode2v2):
+		shouldStartGame = len(room.Players) == 4
+	case string(types.GameModeFFA3):
+		shouldStartGame = len(room.Players) == 3
+	case string(types.GameModeFFA5):
+		shouldStartGame = len(room.Players) == 5
+	}
+
 	var playerNames []string
 
 	// If we have 2 players, start the game

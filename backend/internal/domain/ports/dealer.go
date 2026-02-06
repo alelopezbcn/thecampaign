@@ -1,6 +1,6 @@
 package ports
 
 type Dealer interface {
-	WarriorsCards() (warriors []Card)
-	OtherCards() (other []Card)
+	WarriorsCards(playerCount int) (warriors []Card)
+	OtherCards(playerCount int) (other []Card)
 }

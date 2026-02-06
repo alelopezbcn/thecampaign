@@ -2,11 +2,7 @@ package domain
 
 import (
 	"errors"
-	"fmt"
-	"math/rand"
-	"strings"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/google/uuid"
@@ -16,7 +12,10 @@ type Games []Game
 
 type Game struct {
 	id                 string
+	Mode               types.GameMode
 	Players            []ports.Player
+	Teams              map[int][]int // teamID -> player indices (2v2 only)
+	EliminatedPlayers  map[int]bool  // player index -> eliminated (FFA only)
 	CurrentTurn        int
 	currentAction      types.ActionType
 	CanMoveWarrior     bool
@@ -26,21 +25,20 @@ type Game struct {
 	deck               ports.Deck
 	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
-	history            []string
-	historyTracker     int
 	dealer             ports.Dealer
 	GameStatusProvider GameStatusProvider
+	history            []string
+	historyTracker     int
 	gameOver           bool
 	winner             string
 }
 
-func NewGame(player1, player2 string,
-	dealer ports.Dealer, gameStatusProvider GameStatusProvider) *Game {
+func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
+	gameStatusProvider GameStatusProvider) (*Game, error) {
 
-	playersArr := []string{player1, player2}
-	rand.Shuffle(len(playersArr), func(i, j int) {
-		playersArr[i], playersArr[j] = playersArr[j], playersArr[i]
-	})
+	if err := validatePlayers(playerNames, mode); err != nil {
+		return nil, err
+	}
 
 	g := &Game{
 		id:                 uuid.NewString(),
@@ -50,22 +48,55 @@ func NewGame(player1, player2 string,
 		history:            []string{},
 		dealer:             dealer,
 		GameStatusProvider: gameStatusProvider,
+		Players:            make([]ports.Player, len(playerNames)),
+		Mode:               mode,
+		EliminatedPlayers:  make(map[int]bool),
 	}
 
-	p1 := NewPlayer(playersArr[0], g, g, g, g)
-	p2 := NewPlayer(playersArr[1], g, g, g, g)
-	g.Players = []ports.Player{p1, p2}
+	if mode == types.GameMode2v2 {
+		g.Teams = map[int][]int{
+			1: {0, 2}, // Team 1: Player 1 and Player 3
+			2: {1, 3}, // Team 2: Player 2 and Player 4
+		}
+	}
 
-	g.addToHistory(fmt.Sprintf("Game created between %s and %s",
-		p1.Name(), p2.Name()))
+	for i, name := range playerNames {
+		p := NewPlayer(name, i, g, g, g, g)
+		g.Players[i] = p
+	}
 
 	g.deal()
 
-	return g
+	return g, nil
+}
+
+func validatePlayers(playerNames []string, mode types.GameMode) error {
+	switch mode {
+	case types.GameMode1v1:
+		if len(playerNames) != 2 {
+			return errors.New("1v1 mode requires 2 players")
+		}
+	case types.GameMode2v2:
+		if len(playerNames) != 4 {
+			return errors.New("2v2 mode requires 4 players")
+		}
+	case types.GameModeFFA3:
+		if len(playerNames) != 3 {
+			return errors.New("FFA3 mode requires 3 players")
+		}
+	case types.GameModeFFA5:
+		if len(playerNames) != 5 {
+			return errors.New("FFA mode requires 5 players")
+		}
+	default:
+		return errors.New("invalid game mode")
+	}
+
+	return nil
 }
 
 func (g *Game) deal() {
-	warriorCards := shuffle(g.dealer.WarriorsCards())
+	warriorCards := shuffle(g.dealer.WarriorsCards(len(g.Players)))
 
 	// Each player gets 3 Warrior cards
 	warriorsIdx := 0
@@ -74,7 +105,9 @@ func (g *Game) deal() {
 		warriorsIdx += 3
 	}
 
-	deckCards := append(warriorCards[warriorsIdx:], g.dealer.OtherCards()...)
+	deckCards := append(warriorCards[warriorsIdx:],
+		g.dealer.OtherCards(len(g.Players))...)
+
 	deckCards = shuffle(deckCards)
 	otherIdx := 0
 	for _, p := range g.Players {
@@ -84,499 +117,6 @@ func (g *Game) deal() {
 
 	deckCards = deckCards[otherIdx:]
 	g.deck = NewDeck(deckCards)
-}
-
-func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Card) {
-	i := 0
-	for _, p := range g.Players {
-		if p.Name() == playerName {
-			for _, c := range p.Hand().ShowCards() {
-				if w, ok := c.(ports.Warrior); ok {
-					warriors[i] = gamestatus.FromDomainCard(w)
-					i++
-					if i == 3 {
-						return warriors
-					}
-				}
-			}
-		}
-	}
-
-	return warriors
-}
-
-func (g *Game) SetInitialWarriors(playerName string, warriorIDs []string) error {
-	p, _ := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if len(warriorIDs) < 1 {
-		return errors.New("must place at least 1 warrior")
-	}
-	if len(warriorIDs) > 3 {
-		return errors.New("cannot place more than 3 warriors")
-	}
-
-	for _, id := range warriorIDs {
-		if err := p.MoveCardToField(strings.TrimSpace(id)); err != nil {
-			return err
-		}
-	}
-	g.switchTurn()
-
-	// Check if both players have set their warriors
-	allSet := true
-	for _, p := range g.Players {
-		if len(p.Field().Warriors()) == 0 {
-			allSet = false
-			break
-		}
-	}
-	if allSet {
-		return nil
-	}
-
-	return nil
-}
-
-func (g *Game) WhoIsCurrent() (current ports.Player, enemy ports.Player) {
-	return g.Players[g.CurrentTurn],
-		g.Players[(g.CurrentTurn+1)%len(g.Players)]
-}
-
-func (g *Game) MoveWarriorToField(playerName, warriorID string) (
-	status GameStatus, err error) {
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	err = p.MoveCardToField(warriorID)
-	if err != nil {
-		return status, fmt.Errorf("moving warrior to field failed: %w", err)
-	}
-
-	g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()))
-	g.hasMovedWarrior = true
-	status = g.GameStatusProvider.Get(p, e, g)
-
-	return status, nil
-}
-
-func (g *Game) Trade(playerName string, cardIDs []string) (
-	status GameStatus, err error) {
-
-	var cards []ports.Card
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.hasTraded {
-		return status, errors.New("already traded this turn")
-	}
-
-	if len(cardIDs) != 3 {
-		return status, errors.New("must trade exactly 3 cards")
-	}
-
-	tradedCards, err := p.GiveCards(cardIDs...)
-	if err != nil {
-		return status, fmt.Errorf("giving cards for trading failed: %w", err)
-	}
-	for _, c := range tradedCards {
-		g.OnCardMovedToPile(c)
-	}
-
-	cards, err = g.drawCards(p, 1)
-	if err != nil {
-		return status, fmt.Errorf("drawing card for trading failed: %w", err)
-	}
-
-	p.TakeCards(cards...)
-
-	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()))
-	g.hasTraded = true
-	g.CanTrade = false
-	status = g.GameStatusProvider.Get(p, e, g, cards...)
-
-	return status, nil
-}
-
-func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
-	var cards []ports.Card
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	cards, err = g.drawCards(p, 1)
-	if err != nil {
-		if errors.Is(err, ErrHandLimitExceeded) {
-			// Player has max cards, skip drawing but continue to attack phase
-			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()))
-			status = g.nextAction(types.ActionTypeAttack,
-				func() GameStatus {
-					return g.GameStatusProvider.Get(p, e, g)
-				})
-			return status, nil
-		}
-		return status, fmt.Errorf("drawing card failed: %w", err)
-	}
-
-	p.TakeCards(cards...)
-	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()))
-	status = g.nextAction(types.ActionTypeAttack,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g, cards...)
-		})
-
-	return status, nil
-}
-
-func (g *Game) Attack(playerName, targetID, weaponID string) (
-	status GameStatus, err error) {
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeAttack {
-		return status, fmt.Errorf("cannot attack in the %s phase",
-			g.currentAction)
-	}
-
-	targetCard, ok := e.GetCardFromField(targetID)
-	if !ok {
-		return status, errors.New("target card not in enemy field: " + targetID)
-	}
-
-	weaponCard, ok := p.GetCardFromHand(weaponID)
-	if !ok {
-		return status, errors.New("weapon card not in hand: " + weaponID)
-	}
-
-	t, ok := targetCard.(ports.Attackable)
-	if !ok {
-		return status, fmt.Errorf("the target cardBase cannot be attacked")
-	}
-
-	w, ok := weaponCard.(ports.Weapon)
-	if !ok {
-		return status, fmt.Errorf("the card is not a weapon")
-	}
-
-	if err = p.Attack(t, w); err != nil {
-		return status, fmt.Errorf("attack action failed: %w", err)
-	}
-
-	g.addToHistory(fmt.Sprintf("%s attacked %s with %s",
-		playerName, t.String(), w.String()))
-	status = g.nextAction(types.ActionTypeSpySteal,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g)
-		})
-
-	return status, nil
-}
-
-func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
-	status GameStatus, err error) {
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeAttack {
-		return status, fmt.Errorf("cannot use special power in the %s phase",
-			g.currentAction)
-	}
-
-	userCard, ok := p.GetCardFromField(userID)
-	if !ok {
-		return status, errors.New("warrior card not in field: " + userID)
-	}
-
-	var targetCard ports.Card
-	targetCard, ok = p.GetCardFromField(targetID)
-	if !ok {
-		targetCard, ok = e.GetCardFromField(targetID)
-		if !ok {
-			return status, errors.New("target card not valid: " + targetID)
-		}
-	}
-
-	weaponCard, ok := p.GetCardFromHand(weaponID)
-	if !ok {
-		return status, errors.New("weapon card not in hand: " + weaponID)
-	}
-
-	s, ok := weaponCard.(ports.SpecialPower)
-	if !ok {
-		return status, fmt.Errorf("the card is not a special power")
-	}
-
-	w, ok := userCard.(ports.Warrior)
-	if !ok {
-		return status, fmt.Errorf("the attacking card is not a warrior")
-	}
-
-	t, ok := targetCard.(ports.Warrior)
-	if !ok {
-		return status, fmt.Errorf("the target card is not a warrior")
-	}
-
-	if err = p.UseSpecialPower(w, t, s); err != nil {
-		return status, fmt.Errorf("special power action failed: %w", err)
-	}
-
-	g.addToHistory(fmt.Sprintf("%s used special power on %s",
-		playerName, t.String()))
-	status = g.nextAction(types.ActionTypeSpySteal,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g)
-		})
-
-	return status, nil
-}
-
-func (g *Game) Catapult(playerName string, cardPosition int) (
-	status GameStatus, err error) {
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeAttack {
-		return status, fmt.Errorf("cannot use catapult in the %s phase",
-			g.currentAction)
-	}
-
-	t := p.Catapult()
-	if t == nil {
-		return status, errors.New("player does not have a catapult to attack")
-	}
-
-	stolenGold, err := t.Attack(e.Castle(), cardPosition)
-	if err != nil {
-		return status, fmt.Errorf("attacking castle failed: %w", err)
-	}
-
-	g.OnCardMovedToPile(stolenGold)
-
-	g.addToHistory(fmt.Sprintf("%s removed %d gold from %s's castle",
-		p.Name(), stolenGold.Value(), e.Name()))
-	status = g.nextAction(types.ActionTypeSpySteal,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g)
-		})
-
-	return status, nil
-}
-
-func (g *Game) Spy(playerName string, option int) (status GameStatus, err error) {
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeSpySteal {
-		return status, fmt.Errorf("cannot use Spy in the %s phase",
-			g.currentAction)
-	}
-
-	s := p.Spy()
-	if s == nil {
-		return status, errors.New("player does not have a Spy to use")
-	}
-
-	g.OnCardMovedToPile(s)
-	var spiedCards []ports.Card
-
-	switch option {
-	case 1:
-		// Reveal top 5 cards from deck
-		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()))
-		spiedCards = g.deck.Reveal(5)
-	case 2:
-		// Reveal enemy's cards
-		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
-			p.Name(), e.Name()))
-		spiedCards = e.Hand().ShowCards()
-	default:
-		return status, errors.New("invalid Spy option")
-	}
-
-	status = g.nextAction(types.ActionTypeBuy,
-		func() GameStatus {
-			return g.GameStatusProvider.GetWithModal(p, e, g, spiedCards)
-		})
-
-	return status, nil
-}
-
-func (g *Game) Steal(playerName string, cardPosition int) (
-	status GameStatus, err error) {
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeSpySteal {
-		return status, fmt.Errorf("cannot use Steal in the %s phase",
-			g.currentAction)
-	}
-
-	t := p.Thief()
-	if t == nil {
-		return status, errors.New("player does not have a thief to steal with")
-	}
-
-	stolenCard, err := e.CardStolenFromHand(cardPosition)
-	if err != nil {
-		return status, fmt.Errorf("stealing card failed: %w", err)
-	}
-
-	g.OnCardMovedToPile(t)
-	p.TakeCards(stolenCard)
-
-	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
-		p.Name(), e.Name()))
-	status = g.nextAction(types.ActionTypeBuy,
-		func() GameStatus {
-			return g.GameStatusProvider.GetWithModal(p, e, g, []ports.Card{stolenCard})
-		})
-
-	return status, nil
-}
-
-func (g *Game) Buy(playerName, cardID string) (
-	status GameStatus, err error) {
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeBuy {
-		return status, fmt.Errorf("cannot buy in the %s phase",
-			g.currentAction)
-	}
-
-	resourceCard, ok := p.GetCardFromHand(cardID)
-	if !ok {
-		return status, errors.New("Resource card not in hand: " + cardID)
-	}
-
-	r, ok := resourceCard.(ports.Resource)
-	if !ok {
-		return status, errors.New("only gold cards can be used to buy")
-	}
-
-	val := r.Value()
-	if _, err = p.GiveCards(resourceCard.GetID()); err != nil {
-		return status, fmt.Errorf("giving card for buying failed: %w", err)
-	}
-
-	cardsToBuy := val / 2
-	cards, err := g.drawCards(p, cardsToBuy)
-	if err != nil {
-		p.TakeCards(resourceCard)
-		if errors.Is(err, ErrHandLimitExceeded) {
-			return status, fmt.Errorf("cards in hand limit exceeded")
-		}
-		return status, fmt.Errorf("drawing card for buying failed: %w", err)
-	}
-
-	p.TakeCards(cards...)
-
-	g.OnCardMovedToPile(resourceCard)
-	g.addToHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy))
-	status = g.nextAction(types.ActionTypeConstruct,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g, cards...)
-		})
-
-	return status, nil
-}
-
-func (g *Game) Construct(playerName, cardID string) (
-	status GameStatus, err error) {
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeConstruct {
-		return status, fmt.Errorf("cannot construct in the %s phase",
-			g.currentAction)
-	}
-
-	if err = p.Construct(cardID); err != nil {
-		return status, fmt.Errorf("constructing card failed: %w", err)
-	}
-
-	g.addToHistory(fmt.Sprintf("%s constructed", p.Name()))
-	status = g.nextAction(types.ActionTypeEndTurn,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g)
-		})
-
-	return status, nil
-}
-
-func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
-	var nextAction types.ActionType
-
-	p, e := g.WhoIsCurrent()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	switch g.currentAction {
-	case types.ActionTypeAttack:
-		nextAction = types.ActionTypeSpySteal
-	case types.ActionTypeSpySteal:
-		nextAction = types.ActionTypeBuy
-	case types.ActionTypeBuy:
-		nextAction = types.ActionTypeConstruct
-	case types.ActionTypeConstruct:
-		nextAction = types.ActionTypeEndTurn
-	default:
-		return status, errors.New("cannot skip this phase")
-	}
-
-	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
-	status = g.nextAction(nextAction,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g)
-		})
-
-	return status, nil
-}
-
-func (g *Game) EndTurn(player string) (status GameStatus, err error) {
-	p, _ := g.WhoIsCurrent()
-	if p.Name() != player {
-		return status, fmt.Errorf("%s not your turn", player)
-	}
-
-	g.switchTurn()
-	p, e := g.WhoIsCurrent()
-	status = g.nextAction(types.ActionTypeDrawCard,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, e, g)
-		})
-
-	g.addToHistory(fmt.Sprintf("is %s's turn", p.Name()))
-
-	return status, nil
 }
 
 func (g *Game) IsGameOver() (bool, string) {
@@ -640,36 +180,89 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.gameOver = true
-	g.winner = p.Name()
+	if g.Mode == types.GameMode2v2 {
+		g.winner = p.Name() + "'s team"
+	} else {
+		g.winner = p.Name()
+	}
 }
 
-func (g *Game) OnFieldWithoutWarriors() {
-	g.gameOver = true
-	p, _ := g.WhoIsCurrent()
-	g.winner = p.Name()
+func (g *Game) OnFieldWithoutWarriors(playerName string) {
+	eliminatedIdx := g.PlayerIndex(playerName)
+
+	switch g.Mode {
+	case types.GameMode1v1:
+		g.gameOver = true
+		g.winner = g.CurrentPlayer().Name()
+
+	case types.GameModeFFA3, types.GameModeFFA5:
+		g.EliminatedPlayers[eliminatedIdx] = true
+		g.addToHistory(playerName + " has been eliminated!")
+		active := 0
+		var lastActive string
+		for i, p := range g.Players {
+			if !g.EliminatedPlayers[i] {
+				active++
+				lastActive = p.Name()
+			}
+		}
+		if active == 1 {
+			g.gameOver = true
+			g.winner = lastActive
+		}
+
+	case types.GameMode2v2:
+		g.EliminatedPlayers[eliminatedIdx] = true
+		g.addToHistory(playerName + " has been eliminated!")
+		// Check if all enemies of the eliminated player's team are also eliminated
+		// (i.e., the opposing team is fully eliminated)
+		attackerIdx := g.CurrentTurn
+		allEnemiesEliminated := true
+		for _, enemy := range g.Enemies(attackerIdx) {
+			enemyIdx := g.PlayerIndex(enemy.Name())
+			if !g.EliminatedPlayers[enemyIdx] {
+				allEnemiesEliminated = false
+				break
+			}
+		}
+		if allEnemiesEliminated {
+			g.gameOver = true
+			g.winner = g.CurrentPlayer().Name() + "'s team"
+		}
+	}
 }
 
 func (g *Game) switchTurn() {
 	g.hasMovedWarrior = false
 	g.hasTraded = false
 	g.currentAction = types.ActionTypeDrawCard
-	g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
-}
 
-func (g *Game) CurrentAction() types.ActionType {
-	return g.currentAction
+	for {
+		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
+		if !g.EliminatedPlayers[g.CurrentTurn] {
+			break
+		}
+	}
 }
 
 func (g *Game) nextAction(expectedAction types.ActionType,
 	gameStatusFn func() GameStatus) GameStatus {
 
-	p, enemy := g.WhoIsCurrent()
+	p := g.CurrentPlayer()
 	g.CanMoveWarrior = !g.hasMovedWarrior && p.HasWarriorsInHand()
 	g.CanTrade = !g.hasTraded && p.CanTradeCards()
 
 	if expectedAction == types.ActionTypeAttack {
 		// Check if player can attack with weapons OR catapult
-		canAttackWithCatapult := p.HasCatapult() && enemy.Castle().CanBeAttacked()
+		canAttackWithCatapult := false
+		if p.HasCatapult() {
+			for _, e := range g.Enemies(g.CurrentTurn) {
+				if e.Castle().CanBeAttacked() {
+					canAttackWithCatapult = true
+					break
+				}
+			}
+		}
 
 		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
 			g.currentAction = types.ActionTypeAttack

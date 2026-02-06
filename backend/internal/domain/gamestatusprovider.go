@@ -5,23 +5,23 @@ import (
 )
 
 type GameStatusProvider interface {
-	Get(p ports.Player, e ports.Player, game *Game, newCards ...ports.Card) GameStatus
-	GetWithModal(p ports.Player, e ports.Player, game *Game, modalCards []ports.Card) GameStatus
+	Get(viewer ports.Player, game *Game, newCards ...ports.Card) GameStatus
+	GetWithModal(viewer ports.Player, game *Game, modalCards []ports.Card) GameStatus
 }
 
 type gameStatusProvider struct{}
 
-func (gsp *gameStatusProvider) Get(p ports.Player, e ports.Player,
-	game *Game, newCards ...ports.Card) GameStatus {
+func (gsp *gameStatusProvider) Get(viewer ports.Player, game *Game,
+	newCards ...ports.Card) GameStatus {
 
-	return newGameStatus(p, e, game, newCards...)
+	return newGameStatus(viewer, game, newCards...)
 
 }
 
-func (gsp *gameStatusProvider) GetWithModal(p ports.Player, e ports.Player,
-	game *Game, modalCards []ports.Card) GameStatus {
+func (gsp *gameStatusProvider) GetWithModal(viewer ports.Player, game *Game,
+	modalCards []ports.Card) GameStatus {
 
-	return newGameStatusWithModalCards(p, e, game, modalCards)
+	return newGameStatusWithModalCards(viewer, game, modalCards)
 
 }
 

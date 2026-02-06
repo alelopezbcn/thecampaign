@@ -13,9 +13,21 @@ func NewDealer() ports.Dealer {
 	return &dealer{}
 }
 
-func (d *dealer) WarriorsCards() (warriors []ports.Card) {
-	warriors = make([]ports.Card, 0, 15)
-	for i := 1; i < 6; i++ {
+func (d *dealer) WarriorsCards(playerCount int) (warriors []ports.Card) {
+	totalWarriors := 15
+	warriorsPerType := 5
+
+	if playerCount > 2 && playerCount <= 4 {
+		totalWarriors = 21
+		warriorsPerType = 7
+	} else if playerCount > 4 {
+		totalWarriors = 27
+		warriorsPerType = 9
+	}
+
+	warriors = make([]ports.Card, 0, totalWarriors)
+
+	for i := 1; i <= warriorsPerType; i++ {
 		k := NewKnight(fmt.Sprintf("k%d", i))
 		warriors = append(warriors, k)
 
@@ -29,9 +41,9 @@ func (d *dealer) WarriorsCards() (warriors []ports.Card) {
 	return warriors
 }
 
-func (d *dealer) OtherCards() (other []ports.Card) {
+func (d *dealer) OtherCards(playerCount int) (other []ports.Card) {
 	other = []ports.Card{
-		NewDragon("d"),
+		NewDragon("dr1"),
 		NewSpecialPower("s1"),
 		NewSpecialPower("s2"),
 		NewSpecialPower("s3"),
@@ -39,14 +51,15 @@ func (d *dealer) OtherCards() (other []ports.Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c1"),
+	}
+
+	if playerCount > 3 {
+		other = append(other, NewDragon("dr2"))
+		other = append(other, NewSpecialPower("s5"))
+		other = append(other, NewSpecialPower("s6"))
+		other = append(other, NewSpy("spy2"))
+		other = append(other, NewThief("t2"))
+		other = append(other, NewCatapultCard("c2"))
 	}
 
 	for i := 1; i < 10; i++ {
@@ -57,16 +70,7 @@ func (d *dealer) OtherCards() (other []ports.Card) {
 		if i == 5 || i == 7 {
 			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
 		}
-
-		if i == 1 {
-			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
-			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
-			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
-			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
-			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
-			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
-			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
-			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
+		if playerCount > 3 {
 			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
 			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
 			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))

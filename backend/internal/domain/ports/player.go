@@ -2,6 +2,7 @@ package ports
 
 type Player interface {
 	Name() string
+	Idx() int
 	TakeCards(cards ...Card) bool
 	MoveCardToField(cardID string) error
 	GiveCards(cardIDs ...string) ([]Card, error)
