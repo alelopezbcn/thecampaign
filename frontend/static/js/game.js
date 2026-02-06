@@ -1,5 +1,7 @@
 // Game state
 let ws = null;
+let reconnectAttempts = 0;
+let reconnectTimer = null;
 let gameState = {
     playerName: '',
     gameID: '',
@@ -93,7 +95,17 @@ function connectWebSocket() {
 
     ws.onopen = () => {
         console.log('WebSocket connected');
+        reconnectAttempts = 0;
         showStatus('connection-status', 'Connected to server', 'success');
+
+        // If we have game info, rejoin automatically (reconnection)
+        if (gameState.playerName && gameState.gameID) {
+            console.log('Reconnecting to game:', gameState.gameID);
+            sendMessage('join_game', {
+                player_name: gameState.playerName,
+                game_id: gameState.gameID
+            });
+        }
     };
 
     ws.onmessage = (event) => {
@@ -109,7 +121,20 @@ function connectWebSocket() {
 
     ws.onclose = () => {
         console.log('WebSocket closed');
-        showStatus('connection-status', 'Disconnected from server', 'error');
+        ws = null;
+
+        // Only auto-reconnect if we were in a game
+        if (gameState.playerName && gameState.gameID) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+            reconnectAttempts++;
+            showStatus('connection-status', `Reconnecting in ${delay / 1000}s... (attempt ${reconnectAttempts})`, 'error');
+            reconnectTimer = setTimeout(() => {
+                console.log(`Reconnect attempt ${reconnectAttempts}`);
+                connectWebSocket();
+            }, delay);
+        } else {
+            showStatus('connection-status', 'Disconnected from server', 'error');
+        }
     };
 }
 
@@ -353,15 +378,8 @@ function joinGame() {
     gameState.playerName = playerName;
     gameState.gameID = gameID;
 
+    // connectWebSocket's onopen will send join_game automatically
     connectWebSocket();
-
-    // Send join message after connection
-    setTimeout(() => {
-        sendMessage('join_game', {
-            player_name: playerName,
-            game_id: gameID
-        });
-    }, 500);
 }
 
 function selectAllWarriors() {
