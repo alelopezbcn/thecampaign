@@ -16,6 +16,8 @@ let gameState = {
     executedPhases: [], // Track phases that were actually executed this turn
     lastTurnPlayer: null, // Track whose turn it was to detect turn changes
     historyMessages: [], // Accumulated history messages
+    waitingPlayers: [], // Track players who have joined the waiting room
+    maxPlayers: 2, // Max players for current game mode
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -47,6 +49,15 @@ function setupEventListeners() {
     });
     document.getElementById('game-id').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') joinGame();
+    });
+
+    // Game mode selector
+    document.querySelectorAll('.game-mode-option').forEach(option => {
+        option.addEventListener('click', () => {
+            document.querySelectorAll('.game-mode-option').forEach(o => o.classList.remove('selected'));
+            option.classList.add('selected');
+            gameState.gameMode = option.dataset.mode;
+        });
     });
 
     // Game screen actions - only 4 buttons
@@ -180,7 +191,19 @@ function handleError(payload) {
 
 function handlePlayerJoined(payload) {
     console.log('Player joined:', payload.player_name);
+
+    if (payload.game_mode) {
+        gameState.gameMode = payload.game_mode;
+    }
+    if (payload.max_players) {
+        gameState.maxPlayers = payload.max_players;
+    }
+    if (payload.player_name && !gameState.waitingPlayers.includes(payload.player_name)) {
+        gameState.waitingPlayers.push(payload.player_name);
+    }
+
     showWaitingScreen();
+    updateWaitingScreen();
 }
 
 function handleGameStarted(payload) {
@@ -317,7 +340,57 @@ function showScreen(screenName) {
 
 function showWaitingScreen() {
     document.getElementById('current-game-id').textContent = gameState.gameID;
+
+    // Ensure current player is in the list
+    if (gameState.playerName && !gameState.waitingPlayers.includes(gameState.playerName)) {
+        gameState.waitingPlayers.push(gameState.playerName);
+    }
+
+    updateWaitingScreen();
     showScreen('waiting');
+}
+
+function updateWaitingScreen() {
+    const modeBadge = document.getElementById('waiting-mode-badge');
+    const countEl = document.getElementById('waiting-player-count');
+    const listEl = document.getElementById('waiting-players-list');
+
+    if (modeBadge) {
+        modeBadge.textContent = gameState.gameMode.toUpperCase();
+    }
+
+    if (countEl) {
+        countEl.textContent = `${gameState.waitingPlayers.length}/${gameState.maxPlayers} players`;
+    }
+
+    if (listEl) {
+        listEl.innerHTML = '';
+
+        // Render filled slots
+        for (const name of gameState.waitingPlayers) {
+            const isSelf = name === gameState.playerName;
+            const slot = document.createElement('div');
+            slot.className = `player-slot ${isSelf ? 'self' : 'filled'}`;
+            slot.innerHTML = `
+                <div class="player-slot-icon">${isSelf ? '⚔' : '🛡'}</div>
+                <span class="player-slot-name">${name}</span>
+                ${isSelf ? '<span class="player-slot-you">YOU</span>' : ''}
+            `;
+            listEl.appendChild(slot);
+        }
+
+        // Render empty slots
+        const emptySlots = gameState.maxPlayers - gameState.waitingPlayers.length;
+        for (let i = 0; i < emptySlots; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'player-slot empty';
+            slot.innerHTML = `
+                <div class="player-slot-icon">?</div>
+                <span class="player-slot-name">Waiting...</span>
+            `;
+            listEl.appendChild(slot);
+        }
+    }
 }
 
 function showGameScreen(status) {
@@ -338,6 +411,8 @@ function joinGame() {
 
     gameState.playerName = playerName;
     gameState.gameID = gameID;
+    gameState.waitingPlayers = [];
+    gameState.maxPlayers = { '1v1': 2, '2v2': 4, 'ffa3': 3, 'ffa5': 5 }[gameState.gameMode] || 2;
 
     // connectWebSocket's onopen will send join_game automatically
     connectWebSocket();
