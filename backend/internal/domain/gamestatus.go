@@ -8,6 +8,7 @@ import (
 
 type GameStatus struct {
 	CurrentPlayer  string   `json:"current_player"`
+	TurnPlayer     string   `json:"turn_player"`
 	CurrentAction  string   `json:"current_action"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
@@ -16,6 +17,7 @@ type GameStatus struct {
 	CurrentPlayerHand   []gamestatus.HandCard  `json:"current_player_hand"`
 	CurrentPlayerField  []gamestatus.FieldCard `json:"current_player_field"`
 	CurrentPlayerCastle gamestatus.Castle      `json:"current_player_castle"`
+	IsEliminated        bool                   `json:"is_eliminated"`
 	Opponents           []OpponentStatus       `json:"opponents"`
 	GameMode            string                 `json:"game_mode"`
 	Cemetery            gamestatus.Cemetery    `json:"cemetery"`
@@ -47,14 +49,17 @@ func newGameStatusWithModalCards(viewer ports.Player, game *Game,
 func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 ) GameStatus {
 
+	viewerIdx := game.PlayerIndex(viewer.Name())
 	gs := GameStatus{
 		CurrentPlayer:       viewer.Name(),
+		TurnPlayer:          game.CurrentPlayer().Name(),
 		CurrentAction:       string(game.currentAction),
 		GameMode:            string(game.Mode),
 		NewCards:            []string{},
 		CurrentPlayerHand:   []gamestatus.HandCard{},
 		CurrentPlayerField:  []gamestatus.FieldCard{},
 		CurrentPlayerCastle: gamestatus.NewCastle(viewer.Castle()),
+		IsEliminated:        game.EliminatedPlayers[viewerIdx],
 		CanTrade:            game.CanTrade,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),

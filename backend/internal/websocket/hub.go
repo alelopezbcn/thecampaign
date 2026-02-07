@@ -235,11 +235,16 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 
 	// Not enough players yet
 	if len(room.Players) < room.MaxPlayers {
+		allNames := make([]string, 0, len(room.Players))
+		for name := range room.Players {
+			allNames = append(allNames, name)
+		}
 		for _, c := range room.Players {
 			c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
 				GameMode:   string(room.GameMode),
 				MaxPlayers: room.MaxPlayers,
 				PlayerName: playerName,
+				Players:    allNames,
 			})
 		}
 		room.mutex.Unlock()

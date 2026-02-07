@@ -6,7 +6,6 @@ let gameState = {
     playerName: '',
     gameID: '',
     gameMode: '1v1',
-    enemyName: '',
     isYourTurn: false,
     currentState: null,
     selectedCards: [],
@@ -198,7 +197,10 @@ function handlePlayerJoined(payload) {
     if (payload.max_players) {
         gameState.maxPlayers = payload.max_players;
     }
-    if (payload.player_name && !gameState.waitingPlayers.includes(payload.player_name)) {
+    // Use the full players list from the server (authoritative)
+    if (payload.players && payload.players.length > 0) {
+        gameState.waitingPlayers = payload.players;
+    } else if (payload.player_name && !gameState.waitingPlayers.includes(payload.player_name)) {
         gameState.waitingPlayers.push(payload.player_name);
     }
 
@@ -215,29 +217,9 @@ function handleGameStarted(payload) {
     document.getElementById('player-name-display').textContent = payload.your_name;
 }
 
-// Normalize multiplayer game status to flat fields for 1v1 backward compatibility
-function normalizeGameStatusFor1v1(status) {
-    if (status.opponents && status.opponents.length > 0) {
-        // In 1v1, there's only one opponent
-        const enemy = status.opponents[0];
-        status.enemy_field = enemy.field || [];
-        status.enemy_castle = enemy.castle || {};
-        status.cards_in_enemy_hand = enemy.cards_in_hand || 0;
-        gameState.enemyName = enemy.player_name;
-    } else {
-        status.enemy_field = [];
-        status.enemy_castle = {};
-        status.cards_in_enemy_hand = 0;
-    }
-    return status;
-}
-
 function handleGameState(payload) {
     console.log('Game state updated:', payload);
     console.log('New cards from payload:', payload.game_status.new_cards);
-
-    // Normalize opponents array to flat fields for 1v1
-    normalizeGameStatusFor1v1(payload.game_status);
 
     // Save previous state for damage detection
     const previousState = gameState.currentState;
@@ -253,6 +235,11 @@ function handleGameState(payload) {
 
     gameState.isYourTurn = isNowYourTurn;
     gameState.currentState = payload.game_status;
+
+    // Detect newly eliminated players
+    if (previousState) {
+        checkForEliminations(previousState, payload.game_status);
+    }
 
     // Schedule damage feedback after render (needs DOM elements to exist)
     if (previousState) {
@@ -464,7 +451,7 @@ function clearSelections() {
     });
     // Remove selection mode classes from fields
     document.getElementById('player-field')?.classList.remove('selecting-ally');
-    document.getElementById('enemy-field')?.classList.remove('selecting-target');
+    document.querySelectorAll('.opponent-field').forEach(f => f.classList.remove('selecting-target'));
     document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
         badge.remove();
     });
@@ -562,8 +549,9 @@ function handleCardClick(cardID, cardType, context, card = null) {
         return;
     }
 
-    // Handle target selection for attack phase (enemy field)
-    if (gameState.actionState.weaponId && context === 'enemy-field') {
+    // Handle target selection for attack phase (opponent field)
+    if (gameState.actionState.weaponId && context.startsWith('opponent-field:')) {
+        const opponentName = context.split(':')[1];
         // For special powers, only Archer (Instant Kill) can target enemies
         if (gameState.actionState.type === 'specialpower') {
             const userId = gameState.actionState.userId;
@@ -576,6 +564,7 @@ function handleCardClick(cardID, cardType, context, card = null) {
                 }
             }
         }
+        gameState.actionState.targetPlayer = opponentName;
         handleAttackPhaseTargetClick(cardID, 'enemy');
         return;
     }
@@ -627,7 +616,19 @@ function handleAttackPhaseHandClick(cardID, card) {
         gameState.actionState.type = 'catapult';
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
-        showCatapultModal();
+        const enemies = getEnemyOpponents().filter(e => e.castle?.constructed && e.castle?.resource_cards > 0);
+        if (enemies.length === 1) {
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            showCatapultModal();
+        } else if (enemies.length > 1) {
+            showTargetPlayerModal('Select a castle to attack', enemies, (playerName) => {
+                gameState.actionState.targetPlayer = playerName;
+                showCatapultModal();
+            });
+        } else {
+            updateActionPrompt('No enemy castles to attack!');
+            resetActionState();
+        }
     } else if (cardType === 'weapon') {
         gameState.actionState.type = 'attack';
         highlightSelectedCard(cardID);
@@ -742,7 +743,7 @@ function showAttackConfirmModal(weapon, target) {
         description: description,
         onConfirm: () => {
             sendAction('attack', {
-                target_player: gameState.enemyName,
+                target_player: gameState.actionState.targetPlayer,
                 weapon_id: gameState.actionState.weaponId,
                 target_id: gameState.actionState.targetId
             });
@@ -837,12 +838,21 @@ function handleSpyStealPhaseHandClick(cardID, card) {
 
     if (cardType === 'spy') {
         gameState.actionState.type = 'spy';
-        // Show spy options modal
         showSpyOptionsModal();
     } else if (cardType === 'thief') {
         gameState.actionState.type = 'thief';
-        // Show steal modal immediately when thief is selected
-        showStealModal();
+        const enemies = getEnemyOpponents();
+        if (enemies.length === 1) {
+            // Only one enemy, skip player selection
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            showStealModal();
+        } else {
+            // Multiple enemies, show target player selection first
+            showTargetPlayerModal('Select a player to steal from', enemies, (playerName) => {
+                gameState.actionState.targetPlayer = playerName;
+                showStealModal();
+            });
+        }
     }
 }
 
@@ -935,13 +945,11 @@ function highlightValidUserWarriors(weapon) {
 
 function enableSpecialPowerTargetSelection(userType) {
     // Enable target selection on the appropriate field based on warrior type
-    // Don't pre-highlight any targets - only the clicked one will be highlighted
     const playerField = document.getElementById('player-field');
-    const enemyField = document.getElementById('enemy-field');
 
     if (userType === 'archer') {
         // Archer (Instant Kill) targets enemies
-        enemyField.classList.add('selecting-target');
+        document.querySelectorAll('.opponent-field').forEach(f => f.classList.add('selecting-target'));
     } else {
         // Mage (Heal) and Knight (Protect) target allies
         playerField.classList.add('selecting-ally');
@@ -951,9 +959,8 @@ function enableSpecialPowerTargetSelection(userType) {
 function highlightValidTargets(weapon) {
     const dmgMult = weapon?.dmg_mult || {};
 
-    // Highlight valid targets on enemy field
-    const enemyField = document.getElementById('enemy-field');
-    enemyField.querySelectorAll('.card').forEach(card => {
+    // Highlight valid targets on all opponent fields
+    document.querySelectorAll('.opponent-field .card').forEach(card => {
         const cardId = card.dataset.cardId;
         if (weapon && weapon.use_on && weapon.use_on.includes(cardId)) {
             card.classList.add('valid-target');
@@ -999,9 +1006,11 @@ function findCardById(cardId) {
         if (card.id === cardId) return card;
     }
 
-    // Search in enemy field
-    for (const card of status.enemy_field || []) {
-        if (card.id === cardId) return card;
+    // Search in all opponent fields
+    for (const opponent of status.opponents || []) {
+        for (const card of opponent.field || []) {
+            if (card.id === cardId) return card;
+        }
     }
 
     return null;
@@ -1052,7 +1061,8 @@ function resetActionState() {
         weaponId: null,
         userId: null,
         targetId: null,
-        warriorId: null
+        warriorId: null,
+        targetPlayer: null
     };
 
     // Clear visual selections
@@ -1062,7 +1072,7 @@ function resetActionState() {
 
     // Remove selection mode classes from fields
     document.getElementById('player-field')?.classList.remove('selecting-ally');
-    document.getElementById('enemy-field')?.classList.remove('selecting-target');
+    document.querySelectorAll('.opponent-field').forEach(f => f.classList.remove('selecting-target'));
 
     // Remove damage multiplier badges
     document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
@@ -1112,8 +1122,10 @@ function extractFieldHP(status) {
         (status.current_player_field || []).forEach(card => {
             hpMap[card.id] = card.value;
         });
-        (status.enemy_field || []).forEach(card => {
-            hpMap[card.id] = card.value;
+        (status.opponents || []).forEach(opp => {
+            (opp.field || []).forEach(card => {
+                hpMap[card.id] = card.value;
+            });
         });
     }
     return hpMap;
@@ -1170,8 +1182,8 @@ function showFloatingHeal(cardId, amount) {
 }
 
 function renderGameBoard(status) {
-    // Render enemy field
-    renderCards('enemy-field', status.enemy_field);
+    // Render all opponent boards
+    renderOpponents(status.opponents || []);
 
     // Render player field
     renderCards('player-field', status.current_player_field);
@@ -1179,8 +1191,7 @@ function renderGameBoard(status) {
     // Render player hand
     renderCards('player-hand', status.current_player_hand);
 
-    // Render castles
-    renderCastle('enemy-castle', status.enemy_castle);
+    // Render player castle
     renderCastle('player-castle', status.current_player_castle);
 
     // Render cemetery
@@ -1195,8 +1206,161 @@ function renderGameBoard(status) {
     // Render history
     renderHistory(status.history);
 
-    // Render enemy hand as card backs
-    renderEnemyHand(status.cards_in_enemy_hand);
+    // Show/hide player eliminated overlay
+    updatePlayerEliminatedState(status.is_eliminated);
+}
+
+function updatePlayerEliminatedState(isEliminated) {
+    const playerBoard = document.querySelector('.player-board');
+    const actionPanel = document.querySelector('.action-panel');
+
+    if (!isEliminated) {
+        playerBoard?.classList.remove('eliminated');
+        // Remove overlay if exists
+        document.getElementById('player-eliminated-overlay')?.remove();
+        return;
+    }
+
+    playerBoard?.classList.add('eliminated');
+    actionPanel?.classList.add('eliminated');
+
+    // Add overlay if not already present
+    if (!document.getElementById('player-eliminated-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.id = 'player-eliminated-overlay';
+        overlay.className = 'player-eliminated-overlay';
+        overlay.innerHTML = `
+            <div class="eliminated-overlay-content">
+                <div class="eliminated-overlay-icon">💀</div>
+                <div class="eliminated-overlay-text">ELIMINATED</div>
+            </div>
+        `;
+        playerBoard?.appendChild(overlay);
+    }
+
+    // Disable all action buttons
+    document.querySelectorAll('.action-buttons .btn').forEach(btn => {
+        btn.disabled = true;
+    });
+}
+
+function renderOpponents(opponents) {
+    const container = document.getElementById('opponents-container');
+    container.innerHTML = '';
+    container.setAttribute('data-count', opponents.length);
+
+    opponents.forEach(opponent => {
+        const board = document.createElement('div');
+        board.className = 'opponent-board';
+        board.dataset.opponentName = opponent.player_name;
+        if (opponent.is_ally) board.classList.add('ally');
+        if (opponent.is_eliminated) board.classList.add('eliminated');
+
+        // Header
+        const header = document.createElement('div');
+        header.className = 'opponent-header';
+        header.innerHTML = `
+            <span class="opponent-name">${opponent.player_name}</span>
+            ${opponent.is_ally ? '<span class="opponent-badge ally-badge">Ally</span>' : ''}
+            ${opponent.is_eliminated ? '<span class="opponent-badge eliminated-badge">Eliminated</span>' : ''}
+        `;
+        board.appendChild(header);
+
+        // Internal layout
+        const area = document.createElement('div');
+        area.className = 'opponent-area';
+
+        // Castle
+        const castleArea = document.createElement('div');
+        castleArea.className = 'opponent-castle-area';
+        castleArea.innerHTML = '<h4>Castle</h4>';
+        const castleDiv = document.createElement('div');
+        castleDiv.className = 'castle';
+        castleArea.appendChild(castleDiv);
+        renderCastleInto(castleDiv, opponent.castle);
+        area.appendChild(castleArea);
+
+        // Field
+        const fieldArea = document.createElement('div');
+        fieldArea.className = 'opponent-field-area';
+        fieldArea.innerHTML = '<h4>Field</h4>';
+        const fieldDiv = document.createElement('div');
+        fieldDiv.className = 'opponent-field field card-container';
+        fieldDiv.dataset.opponentName = opponent.player_name;
+        fieldArea.appendChild(fieldDiv);
+        area.appendChild(fieldArea);
+
+        // Render field cards
+        const fieldCards = opponent.field || [];
+        if (fieldCards.length === 0) {
+            fieldDiv.innerHTML = '<div style="color: #666; padding: 10px; font-size: 0.85em;">No warriors</div>';
+        } else {
+            fieldCards.forEach(card => {
+                const cardElement = createCardElement(card, `opponent-field:${opponent.player_name}`);
+                fieldDiv.appendChild(cardElement);
+            });
+        }
+
+        board.appendChild(area);
+
+        // Hand
+        const handArea = document.createElement('div');
+        handArea.className = 'opponent-hand-area';
+        handArea.innerHTML = `<h4>Hand (${opponent.cards_in_hand || 0})</h4>`;
+        const handDiv = document.createElement('div');
+        handDiv.className = 'opponent-hand';
+        renderOpponentHandInto(handDiv, opponent.cards_in_hand || 0);
+        handArea.appendChild(handDiv);
+        board.appendChild(handArea);
+
+        container.appendChild(board);
+    });
+}
+
+function renderCastleInto(container, castle) {
+    if (!castle) {
+        container.innerHTML = '<div class="castle-status">Not Constructed</div>';
+        return;
+    }
+
+    const isConstructed = castle.constructed || false;
+    const resourceCount = castle.resource_cards || 0;
+    const castleValue = castle.value || 0;
+
+    container.className = 'castle';
+    if (isConstructed) container.classList.add('constructed');
+
+    container.innerHTML = `
+        <div class="castle-icon"></div>
+        <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
+        ${isConstructed ? `
+            <div class="castle-info">
+                <div class="castle-value">${castleValue}/25</div>
+                <div class="castle-value-label">Value</div>
+                <div class="castle-resources">${resourceCount} resource cards</div>
+            </div>
+        ` : ''}
+    `;
+}
+
+function renderOpponentHandInto(container, cardCount) {
+    container.innerHTML = '';
+    if (!cardCount || cardCount === 0) {
+        container.innerHTML = '<div style="color: #666; font-size: 0.8em;">No cards</div>';
+        return;
+    }
+    for (let i = 0; i < cardCount; i++) {
+        const cardBack = document.createElement('div');
+        cardBack.className = 'opponent-hand-card';
+        cardBack.innerHTML = `
+            <div class="card-back-mini">
+                <div class="card-back-mini-inner">
+                    <span class="card-back-mini-emblem">⚔</span>
+                </div>
+            </div>
+        `;
+        container.appendChild(cardBack);
+    }
 }
 
 function renderCards(containerId, cards) {
@@ -1214,28 +1378,6 @@ function renderCards(containerId, cards) {
     });
 }
 
-function renderEnemyHand(cardCount) {
-    const container = document.getElementById('enemy-hand');
-    container.innerHTML = '';
-
-    if (!cardCount || cardCount === 0) {
-        container.innerHTML = '<div style="color: #666; font-size: 0.85em;">No cards</div>';
-        return;
-    }
-
-    for (let i = 0; i < cardCount; i++) {
-        const cardBack = document.createElement('div');
-        cardBack.className = 'enemy-hand-card';
-        cardBack.innerHTML = `
-            <div class="card-back-mini">
-                <div class="card-back-mini-inner">
-                    <span class="card-back-mini-emblem">⚔</span>
-                </div>
-            </div>
-        `;
-        container.appendChild(cardBack);
-    }
-}
 
 function createCardElement(card, context) {
     const div = document.createElement('div');
@@ -1333,7 +1475,7 @@ function createCardElement(card, context) {
     }
 
     // Add click handler
-    if (context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {
+    if (context === 'player-hand' || context.startsWith('opponent-field:') || context === 'player-field') {
         div.addEventListener('click', () => {
             handleCardClick(div.dataset.cardId, cardType, context, card);
         });
@@ -1602,7 +1744,8 @@ function updatePhaseTracker() {
             turnStatusElement.classList.add('enemy-turn');
             phaseTracker?.classList.add('enemy-turn');
             gameScreen?.classList.add('enemy-turn');
-            turnTextElement.textContent = 'Enemy Turn';
+            const turnPlayer = gameState.currentState?.turn_player || 'Enemy';
+            turnTextElement.textContent = `${turnPlayer}'s Turn`;
         }
     }
 
@@ -1801,12 +1944,53 @@ function renderArrow() {
     return '<span class="action-confirm-arrow">→</span>';
 }
 
+// Helper: get non-eliminated, non-ally opponents
+function getEnemyOpponents() {
+    const opponents = gameState.currentState?.opponents || [];
+    return opponents.filter(o => !o.is_eliminated && !o.is_ally);
+}
+
+// Helper: get opponent data by name
+function getOpponentByName(name) {
+    const opponents = gameState.currentState?.opponents || [];
+    return opponents.find(o => o.player_name === name) || null;
+}
+
+// Target Player Selection Modal
+function showTargetPlayerModal(title, opponents, callback) {
+    let content = '<div class="target-player-options">';
+    opponents.forEach(opp => {
+        const name = opp.player_name;
+        const detail = `${opp.cards_in_hand} cards, ${(opp.field || []).length} warriors`;
+        content += `
+            <div class="target-player-option" onclick="window._targetPlayerCallback('${name}')">
+                <span class="player-icon">⚔</span>
+                <div class="player-info">
+                    <div class="player-name">${name}</div>
+                    <div class="player-detail">${detail}</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._targetPlayerCallback = (playerName) => {
+        hideGameModal();
+        delete window._targetPlayerCallback;
+        callback(playerName);
+    };
+
+    showGameModal(title, 'Choose a target player', content, true);
+}
+
 // Steal Modal
 function showStealModal() {
-    const enemyHandCount = gameState.currentState?.cards_in_enemy_hand || 0;
+    const targetName = gameState.actionState.targetPlayer;
+    const opponent = getOpponentByName(targetName);
+    const handCount = opponent?.cards_in_hand || 0;
 
     let content = '';
-    for (let i = 0; i < enemyHandCount; i++) {
+    for (let i = 0; i < handCount; i++) {
         content += `
             <div class="card-face-down" data-position="${i}" onclick="selectStealPosition(${i})">
                 <span class="card-position">#${i + 1}</span>
@@ -1814,17 +1998,20 @@ function showStealModal() {
         `;
     }
 
-    showGameModal('Select a card to steal', "Choose one of your opponent's cards", content, true);
+    showGameModal(`Steal from ${targetName}`, "Choose one of their cards", content, true);
 }
 
 function selectStealPosition(position) {
     gameState.pendingModalAction = 'steal';
-    sendAction('steal', { target_player: gameState.enemyName, card_position: position });
+    sendAction('steal', { target_player: gameState.actionState.targetPlayer, card_position: position });
     hideGameModal();
 }
 
 // Spy Options Modal
 function showSpyOptionsModal() {
+    const enemies = getEnemyOpponents();
+    const hasMultipleEnemies = enemies.length > 1;
+
     const content = `
         <div class="spy-option" onclick="selectSpyOption(1)">
             <div class="spy-option-title">Reveal Deck</div>
@@ -1841,17 +2028,36 @@ function showSpyOptionsModal() {
 
 function selectSpyOption(option) {
     hideGameModal();
-    gameState.pendingModalAction = option === 1 ? 'spy_deck' : 'spy_hand';
-    sendAction('spy', { target_player: gameState.enemyName, option: option });
+
+    if (option === 1) {
+        // Reveal deck - no target player needed
+        gameState.pendingModalAction = 'spy_deck';
+        const enemies = getEnemyOpponents();
+        // Backend requires a target_player even for deck spy; use first enemy
+        sendAction('spy', { target_player: enemies[0]?.player_name || '', option: option });
+    } else {
+        // Reveal hand - need to select target player
+        const enemies = getEnemyOpponents();
+        if (enemies.length === 1) {
+            gameState.pendingModalAction = 'spy_hand';
+            sendAction('spy', { target_player: enemies[0].player_name, option: option });
+        } else {
+            showTargetPlayerModal('Whose hand do you want to reveal?', enemies, (playerName) => {
+                gameState.pendingModalAction = 'spy_hand';
+                sendAction('spy', { target_player: playerName, option: option });
+            });
+        }
+    }
 }
 
 // Catapult Modal
 function showCatapultModal() {
-    const enemyCastle = gameState.currentState?.enemy_castle;
-    const resourceCount = enemyCastle?.resource_cards || 0;
+    const targetName = gameState.actionState.targetPlayer;
+    const opponent = getOpponentByName(targetName);
+    const resourceCount = opponent?.castle?.resource_cards || 0;
 
     if (resourceCount === 0) {
-        updateActionPrompt('Enemy castle has no resources to attack!');
+        updateActionPrompt('Castle has no resources to attack!');
         resetActionState();
         return;
     }
@@ -1869,12 +2075,12 @@ function showCatapultModal() {
     }
     content += '</div>';
 
-    showGameModal('🏰 Catapult Attack', 'Select a resource card to destroy', content, true);
+    showGameModal(`Catapult ${targetName}'s Castle`, 'Select a resource card to destroy', content, true);
 }
 
 function selectCatapultPosition(position) {
     hideGameModal();
-    sendAction('catapult', { target_player: gameState.enemyName, card_position: position });
+    sendAction('catapult', { target_player: gameState.actionState.targetPlayer, card_position: position });
 }
 
 // Bought Cards Modal
@@ -1963,6 +2169,45 @@ function showGameOverModal(isWinner, message) {
     }
 
     messageElement.textContent = message;
+    modal.classList.remove('hidden');
+}
+
+// Elimination detection
+function checkForEliminations(previousState, newState) {
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    for (const newOpp of newOpponents) {
+        if (!newOpp.is_eliminated) continue;
+        const prevOpp = prevOpponents.find(o => o.player_name === newOpp.player_name);
+        if (prevOpp && !prevOpp.is_eliminated) {
+            // This player was just eliminated
+            const isSelf = newOpp.player_name === gameState.playerName;
+            setTimeout(() => showEliminationModal(newOpp.player_name, isSelf), 200);
+            return; // Show one at a time
+        }
+    }
+}
+
+function showEliminationModal(playerName, isSelf) {
+    const modal = document.getElementById('game-modal');
+    const title = document.getElementById('modal-title');
+    const subtitle = document.getElementById('modal-subtitle');
+    const cardsContainer = document.getElementById('modal-cards-container');
+    const closeBtn = document.getElementById('modal-close-btn');
+
+    if (isSelf) {
+        title.textContent = 'You have been eliminated!';
+        subtitle.textContent = 'All your warriors have fallen. You are out of the battle.';
+        cardsContainer.innerHTML = '<div style="font-size: 4em; text-align: center; padding: 20px;">💀</div>';
+    } else {
+        title.textContent = `${playerName} eliminated!`;
+        subtitle.textContent = `${playerName} has lost all warriors and is out of the battle.`;
+        cardsContainer.innerHTML = '<div style="font-size: 4em; text-align: center; padding: 20px;">⚔️</div>';
+    }
+
+    closeBtn.textContent = 'Continue';
+    closeBtn.onclick = () => modal.classList.add('hidden');
     modal.classList.remove('hidden');
 }
 

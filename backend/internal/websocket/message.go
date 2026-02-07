@@ -103,6 +103,7 @@ type GameStatePayload struct {
 // GameStatusDTO is the JSON-friendly game status
 type GameStatusDTO struct {
 	CurrentPlayer  string   `json:"current_player"`
+	TurnPlayer     string   `json:"turn_player"`
 	CurrentAction  string   `json:"current_action"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
@@ -111,6 +112,7 @@ type GameStatusDTO struct {
 	CurrentPlayerHand   []HandCardDTO       `json:"current_player_hand"`
 	CurrentPlayerField  []FieldCardDTO      `json:"current_player_field"`
 	CurrentPlayerCastle CastleDTO           `json:"current_player_castle"`
+	IsEliminated        bool                `json:"is_eliminated"`
 	Opponents           []OpponentStatusDTO `json:"opponents"`
 	GameMode            string              `json:"game_mode"`
 	Cemetery            CemeteryDTO         `json:"cemetery"`
@@ -160,8 +162,9 @@ type GameStartedPayload struct {
 
 // PlayerJoinedPayload when a player joins
 type PlayerJoinedPayload struct {
-	GameMode   string `json:"game_mode"`
-	MaxPlayers int    `json:"max_players"`
-	PlayerName string `json:"player_name"`
+	GameMode   string   `json:"game_mode"`
+	MaxPlayers int      `json:"max_players"`
+	PlayerName string   `json:"player_name"`
+	Players    []string `json:"players"`
 }
 

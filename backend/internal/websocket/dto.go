@@ -49,6 +49,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 
 	return GameStatusDTO{
 		CurrentPlayer:  status.CurrentPlayer,
+		TurnPlayer:     status.TurnPlayer,
 		CurrentAction:  status.CurrentAction,
 		NewCards:       status.NewCards,
 		CanMoveWarrior: status.CanMoveWarrior,
@@ -57,6 +58,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CurrentPlayerHand:   convertHandCards(status.CurrentPlayerHand),
 		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
 		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
+		IsEliminated:        status.IsEliminated,
 		Opponents:           opponents,
 		GameMode:            status.GameMode,
 		Cemetery:            convertCemetery(status.Cemetery),
