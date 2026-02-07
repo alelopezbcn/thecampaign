@@ -50,10 +50,9 @@ type AttackPayload struct {
 
 // SpecialPowerPayload for special power action
 type SpecialPowerPayload struct {
-	TargetPlayer string `json:"target_player"`
-	UserID       string `json:"user_id"`
-	TargetID     string `json:"target_id"`
-	WeaponID     string `json:"weapon_id"`
+	UserID   string `json:"user_id"`
+	TargetID string `json:"target_id"`
+	WeaponID string `json:"weapon_id"`
 }
 
 // MoveWarriorPayload for moving a warrior to field

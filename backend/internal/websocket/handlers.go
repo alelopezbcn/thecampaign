@@ -180,9 +180,23 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 func (h *Hub) handleEndTurn(client *Client) {
 	log.Printf("handleEndTurn called by %s", client.PlayerName)
 
-	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.EndTurn(client.PlayerName)
-	})
+	room, exists := h.getGameRoom(client)
+	if !exists || room.Game == nil {
+		client.SendError("Game not found")
+		return
+	}
+
+	room.mutex.Lock()
+	_, err := room.Game.EndTurn(client.PlayerName)
+	room.mutex.Unlock()
+
+	if err != nil {
+		client.SendError(err.Error())
+		return
+	}
+
+	// Auto draw card for the next player and broadcast state
+	h.autoDrawAndBroadcast(client.GameID)
 }
 
 func (h *Hub) handleSkipPhase(client *Client) {

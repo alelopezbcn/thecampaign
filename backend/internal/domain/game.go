@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
@@ -289,6 +290,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			return gameStatusFn()
 		}
 		expectedAction = types.ActionTypeSpySteal
+		g.addToHistory(fmt.Sprintf("%s has no cards to attack, skipping phase.", p.Name()))
 	}
 	if expectedAction == types.ActionTypeSpySteal {
 		if p.HasSpy() || p.HasThief() {
@@ -296,6 +298,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			return gameStatusFn()
 		}
 		expectedAction = types.ActionTypeBuy
+		g.addToHistory(fmt.Sprintf("%s has no Spy or Thief to steal, skipping phase.", p.Name()))
 	}
 	if expectedAction == types.ActionTypeBuy {
 		if p.CanBuy() {
@@ -303,6 +306,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			return gameStatusFn()
 		}
 		expectedAction = types.ActionTypeConstruct
+		g.addToHistory(fmt.Sprintf("%s has no cards to buy or exceeds hand limit, skipping phase.", p.Name()))
 	}
 	if expectedAction == types.ActionTypeConstruct {
 		if p.CanConstruct() {
@@ -310,6 +314,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			return gameStatusFn()
 		}
 		expectedAction = types.ActionTypeEndTurn
+		g.addToHistory(fmt.Sprintf("%s has no cards to construct, skipping phase.", p.Name()))
 	}
 
 	if expectedAction == types.ActionTypeEndTurn {
