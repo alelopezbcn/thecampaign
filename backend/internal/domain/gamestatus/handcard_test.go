@@ -12,9 +12,9 @@ import (
 
 func TestNewWarriorHandCard(t *testing.T) {
 	tests := []struct {
-		name       string
+		name        string
 		warriorType types.WarriorType
-		wantType   CardType
+		wantType    CardType
 	}{
 		{"Knight", types.KnightWarriorType, CardTypeKnight},
 		{"Archer", types.ArcherWarriorType, CardTypeArcher},
@@ -58,7 +58,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		// HasKnight/HasDragon are called before action check
 		myField.EXPECT().HasKnight().Return(true)
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeBuy)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeBuy)
 
 		assert.Equal(t, "S1", hc.CardID)
 		assert.Equal(t, CardTypeSword, hc.CardType)
@@ -82,7 +82,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeSpySteal)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeSpySteal)
 
 		assert.Equal(t, "A1", hc.CardID)
 		assert.Equal(t, CardTypeArrow, hc.CardType)
@@ -105,7 +105,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasMage().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeBuy)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeBuy)
 
 		assert.Equal(t, CardTypePoison, hc.CardType)
 	})
@@ -126,7 +126,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasMage().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeConstruct)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeConstruct)
 
 		assert.Equal(t, "P1", hc.CardID)
 		assert.True(t, hc.CanBeUsed)
@@ -149,7 +149,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, true, types.ActionTypeConstruct)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, true, types.ActionTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -169,7 +169,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		// HasKnight/HasDragon called before action check
 		myField.EXPECT().HasKnight().Return(true)
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeConstruct)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -191,7 +191,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		enemy1.EXPECT().GetID().Return("EK1").Times(2)
 		enemyField.EXPECT().Warriors().Return([]ports.Warrior{enemy1})
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeAttack)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -213,7 +213,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasDragon().Return(false)
 		enemyField.EXPECT().Warriors().Return([]ports.Warrior{})
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeAttack)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeAttack)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -233,7 +233,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasDragon().Return(true)
 		enemyField.EXPECT().Warriors().Return([]ports.Warrior{})
 
-		hc := NewWeaponHandCard(weapon, myField, enemyField, false, types.ActionTypeAttack)
+		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 	})
@@ -332,11 +332,10 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeBuy)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeBuy)
 
 		assert.Equal(t, "SP1", hc.CardID)
 		assert.Equal(t, CardTypeSpecialPower, hc.CardType)
@@ -360,7 +359,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		enemy1.EXPECT().GetID().Return("EK1")
 		enemyField.EXPECT().Warriors().Return([]ports.Warrior{enemy1})
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{enemyField}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -372,7 +371,6 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		myWarrior := mocks.NewMockWarrior(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
@@ -384,7 +382,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myWarrior.EXPECT().IsProtected().Return(false, nil)
 		myWarrior.EXPECT().GetID().Return("K1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"K1"}, hc.CanBeUsedOnIDs)
@@ -396,7 +394,6 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		dragon := mocks.NewMockWarrior(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
@@ -408,7 +405,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		dragon.EXPECT().IsProtected().Return(false, nil)
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -420,7 +417,6 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		protectedWarrior := mocks.NewMockWarrior(ctrl)
 		existingSP := mocks.NewMockSpecialPower(ctrl)
 
@@ -432,7 +428,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		protectedWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		protectedWarrior.EXPECT().IsProtected().Return(true, existingSP)
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -444,7 +440,6 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		damagedWarrior := mocks.NewMockWarrior(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
@@ -456,7 +451,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		damagedWarrior.EXPECT().IsDamaged().Return(true)
 		damagedWarrior.EXPECT().GetID().Return("M1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"M1"}, hc.CanBeUsedOnIDs)
@@ -468,7 +463,6 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		healthyWarrior := mocks.NewMockWarrior(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
@@ -479,7 +473,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		healthyWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		healthyWarrior.EXPECT().IsDamaged().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -491,7 +485,6 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		dragon := mocks.NewMockWarrior(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
@@ -501,7 +494,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().Warriors().Return([]ports.Warrior{dragon})
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -513,14 +506,13 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp := mocks.NewMockSpecialPower(ctrl)
 		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 
 		sp.EXPECT().GetID().Return("SP1")
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp, myField, enemyField, types.ActionTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.ActionTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -529,46 +521,46 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 func TestNewSpyHandCard(t *testing.T) {
 	tests := []struct {
-		name      string
-		cardID    string
-		action    types.ActionType
-		wantUsed  bool
-		wantType  CardType
+		name     string
+		cardID   string
+		action   types.ActionType
+		wantUsed bool
+		wantType CardType
 	}{
 		{
-			name:      "Spy can be used during SpySteal phase",
-			cardID:    "SPY1",
-			action:    types.ActionTypeSpySteal,
-			wantUsed:  true,
-			wantType:  CardTypeSpy,
+			name:     "Spy can be used during SpySteal phase",
+			cardID:   "SPY1",
+			action:   types.ActionTypeSpySteal,
+			wantUsed: true,
+			wantType: CardTypeSpy,
 		},
 		{
-			name:      "Spy cannot be used during Attack phase",
-			cardID:    "SPY2",
-			action:    types.ActionTypeAttack,
-			wantUsed:  false,
-			wantType:  CardTypeSpy,
+			name:     "Spy cannot be used during Attack phase",
+			cardID:   "SPY2",
+			action:   types.ActionTypeAttack,
+			wantUsed: false,
+			wantType: CardTypeSpy,
 		},
 		{
-			name:      "Spy cannot be used during Buy phase",
-			cardID:    "SPY3",
-			action:    types.ActionTypeBuy,
-			wantUsed:  false,
-			wantType:  CardTypeSpy,
+			name:     "Spy cannot be used during Buy phase",
+			cardID:   "SPY3",
+			action:   types.ActionTypeBuy,
+			wantUsed: false,
+			wantType: CardTypeSpy,
 		},
 		{
-			name:      "Spy cannot be used during Construct phase",
-			cardID:    "SPY4",
-			action:    types.ActionTypeConstruct,
-			wantUsed:  false,
-			wantType:  CardTypeSpy,
+			name:     "Spy cannot be used during Construct phase",
+			cardID:   "SPY4",
+			action:   types.ActionTypeConstruct,
+			wantUsed: false,
+			wantType: CardTypeSpy,
 		},
 		{
-			name:      "Spy cannot be used during DrawCard phase",
-			cardID:    "SPY5",
-			action:    types.ActionTypeDrawCard,
-			wantUsed:  false,
-			wantType:  CardTypeSpy,
+			name:     "Spy cannot be used during DrawCard phase",
+			cardID:   "SPY5",
+			action:   types.ActionTypeDrawCard,
+			wantUsed: false,
+			wantType: CardTypeSpy,
 		},
 	}
 
@@ -587,39 +579,39 @@ func TestNewSpyHandCard(t *testing.T) {
 
 func TestNewThiefHandCard(t *testing.T) {
 	tests := []struct {
-		name      string
-		cardID    string
-		action    types.ActionType
-		wantUsed  bool
-		wantType  CardType
+		name     string
+		cardID   string
+		action   types.ActionType
+		wantUsed bool
+		wantType CardType
 	}{
 		{
-			name:      "Thief can be used during SpySteal phase",
-			cardID:    "THIEF1",
-			action:    types.ActionTypeSpySteal,
-			wantUsed:  true,
-			wantType:  CardTypeThief,
+			name:     "Thief can be used during SpySteal phase",
+			cardID:   "THIEF1",
+			action:   types.ActionTypeSpySteal,
+			wantUsed: true,
+			wantType: CardTypeThief,
 		},
 		{
-			name:      "Thief cannot be used during Attack phase",
-			cardID:    "THIEF2",
-			action:    types.ActionTypeAttack,
-			wantUsed:  false,
-			wantType:  CardTypeThief,
+			name:     "Thief cannot be used during Attack phase",
+			cardID:   "THIEF2",
+			action:   types.ActionTypeAttack,
+			wantUsed: false,
+			wantType: CardTypeThief,
 		},
 		{
-			name:      "Thief cannot be used during Buy phase",
-			cardID:    "THIEF3",
-			action:    types.ActionTypeBuy,
-			wantUsed:  false,
-			wantType:  CardTypeThief,
+			name:     "Thief cannot be used during Buy phase",
+			cardID:   "THIEF3",
+			action:   types.ActionTypeBuy,
+			wantUsed: false,
+			wantType: CardTypeThief,
 		},
 		{
-			name:      "Thief cannot be used during Construct phase",
-			cardID:    "THIEF4",
-			action:    types.ActionTypeConstruct,
-			wantUsed:  false,
-			wantType:  CardTypeThief,
+			name:     "Thief cannot be used during Construct phase",
+			cardID:   "THIEF4",
+			action:   types.ActionTypeConstruct,
+			wantUsed: false,
+			wantType: CardTypeThief,
 		},
 	}
 
@@ -638,58 +630,58 @@ func TestNewThiefHandCard(t *testing.T) {
 
 func TestNewCatapultHandCard(t *testing.T) {
 	tests := []struct {
-		name                     string
-		cardID                   string
-		enemyCastleCanBeAttacked bool
-		action                   types.ActionType
-		wantUsed                 bool
-		wantType                 CardType
+		name      string
+		cardID    string
+		canBeUsed bool
+		action    types.ActionType
+		wantUsed  bool
+		wantType  CardType
 	}{
 		{
-			name:                     "Catapult can be used when enemy castle can be attacked in Attack phase",
-			cardID:                   "CAT1",
-			enemyCastleCanBeAttacked: true,
-			action:                   types.ActionTypeAttack,
-			wantUsed:                 true,
-			wantType:                 CardTypeCatapult,
+			name:      "Catapult can be used when enemy castle can be attacked in Attack phase",
+			cardID:    "CAT1",
+			canBeUsed: true,
+			action:    types.ActionTypeAttack,
+			wantUsed:  true,
+			wantType:  CardTypeCatapult,
 		},
 		{
-			name:                     "Catapult cannot be used when enemy castle cannot be attacked in Attack phase",
-			cardID:                   "CAT2",
-			enemyCastleCanBeAttacked: false,
-			action:                   types.ActionTypeAttack,
-			wantUsed:                 false,
-			wantType:                 CardTypeCatapult,
+			name:      "Catapult cannot be used when enemy castle cannot be attacked in Attack phase",
+			cardID:    "CAT2",
+			canBeUsed: false,
+			action:    types.ActionTypeAttack,
+			wantUsed:  false,
+			wantType:  CardTypeCatapult,
 		},
 		{
-			name:                     "Catapult cannot be used during Buy phase even if castle can be attacked",
-			cardID:                   "CAT3",
-			enemyCastleCanBeAttacked: true,
-			action:                   types.ActionTypeBuy,
-			wantUsed:                 false,
-			wantType:                 CardTypeCatapult,
+			name:      "Catapult cannot be used during Buy phase even if castle can be attacked",
+			cardID:    "CAT3",
+			canBeUsed: true,
+			action:    types.ActionTypeBuy,
+			wantUsed:  false,
+			wantType:  CardTypeCatapult,
 		},
 		{
-			name:                     "Catapult cannot be used during SpySteal phase",
-			cardID:                   "CAT4",
-			enemyCastleCanBeAttacked: true,
-			action:                   types.ActionTypeSpySteal,
-			wantUsed:                 false,
-			wantType:                 CardTypeCatapult,
+			name:      "Catapult cannot be used during SpySteal phase",
+			cardID:    "CAT4",
+			canBeUsed: true,
+			action:    types.ActionTypeSpySteal,
+			wantUsed:  false,
+			wantType:  CardTypeCatapult,
 		},
 		{
-			name:                     "Catapult cannot be used during Construct phase",
-			cardID:                   "CAT5",
-			enemyCastleCanBeAttacked: true,
-			action:                   types.ActionTypeConstruct,
-			wantUsed:                 false,
-			wantType:                 CardTypeCatapult,
+			name:      "Catapult cannot be used during Construct phase",
+			cardID:    "CAT5",
+			canBeUsed: true,
+			action:    types.ActionTypeConstruct,
+			wantUsed:  false,
+			wantType:  CardTypeCatapult,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := NewCatapultHandCard(tt.cardID, tt.enemyCastleCanBeAttacked, tt.action)
+			hc := NewCatapultHandCard(tt.cardID, tt.canBeUsed, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.CardID)
 			assert.Equal(t, tt.wantType, hc.CardType)

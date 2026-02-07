@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/google/uuid"
@@ -68,6 +69,25 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	g.deal()
 
 	return g, nil
+}
+
+func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Card) {
+	i := 0
+	for _, p := range g.Players {
+		if p.Name() == playerName {
+			for _, c := range p.Hand().ShowCards() {
+				if w, ok := c.(ports.Warrior); ok {
+					warriors[i] = gamestatus.FromDomainCard(w)
+					i++
+					if i == 3 {
+						return warriors
+					}
+				}
+			}
+		}
+	}
+
+	return warriors
 }
 
 func validatePlayers(playerNames []string, mode types.GameMode) error {

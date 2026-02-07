@@ -3,7 +3,13 @@
     "allow": [
       "Bash(taskkill:*)",
       "Bash(go build:*)",
-      "Bash(dir \"c:\\\\temp\\\\projects\\\\TheCampaign\\\\frontend\" /s)"
+      "Bash(dir \"c:\\\\temp\\\\projects\\\\TheCampaign\\\\frontend\" /s)",
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(git diff:*)",
+      "Bash(mockgen:*)",
+      "Bash(go run:*)",
+      "Bash(go tool cover:*)"
     ]
   }
 }

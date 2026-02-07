@@ -40,9 +40,9 @@ func (m *MockGameStatusProvider) EXPECT() *MockGameStatusProviderMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGameStatusProvider) Get(p, e ports.Player, game *Game, newCards ...ports.Card) GameStatus {
+func (m *MockGameStatusProvider) Get(viewer ports.Player, game *Game, newCards ...ports.Card) GameStatus {
 	m.ctrl.T.Helper()
-	varargs := []any{p, e, game}
+	varargs := []any{viewer, game}
 	for _, a := range newCards {
 		varargs = append(varargs, a)
 	}
@@ -52,22 +52,22 @@ func (m *MockGameStatusProvider) Get(p, e ports.Player, game *Game, newCards ...
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockGameStatusProviderMockRecorder) Get(p, e, game any, newCards ...any) *gomock.Call {
+func (mr *MockGameStatusProviderMockRecorder) Get(viewer, game any, newCards ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{p, e, game}, newCards...)
+	varargs := append([]any{viewer, game}, newCards...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockGameStatusProvider)(nil).Get), varargs...)
 }
 
 // GetWithModal mocks base method.
-func (m *MockGameStatusProvider) GetWithModal(p, e ports.Player, game *Game, modalCards []ports.Card) GameStatus {
+func (m *MockGameStatusProvider) GetWithModal(viewer ports.Player, game *Game, modalCards []ports.Card) GameStatus {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetWithModal", p, e, game, modalCards)
+	ret := m.ctrl.Call(m, "GetWithModal", viewer, game, modalCards)
 	ret0, _ := ret[0].(GameStatus)
 	return ret0
 }
 
 // GetWithModal indicates an expected call of GetWithModal.
-func (mr *MockGameStatusProviderMockRecorder) GetWithModal(p, e, game, modalCards any) *gomock.Call {
+func (mr *MockGameStatusProviderMockRecorder) GetWithModal(viewer, game, modalCards any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithModal", reflect.TypeOf((*MockGameStatusProvider)(nil).GetWithModal), p, e, game, modalCards)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWithModal", reflect.TypeOf((*MockGameStatusProvider)(nil).GetWithModal), viewer, game, modalCards)
 }

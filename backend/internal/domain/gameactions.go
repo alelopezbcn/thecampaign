@@ -8,6 +8,15 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
+func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
+	p := g.GetPlayer(playerName)
+	if p == nil {
+		return fmt.Errorf("player %s not found", playerName)
+	}
+	return p.MoveCardToField(warriorID)
+}
+
 func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 	status GameStatus, err error) {
 
@@ -479,7 +488,7 @@ func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 			return g.GameStatusProvider.Get(g.CurrentPlayer(), g)
 		})
 
-	g.addToHistory(fmt.Sprintf("is %s's turn", p.Name()))
+	g.addToHistory(fmt.Sprintf("is %s's turn", g.CurrentPlayer().Name()))
 
 	return status, nil
 }

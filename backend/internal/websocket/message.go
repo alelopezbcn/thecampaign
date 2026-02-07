@@ -5,9 +5,8 @@ type MessageType string
 
 const (
 	// Client to Server messages
-	MsgJoinGame           MessageType = "join_game"
-	MsgSetInitialWarriors MessageType = "set_initial_warriors"
-	MsgDrawCard           MessageType = "draw_card"
+	MsgJoinGame MessageType = "join_game"
+	MsgDrawCard MessageType = "draw_card"
 	MsgAttack             MessageType = "attack"
 	MsgSpecialPower       MessageType = "special_power"
 	MsgMoveWarrior        MessageType = "move_warrior"
@@ -26,8 +25,7 @@ const (
 	MsgGameStarted      MessageType = "game_started"
 	MsgWaitingForPlayer MessageType = "waiting_for_player"
 	MsgPlayerJoined     MessageType = "player_joined"
-	MsgGameEnded        MessageType = "game_ended"
-	MsgInitialWarriors  MessageType = "initial_warriors"
+	MsgGameEnded MessageType = "game_ended"
 )
 
 // Message is the base WebSocket message structure
@@ -40,11 +38,7 @@ type Message struct {
 type JoinGamePayload struct {
 	GameID     string `json:"game_id"`
 	PlayerName string `json:"player_name"`
-}
-
-// SetInitialWarriorsPayload for setting initial warriors
-type SetInitialWarriorsPayload struct {
-	WarriorIDs []string `json:"warrior_ids"`
+	GameMode   string `json:"game_mode"`
 }
 
 // AttackPayload for attack action
@@ -172,8 +166,3 @@ type PlayerJoinedPayload struct {
 	PlayerName string `json:"player_name"`
 }
 
-// InitialWarriorsPayload sent to players to choose their initial warriors
-type InitialWarriorsPayload struct {
-	Warriors   []CardDTO `json:"warriors"`
-	IsYourTurn bool      `json:"is_your_turn"`
-}

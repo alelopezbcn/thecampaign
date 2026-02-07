@@ -40,29 +40,29 @@ func (m *MockDealer) EXPECT() *MockDealerMockRecorder {
 }
 
 // OtherCards mocks base method.
-func (m *MockDealer) OtherCards() []ports.Card {
+func (m *MockDealer) OtherCards(playerCount int) []ports.Card {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "OtherCards")
+	ret := m.ctrl.Call(m, "OtherCards", playerCount)
 	ret0, _ := ret[0].([]ports.Card)
 	return ret0
 }
 
 // OtherCards indicates an expected call of OtherCards.
-func (mr *MockDealerMockRecorder) OtherCards() *gomock.Call {
+func (mr *MockDealerMockRecorder) OtherCards(playerCount any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OtherCards", reflect.TypeOf((*MockDealer)(nil).OtherCards))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OtherCards", reflect.TypeOf((*MockDealer)(nil).OtherCards), playerCount)
 }
 
 // WarriorsCards mocks base method.
-func (m *MockDealer) WarriorsCards() []ports.Card {
+func (m *MockDealer) WarriorsCards(playerCount int) []ports.Card {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "WarriorsCards")
+	ret := m.ctrl.Call(m, "WarriorsCards", playerCount)
 	ret0, _ := ret[0].([]ports.Card)
 	return ret0
 }
 
 // WarriorsCards indicates an expected call of WarriorsCards.
-func (mr *MockDealerMockRecorder) WarriorsCards() *gomock.Call {
+func (mr *MockDealerMockRecorder) WarriorsCards(playerCount any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WarriorsCards", reflect.TypeOf((*MockDealer)(nil).WarriorsCards))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WarriorsCards", reflect.TypeOf((*MockDealer)(nil).WarriorsCards), playerCount)
 }

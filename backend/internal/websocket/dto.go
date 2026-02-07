@@ -33,8 +33,20 @@ type DiscardPileDTO struct {
 	LastCard *CardDTO `json:"last_card,omitempty"`
 }
 
-// ConvertGameStatus converts gamestatus.GameStatus to GameStatusDTO
+// ConvertGameStatus converts domain.GameStatus to GameStatusDTO
 func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
+	opponents := make([]OpponentStatusDTO, len(status.Opponents))
+	for i, opp := range status.Opponents {
+		opponents[i] = OpponentStatusDTO{
+			PlayerName:   opp.PlayerName,
+			Field:        convertFieldCards(opp.Field),
+			Castle:       convertCastle(opp.Castle),
+			CardsInHand:  opp.CardsInHand,
+			IsAlly:       opp.IsAlly,
+			IsEliminated: opp.IsEliminated,
+		}
+	}
+
 	return GameStatusDTO{
 		CurrentPlayer:  status.CurrentPlayer,
 		CurrentAction:  status.CurrentAction,
@@ -45,9 +57,8 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CurrentPlayerHand:   convertHandCards(status.CurrentPlayerHand),
 		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
 		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
-		EnemyField:          convertFieldCards(status.EnemyField),
-		EnemyCastle:         convertCastle(status.EnemyCastle),
-		CardsInEnemyHand:    status.CardsInEnemyHand,
+		Opponents:           opponents,
+		GameMode:            status.GameMode,
 		Cemetery:            convertCemetery(status.Cemetery),
 		DiscardPile:         convertDiscardPile(status.DiscardPile),
 		CardsInDeck:         status.CardsInDeck,

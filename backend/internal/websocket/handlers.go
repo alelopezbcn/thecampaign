@@ -7,65 +7,12 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 )
 
-func (h *Hub) handleSetInitialWarriors(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
-		return
-	}
+func (h *Hub) handleDrawCard(client *Client) {
+	log.Printf("handleDrawCard called by %s", client.PlayerName)
 
-	var p SetInitialWarriorsPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid set initial warriors payload")
-		return
-	}
-
-	room, exists := h.getGameRoom(client)
-	if !exists || room.Game == nil {
-		client.SendError("Game not found")
-		return
-	}
-
-	room.mutex.Lock()
-
-	// Set initial warriors
-	if err := room.Game.SetInitialWarriors(client.PlayerName, p.WarriorIDs); err != nil {
-		room.mutex.Unlock()
-		client.SendError(err.Error())
-		return
-	}
-
-	// Check if both players have warriors on field (setup complete)
-	currentPlayer, enemyPlayer := room.Game.WhoIsCurrent()
-	bothHaveWarriors := len(currentPlayer.Field().Warriors()) > 0 && len(enemyPlayer.Field().Warriors()) > 0
-
-	log.Printf("SetInitialWarriors: currentPlayer=%s, currentPlayerField=%d, enemyField=%d, bothHaveWarriors=%v",
-		currentPlayer.Name(), len(currentPlayer.Field().Warriors()), len(enemyPlayer.Field().Warriors()), bothHaveWarriors)
-
-	var status domain.GameStatus
-	if bothHaveWarriors {
-		// Setup complete - auto draw for the current player
-		log.Printf("Setup complete! Drawing card for %s", currentPlayer.Name())
-
-		status, err = room.Game.DrawCard(currentPlayer.Name())
-		if err != nil {
-			log.Printf("Error drawing card: %v", err)
-			room.mutex.Unlock()
-			client.SendError(err.Error())
-			return
-		}
-		log.Printf("Drew card, new cards: %v", status.NewCards)
-	}
-
-	room.mutex.Unlock()
-
-	if bothHaveWarriors {
-		// Setup complete - send game state
-		h.sendGameStateWithStatus(client.GameID, status)
-	} else {
-		// Still waiting for second player - send updated initial warriors
-		h.sendInitialWarriors(client.GameID)
-	}
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
+		return g.DrawCard(client.PlayerName)
+	})
 }
 
 func (h *Hub) handleAttack(client *Client, payload interface{}) {
@@ -82,7 +29,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Attack(client.PlayerName, p.TargetID, p.WeaponID)
+		return g.Attack(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID)
 	})
 }
 
@@ -190,7 +137,7 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Spy(client.PlayerName, p.Option)
+		return g.Spy(client.PlayerName, p.TargetPlayer, p.Option)
 	})
 }
 
@@ -208,7 +155,7 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Steal(client.PlayerName, p.CardPosition)
+		return g.Steal(client.PlayerName, p.TargetPlayer, p.CardPosition)
 	})
 }
 
@@ -226,49 +173,16 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Catapult(client.PlayerName, p.CardPosition)
+		return g.Catapult(client.PlayerName, p.TargetPlayer, p.CardPosition)
 	})
 }
 
 func (h *Hub) handleEndTurn(client *Client) {
 	log.Printf("handleEndTurn called by %s", client.PlayerName)
 
-	room, exists := h.getGameRoom(client)
-	if !exists || room.Game == nil {
-		client.SendError("Game not found")
-		return
-	}
-
-	room.mutex.Lock()
-
-	// End the current player's turn
-	_, err := room.Game.EndTurn(client.PlayerName)
-	if err != nil {
-		log.Printf("EndTurn error: %v", err)
-		room.mutex.Unlock()
-		client.SendError(err.Error())
-		return
-	}
-
-	// Get the new current player
-	nextPlayer, _ := room.Game.WhoIsCurrent()
-	log.Printf("EndTurn: nextPlayer=%s", nextPlayer.Name())
-
-	// Automatically draw a card for the new current player
-	status, err := room.Game.DrawCard(nextPlayer.Name())
-	if err != nil {
-		log.Printf("DrawCard error: %v", err)
-		room.mutex.Unlock()
-		client.SendError(err.Error())
-		return
-	}
-
-	log.Printf("EndTurn: newCards=%v", status.NewCards)
-
-	room.mutex.Unlock()
-
-	// Send updated game state with the status from DrawCard
-	h.sendGameStateWithStatus(client.GameID, status)
+	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
+		return g.EndTurn(client.PlayerName)
+	})
 }
 
 func (h *Hub) handleSkipPhase(client *Client) {
