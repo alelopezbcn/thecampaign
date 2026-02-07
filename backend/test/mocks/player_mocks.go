@@ -341,6 +341,20 @@ func (mr *MockPlayerMockRecorder) HasWarriorsInHand() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorsInHand", reflect.TypeOf((*MockPlayer)(nil).HasWarriorsInHand))
 }
 
+// Idx mocks base method.
+func (m *MockPlayer) Idx() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Idx")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Idx indicates an expected call of Idx.
+func (mr *MockPlayerMockRecorder) Idx() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Idx", reflect.TypeOf((*MockPlayer)(nil).Idx))
+}
+
 // MoveCardToField mocks base method.
 func (m *MockPlayer) MoveCardToField(cardID string) error {
 	m.ctrl.T.Helper()

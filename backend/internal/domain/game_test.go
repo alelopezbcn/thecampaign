@@ -174,7 +174,7 @@ func TestGame_Buy(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g, mockDrawnCard,
 		).Return(expectedStatus)
 		status, err := g.Buy("Player1", "gold-123")
@@ -225,7 +225,7 @@ func TestGame_Buy(t *testing.T) {
 			GameStatusProvider: mockProvider,
 		}
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g, mockDrawnCard1, mockDrawnCard2,
 		).Return(expectedStatus)
 
@@ -279,7 +279,7 @@ func TestGame_Buy(t *testing.T) {
 			GameStatusProvider: mockProvider,
 		}
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g, mockDrawnCard1, mockDrawnCard2, mockDrawnCard3,
 		).Return(expectedStatus)
 
@@ -337,7 +337,7 @@ func TestGame_Buy(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g, mockDrawnCard,
 		).Return(expectedStatus)
 
@@ -389,7 +389,7 @@ func TestGame_Buy(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g, mockDrawnCard,
 		).Return(expectedStatus)
 
@@ -441,7 +441,7 @@ func TestGame_Buy(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g, mockDrawnCard1, mockDrawnCard2,
 		).Return(expectedStatus)
 
@@ -491,7 +491,7 @@ func TestGame_Buy(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer2, mockPlayer1,
+			mockPlayer2,
 			g,
 			mockDrawnCard,
 		).Return(expectedStatus)
@@ -593,7 +593,7 @@ func TestGame_DrawCard(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g,
 			mockDrawnCard,
 		).Return(expectedStatus)
@@ -638,7 +638,7 @@ func TestGame_DrawCard(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g,
 		).Return(expectedStatus)
 
@@ -691,7 +691,7 @@ func TestGame_DrawCard(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g,
 			mockDrawnCard,
 		).Return(expectedStatus)
@@ -733,7 +733,7 @@ func TestGame_DrawCard(t *testing.T) {
 			GameStatusProvider: mockProvider,
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.DrawCard("Player1")
 
@@ -776,7 +776,7 @@ func TestGame_DrawCard(t *testing.T) {
 			GameStatusProvider: mockProvider,
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.DrawCard("Player1")
 
@@ -828,7 +828,7 @@ func TestGame_DrawCard(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer1, mockPlayer2,
+			mockPlayer1,
 			g,
 			mockDrawnCard,
 		).Return(expectedStatus)
@@ -876,7 +876,7 @@ func TestGame_DrawCard(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().Get(
-			mockPlayer2, mockPlayer1,
+			mockPlayer2,
 			g,
 			mockDrawnCard,
 		).Return(expectedStatus)
@@ -2031,7 +2031,7 @@ func TestGame_EndTurn(t *testing.T) {
 			hasTraded:          true,
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer2, mockPlayer1, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
 
 		status, err := g.EndTurn("Player1")
 
@@ -2071,7 +2071,7 @@ func TestGame_EndTurn(t *testing.T) {
 			GameStatusProvider: mockProvider,
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.EndTurn("Player2")
 
@@ -2102,7 +2102,7 @@ func TestGame_EndTurn(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.EndTurn("Player1")
 
@@ -2134,7 +2134,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Attack("Player2", "targetID", "weaponID")
+		status, err := g.Attack("Player2", "Player1", "targetID", "weaponID")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -2156,7 +2156,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction: types.ActionTypeBuy, // Not Attack phase
 		}
 
-		status, err := g.Attack("Player1", "targetID", "weaponID")
+		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot attack in the")
@@ -2171,6 +2171,7 @@ func TestGame_Attack(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(nil, false)
 
 		g := &Game{
@@ -2179,7 +2180,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Attack("Player1", "targetID", "weaponID")
+		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "target card not in enemy field")
@@ -2195,6 +2196,7 @@ func TestGame_Attack(t *testing.T) {
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(nil, false)
 
@@ -2204,7 +2206,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Attack("Player1", "targetID", "weaponID")
+		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "weapon card not in hand")
@@ -2221,6 +2223,7 @@ func TestGame_Attack(t *testing.T) {
 		mockResource := mocks.NewMockResource(ctrl) // Not a weapon
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("resourceID").Return(mockResource, true)
 
@@ -2230,7 +2233,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Attack("Player1", "targetID", "resourceID")
+		status, err := g.Attack("Player1", "Player2", "targetID", "resourceID")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "the card is not a weapon")
@@ -2247,6 +2250,7 @@ func TestGame_Attack(t *testing.T) {
 		mockWeapon := mocks.NewMockWeapon(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(errors.New("attack failed"))
@@ -2257,7 +2261,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Attack("Player1", "targetID", "weaponID")
+		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "attack action failed")
@@ -2280,6 +2284,7 @@ func TestGame_Attack(t *testing.T) {
 		}
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("S1").Return(mockWeapon, true)
 		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(nil)
@@ -2302,9 +2307,9 @@ func TestGame_Attack(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.Attack("Player1", "K1", "S1")
+		status, err := g.Attack("Player1", "Player2", "K1", "S1")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -2323,6 +2328,7 @@ func TestGame_Attack(t *testing.T) {
 		mockWeapon := mocks.NewMockWeapon(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("S1").Return(mockWeapon, true)
 		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(nil)
@@ -2345,9 +2351,9 @@ func TestGame_Attack(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.Attack("Player1", "K1", "S1")
+		_, err := g.Attack("Player1", "Player2", "K1", "S1")
 
 		assert.NoError(t, err)
 		found := false
@@ -2454,7 +2460,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.SkipPhase("Player1")
 
@@ -2489,7 +2495,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.SkipPhase("Player1")
 
@@ -2524,7 +2530,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.SkipPhase("Player1")
 
@@ -2558,7 +2564,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.SkipPhase("Player1")
 
@@ -2592,7 +2598,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.SkipPhase("Player1")
 
@@ -2674,7 +2680,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.MoveWarriorToField("Player1", "K1")
 
@@ -2703,7 +2709,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.MoveWarriorToField("Player1", "K1")
 
@@ -2740,7 +2746,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer2, mockPlayer1, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
 
 		status, err := g.MoveWarriorToField("Player2", "A1")
 
@@ -2876,7 +2882,7 @@ func TestGame_Trade(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g, mockDrawnCard).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
 
 		status, err := g.Trade("Player1", []string{"C1", "C2", "C3"})
 
@@ -2982,7 +2988,7 @@ func TestGame_Construct(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.Construct("Player1", "G1")
 
@@ -3014,7 +3020,7 @@ func TestGame_Construct(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
 		_, err := g.Construct("Player1", "G1")
 
@@ -3046,7 +3052,7 @@ func TestGame_Spy(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Spy("Player2", 1)
+		status, err := g.Spy("Player2", "Player1", 1)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -3068,7 +3074,7 @@ func TestGame_Spy(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Spy("Player1", 1)
+		status, err := g.Spy("Player1", "Player2", 1)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use Spy in the")
@@ -3091,7 +3097,7 @@ func TestGame_Spy(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Spy("Player1", 1)
+		status, err := g.Spy("Player1", "Player2", 1)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "player does not have a Spy")
@@ -3118,7 +3124,7 @@ func TestGame_Spy(t *testing.T) {
 			discardPile:   mockDiscardPile,
 		}
 
-		status, err := g.Spy("Player1", 3) // Invalid option
+		status, err := g.Spy("Player1", "Player2", 3) // Invalid option
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid Spy option")
@@ -3160,9 +3166,9 @@ func TestGame_Spy(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().GetWithModal(mockPlayer1, mockPlayer2, g, revealedCards).Return(expectedStatus)
+		mockProvider.EXPECT().GetWithModal(mockPlayer1, g, revealedCards).Return(expectedStatus)
 
-		status, err := g.Spy("Player1", 1)
+		status, err := g.Spy("Player1", "Player2", 1)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -3205,9 +3211,9 @@ func TestGame_Spy(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().GetWithModal(mockPlayer1, mockPlayer2, g, enemyCards).Return(expectedStatus)
+		mockProvider.EXPECT().GetWithModal(mockPlayer1, g, enemyCards).Return(expectedStatus)
 
-		status, err := g.Spy("Player1", 2)
+		status, err := g.Spy("Player1", "Player2", 2)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -3230,7 +3236,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Steal("Player2", 0)
+		status, err := g.Steal("Player2", "Player1", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -3252,7 +3258,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction: types.ActionTypeBuy,
 		}
 
-		status, err := g.Steal("Player1", 0)
+		status, err := g.Steal("Player1", "Player2", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use Steal in the")
@@ -3267,6 +3273,7 @@ func TestGame_Steal(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Thief().Return(nil)
 
 		g := &Game{
@@ -3275,7 +3282,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Steal("Player1", 0)
+		status, err := g.Steal("Player1", "Player2", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "player does not have a thief")
@@ -3291,6 +3298,7 @@ func TestGame_Steal(t *testing.T) {
 		mockThief := mocks.NewMockThief(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Thief().Return(mockThief)
 		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(nil, errors.New("invalid position"))
 
@@ -3300,7 +3308,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Steal("Player1", 0)
+		status, err := g.Steal("Player1", "Player2", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "stealing card failed")
@@ -3342,10 +3350,10 @@ func TestGame_Steal(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().GetWithModal(
-			mockPlayer1, mockPlayer2, g, []ports.Card{mockStolenCard},
+			mockPlayer1, g, []ports.Card{mockStolenCard},
 		).Return(expectedStatus)
 
-		status, err := g.Steal("Player1", 2)
+		status, err := g.Steal("Player1", "Player2", 2)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -3383,9 +3391,9 @@ func TestGame_Steal(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().GetWithModal(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
+		mockProvider.EXPECT().GetWithModal(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.Steal("Player1", 0)
+		_, err := g.Steal("Player1", "Player2", 0)
 
 		assert.NoError(t, err)
 		found := false
@@ -3415,7 +3423,7 @@ func TestGame_Catapult(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Catapult("Player2", 0)
+		status, err := g.Catapult("Player2", "Player1", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -3437,7 +3445,7 @@ func TestGame_Catapult(t *testing.T) {
 			currentAction: types.ActionTypeBuy,
 		}
 
-		status, err := g.Catapult("Player1", 0)
+		status, err := g.Catapult("Player1", "Player2", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use catapult in the")
@@ -3452,6 +3460,7 @@ func TestGame_Catapult(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Catapult().Return(nil)
 
 		g := &Game{
@@ -3460,7 +3469,7 @@ func TestGame_Catapult(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Catapult("Player1", 0)
+		status, err := g.Catapult("Player1", "Player2", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "player does not have a catapult")
@@ -3477,6 +3486,7 @@ func TestGame_Catapult(t *testing.T) {
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCatapult.EXPECT().Attack(mockCastle, 0).Return(nil, errors.New("invalid position"))
@@ -3487,7 +3497,7 @@ func TestGame_Catapult(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.Catapult("Player1", 0)
+		status, err := g.Catapult("Player1", "Player2", 0)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "attacking castle failed")
@@ -3532,9 +3542,9 @@ func TestGame_Catapult(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.Catapult("Player1", 2)
+		status, err := g.Catapult("Player1", "Player2", 2)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -3733,7 +3743,7 @@ func TestGame_SpecialPower(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.SpecialPower("Player1", "K1", "EK1", "SP1")
 
@@ -3780,11 +3790,825 @@ func TestGame_SpecialPower(t *testing.T) {
 			history:            []string{},
 		}
 
-		mockProvider.EXPECT().Get(mockPlayer1, mockPlayer2, g).Return(expectedStatus)
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
 		status, err := g.SpecialPower("Player1", "K1", "A1", "SP1")
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
+	})
+}
+
+func TestGame_OnCastleCompletion(t *testing.T) {
+	t.Run("1v1 sets individual winner", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Mode: types.GameMode1v1,
+		}
+
+		g.OnCastleCompletion(mockPlayer1)
+
+		assert.True(t, g.gameOver)
+		assert.Equal(t, "Player1", g.winner)
+	})
+
+	t.Run("2v2 sets team winner", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Mode: types.GameMode2v2,
+		}
+
+		g.OnCastleCompletion(mockPlayer1)
+
+		assert.True(t, g.gameOver)
+		assert.Equal(t, "Player1's team", g.winner)
+	})
+
+	t.Run("FFA3 sets individual winner", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Mode: types.GameModeFFA3,
+		}
+
+		g.OnCastleCompletion(mockPlayer1)
+
+		assert.True(t, g.gameOver)
+		assert.Equal(t, "Player1", g.winner)
+	})
+}
+
+func TestGame_OnFieldWithoutWarriors(t *testing.T) {
+	t.Run("1v1 current player wins immediately", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:       0,
+			Mode:              types.GameMode1v1,
+			EliminatedPlayers: make(map[int]bool),
+			history:           []string{},
+		}
+
+		g.OnFieldWithoutWarriors("Player2")
+
+		assert.True(t, g.gameOver)
+		assert.Equal(t, "Player1", g.winner)
+	})
+
+	t.Run("FFA3 eliminates player, game continues with 2 remaining", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
+			CurrentTurn:       0,
+			Mode:              types.GameModeFFA3,
+			EliminatedPlayers: make(map[int]bool),
+			history:           []string{},
+		}
+
+		g.OnFieldWithoutWarriors("Player2")
+
+		assert.False(t, g.gameOver)
+		assert.True(t, g.EliminatedPlayers[1])
+		assert.Contains(t, g.history, "Player2 has been eliminated!")
+	})
+
+	t.Run("FFA3 last player standing wins", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
+			CurrentTurn:       0,
+			Mode:              types.GameModeFFA3,
+			EliminatedPlayers: map[int]bool{1: true}, // Player2 already eliminated
+			history:           []string{},
+		}
+
+		g.OnFieldWithoutWarriors("Player3")
+
+		assert.True(t, g.gameOver)
+		assert.Equal(t, "Player1", g.winner)
+		assert.True(t, g.EliminatedPlayers[2])
+	})
+
+	t.Run("FFA5 eliminates player, game continues", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		players := make([]ports.Player, 5)
+		for i := 0; i < 5; i++ {
+			mp := mocks.NewMockPlayer(ctrl)
+			mp.EXPECT().Name().Return(
+				"Player" + string(rune('1'+i))).AnyTimes()
+			players[i] = mp
+		}
+
+		g := &Game{
+			Players:           players,
+			CurrentTurn:       0,
+			Mode:              types.GameModeFFA5,
+			EliminatedPlayers: make(map[int]bool),
+			history:           []string{},
+		}
+
+		g.OnFieldWithoutWarriors("Player2")
+
+		assert.False(t, g.gameOver)
+		assert.True(t, g.EliminatedPlayers[1])
+	})
+
+	t.Run("2v2 eliminates one enemy, game continues", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			CurrentTurn:       0, // Player1's turn (Team 1)
+			Mode:              types.GameMode2v2,
+			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
+			EliminatedPlayers: make(map[int]bool),
+			history:           []string{},
+		}
+
+		// Player2 (Team 2) loses warriors, but Player4 (Team 2) is still alive
+		g.OnFieldWithoutWarriors("Player2")
+
+		assert.False(t, g.gameOver)
+		assert.True(t, g.EliminatedPlayers[1])
+		assert.Contains(t, g.history, "Player2 has been eliminated!")
+	})
+
+	t.Run("2v2 both enemies eliminated, team wins", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			CurrentTurn:       0, // Player1's turn (Team 1)
+			Mode:              types.GameMode2v2,
+			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
+			EliminatedPlayers: map[int]bool{1: true}, // Player2 already eliminated
+			history:           []string{},
+		}
+
+		// Player4 (last of Team 2) loses warriors
+		g.OnFieldWithoutWarriors("Player4")
+
+		assert.True(t, g.gameOver)
+		assert.Equal(t, "Player1's team", g.winner)
+		assert.True(t, g.EliminatedPlayers[3])
+	})
+}
+
+func TestGame_IsGameOver(t *testing.T) {
+	t.Run("Returns false initially", func(t *testing.T) {
+		g := &Game{}
+
+		gameOver, winner := g.IsGameOver()
+
+		assert.False(t, gameOver)
+		assert.Empty(t, winner)
+	})
+
+	t.Run("Returns true after game ends", func(t *testing.T) {
+		g := &Game{
+			gameOver: true,
+			winner:   "Player1",
+		}
+
+		gameOver, winner := g.IsGameOver()
+
+		assert.True(t, gameOver)
+		assert.Equal(t, "Player1", winner)
+	})
+}
+
+func TestGame_GetHistory(t *testing.T) {
+	t.Run("Returns all history on first call", func(t *testing.T) {
+		g := &Game{
+			history: []string{"msg1", "msg2", "msg3"},
+		}
+
+		result := g.GetHistory()
+
+		assert.Equal(t, []string{"msg1", "msg2", "msg3"}, result)
+	})
+
+	t.Run("Returns only new messages on subsequent calls", func(t *testing.T) {
+		g := &Game{
+			history: []string{"msg1", "msg2"},
+		}
+
+		_ = g.GetHistory() // First call reads all
+
+		g.history = append(g.history, "msg3", "msg4")
+		result := g.GetHistory()
+
+		assert.Equal(t, []string{"msg3", "msg4"}, result)
+	})
+
+	t.Run("Returns empty slice when no new messages", func(t *testing.T) {
+		g := &Game{
+			history: []string{"msg1"},
+		}
+
+		_ = g.GetHistory()
+		result := g.GetHistory()
+
+		assert.Empty(t, result)
+	})
+}
+
+func TestGame_OnWarriorMovedToCemetery(t *testing.T) {
+	t.Run("Adds warrior to cemetery and records history", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockCemetery := mocks.NewMockCemetery(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockCemetery.EXPECT().AddCorp(mockWarrior)
+
+		g := &Game{
+			cemetery: mockCemetery,
+			history:  []string{},
+		}
+
+		g.OnWarriorMovedToCemetery(mockWarrior)
+
+		assert.Contains(t, g.history, "warrior buried in cemetery")
+	})
+}
+
+func TestGame_AutoMoveWarriorToField(t *testing.T) {
+	t.Run("Success moving warrior", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().MoveCardToField("W1").Return(nil)
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1},
+		}
+
+		err := g.AutoMoveWarriorToField("Player1", "W1")
+
+		assert.NoError(t, err)
+	})
+
+	t.Run("Error when player not found", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1},
+		}
+
+		err := g.AutoMoveWarriorToField("Unknown", "W1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "player Unknown not found")
+	})
+
+	t.Run("Error when MoveCardToField fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().MoveCardToField("W1").Return(errors.New("field full"))
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1},
+		}
+
+		err := g.AutoMoveWarriorToField("Player1", "W1")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "field full")
+	})
+}
+
+func TestGame_SameTeam(t *testing.T) {
+	t.Run("Returns false for non-2v2 mode", func(t *testing.T) {
+		g := &Game{Mode: types.GameMode1v1}
+		assert.False(t, g.SameTeam(0, 1))
+	})
+
+	t.Run("Returns true for same team in 2v2", func(t *testing.T) {
+		g := &Game{
+			Mode:  types.GameMode2v2,
+			Teams: map[int][]int{1: {0, 2}, 2: {1, 3}},
+		}
+
+		assert.True(t, g.SameTeam(0, 2))  // Team 1
+		assert.True(t, g.SameTeam(2, 0))  // Symmetric
+		assert.True(t, g.SameTeam(1, 3))  // Team 2
+		assert.True(t, g.SameTeam(3, 1))  // Symmetric
+	})
+
+	t.Run("Returns false for different teams in 2v2", func(t *testing.T) {
+		g := &Game{
+			Mode:  types.GameMode2v2,
+			Teams: map[int][]int{1: {0, 2}, 2: {1, 3}},
+		}
+
+		assert.False(t, g.SameTeam(0, 1))
+		assert.False(t, g.SameTeam(0, 3))
+		assert.False(t, g.SameTeam(2, 1))
+		assert.False(t, g.SameTeam(2, 3))
+	})
+}
+
+func TestGame_Allies(t *testing.T) {
+	t.Run("Returns nil for 1v1", func(t *testing.T) {
+		g := &Game{Mode: types.GameMode1v1}
+		assert.Nil(t, g.Allies(0))
+	})
+
+	t.Run("Returns nil for FFA3", func(t *testing.T) {
+		g := &Game{Mode: types.GameModeFFA3}
+		assert.Nil(t, g.Allies(0))
+	})
+
+	t.Run("Returns teammate for 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			Mode:    types.GameMode2v2,
+			Teams:   map[int][]int{1: {0, 2}, 2: {1, 3}},
+		}
+
+		allies0 := g.Allies(0)
+		assert.Len(t, allies0, 1)
+		assert.Equal(t, mockPlayer3, allies0[0])
+
+		allies1 := g.Allies(1)
+		assert.Len(t, allies1, 1)
+		assert.Equal(t, mockPlayer4, allies1[0])
+	})
+}
+
+func TestGame_Enemies(t *testing.T) {
+	t.Run("1v1 returns opponent", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2},
+			Mode:              types.GameMode1v1,
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		enemies := g.Enemies(0)
+		assert.Len(t, enemies, 1)
+		assert.Equal(t, mockPlayer2, enemies[0])
+	})
+
+	t.Run("2v2 excludes teammates", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			Mode:              types.GameMode2v2,
+			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		enemies := g.Enemies(0) // Player1 (Team 1)
+		assert.Len(t, enemies, 2)
+		assert.Equal(t, mockPlayer2, enemies[0])
+		assert.Equal(t, mockPlayer4, enemies[1])
+	})
+
+	t.Run("Excludes eliminated players", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
+			Mode:              types.GameModeFFA3,
+			EliminatedPlayers: map[int]bool{1: true},
+		}
+
+		enemies := g.Enemies(0)
+		assert.Len(t, enemies, 1)
+		assert.Equal(t, mockPlayer3, enemies[0])
+	})
+}
+
+func TestGame_getTargetPlayer(t *testing.T) {
+	t.Run("Error when target not found", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1},
+		}
+
+		_, err := g.getTargetPlayer("Player1", "Unknown")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "target player Unknown not found")
+	})
+
+	t.Run("Error when targeting self", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1},
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		_, err := g.getTargetPlayer("Player1", "Player1")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot attack yourself")
+	})
+
+	t.Run("Error when targeting ally in 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			Mode:              types.GameMode2v2,
+			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		_, err := g.getTargetPlayer("Player1", "Player3") // Player3 is teammate
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot attack your ally")
+	})
+
+	t.Run("Error when targeting eliminated player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
+			Mode:              types.GameModeFFA3,
+			EliminatedPlayers: map[int]bool{1: true},
+		}
+
+		_, err := g.getTargetPlayer("Player1", "Player2")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot attack eliminated player")
+	})
+
+	t.Run("Success targeting valid enemy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2},
+			Mode:              types.GameMode1v1,
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		target, err := g.getTargetPlayer("Player1", "Player2")
+		assert.NoError(t, err)
+		assert.Equal(t, mockPlayer2, target)
+	})
+
+	t.Run("Success targeting valid enemy in 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			Mode:              types.GameMode2v2,
+			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		target, err := g.getTargetPlayer("Player1", "Player2") // Player2 is enemy
+		assert.NoError(t, err)
+		assert.Equal(t, mockPlayer2, target)
+	})
+}
+
+func TestGame_switchTurn(t *testing.T) {
+	t.Run("Switches to next player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:       0,
+			hasMovedWarrior:   true,
+			hasTraded:         true,
+			currentAction:     types.ActionTypeEndTurn,
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		g.switchTurn()
+
+		assert.Equal(t, 1, g.CurrentTurn)
+		assert.False(t, g.hasMovedWarrior)
+		assert.False(t, g.hasTraded)
+		assert.Equal(t, types.ActionTypeDrawCard, g.currentAction)
+	})
+
+	t.Run("Wraps around to first player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:       1,
+			EliminatedPlayers: make(map[int]bool),
+		}
+
+		g.switchTurn()
+
+		assert.Equal(t, 0, g.CurrentTurn)
+	})
+
+	t.Run("Skips eliminated players", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+
+		g := &Game{
+			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
+			CurrentTurn:       0,
+			EliminatedPlayers: map[int]bool{1: true}, // Player2 eliminated
+		}
+
+		g.switchTurn()
+
+		assert.Equal(t, 2, g.CurrentTurn) // Skips Player2
+	})
+
+	t.Run("Skips multiple eliminated players", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		players := make([]ports.Player, 5)
+		for i := 0; i < 5; i++ {
+			players[i] = mocks.NewMockPlayer(ctrl)
+		}
+
+		g := &Game{
+			Players:           players,
+			CurrentTurn:       0,
+			EliminatedPlayers: map[int]bool{1: true, 2: true, 3: true},
+		}
+
+		g.switchTurn()
+
+		assert.Equal(t, 4, g.CurrentTurn)
+	})
+}
+
+func TestGame_PlayerIndex(t *testing.T) {
+	t.Run("Returns correct index", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1, mockPlayer2},
+		}
+
+		assert.Equal(t, 0, g.PlayerIndex("Player1"))
+		assert.Equal(t, 1, g.PlayerIndex("Player2"))
+	})
+
+	t.Run("Returns -1 for unknown player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1},
+		}
+
+		assert.Equal(t, -1, g.PlayerIndex("Unknown"))
+	})
+}
+
+func TestGame_GetPlayer(t *testing.T) {
+	t.Run("Returns player by name", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1, mockPlayer2},
+		}
+
+		assert.Equal(t, mockPlayer1, g.GetPlayer("Player1"))
+		assert.Equal(t, mockPlayer2, g.GetPlayer("Player2"))
+	})
+
+	t.Run("Returns nil for unknown player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+
+		g := &Game{
+			Players: []ports.Player{mockPlayer1},
+		}
+
+		assert.Nil(t, g.GetPlayer("Unknown"))
+	})
+}
+
+func TestGame_OnCardMovedToPile(t *testing.T) {
+	t.Run("Discards card to pile", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
+		mockDiscardPile.EXPECT().Discard(mockCard)
+
+		g := &Game{
+			discardPile: mockDiscardPile,
+		}
+
+		g.OnCardMovedToPile(mockCard)
+	})
+}
+
+func TestGame_addToHistory(t *testing.T) {
+	t.Run("Adds message to history", func(t *testing.T) {
+		g := &Game{history: []string{}}
+		g.addToHistory("test message")
+		assert.Equal(t, []string{"test message"}, g.history)
+	})
+
+	t.Run("Does not add empty message", func(t *testing.T) {
+		g := &Game{history: []string{}}
+		g.addToHistory("")
+		assert.Empty(t, g.history)
+	})
+}
+
+func TestGame_validatePlayers(t *testing.T) {
+	t.Run("1v1 requires 2 players", func(t *testing.T) {
+		assert.NoError(t, validatePlayers([]string{"A", "B"}, types.GameMode1v1))
+		assert.Error(t, validatePlayers([]string{"A"}, types.GameMode1v1))
+		assert.Error(t, validatePlayers([]string{"A", "B", "C"}, types.GameMode1v1))
+	})
+
+	t.Run("2v2 requires 4 players", func(t *testing.T) {
+		assert.NoError(t, validatePlayers([]string{"A", "B", "C", "D"}, types.GameMode2v2))
+		assert.Error(t, validatePlayers([]string{"A", "B"}, types.GameMode2v2))
+		assert.Error(t, validatePlayers([]string{"A", "B", "C", "D", "E"}, types.GameMode2v2))
+	})
+
+	t.Run("FFA3 requires 3 players", func(t *testing.T) {
+		assert.NoError(t, validatePlayers([]string{"A", "B", "C"}, types.GameModeFFA3))
+		assert.Error(t, validatePlayers([]string{"A", "B"}, types.GameModeFFA3))
+	})
+
+	t.Run("FFA5 requires 5 players", func(t *testing.T) {
+		assert.NoError(t, validatePlayers([]string{"A", "B", "C", "D", "E"}, types.GameModeFFA5))
+		assert.Error(t, validatePlayers([]string{"A", "B", "C"}, types.GameModeFFA5))
+	})
+
+	t.Run("Invalid game mode", func(t *testing.T) {
+		err := validatePlayers([]string{"A", "B"}, "invalid")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid game mode")
 	})
 }

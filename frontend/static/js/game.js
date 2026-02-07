@@ -5,6 +5,8 @@ let reconnectTimer = null;
 let gameState = {
     playerName: '',
     gameID: '',
+    gameMode: '1v1',
+    enemyName: '',
     isYourTurn: false,
     currentState: null,
     selectedCards: [],
@@ -28,7 +30,6 @@ let gameState = {
 const screens = {
     join: document.getElementById('join-screen'),
     waiting: document.getElementById('waiting-screen'),
-    setup: document.getElementById('setup-screen'),
     game: document.getElementById('game-screen'),
     gameover: document.getElementById('gameover-screen')
 };
@@ -47,10 +48,6 @@ function setupEventListeners() {
     document.getElementById('game-id').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') joinGame();
     });
-
-    // Setup screen
-    document.getElementById('confirm-warriors-btn').addEventListener('click', confirmInitialWarriors);
-    document.getElementById('select-all-warriors-btn').addEventListener('click', selectAllWarriors);
 
     // Game screen actions - only 4 buttons
     document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
@@ -103,7 +100,8 @@ function connectWebSocket() {
             console.log('Reconnecting to game:', gameState.gameID);
             sendMessage('join_game', {
                 player_name: gameState.playerName,
-                game_id: gameState.gameID
+                game_id: gameState.gameID,
+                game_mode: gameState.gameMode
             });
         }
     };
@@ -169,15 +167,6 @@ function handleMessage(message) {
         case 'game_ended':
             handleGameEnded();
             break;
-        case 'spy_result':
-            handleSpyResult(message.payload);
-            break;
-        case 'steal_result':
-            handleStealResult(message.payload);
-            break;
-        case 'initial_warriors':
-            handleInitialWarriors(message.payload);
-            break;
         default:
             console.log('Unknown message type:', message.type);
     }
@@ -186,12 +175,12 @@ function handleMessage(message) {
 function handleError(payload) {
     console.error('Server error:', payload.message);
     showStatus('connection-status', payload.message, 'error');
-    showStatus('setup-status', payload.message, 'error');
     addErrorToHistory(payload.message);
 }
 
 function handlePlayerJoined(payload) {
     console.log('Player joined:', payload.player_name);
+    showWaitingScreen();
 }
 
 function handleGameStarted(payload) {
@@ -203,33 +192,29 @@ function handleGameStarted(payload) {
     document.getElementById('player-name-display').textContent = payload.your_name;
 }
 
-function handleInitialWarriors(payload) {
-    console.log('Initial warriors received:', payload);
-    gameState.isYourTurn = payload.is_your_turn;
-    gameState.selectedCards = [];
-
-    // Store warriors for rendering
-    gameState.initialWarriors = payload.warriors;
-
-    // Show setup screen and render warriors
-    showScreen('setup');
-    renderInitialWarriors(payload.warriors);
-    updateSetupTurnIndicator();
-}
-
-function renderInitialWarriors(warriors) {
-    const container = document.getElementById('setup-hand');
-    container.innerHTML = '';
-
-    warriors.forEach(warrior => {
-        const cardElement = createCardElement(warrior, 'setup');
-        container.appendChild(cardElement);
-    });
+// Normalize multiplayer game status to flat fields for 1v1 backward compatibility
+function normalizeGameStatusFor1v1(status) {
+    if (status.opponents && status.opponents.length > 0) {
+        // In 1v1, there's only one opponent
+        const enemy = status.opponents[0];
+        status.enemy_field = enemy.field || [];
+        status.enemy_castle = enemy.castle || {};
+        status.cards_in_enemy_hand = enemy.cards_in_hand || 0;
+        gameState.enemyName = enemy.player_name;
+    } else {
+        status.enemy_field = [];
+        status.enemy_castle = {};
+        status.cards_in_enemy_hand = 0;
+    }
+    return status;
 }
 
 function handleGameState(payload) {
     console.log('Game state updated:', payload);
     console.log('New cards from payload:', payload.game_status.new_cards);
+
+    // Normalize opponents array to flat fields for 1v1
+    normalizeGameStatusFor1v1(payload.game_status);
 
     // Save previous state for damage detection
     const previousState = gameState.currentState;
@@ -260,12 +245,7 @@ function handleGameState(payload) {
     resetActionState();
     updateActionPrompt('');
 
-    // Determine which screen to show
-    if (payload.game_status.current_player && !isSetupComplete(payload.game_status)) {
-        showSetupScreen(payload.game_status);
-    } else {
-        showGameScreen(payload.game_status);
-    }
+    showGameScreen(payload.game_status);
 
     updateTurnIndicator();
     updatePhaseIndicator();
@@ -329,19 +309,6 @@ function handleGameEnded() {
         `${winner} wins the game!`;
 }
 
-function handleSpyResult(payload) {
-    const cards = payload.cards || [];
-    const source = payload.source; // 1 = deck, 2 = enemy hand
-    showSpyResultModal(cards, source);
-}
-
-function handleStealResult(payload) {
-    const card = payload.card;
-    if (card) {
-        showStealResultModal(card);
-    }
-}
-
 // Screen management
 function showScreen(screenName) {
     Object.values(screens).forEach(screen => screen.classList.add('hidden'));
@@ -351,12 +318,6 @@ function showScreen(screenName) {
 function showWaitingScreen() {
     document.getElementById('current-game-id').textContent = gameState.gameID;
     showScreen('waiting');
-}
-
-function showSetupScreen(status) {
-    showScreen('setup');
-    renderSetupHand(status);
-    updateSetupTurnIndicator();
 }
 
 function showGameScreen(status) {
@@ -380,49 +341,6 @@ function joinGame() {
 
     // connectWebSocket's onopen will send join_game automatically
     connectWebSocket();
-}
-
-function selectAllWarriors() {
-    // Get all warrior cards in setup hand
-    const setupHand = document.getElementById('setup-hand');
-    const cards = setupHand.querySelectorAll('.card');
-
-    // Clear current selection
-    gameState.selectedCards = [];
-    document.querySelectorAll('.card.selected').forEach(card => {
-        card.classList.remove('selected');
-    });
-
-    // Select all (max 3)
-    cards.forEach((card, index) => {
-        if (index < 3) {
-            const cardId = card.dataset.cardId;
-            gameState.selectedCards.push(cardId);
-            card.classList.add('selected');
-        }
-    });
-
-    // Enable confirm button
-    document.getElementById('confirm-warriors-btn').disabled = gameState.selectedCards.length < 1;
-}
-
-function confirmInitialWarriors() {
-    const selectedWarriors = gameState.selectedCards;
-
-    if (selectedWarriors.length < 1 || selectedWarriors.length > 3) {
-        showStatus('setup-status', 'Select 1-3 warriors', 'error');
-        return;
-    }
-
-    sendMessage('set_initial_warriors', {
-        warrior_ids: selectedWarriors
-    });
-
-    gameState.selectedCards = [];
-
-    // After confirming, it's now the opponent's turn to select
-    gameState.isYourTurn = false;
-    updateSetupTurnIndicator();
 }
 
 function sendAction(actionType, payload = null) {
@@ -509,13 +427,6 @@ function handleCardClick(cardID, cardType, context, card = null) {
 
     const action = gameState.currentAction;
     const status = gameState.currentState;
-
-    if (context === 'setup') {
-        toggleCardSelection(cardID, 'setup');
-        document.getElementById('confirm-warriors-btn').disabled =
-            gameState.selectedCards.length < 1 || gameState.selectedCards.length > 3;
-        return;
-    }
 
     // Handle move_warrior action
     if (action === 'move_warrior' && context === 'player-hand') {
@@ -756,6 +667,7 @@ function showAttackConfirmModal(weapon, target) {
         description: description,
         onConfirm: () => {
             sendAction('attack', {
+                target_player: gameState.enemyName,
                 weapon_id: gameState.actionState.weaponId,
                 target_id: gameState.actionState.targetId
             });
@@ -1095,64 +1007,6 @@ function hideConfirmButtons() {
     document.getElementById('action-prompt-container').classList.add('hidden');
 }
 
-function confirmAction() {
-    const actionState = gameState.actionState;
-    const action = gameState.currentAction;
-
-    // Handle move warrior
-    if (action === 'move_warrior' && actionState.warriorId) {
-        sendAction('move_warrior', { warrior_id: actionState.warriorId });
-        resetActionState();
-        return;
-    }
-
-    // Handle trade
-    if (action === 'trade' && gameState.selectedCards.length === 3) {
-        sendAction('trade', { card_ids: gameState.selectedCards });
-        resetActionState();
-        return;
-    }
-
-    // Catapult is handled through modal, not confirm button
-
-    // Handle special power
-    if (actionState.type === 'specialpower') {
-        if (!actionState.weaponId || !actionState.userId || !actionState.targetId) return;
-        sendAction('special_power', {
-            weapon_id: actionState.weaponId,
-            user_id: actionState.userId,
-            target_id: actionState.targetId
-        });
-        resetActionState();
-        return;
-    }
-
-    // Handle regular attack
-    if (actionState.type === 'attack') {
-        if (!actionState.weaponId || !actionState.targetId) return;
-        sendAction('attack', {
-            weapon_id: actionState.weaponId,
-            target_id: actionState.targetId
-        });
-        resetActionState();
-        return;
-    }
-
-    // Handle buy
-    if (actionState.type === 'buy' && actionState.weaponId) {
-        sendAction('buy', { card_id: actionState.weaponId });
-        resetActionState();
-        return;
-    }
-
-    // Handle construct (send one card at a time)
-    if (actionState.type === 'construct' && gameState.selectedCards.length > 0) {
-        sendAction('construct', { card_id: gameState.selectedCards[0] });
-        resetActionState();
-        return;
-    }
-}
-
 function cancelAction() {
     resetActionState();
     updateActionPrompt('');
@@ -1168,27 +1022,12 @@ function toggleCardSelection(cardID, context) {
     }
 
     // Update visual selection
-    const container = context === 'setup' ?
-        document.getElementById('setup-hand') :
-        document.getElementById('player-hand');
+    const container = document.getElementById('player-hand');
 
     const cardElement = container.querySelector(`[data-card-id="${cardID}"]`);
     if (cardElement) {
         cardElement.classList.toggle('selected');
     }
-}
-
-// Rendering functions
-function renderSetupHand(status) {
-    const container = document.getElementById('setup-hand');
-    container.innerHTML = '';
-
-    status.current_player_hand.forEach(card => {
-        if (isWarrior(card)) {
-            const cardElement = createCardElement(card, 'setup');
-            container.appendChild(cardElement);
-        }
-    });
 }
 
 // Extract HP values from field cards for damage detection
@@ -1419,7 +1258,7 @@ function createCardElement(card, context) {
     }
 
     // Add click handler
-    if (context === 'setup' || context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {
+    if (context === 'player-hand' || context === 'enemy-field' || context === 'player-field') {
         div.addEventListener('click', () => {
             handleCardClick(div.dataset.cardId, cardType, context, card);
         });
@@ -1629,34 +1468,9 @@ function isWarrior(card) {
     return type === 'warrior';
 }
 
-function isSetupComplete(status) {
-    return status.current_player_field && status.current_player_field.length > 0;
-}
-
 function updateTurnIndicator() {
     // Update the phase tracker turn status
     updatePhaseTracker();
-}
-
-function updateSetupTurnIndicator() {
-    const nameDisplay = document.getElementById('setup-player-name');
-    const indicator = document.getElementById('setup-turn-indicator');
-
-    nameDisplay.textContent = gameState.playerName;
-
-    if (gameState.isYourTurn) {
-        indicator.textContent = 'YOUR TURN - Select Warriors';
-        indicator.className = 'turn-indicator your-turn';
-        document.getElementById('setup-hand').style.opacity = '1';
-        document.getElementById('confirm-warriors-btn').style.display = 'block';
-        document.getElementById('select-all-warriors-btn').style.display = 'block';
-    } else {
-        indicator.textContent = 'WAITING - Opponent selecting Warriors';
-        indicator.className = 'turn-indicator enemy-turn';
-        document.getElementById('setup-hand').style.opacity = '0.5';
-        document.getElementById('confirm-warriors-btn').style.display = 'none';
-        document.getElementById('select-all-warriors-btn').style.display = 'none';
-    }
 }
 
 function updateActionButtons() {
@@ -1930,7 +1744,7 @@ function showStealModal() {
 
 function selectStealPosition(position) {
     gameState.pendingModalAction = 'steal';
-    sendAction('steal', { card_position: position });
+    sendAction('steal', { target_player: gameState.enemyName, card_position: position });
     hideGameModal();
 }
 
@@ -1953,7 +1767,7 @@ function showSpyOptionsModal() {
 function selectSpyOption(option) {
     hideGameModal();
     gameState.pendingModalAction = option === 1 ? 'spy_deck' : 'spy_hand';
-    sendAction('spy', { option: option });
+    sendAction('spy', { target_player: gameState.enemyName, option: option });
 }
 
 // Catapult Modal
@@ -1985,23 +1799,7 @@ function showCatapultModal() {
 
 function selectCatapultPosition(position) {
     hideGameModal();
-    sendAction('catapult', { card_position: position });
-}
-
-// Spy Result Modal
-function showSpyResultModal(cards, source) {
-    if (source === 1) {
-        // Deck cards - show with position indicator
-        showCardsModal(cards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
-    } else {
-        // Enemy hand
-        showCardsModal(cards, 'Enemy Hand', 'These are the cards in your opponent\'s hand');
-    }
-}
-
-// Steal Result Modal
-function showStealResultModal(card) {
-    showCardsModal([card], 'Card Stolen!', 'You stole this card from your opponent');
+    sendAction('catapult', { target_player: gameState.enemyName, card_position: position });
 }
 
 // Bought Cards Modal

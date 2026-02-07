@@ -17,5 +17,5 @@ type CastleCompletionObserver interface {
 }
 
 type FieldWithoutWarriorsObserver interface {
-	OnFieldWithoutWarriors()
+	OnFieldWithoutWarriors(playerName string)
 }

@@ -45,7 +45,7 @@ func NewWarriorHandCard(warrior ports.Warrior) HandCard {
 }
 
 func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
-	enemyField ports.Field, castleConstructed bool,
+	enemyFields []ports.Field, castleConstructed bool,
 	action types.ActionType) HandCard {
 
 	canBeUsed := false
@@ -81,9 +81,12 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 
 	mults := map[string]int{}
 	attackableIDs := []string{}
-	for _, v := range enemyField.Warriors() {
-		mults[v.GetID()] = weapon.MultiplierFactor(v)
-		attackableIDs = append(attackableIDs, v.GetID())
+	// Build attackableIDs from ALL enemy fields
+	for _, ef := range enemyFields {
+		for _, v := range ef.Warriors() {
+			mults[v.GetID()] = weapon.MultiplierFactor(v)
+			attackableIDs = append(attackableIDs, v.GetID())
+		}
 	}
 
 	hc := newHandCard(weapon.GetID(), aCardType,
@@ -95,7 +98,7 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 }
 
 func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
-	myField ports.Field, enemyField ports.Field,
+	myField ports.Field, allyFields []ports.Field, enemyFields []ports.Field,
 	action types.ActionType) HandCard {
 
 	if action != types.ActionTypeAttack {
@@ -106,10 +109,13 @@ func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 	canBeUsedOnIDs := []string{}
 
 	if myField.HasArcher() {
-		for _, warrior := range enemyField.Warriors() {
-			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
+		for _, ef := range enemyFields {
+			for _, warrior := range ef.Warriors() {
+				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
+			}
 		}
 	}
+
 	if myField.HasKnight() {
 		for _, warrior := range myField.Warriors() {
 			isProtected, _ := warrior.IsProtected()
@@ -118,7 +124,17 @@ func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 			}
 			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 		}
+		for _, af := range allyFields {
+			for _, warrior := range af.Warriors() {
+				isProtected, _ := warrior.IsProtected()
+				if warrior.Type() == types.DragonWarriorType || isProtected {
+					continue
+				}
+				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
+			}
+		}
 	}
+
 	if myField.HasMage() {
 		for _, warrior := range myField.Warriors() {
 			if warrior.Type() == types.DragonWarriorType || !warrior.IsDamaged() {
@@ -126,13 +142,21 @@ func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 			}
 			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 		}
+		for _, af := range allyFields {
+			for _, warrior := range af.Warriors() {
+				if warrior.Type() == types.DragonWarriorType || !warrior.IsDamaged() {
+					continue
+				}
+				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
+			}
+		}
 	}
 
 	return newHandCard(specialPower.GetID(), CardTypeSpecialPower,
 		0, canBeUsedOnIDs, true)
 }
 
-func NewCatapultHandCard(cardID string, enemyCastleCanBeAttacked bool,
+func NewCatapultHandCard(cardID string, canBeUsed bool,
 	action types.ActionType) HandCard {
 
 	if action != types.ActionTypeAttack {
@@ -140,7 +164,7 @@ func NewCatapultHandCard(cardID string, enemyCastleCanBeAttacked bool,
 	}
 
 	return newHandCard(cardID, CardTypeCatapult, 0, []string{},
-		enemyCastleCanBeAttacked)
+		canBeUsed)
 }
 
 func NewSpyHandCard(cardID string, action types.ActionType) HandCard {

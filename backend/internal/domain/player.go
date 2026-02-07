@@ -11,6 +11,7 @@ import (
 
 type player struct {
 	name                           string
+	idx                            int
 	hand                           ports.Hand
 	field                          ports.Field
 	castle                         ports.Castle
@@ -19,6 +20,7 @@ type player struct {
 }
 
 func NewPlayer(name string,
+	idx int,
 	cardMovedToPileObserver ports.CardMovedToPileObserver,
 	warriorMovedToCemeteryObserver ports.WarriorMovedToCemeteryObserver,
 	castleCompletionObserver ports.CastleCompletionObserver,
@@ -26,8 +28,9 @@ func NewPlayer(name string,
 ) ports.Player {
 	p := &player{
 		name:                           name,
+		idx:                            idx,
 		hand:                           NewHand(),
-		field:                          NewField(fieldWithoutWarriorsObserver),
+		field:                          NewField(name, fieldWithoutWarriorsObserver),
 		cardMovedToPileObserver:        cardMovedToPileObserver,
 		warriorMovedToCemeteryObserver: warriorMovedToCemeteryObserver,
 	}
@@ -38,6 +41,10 @@ func NewPlayer(name string,
 
 func (p *player) Name() string {
 	return p.name
+}
+
+func (p *player) Idx() int {
+	return p.idx
 }
 
 func (p *player) CanTakeCards(count int) bool {

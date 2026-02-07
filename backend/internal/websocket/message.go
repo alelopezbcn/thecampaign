@@ -5,9 +5,8 @@ type MessageType string
 
 const (
 	// Client to Server messages
-	MsgJoinGame           MessageType = "join_game"
-	MsgSetInitialWarriors MessageType = "set_initial_warriors"
-	MsgDrawCard           MessageType = "draw_card"
+	MsgJoinGame MessageType = "join_game"
+	MsgDrawCard MessageType = "draw_card"
 	MsgAttack             MessageType = "attack"
 	MsgSpecialPower       MessageType = "special_power"
 	MsgMoveWarrior        MessageType = "move_warrior"
@@ -26,8 +25,7 @@ const (
 	MsgGameStarted      MessageType = "game_started"
 	MsgWaitingForPlayer MessageType = "waiting_for_player"
 	MsgPlayerJoined     MessageType = "player_joined"
-	MsgGameEnded        MessageType = "game_ended"
-	MsgInitialWarriors  MessageType = "initial_warriors"
+	MsgGameEnded MessageType = "game_ended"
 )
 
 // Message is the base WebSocket message structure
@@ -40,17 +38,14 @@ type Message struct {
 type JoinGamePayload struct {
 	GameID     string `json:"game_id"`
 	PlayerName string `json:"player_name"`
-}
-
-// SetInitialWarriorsPayload for setting initial warriors
-type SetInitialWarriorsPayload struct {
-	WarriorIDs []string `json:"warrior_ids"`
+	GameMode   string `json:"game_mode"`
 }
 
 // AttackPayload for attack action
 type AttackPayload struct {
-	TargetID string `json:"target_id"`
-	WeaponID string `json:"weapon_id"`
+	TargetPlayer string `json:"target_player"`
+	TargetID     string `json:"target_id"`
+	WeaponID     string `json:"weapon_id"`
 }
 
 // SpecialPowerPayload for special power action
@@ -82,17 +77,20 @@ type ConstructPayload struct {
 
 // SpyPayload for spy action
 type SpyPayload struct {
-	Option int `json:"option"`
+	TargetPlayer string `json:"target_player"`
+	Option       int    `json:"option"`
 }
 
 // StealPayload for steal action
 type StealPayload struct {
-	CardPosition int `json:"card_position"`
+	TargetPlayer string `json:"target_player"`
+	CardPosition int    `json:"card_position"`
 }
 
 // CatapultPayload for catapult action
 type CatapultPayload struct {
-	CardPosition int `json:"card_position"`
+	TargetPlayer string `json:"target_player"`
+	CardPosition int    `json:"card_position"`
 }
 
 // GameStatePayload is sent to update clients with game state
@@ -110,18 +108,26 @@ type GameStatusDTO struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand   []HandCardDTO  `json:"current_player_hand"`
-	CurrentPlayerField  []FieldCardDTO `json:"current_player_field"`
-	CurrentPlayerCastle CastleDTO      `json:"current_player_castle"`
-	EnemyField          []FieldCardDTO `json:"enemy_field"`
-	EnemyCastle         CastleDTO      `json:"enemy_castle"`
-	CardsInEnemyHand    int            `json:"cards_in_enemy_hand"`
-	Cemetery            CemeteryDTO    `json:"cemetery"`
-	DiscardPile         DiscardPileDTO `json:"discard_pile"`
-	CardsInDeck         int            `json:"cards_in_deck"`
-	ModalCards          []CardDTO      `json:"modal_cards,omitempty"`
-	History             []string       `json:"history"`
-	GameOverMsg         string         `json:"game_over_msg,omitempty"`
+	CurrentPlayerHand   []HandCardDTO       `json:"current_player_hand"`
+	CurrentPlayerField  []FieldCardDTO      `json:"current_player_field"`
+	CurrentPlayerCastle CastleDTO           `json:"current_player_castle"`
+	Opponents           []OpponentStatusDTO `json:"opponents"`
+	GameMode            string              `json:"game_mode"`
+	Cemetery            CemeteryDTO         `json:"cemetery"`
+	DiscardPile         DiscardPileDTO      `json:"discard_pile"`
+	CardsInDeck         int                 `json:"cards_in_deck"`
+	ModalCards          []CardDTO           `json:"modal_cards,omitempty"`
+	History             []string            `json:"history"`
+	GameOverMsg         string              `json:"game_over_msg,omitempty"`
+}
+
+type OpponentStatusDTO struct {
+	PlayerName   string         `json:"player_name"`
+	Field        []FieldCardDTO `json:"field"`
+	Castle       CastleDTO      `json:"castle"`
+	CardsInHand  int            `json:"cards_in_hand"`
+	IsAlly       bool           `json:"is_ally"`
+	IsEliminated bool           `json:"is_eliminated"`
 }
 
 // HandCardDTO represents a card in the player's hand
@@ -154,11 +160,8 @@ type GameStartedPayload struct {
 
 // PlayerJoinedPayload when a player joins
 type PlayerJoinedPayload struct {
+	GameMode   string `json:"game_mode"`
+	MaxPlayers int    `json:"max_players"`
 	PlayerName string `json:"player_name"`
 }
 
-// InitialWarriorsPayload sent to players to choose their initial warriors
-type InitialWarriorsPayload struct {
-	Warriors   []CardDTO `json:"warriors"`
-	IsYourTurn bool      `json:"is_your_turn"`
-}
