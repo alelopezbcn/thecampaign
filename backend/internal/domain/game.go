@@ -309,7 +309,22 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		g.addToHistory(fmt.Sprintf("%s has no cards to buy or exceeds hand limit, skipping phase.", p.Name()))
 	}
 	if expectedAction == types.ActionTypeConstruct {
-		if p.CanConstruct() {
+		canConstruct := p.CanConstruct()
+		if !canConstruct {
+			// In 2v2, check if player has resources and any ally has a constructed castle
+			for _, ally := range g.Allies(g.PlayerIndex(p.Name())) {
+				if ally.Castle().IsConstructed() {
+					for _, c := range p.Hand().ShowCards() {
+						if _, ok := c.(ports.Resource); ok {
+							canConstruct = true
+							break
+						}
+					}
+					break
+				}
+			}
+		}
+		if canConstruct {
 			g.currentAction = types.ActionTypeConstruct
 			return gameStatusFn()
 		}

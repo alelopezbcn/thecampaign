@@ -347,6 +347,54 @@ body {
     font-weight: 600;
 }
 
+/* Team Layout for 2v2 Waiting Room */
+.waiting-players-list.team-layout {
+    max-width: 600px;
+}
+
+.teams-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 20px;
+    justify-content: center;
+}
+
+.team-column {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-width: 180px;
+}
+
+.team-header {
+    font-size: 1.2em;
+    font-weight: 700;
+    text-align: center;
+    padding: 8px 0;
+    color: #a8b8ff;
+    border-bottom: 2px solid rgba(168, 184, 255, 0.3);
+    margin-bottom: 5px;
+}
+
+.team-vs {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5em;
+    font-weight: 900;
+    color: #ff6b6b;
+    padding: 0 10px;
+    align-self: center;
+}
+
+.swap-team-btn {
+    margin-top: 20px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 .spinner {
     margin: 20px auto;
     width: 30px;
@@ -1473,6 +1521,16 @@ body {
 .opponent-field.selecting-target .card:hover {
     transform: translateY(5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Enable hover on ally opponent field when selecting ally for heal/protect */
+.opponent-field.selecting-ally .card {
+    cursor: pointer;
+}
+
+.opponent-field.selecting-ally .card:hover {
+    transform: translateY(5px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
 }
 
 /* Selected card style - prominent glow effect */

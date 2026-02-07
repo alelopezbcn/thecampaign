@@ -3034,6 +3034,113 @@ func TestGame_Construct(t *testing.T) {
 		}
 		assert.True(t, found, "History should contain construct action")
 	})
+
+	t.Run("Error when constructing on non-ally in 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeConstruct,
+			Mode:          types.GameMode1v1,
+		}
+
+		_, err := g.Construct("Player1", "G1", "Player2")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "can only construct on ally's castle")
+	})
+
+	t.Run("Error when card not in hand for ally construct", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeConstruct,
+			Mode:          types.GameMode2v2,
+			Teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
+		}
+
+		_, err := g.Construct("Player1", "G1", "Player2")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "card not in hand")
+	})
+
+	t.Run("Success constructing on ally castle in 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+		mockHand := mocks.NewMockHand(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().Construct(mockResource).Return(nil)
+		mockPlayer1.EXPECT().Hand().Return(mockHand)
+		mockHand.EXPECT().RemoveCard(mockResource).Return(true)
+
+		// nextAction expectations for ActionTypeEndTurn
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeConstruct,
+			Mode:               types.GameMode2v2,
+			Teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
+
+		status, err := g.Construct("Player1", "G1", "Player2")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeEndTurn, g.currentAction)
+		// Check history mentions ally castle
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player2's castle") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should mention ally's castle")
+	})
 }
 
 func TestGame_Spy(t *testing.T) {
@@ -3630,6 +3737,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		// Target not in player's field
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		// Target not in enemy's field either
@@ -3659,6 +3767,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(nil, false)
@@ -3688,6 +3797,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockResource, true)
@@ -3721,6 +3831,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
@@ -3768,6 +3879,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		// Target found in own field
 		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)

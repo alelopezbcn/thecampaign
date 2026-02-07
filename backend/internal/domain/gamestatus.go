@@ -142,9 +142,16 @@ func processHandCards(viewer ports.Player, game *Game, gs *GameStatus) {
 				gamestatus.NewThiefHandCard(ct.GetID(), action))
 
 		case ports.Resource:
+			allyCastleConstructed := false
+			for _, ally := range game.Allies(game.PlayerIndex(viewer.Name())) {
+				if ally.Castle().IsConstructed() {
+					allyCastleConstructed = true
+					break
+				}
+			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				gamestatus.NewResourceHandCard(ct, viewer.Castle().IsConstructed(),
-					viewer.CanBuyWith(ct), action))
+					allyCastleConstructed, viewer.CanBuyWith(ct), action))
 		}
 	}
 }

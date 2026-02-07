@@ -65,7 +65,7 @@ func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.MoveWarriorToField(client.PlayerName, p.WarriorID)
+		return g.MoveWarriorToField(client.PlayerName, p.WarriorID, p.TargetPlayer)
 	})
 }
 
@@ -119,7 +119,7 @@ func (h *Hub) handleConstruct(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Construct(client.PlayerName, p.CardID)
+		return g.Construct(client.PlayerName, p.CardID, p.TargetPlayer)
 	})
 }
 

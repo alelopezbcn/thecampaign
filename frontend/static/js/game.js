@@ -17,6 +17,7 @@ let gameState = {
     historyMessages: [], // Accumulated history messages
     waitingPlayers: [], // Track players who have joined the waiting room
     maxPlayers: 2, // Max players for current game mode
+    teamAssignments: {}, // playerName -> teamNumber (1 or 2), 2v2 only
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -204,6 +205,10 @@ function handlePlayerJoined(payload) {
         gameState.waitingPlayers.push(payload.player_name);
     }
 
+    if (payload.teams) {
+        gameState.teamAssignments = payload.teams;
+    }
+
     showWaitingScreen();
     updateWaitingScreen();
 }
@@ -235,6 +240,10 @@ function handleGameState(payload) {
 
     gameState.isYourTurn = isNowYourTurn;
     gameState.currentState = payload.game_status;
+
+    if (payload.game_status.game_mode) {
+        gameState.gameMode = payload.game_status.game_mode;
+    }
 
     // Detect newly eliminated players
     if (previousState) {
@@ -350,34 +359,89 @@ function updateWaitingScreen() {
         countEl.textContent = `${gameState.waitingPlayers.length}/${gameState.maxPlayers} players`;
     }
 
-    if (listEl) {
-        listEl.innerHTML = '';
+    if (!listEl) return;
+    listEl.innerHTML = '';
 
-        // Render filled slots
-        for (const name of gameState.waitingPlayers) {
-            const isSelf = name === gameState.playerName;
-            const slot = document.createElement('div');
-            slot.className = `player-slot ${isSelf ? 'self' : 'filled'}`;
-            slot.innerHTML = `
-                <div class="player-slot-icon">${isSelf ? '⚔' : '🛡'}</div>
-                <span class="player-slot-name">${name}</span>
-                ${isSelf ? '<span class="player-slot-you">YOU</span>' : ''}
-            `;
-            listEl.appendChild(slot);
-        }
-
-        // Render empty slots
-        const emptySlots = gameState.maxPlayers - gameState.waitingPlayers.length;
-        for (let i = 0; i < emptySlots; i++) {
-            const slot = document.createElement('div');
-            slot.className = 'player-slot empty';
-            slot.innerHTML = `
-                <div class="player-slot-icon">?</div>
-                <span class="player-slot-name">Waiting...</span>
-            `;
-            listEl.appendChild(slot);
-        }
+    // 2v2 mode: show two team columns
+    if (gameState.gameMode === '2v2') {
+        listEl.classList.add('team-layout');
+        listEl.innerHTML = renderTeamWaitingLayout();
+        return;
     }
+
+    // Non-2v2: existing flat layout
+    listEl.classList.remove('team-layout');
+
+    for (const name of gameState.waitingPlayers) {
+        const isSelf = name === gameState.playerName;
+        const slot = document.createElement('div');
+        slot.className = `player-slot ${isSelf ? 'self' : 'filled'}`;
+        slot.innerHTML = `
+            <div class="player-slot-icon">${isSelf ? '⚔' : '🛡'}</div>
+            <span class="player-slot-name">${name}</span>
+            ${isSelf ? '<span class="player-slot-you">YOU</span>' : ''}
+        `;
+        listEl.appendChild(slot);
+    }
+
+    const emptySlots = gameState.maxPlayers - gameState.waitingPlayers.length;
+    for (let i = 0; i < emptySlots; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'player-slot empty';
+        slot.innerHTML = `
+            <div class="player-slot-icon">?</div>
+            <span class="player-slot-name">Waiting...</span>
+        `;
+        listEl.appendChild(slot);
+    }
+}
+
+function renderTeamWaitingLayout() {
+    const teams = gameState.teamAssignments;
+    const team1Players = gameState.waitingPlayers.filter(n => teams[n] === 1);
+    const team2Players = gameState.waitingPlayers.filter(n => teams[n] === 2);
+
+    function renderTeamColumn(teamNum, players) {
+        let html = `<div class="team-column">`;
+        html += `<div class="team-header">Team ${teamNum}</div>`;
+
+        for (const name of players) {
+            const isSelf = name === gameState.playerName;
+            html += `
+                <div class="player-slot ${isSelf ? 'self' : 'filled'}">
+                    <div class="player-slot-icon">${isSelf ? '\u2694' : '\uD83D\uDEE1'}</div>
+                    <span class="player-slot-name">${name}</span>
+                    ${isSelf ? '<span class="player-slot-you">YOU</span>' : ''}
+                </div>
+            `;
+        }
+
+        for (let i = players.length; i < 2; i++) {
+            html += `
+                <div class="player-slot empty">
+                    <div class="player-slot-icon">?</div>
+                    <span class="player-slot-name">Waiting...</span>
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    let layout = `<div class="teams-container">`;
+    layout += renderTeamColumn(1, team1Players);
+    layout += `<div class="team-vs">VS</div>`;
+    layout += renderTeamColumn(2, team2Players);
+    layout += `</div>`;
+
+    layout += `<button class="btn btn-secondary swap-team-btn" onclick="sendSwapTeam()">Swap Team</button>`;
+
+    return layout;
+}
+
+function sendSwapTeam() {
+    sendMessage('swap_team');
 }
 
 function showGameScreen(status) {
@@ -399,6 +463,7 @@ function joinGame() {
     gameState.playerName = playerName;
     gameState.gameID = gameID;
     gameState.waitingPlayers = [];
+    gameState.teamAssignments = {};
     gameState.maxPlayers = { '1v1': 2, '2v2': 4, 'ffa3': 3, 'ffa5': 5 }[gameState.gameMode] || 2;
 
     // connectWebSocket's onopen will send join_game automatically
@@ -451,7 +516,10 @@ function clearSelections() {
     });
     // Remove selection mode classes from fields
     document.getElementById('player-field')?.classList.remove('selecting-ally');
-    document.querySelectorAll('.opponent-field').forEach(f => f.classList.remove('selecting-target'));
+    document.querySelectorAll('.opponent-field').forEach(f => {
+        f.classList.remove('selecting-target');
+        f.classList.remove('selecting-ally');
+    });
     document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
         badge.remove();
     });
@@ -497,19 +565,24 @@ function handleCardClick(cardID, cardType, context, card = null) {
         gameState.actionState.warriorId = cardID;
         highlightSelectedCard(cardID);
 
-        // Show action confirm modal with the warrior card
         const warriorCard = findCardById(cardID);
         const cardHtml = renderCardForModal(warriorCard);
 
-        showActionConfirmModal({
-            title: 'Move Warrior',
-            cardsHtml: cardHtml,
-            description: `${getCardName(warriorCard)} will move to your field`,
-            onConfirm: () => {
-                sendAction('move_warrior', { warrior_id: cardID });
-                resetActionState();
-            }
-        });
+        // In 2v2 mode, offer choice between own field and ally's field
+        const allies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated);
+        if (gameState.gameMode === '2v2' && allies.length > 0) {
+            showMoveWarriorTargetModal(cardID, warriorCard, cardHtml, allies);
+        } else {
+            showActionConfirmModal({
+                title: 'Move Warrior',
+                cardsHtml: cardHtml,
+                description: `${getCardName(warriorCard)} will move to your field`,
+                onConfirm: () => {
+                    sendAction('move_warrior', { warrior_id: cardID });
+                    resetActionState();
+                }
+            });
+        }
         return;
     }
 
@@ -552,20 +625,29 @@ function handleCardClick(cardID, cardType, context, card = null) {
     // Handle target selection for attack phase (opponent field)
     if (gameState.actionState.weaponId && context.startsWith('opponent-field:')) {
         const opponentName = context.split(':')[1];
-        // For special powers, only Archer (Instant Kill) can target enemies
+        const opponent = getOpponentByName(opponentName);
+        const isAllyBoard = opponent?.is_ally || false;
+
         if (gameState.actionState.type === 'specialpower') {
             const userId = gameState.actionState.userId;
             if (userId) {
                 const user = findCardById(userId);
                 const userType = (user?.sub_type || '').toLowerCase();
-                // Only archer can target enemies with special power
-                if (userType !== 'archer') {
-                    return; // Mage and Knight can only target allies
+                if (userType === 'archer') {
+                    // Archer (Instant Kill) can only target NON-ally opponents
+                    if (isAllyBoard) return;
+                } else {
+                    // Mage (Heal) and Knight (Protect) can only target ally boards
+                    if (!isAllyBoard) return;
                 }
             }
+        } else {
+            // Regular attacks cannot target allies
+            if (isAllyBoard) return;
         }
+
         gameState.actionState.targetPlayer = opponentName;
-        handleAttackPhaseTargetClick(cardID, 'enemy');
+        handleAttackPhaseTargetClick(cardID, isAllyBoard ? 'ally' : 'enemy');
         return;
     }
 
@@ -582,7 +664,7 @@ function handleCardClick(cardID, cardType, context, card = null) {
         const userId = gameState.actionState.userId;
         const user = findCardById(userId);
         const userType = (user?.sub_type || '').toLowerCase();
-        // Only Mage and Knight can target allies with special power
+        // Only Mage and Knight can target own field
         if (userType === 'archer') {
             return; // Archer can only target enemies
         }
@@ -903,14 +985,74 @@ function handleConstructPhaseHandClick(cardID, card) {
     gameState.actionState.type = 'construct';
     highlightSelectedCard(cardID);
 
-    // Show construct confirmation popup with resource and castle icon
-    showConstructConfirmModal(card, cardID);
+    // In 2v2 mode, offer choice between own castle and ally's castle
+    const allies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated);
+    const alliesWithCastle = allies.filter(a => a.castle?.constructed);
+    const ownCastle = gameState.currentState?.current_player_castle;
+    const canConstructOwn = ownCastle?.constructed || (card.type === 'resource' && card.value === 1) || (card.type === 'weapon' && card.value === 1);
+
+    if (gameState.gameMode === '2v2' && alliesWithCastle.length > 0) {
+        showConstructTargetModal(card, cardID, canConstructOwn, alliesWithCastle);
+    } else {
+        showConstructConfirmModal(card, cardID, '');
+    }
 }
 
-function showConstructConfirmModal(resource, cardID) {
+function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
+    let content = '<div class="target-player-options">';
+
+    // Option: own castle (if possible)
+    if (canConstructOwn) {
+        content += `
+            <div class="target-player-option" onclick="window._constructTargetCallback('')">
+                <span class="player-icon">🏰</span>
+                <div class="player-info">
+                    <div class="player-name">Your Castle</div>
+                    <div class="player-detail">${gameState.currentState?.current_player_castle?.constructed ? 'Value: ' + (gameState.currentState.current_player_castle.value || 0) + '/25' : 'Start construction'}</div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Option: each ally's castle
+    allies.forEach(ally => {
+        const name = ally.player_name;
+        const castleValue = ally.castle?.value || 0;
+        content += `
+            <div class="target-player-option" onclick="window._constructTargetCallback('${name}')">
+                <span class="player-icon">🤝</span>
+                <div class="player-info">
+                    <div class="player-name">${name}'s Castle</div>
+                    <div class="player-detail">Value: ${castleValue}/25</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._constructTargetCallback = (targetPlayer) => {
+        hideGameModal();
+        delete window._constructTargetCallback;
+        showConstructConfirmModal(resource, cardID, targetPlayer);
+    };
+
+    showGameModal('Construct', 'Choose which castle to build', content, true);
+}
+
+function showConstructConfirmModal(resource, cardID, targetPlayer) {
     const resourceName = getCardName(resource);
     const resourceValue = resource?.value || 0;
-    const castle = gameState.currentState?.current_player_castle;
+
+    let castle, targetName;
+    if (targetPlayer) {
+        const ally = getOpponentByName(targetPlayer);
+        castle = ally?.castle;
+        targetName = targetPlayer;
+    } else {
+        castle = gameState.currentState?.current_player_castle;
+        targetName = '';
+    }
+
     const currentValue = castle?.value || 0;
     const newValue = currentValue + resourceValue;
 
@@ -918,16 +1060,22 @@ function showConstructConfirmModal(resource, cardID) {
     cardsHtml += renderArrow();
     cardsHtml += renderCastleIcon();
 
+    const castleLabel = targetName ? `${targetName}'s castle` : 'your castle';
     const description = castle?.constructed
-        ? `${resourceName} (${resourceValue} gold) → Castle value: ${currentValue} → ${newValue}/25`
-        : `${resourceName} (${resourceValue} value) will be added to your castle`;
+        ? `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`
+        : `${resourceName} (${resourceValue} value) will be added to ${castleLabel}`;
+
+    const payload = { card_id: cardID };
+    if (targetPlayer) {
+        payload.target_player = targetPlayer;
+    }
 
     showActionConfirmModal({
         title: castle?.constructed ? 'Add Gold to Castle' : 'Construct Castle',
         cardsHtml: cardsHtml,
         description: description,
         onConfirm: () => {
-            sendAction('construct', { card_id: cardID });
+            sendAction('construct', payload);
             resetActionState();
         }
     });
@@ -948,11 +1096,12 @@ function enableSpecialPowerTargetSelection(userType) {
     const playerField = document.getElementById('player-field');
 
     if (userType === 'archer') {
-        // Archer (Instant Kill) targets enemies
-        document.querySelectorAll('.opponent-field').forEach(f => f.classList.add('selecting-target'));
+        // Archer (Instant Kill) targets enemies only (not allies)
+        document.querySelectorAll('.opponent-board:not(.ally) .opponent-field').forEach(f => f.classList.add('selecting-target'));
     } else {
-        // Mage (Heal) and Knight (Protect) target allies
+        // Mage (Heal) and Knight (Protect) target own field + ally fields
         playerField.classList.add('selecting-ally');
+        document.querySelectorAll('.opponent-board.ally .opponent-field').forEach(f => f.classList.add('selecting-ally'));
     }
 }
 
@@ -1072,7 +1221,10 @@ function resetActionState() {
 
     // Remove selection mode classes from fields
     document.getElementById('player-field')?.classList.remove('selecting-ally');
-    document.querySelectorAll('.opponent-field').forEach(f => f.classList.remove('selecting-target'));
+    document.querySelectorAll('.opponent-field').forEach(f => {
+        f.classList.remove('selecting-target');
+        f.classList.remove('selecting-ally');
+    });
 
     // Remove damage multiplier badges
     document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
@@ -1248,6 +1400,15 @@ function renderOpponents(opponents) {
     const container = document.getElementById('opponents-container');
     container.innerHTML = '';
     container.setAttribute('data-count', opponents.length);
+
+    // In 2v2, place ally in center with enemies on left and right
+    if (gameState.gameMode === '2v2' && opponents.length === 3) {
+        const enemies = opponents.filter(o => !o.is_ally);
+        const ally = opponents.find(o => o.is_ally);
+        if (ally) {
+            opponents = [enemies[0], ally, enemies[1]];
+        }
+    }
 
     opponents.forEach(opponent => {
         const board = document.createElement('div');
@@ -1981,6 +2142,60 @@ function showTargetPlayerModal(title, opponents, callback) {
     };
 
     showGameModal(title, 'Choose a target player', content, true);
+}
+
+// Move Warrior Target Modal (2v2: own field vs ally's field)
+function showMoveWarriorTargetModal(cardID, warriorCard, cardHtml, allies) {
+    let content = '<div class="target-player-options">';
+    // Option: own field
+    content += `
+        <div class="target-player-option" onclick="window._moveWarriorTargetCallback('')">
+            <span class="player-icon">🛡</span>
+            <div class="player-info">
+                <div class="player-name">Your Field</div>
+                <div class="player-detail">Move to your own field</div>
+            </div>
+        </div>
+    `;
+    // Option: each ally's field
+    allies.forEach(ally => {
+        const name = ally.player_name;
+        const detail = `${(ally.field || []).length} warriors on field`;
+        content += `
+            <div class="target-player-option" onclick="window._moveWarriorTargetCallback('${name}')">
+                <span class="player-icon">🤝</span>
+                <div class="player-info">
+                    <div class="player-name">${name}'s Field</div>
+                    <div class="player-detail">${detail}</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._moveWarriorTargetCallback = (targetPlayer) => {
+        hideGameModal();
+        delete window._moveWarriorTargetCallback;
+
+        const payload = { warrior_id: cardID };
+        if (targetPlayer) {
+            payload.target_player = targetPlayer;
+        }
+
+        showActionConfirmModal({
+            title: 'Move Warrior',
+            cardsHtml: cardHtml,
+            description: targetPlayer
+                ? `${getCardName(warriorCard)} will move to ${targetPlayer}'s field`
+                : `${getCardName(warriorCard)} will move to your field`,
+            onConfirm: () => {
+                sendAction('move_warrior', payload);
+                resetActionState();
+            }
+        });
+    };
+
+    showGameModal('Move Warrior', 'Choose where to deploy', content, true);
 }
 
 // Steal Modal

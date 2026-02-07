@@ -18,12 +18,13 @@ type ClientMessage struct {
 
 // GameRoom represents a game room with players
 type GameRoom struct {
-	ID         string
-	GameMode   types.GameMode
-	MaxPlayers int
-	Game       *domain.Game
-	Players    map[string]*Client // playerName -> client
-	mutex      sync.RWMutex
+	ID              string
+	GameMode        types.GameMode
+	MaxPlayers      int
+	Game            *domain.Game
+	Players         map[string]*Client // playerName -> client
+	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
+	mutex           sync.RWMutex
 }
 
 // Hub maintains active clients and game rooms
@@ -78,6 +79,7 @@ func (h *Hub) Run() {
 					if room, exists := h.gameRooms[client.GameID]; exists {
 						room.mutex.Lock()
 						delete(room.Players, client.PlayerName)
+						delete(room.TeamAssignments, client.PlayerName)
 						if len(room.Players) == 0 {
 							delete(h.gameRooms, client.GameID)
 							log.Printf("Game room %s removed (empty)", client.GameID)
@@ -131,6 +133,8 @@ func (h *Hub) processMessage(client *Client, msg *Message) {
 		h.handleEndTurn(client)
 	case MsgSkipPhase:
 		h.handleSkipPhase(client)
+	case MsgSwapTeam:
+		h.handleSwapTeam(client)
 	default:
 		client.SendError("Unknown message type")
 	}
@@ -176,10 +180,11 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	room, exists := h.gameRooms[gameID]
 	if !exists {
 		room = &GameRoom{
-			ID:         gameID,
-			GameMode:   gameMode,
-			MaxPlayers: maxPlayersForMode(gameMode),
-			Players:    make(map[string]*Client),
+			ID:              gameID,
+			GameMode:        gameMode,
+			MaxPlayers:      maxPlayersForMode(gameMode),
+			Players:         make(map[string]*Client),
+			TeamAssignments: make(map[string]int),
 		}
 		h.gameRooms[gameID] = room
 		log.Printf("Created new game room: %s (mode: %s, max: %d)",
@@ -193,7 +198,6 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	if oldClient, exists := room.Players[playerName]; exists {
 		room.Players[playerName] = client
 		gameInProgress := room.Game != nil
-		room.mutex.Unlock()
 
 		// Close old client connection
 		h.mutex.Lock()
@@ -206,9 +210,23 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		log.Printf("Player %s reconnected to game %s", playerName, gameID)
 
 		if gameInProgress {
+			room.mutex.Unlock()
 			h.sendReconnectState(gameID, playerName)
 		} else {
-			client.SendMessage(MsgWaitingForPlayer, nil)
+			// Send full waiting room state including teams
+			allNames := make([]string, 0, len(room.Players))
+			for name := range room.Players {
+				allNames = append(allNames, name)
+			}
+			payload := PlayerJoinedPayload{
+				GameMode:   string(room.GameMode),
+				MaxPlayers: room.MaxPlayers,
+				PlayerName: playerName,
+				Players:    allNames,
+				Teams:      copyTeams(room.TeamAssignments),
+			}
+			room.mutex.Unlock()
+			client.SendMessage(MsgPlayerJoined, payload)
 		}
 		return
 	}
@@ -221,6 +239,24 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	}
 
 	room.Players[playerName] = client
+
+	// Auto-assign team for 2v2
+	if room.GameMode == types.GameMode2v2 {
+		team1Count, team2Count := 0, 0
+		for _, t := range room.TeamAssignments {
+			if t == 1 {
+				team1Count++
+			}
+			if t == 2 {
+				team2Count++
+			}
+		}
+		if team1Count <= team2Count {
+			room.TeamAssignments[playerName] = 1
+		} else {
+			room.TeamAssignments[playerName] = 2
+		}
+	}
 
 	// If a game already exists (player was removed before the new client joined)
 	if room.Game != nil {
@@ -239,12 +275,14 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		for name := range room.Players {
 			allNames = append(allNames, name)
 		}
+		teams := copyTeams(room.TeamAssignments)
 		for _, c := range room.Players {
 			c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
 				GameMode:   string(room.GameMode),
 				MaxPlayers: room.MaxPlayers,
 				PlayerName: playerName,
 				Players:    allNames,
+				Teams:      teams,
 			})
 		}
 		room.mutex.Unlock()
@@ -252,9 +290,23 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	}
 
 	// All players are in - start the game
-	playerNames := make([]string, 0, room.MaxPlayers)
-	for name := range room.Players {
-		playerNames = append(playerNames, name)
+	// For 2v2, interleave teams: T1, T2, T1, T2
+	var playerNames []string
+	if room.GameMode == types.GameMode2v2 {
+		var t1Names, t2Names []string
+		for name, team := range room.TeamAssignments {
+			if team == 1 {
+				t1Names = append(t1Names, name)
+			} else {
+				t2Names = append(t2Names, name)
+			}
+		}
+		playerNames = []string{t1Names[0], t2Names[0], t1Names[1], t2Names[1]}
+	} else {
+		playerNames = make([]string, 0, room.MaxPlayers)
+		for name := range room.Players {
+			playerNames = append(playerNames, name)
+		}
 	}
 
 	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(),
@@ -433,6 +485,73 @@ func (h *Hub) getGameRoom(client *Client) (*GameRoom, bool) {
 
 	room, exists := h.gameRooms[client.GameID]
 	return room, exists
+}
+
+func copyTeams(src map[string]int) map[string]int {
+	if len(src) == 0 {
+		return nil
+	}
+	dst := make(map[string]int, len(src))
+	for k, v := range src {
+		dst[k] = v
+	}
+	return dst
+}
+
+func (h *Hub) handleSwapTeam(client *Client) {
+	room, exists := h.getGameRoom(client)
+	if !exists {
+		client.SendError("Game not found")
+		return
+	}
+
+	room.mutex.Lock()
+	defer room.mutex.Unlock()
+
+	if room.GameMode != types.GameMode2v2 {
+		client.SendError("Team swap only available in 2v2 mode")
+		return
+	}
+	if room.Game != nil {
+		client.SendError("Cannot swap teams after game has started")
+		return
+	}
+
+	currentTeam := room.TeamAssignments[client.PlayerName]
+	targetTeam := 1
+	if currentTeam == 1 {
+		targetTeam = 2
+	}
+
+	// Validate target team has room
+	count := 0
+	for _, t := range room.TeamAssignments {
+		if t == targetTeam {
+			count++
+		}
+	}
+	if count >= 2 {
+		client.SendError("Target team is full")
+		return
+	}
+
+	room.TeamAssignments[client.PlayerName] = targetTeam
+
+	allNames := make([]string, 0, len(room.Players))
+	for name := range room.Players {
+		allNames = append(allNames, name)
+	}
+	teams := copyTeams(room.TeamAssignments)
+
+	for _, c := range room.Players {
+		c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
+			GameMode:   string(room.GameMode),
+			MaxPlayers: room.MaxPlayers,
+			PlayerName: client.PlayerName,
+			Players:    allNames,
+			Teams:      teams,
+		})
+	}
 }
 
 // executeGameAction executes a game action and sends state to all players

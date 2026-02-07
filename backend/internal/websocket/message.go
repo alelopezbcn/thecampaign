@@ -18,6 +18,7 @@ const (
 	MsgCatapult           MessageType = "catapult"
 	MsgEndTurn            MessageType = "end_turn"
 	MsgSkipPhase          MessageType = "skip_phase"
+	MsgSwapTeam           MessageType = "swap_team"
 
 	// Server to Client messages
 	MsgGameState        MessageType = "game_state"
@@ -57,7 +58,8 @@ type SpecialPowerPayload struct {
 
 // MoveWarriorPayload for moving a warrior to field
 type MoveWarriorPayload struct {
-	WarriorID string `json:"warrior_id"`
+	WarriorID    string `json:"warrior_id"`
+	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // TradePayload for trading cards
@@ -72,7 +74,8 @@ type BuyPayload struct {
 
 // ConstructPayload for constructing castle
 type ConstructPayload struct {
-	CardID string `json:"card_id"`
+	CardID       string `json:"card_id"`
+	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // SpyPayload for spy action
@@ -162,9 +165,10 @@ type GameStartedPayload struct {
 
 // PlayerJoinedPayload when a player joins
 type PlayerJoinedPayload struct {
-	GameMode   string   `json:"game_mode"`
-	MaxPlayers int      `json:"max_players"`
-	PlayerName string   `json:"player_name"`
-	Players    []string `json:"players"`
+	GameMode   string         `json:"game_mode"`
+	MaxPlayers int            `json:"max_players"`
+	PlayerName string         `json:"player_name"`
+	Players    []string       `json:"players"`
+	Teams      map[string]int `json:"teams,omitempty"`
 }
 
