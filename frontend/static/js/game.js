@@ -308,7 +308,19 @@ function handleGameState(payload) {
     // Check for game over message
     const gameOverMsg = payload.game_status.game_over_msg;
     if (gameOverMsg && gameOverMsg.length > 0) {
-        const isWinner = gameOverMsg.toLowerCase().includes(gameState.playerName.toLowerCase());
+        let isWinner = gameOverMsg.toLowerCase().includes(gameState.playerName.toLowerCase());
+        // In 2v2, also check if any teammate is mentioned in the winner message
+        if (!isWinner && gameState.gameMode === '2v2') {
+            const myTeam = gameState.teamAssignments[gameState.playerName];
+            if (myTeam) {
+                for (const [name, team] of Object.entries(gameState.teamAssignments)) {
+                    if (team === myTeam && gameOverMsg.toLowerCase().includes(name.toLowerCase())) {
+                        isWinner = true;
+                        break;
+                    }
+                }
+            }
+        }
         showGameOverModal(isWinner, gameOverMsg);
     }
 
@@ -322,8 +334,17 @@ function handleGameState(payload) {
 function handleGameEnded() {
     showScreen('gameover');
     const winner = gameState.currentState ? gameState.currentState.current_player : 'Unknown';
+    let isWinner = winner === gameState.playerName;
+    // In 2v2, check if the winner is a teammate
+    if (!isWinner && gameState.gameMode === '2v2') {
+        const myTeam = gameState.teamAssignments[gameState.playerName];
+        const winnerTeam = gameState.teamAssignments[winner];
+        if (myTeam && winnerTeam && myTeam === winnerTeam) {
+            isWinner = true;
+        }
+    }
     document.getElementById('gameover-title').textContent =
-        winner === gameState.playerName ? 'Victory!' : 'Defeat';
+        isWinner ? 'Victory!' : 'Defeat';
     document.getElementById('gameover-message').textContent =
         `${winner} wins the game!`;
 }
@@ -1773,8 +1794,12 @@ function renderHistory(newMessages) {
 
     gameState.historyMessages.forEach(message => {
         const item = document.createElement('div');
-        item.className = 'history-item' + (message.isError ? ' history-error' : '');
-        item.textContent = message.text || message;
+        const text = message.text || message;
+        let className = 'history-item';
+        if (message.isError) className += ' history-error';
+        else if (text.includes('skipping phase')) className += ' history-skip';
+        item.className = className;
+        item.textContent = text;
         container.appendChild(item);
     });
 
@@ -2122,7 +2147,8 @@ function showTargetPlayerModal(title, opponents, callback) {
     let content = '<div class="target-player-options">';
     opponents.forEach(opp => {
         const name = opp.player_name;
-        const detail = `${opp.cards_in_hand} cards, ${(opp.field || []).length} warriors`;
+        const castle = opp.castle || {};
+        const detail = `Castle: ${castle.value || 0}/25 gold, ${castle.resource_cards || 0} resource cards`;
         content += `
             <div class="target-player-option" onclick="window._targetPlayerCallback('${name}')">
                 <span class="player-icon">⚔</span>
@@ -2205,10 +2231,10 @@ function showStealModal() {
     const handCount = opponent?.cards_in_hand || 0;
 
     let content = '';
-    for (let i = 0; i < handCount; i++) {
+    for (let i = 1; i <= handCount; i++) {
         content += `
             <div class="card-face-down" data-position="${i}" onclick="selectStealPosition(${i})">
-                <span class="card-position">#${i + 1}</span>
+                <span class="card-position">#${i}</span>
             </div>
         `;
     }
@@ -2294,8 +2320,8 @@ function showCatapultModal() {
 }
 
 function selectCatapultPosition(position) {
-    hideGameModal();
     sendAction('catapult', { target_player: gameState.actionState.targetPlayer, card_position: position });
+    hideGameModal();
 }
 
 // Bought Cards Modal

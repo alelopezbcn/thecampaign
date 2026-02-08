@@ -3196,7 +3196,7 @@ func TestGame_Spy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Spy().Return(nil) // No spy
+		mockPlayer1.EXPECT().HasSpy().Return(false)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
@@ -3207,7 +3207,7 @@ func TestGame_Spy(t *testing.T) {
 		status, err := g.Spy("Player1", "Player2", 1)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a Spy")
+		assert.Contains(t, err.Error(), "player does not have a spy")
 		assert.Equal(t, GameStatus{}, status)
 	})
 
@@ -3217,18 +3217,14 @@ func TestGame_Spy(t *testing.T) {
 
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockSpy := mocks.NewMockSpy(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Spy().Return(mockSpy)
-		mockDiscardPile.EXPECT().Discard(mockSpy)
+		mockPlayer1.EXPECT().HasSpy().Return(true)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.ActionTypeSpySteal,
-			discardPile:   mockDiscardPile,
 		}
 
 		status, err := g.Spy("Player1", "Player2", 3) // Invalid option
@@ -3254,6 +3250,7 @@ func TestGame_Spy(t *testing.T) {
 		revealedCards := []ports.Card{mockRevealedCard}
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().HasSpy().Return(true)
 		mockPlayer1.EXPECT().Spy().Return(mockSpy)
 		mockDiscardPile.EXPECT().Discard(mockSpy)
 		mockDeck.EXPECT().Reveal(5).Return(revealedCards)
@@ -3299,6 +3296,7 @@ func TestGame_Spy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().HasSpy().Return(true)
 		mockPlayer1.EXPECT().Spy().Return(mockSpy)
 		mockDiscardPile.EXPECT().Discard(mockSpy)
 		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
@@ -3381,7 +3379,7 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Thief().Return(nil)
+		mockPlayer1.EXPECT().HasThief().Return(false)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
@@ -3389,7 +3387,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Steal("Player1", "Player2", 0)
+		status, err := g.Steal("Player1", "Player2", 1)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "player does not have a thief")
@@ -3402,11 +3400,10 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockThief := mocks.NewMockThief(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer1.EXPECT().HasThief().Return(true)
 		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(nil, errors.New("invalid position"))
 
 		g := &Game{
@@ -3437,8 +3434,9 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer1.EXPECT().HasThief().Return(true)
 		mockPlayer2.EXPECT().CardStolenFromHand(2).Return(mockStolenCard, nil)
+		mockPlayer1.EXPECT().Thief().Return(mockThief)
 		mockDiscardPile.EXPECT().Discard(mockThief) // Thief goes to discard
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
 
@@ -3480,8 +3478,9 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().HasThief().Return(true)
+		mockPlayer2.EXPECT().CardStolenFromHand(1).Return(mockStolenCard, nil)
 		mockPlayer1.EXPECT().Thief().Return(mockThief)
-		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(mockStolenCard, nil)
 		mockDiscardPile.EXPECT().Discard(mockThief)
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
 		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
@@ -3500,7 +3499,7 @@ func TestGame_Steal(t *testing.T) {
 
 		mockProvider.EXPECT().GetWithModal(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.Steal("Player1", "Player2", 0)
+		_, err := g.Steal("Player1", "Player2", 1)
 
 		assert.NoError(t, err)
 		found := false

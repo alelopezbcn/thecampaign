@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
@@ -14,6 +15,7 @@ type Games []Game
 
 type Game struct {
 	id                 string
+	createdAt          time.Time
 	Mode               types.GameMode
 	Players            []ports.Player
 	Teams              map[int][]int // teamID -> player indices (2v2 only)

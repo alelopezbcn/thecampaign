@@ -781,6 +781,12 @@ body {
     font-weight: 600;
 }
 
+.history-skip {
+    border-left-color: #f5a623 !important;
+    background: rgba(245, 166, 35, 0.15) !important;
+    color: #f5c842 !important;
+}
+
 .history-empty {
     font-size: 0.75em;
     color: #666;

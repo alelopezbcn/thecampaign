@@ -301,6 +301,10 @@ func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 			g.currentAction)
 	}
 
+	if !p.HasCatapult() {
+		return status, errors.New("player does not have a catapult to use")
+	}
+
 	targetPlayer, err := g.getTargetPlayer(playerName, targetPlayerName)
 	if err != nil {
 		return status, err
@@ -341,12 +345,10 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 			g.currentAction)
 	}
 
-	s := p.Spy()
-	if s == nil {
-		return status, errors.New("player does not have a Spy to use")
+	if !p.HasSpy() {
+		return status, errors.New("player does not have a spy to use")
 	}
 
-	g.OnCardMovedToPile(s)
 	var spiedCards []ports.Card
 
 	switch option {
@@ -367,6 +369,13 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 	default:
 		return status, errors.New("invalid Spy option")
 	}
+
+	s := p.Spy()
+	if s == nil {
+		return status, errors.New("failed to retrieve spy card")
+	}
+
+	g.OnCardMovedToPile(s)
 
 	status = g.nextAction(types.ActionTypeBuy,
 		func() GameStatus {
@@ -389,19 +398,23 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 			g.currentAction)
 	}
 
+	if !p.HasThief() {
+		return status, errors.New("player does not have a thief to steal with")
+	}
+
 	targetPlayer, err := g.getTargetPlayer(playerName, targetPlayerName)
 	if err != nil {
 		return status, err
 	}
 
-	t := p.Thief()
-	if t == nil {
-		return status, errors.New("player does not have a thief to steal with")
-	}
-
 	stolenCard, err := targetPlayer.CardStolenFromHand(cardPosition)
 	if err != nil {
 		return status, fmt.Errorf("stealing card failed: %w", err)
+	}
+
+	t := p.Thief()
+	if t == nil {
+		return status, errors.New("failed to retrieve thief card")
 	}
 
 	g.OnCardMovedToPile(t)
