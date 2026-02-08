@@ -111,10 +111,10 @@ func (mr *MockCastleMockRecorder) RemoveGold(position any) *gomock.Call {
 }
 
 // ResourceCards mocks base method.
-func (m *MockCastle) ResourceCards() int {
+func (m *MockCastle) ResourceCards() []ports.Resource {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ResourceCards")
-	ret0, _ := ret[0].(int)
+	ret0, _ := ret[0].([]ports.Resource)
 	return ret0
 }
 
@@ -122,6 +122,20 @@ func (m *MockCastle) ResourceCards() int {
 func (mr *MockCastleMockRecorder) ResourceCards() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCards", reflect.TypeOf((*MockCastle)(nil).ResourceCards))
+}
+
+// ResourceCardsCount mocks base method.
+func (m *MockCastle) ResourceCardsCount() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourceCardsCount")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// ResourceCardsCount indicates an expected call of ResourceCardsCount.
+func (mr *MockCastleMockRecorder) ResourceCardsCount() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCardsCount", reflect.TypeOf((*MockCastle)(nil).ResourceCardsCount))
 }
 
 // String mocks base method.

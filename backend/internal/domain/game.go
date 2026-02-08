@@ -215,10 +215,10 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 	case types.GameMode1v1:
 		g.gameOver = true
 		g.winner = g.CurrentPlayer().Name()
+		return
 
 	case types.GameModeFFA3, types.GameModeFFA5:
 		g.EliminatedPlayers[eliminatedIdx] = true
-		g.addToHistory(playerName + " has been eliminated!")
 		active := 0
 		var lastActive string
 		for i, p := range g.Players {
@@ -234,7 +234,6 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 
 	case types.GameMode2v2:
 		g.EliminatedPlayers[eliminatedIdx] = true
-		g.addToHistory(playerName + " has been eliminated!")
 		// Check if all enemies of the eliminated player's team are also eliminated
 		// (i.e., the opposing team is fully eliminated)
 		attackerIdx := g.CurrentTurn
@@ -250,6 +249,17 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 			g.gameOver = true
 			g.winner = g.CurrentPlayer().Name() + "'s team"
 		}
+	}
+
+	g.addToHistory(playerName + " has been eliminated!")
+	eliminatedPlayer := g.Players[eliminatedIdx]
+	// Move all cards from the eliminated player's hand to the discard pile
+	for _, c := range eliminatedPlayer.Hand().ShowCards() {
+		g.discardPile.Discard(c)
+	}
+	// Move all castled cards to the discard pile
+	for _, c := range eliminatedPlayer.Castle().ResourceCards() {
+		g.discardPile.Discard(c)
 	}
 }
 

@@ -39,7 +39,7 @@ func TestCastle_NewCastle(t *testing.T) {
 	assert.Equal(t, "castle_TestPlayer", c.GetID())
 	assert.False(t, c.IsConstructed())
 	assert.Equal(t, 0, c.Value())
-	assert.Equal(t, 0, c.ResourceCards())
+	assert.Equal(t, 0, c.ResourceCardsCount())
 }
 
 func TestCastle_Construct(t *testing.T) {
@@ -120,7 +120,7 @@ func TestCastle_Construct(t *testing.T) {
 		err := c.Construct(gold)
 		assert.NoError(t, err)
 		assert.Equal(t, 4, c.Value())
-		assert.Equal(t, 1, c.ResourceCards())
+		assert.Equal(t, 1, c.ResourceCardsCount())
 	})
 
 	t.Run("Error adding non-resource to constructed castle", func(t *testing.T) {
@@ -181,7 +181,7 @@ func TestCastle_Value(t *testing.T) {
 	c.Construct(g2)
 
 	assert.Equal(t, 8, c.Value())
-	assert.Equal(t, 2, c.ResourceCards())
+	assert.Equal(t, 2, c.ResourceCardsCount())
 }
 
 func TestCastle_RemoveGold(t *testing.T) {
@@ -199,7 +199,7 @@ func TestCastle_RemoveGold(t *testing.T) {
 		removed, err := c.RemoveGold(1)
 		assert.NoError(t, err)
 		assert.NotNil(t, removed)
-		assert.Equal(t, 0, c.ResourceCards())
+		assert.Equal(t, 0, c.ResourceCardsCount())
 	})
 
 	t.Run("Error when no resources", func(t *testing.T) {

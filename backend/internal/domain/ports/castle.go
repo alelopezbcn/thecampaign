@@ -5,7 +5,8 @@ type Castle interface {
 	Construct(card Card) error
 	IsConstructed() bool
 	Value() int
-	ResourceCards() int
+	ResourceCardsCount() int
+	ResourceCards() []Resource
 	RemoveGold(position int) (Resource, error)
 	String() string
 	CanBeAttacked() bool

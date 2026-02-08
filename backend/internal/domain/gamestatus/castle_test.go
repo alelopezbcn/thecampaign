@@ -14,7 +14,7 @@ func TestNewCastle_NotConstructed(t *testing.T) {
 
 	castle := mocks.NewMockCastle(ctrl)
 	castle.EXPECT().IsConstructed().Return(false)
-	castle.EXPECT().ResourceCards().Return(2)
+	castle.EXPECT().ResourceCardsCount().Return(2)
 	castle.EXPECT().Value().Return(5)
 
 	c := NewCastle(castle)
@@ -30,7 +30,7 @@ func TestNewCastle_Constructed(t *testing.T) {
 
 	castle := mocks.NewMockCastle(ctrl)
 	castle.EXPECT().IsConstructed().Return(true)
-	castle.EXPECT().ResourceCards().Return(5)
+	castle.EXPECT().ResourceCardsCount().Return(5)
 	castle.EXPECT().Value().Return(15)
 
 	c := NewCastle(castle)
@@ -46,7 +46,7 @@ func TestNewCastle_Empty(t *testing.T) {
 
 	castle := mocks.NewMockCastle(ctrl)
 	castle.EXPECT().IsConstructed().Return(false)
-	castle.EXPECT().ResourceCards().Return(0)
+	castle.EXPECT().ResourceCardsCount().Return(0)
 	castle.EXPECT().Value().Return(0)
 
 	c := NewCastle(castle)

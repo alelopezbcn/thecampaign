@@ -72,8 +72,12 @@ func (c *castle) Value() int {
 	return total
 }
 
-func (c *castle) ResourceCards() int {
+func (c *castle) ResourceCardsCount() int {
 	return len(c.resources)
+}
+
+func (c *castle) ResourceCards() []ports.Resource {
+	return c.resources
 }
 
 func (c *castle) RemoveGold(position int) (ports.Resource, error) {
@@ -106,12 +110,12 @@ func (c *castle) RemoveGold(position int) (ports.Resource, error) {
 }
 
 func (c *castle) CanBeAttacked() bool {
-	return c.IsConstructed() && c.ResourceCards() > 0
+	return c.IsConstructed() && c.ResourceCardsCount() > 0
 }
 
 func (c *castle) String() string {
 	return fmt.Sprintf("Castle: %v Gold coins (%d cards)",
-		c.Value(), c.ResourceCards())
+		c.Value(), c.ResourceCardsCount())
 }
 
 func (c *castle) addResource(card ports.Card) error {

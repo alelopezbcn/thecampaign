@@ -13,7 +13,7 @@ type Castle struct {
 func NewCastle(c ports.Castle) Castle {
 	return Castle{
 		IsConstructed: c.IsConstructed(),
-		ResourceCards: c.ResourceCards(),
+		ResourceCards: c.ResourceCardsCount(),
 		Value:         c.Value(),
 	}
 }
