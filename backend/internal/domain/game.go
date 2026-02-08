@@ -35,6 +35,8 @@ type Game struct {
 	historyTracker     int
 	gameOver           bool
 	winner             string
+	GameStartedAt      time.Time
+	TurnStartedAt      time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
@@ -44,6 +46,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		return nil, err
 	}
 
+	now := time.Now()
 	g := &Game{
 		id:                 uuid.NewString(),
 		CurrentTurn:        0,
@@ -55,6 +58,8 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		Players:            make([]ports.Player, len(playerNames)),
 		Mode:               mode,
 		EliminatedPlayers:  make(map[int]bool),
+		GameStartedAt:      now,
+		TurnStartedAt:      now,
 	}
 
 	if mode == types.GameMode2v2 {
@@ -269,6 +274,7 @@ func (g *Game) switchTurn() {
 	g.hasMovedWarrior = false
 	g.hasTraded = false
 	g.currentAction = types.ActionTypeDrawCard
+	g.TurnStartedAt = time.Now()
 
 	for {
 		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)

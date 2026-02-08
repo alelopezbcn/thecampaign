@@ -2,6 +2,7 @@
 let ws = null;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
+let timerInterval = null;
 let gameState = {
     playerName: '',
     gameID: '',
@@ -268,6 +269,7 @@ function handleGameState(payload) {
 
     updateTurnIndicator();
     updatePhaseIndicator();
+    startTimers(payload.game_status);
 
     // Check if we have new cards from a pending action (trade or buy)
     const newCards = payload.game_status.new_cards || [];
@@ -1805,6 +1807,70 @@ function renderHistory(newMessages) {
 
     // Scroll to bottom to show latest message
     container.scrollTop = container.scrollHeight;
+}
+
+// Timer functions
+function startTimers(status) {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    const gameStartedAt = new Date(status.game_started_at);
+    const turnStartedAt = new Date(status.turn_started_at);
+    const turnLimit = status.turn_time_limit_secs || 60;
+    const isGameOver = status.game_over_msg && status.game_over_msg.length > 0;
+
+    if (isGameOver) {
+        const turnTimerEl = document.getElementById('turn-timer');
+        if (turnTimerEl) {
+            turnTimerEl.textContent = '--';
+            turnTimerEl.classList.remove('warning');
+        }
+        return;
+    }
+
+    function updateTimers() {
+        const now = new Date();
+
+        // Game timer (counting up)
+        const gameElapsed = Math.floor((now - gameStartedAt) / 1000);
+        const gameTimerEl = document.getElementById('game-timer');
+        if (gameTimerEl) {
+            gameTimerEl.textContent = formatTime(gameElapsed);
+        }
+
+        // Turn timer (counting down)
+        const turnElapsed = Math.floor((now - turnStartedAt) / 1000);
+        const turnRemaining = Math.max(0, turnLimit - turnElapsed);
+        const turnTimerEl = document.getElementById('turn-timer');
+        if (turnTimerEl) {
+            turnTimerEl.textContent = formatCountdown(turnRemaining);
+            if (turnRemaining <= 10) {
+                turnTimerEl.classList.add('warning');
+            } else {
+                turnTimerEl.classList.remove('warning');
+            }
+        }
+    }
+
+    updateTimers();
+    timerInterval = setInterval(updateTimers, 1000);
+}
+
+function formatTime(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const mins = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    if (hours > 0) {
+        return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+function formatCountdown(totalSeconds) {
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    return `${mins}:${String(secs).padStart(2, '0')}`;
 }
 
 // Helper functions

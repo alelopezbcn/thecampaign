@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"time"
+
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -26,6 +28,9 @@ type GameStatus struct {
 	ModalCards          []gamestatus.Card      `json:"modal_cards"`
 	History             []string               `json:"history"`
 	GameOverMgs         string                 `json:"game_over_msg"`
+	GameStartedAt       time.Time              `json:"game_started_at"`
+	TurnStartedAt       time.Time              `json:"turn_started_at"`
+	TurnTimeLimitSecs   int                    `json:"turn_time_limit_secs"`
 }
 
 type OpponentStatus struct {
@@ -65,6 +70,9 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
 		History:             game.GetHistory(),
+		GameStartedAt:       game.GameStartedAt,
+		TurnStartedAt:       game.TurnStartedAt,
+		TurnTimeLimitSecs:   60,
 	}
 
 	if len(newCards) > 0 {

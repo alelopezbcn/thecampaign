@@ -67,6 +67,9 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		ModalCards:          convertModalCards(status.ModalCards),
 		History:             status.History,
 		GameOverMsg:         status.GameOverMgs,
+		GameStartedAt:       status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		TurnStartedAt:       status.TurnStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		TurnTimeLimitSecs:   status.TurnTimeLimitSecs,
 	}
 }
 

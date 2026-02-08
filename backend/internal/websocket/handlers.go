@@ -197,6 +197,7 @@ func (h *Hub) handleEndTurn(client *Client) {
 
 	// Auto draw card for the next player and broadcast state
 	h.autoDrawAndBroadcast(client.GameID)
+	h.startTurnTimer(client.GameID)
 }
 
 func (h *Hub) handleSkipPhase(client *Client) {

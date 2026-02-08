@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
+
+const turnTimeLimit = 60 * time.Second
 
 // ClientMessage represents a message from a client
 type ClientMessage struct {
@@ -25,6 +28,8 @@ type GameRoom struct {
 	Players         map[string]*Client // playerName -> client
 	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
 	mutex           sync.RWMutex
+	turnTimer       *time.Timer
+	turnTimerStop   chan struct{}
 }
 
 // Hub maintains active clients and game rooms
@@ -350,6 +355,7 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 
 	// Auto draw card for the first player and send game state
 	h.autoDrawAndBroadcast(gameID)
+	h.startTurnTimer(gameID)
 }
 
 // autoDrawAndBroadcast draws a card for the current player and sends state to all
@@ -373,6 +379,82 @@ func (h *Hub) autoDrawAndBroadcast(gameID string) {
 	}
 
 	h.sendGameStateToAll(gameID, status)
+}
+
+// startTurnTimer starts (or restarts) the turn timer for a game room.
+// When the timer expires, it auto-ends the current player's turn.
+func (h *Hub) startTurnTimer(gameID string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists || room.Game == nil {
+		return
+	}
+
+	// Stop any existing timer
+	if room.turnTimerStop != nil {
+		close(room.turnTimerStop)
+	}
+	if room.turnTimer != nil {
+		room.turnTimer.Stop()
+	}
+
+	room.turnTimerStop = make(chan struct{})
+	room.turnTimer = time.NewTimer(turnTimeLimit)
+	stop := room.turnTimerStop
+
+	go func() {
+		select {
+		case <-room.turnTimer.C:
+			room.mutex.Lock()
+			if room.Game == nil {
+				room.mutex.Unlock()
+				return
+			}
+
+			if over, _ := room.Game.IsGameOver(); over {
+				room.mutex.Unlock()
+				return
+			}
+
+			currentPlayer := room.Game.CurrentPlayer().Name()
+			log.Printf("Turn timer expired for %s in game %s", currentPlayer, gameID)
+
+			_, err := room.Game.EndTurn(currentPlayer)
+			room.mutex.Unlock()
+
+			if err != nil {
+				log.Printf("Error auto-ending turn for %s: %v", currentPlayer, err)
+				return
+			}
+
+			h.autoDrawAndBroadcast(gameID)
+			h.startTurnTimer(gameID)
+		case <-stop:
+			return
+		}
+	}()
+}
+
+// stopTurnTimer stops the turn timer for a game room.
+func (h *Hub) stopTurnTimer(gameID string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists {
+		return
+	}
+
+	if room.turnTimerStop != nil {
+		close(room.turnTimerStop)
+		room.turnTimerStop = nil
+	}
+	if room.turnTimer != nil {
+		room.turnTimer.Stop()
+		room.turnTimer = nil
+	}
 }
 
 // sendReconnectState sends the current game state to a reconnected player
@@ -572,4 +654,8 @@ func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (domai
 	}
 
 	h.sendGameStateToAll(client.GameID, status)
+
+	if status.GameOverMgs != "" {
+		h.stopTurnTimer(client.GameID)
+	}
 }
