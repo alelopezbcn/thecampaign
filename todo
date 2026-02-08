@@ -1,42 +1,17 @@
-en 2v2 cuando acaba el juego, solo muestra victory al player que estaba jugando, al aliado le muestra defeat
-Steal en FFA5 no funciona. A veces Si funciona en FFA3, a veces no
-    intento 1: stealing card failed: invalid position 0 for stealing cardBase
-    intento 2: player does not have a thief to steal with
-Cuando el tieft se usa y da error, se lo quita de la mano
-Catapult en FF5 y FFA3 no funciona cuando hay mas de un castillo construido con resources
-    target player not found
-en el popup selec castle to attack, que mujestre cant de recursos y cant de cartas de cada castillo, en vez de numero de hand cards y warriors
-las acciones de skipping que las muestre en amarillo en el log
 cuando un player es eliminated, todas sus cartas deberian ir a la pila de descarte, incluso las del castillo - TEST
-Agregar tiempo de partida, y tiempo de turno
-
-
-
-Claude
--drag and drop?
--cuando movemos warrior, que se arrastre al field
-
-
-
-
+Steal en FFA5 no funciona. En FFA3 me ha funcionado un vez, otras no. TEST
+en 2v2 cuando acaba el juego, solo muestra victory al player que estaba jugando, al aliado le muestra defeat - TEST
+Catapult en FF5 y FFA3 no funciona cuando hay mas de un castillo construido con resources - TEST
+en el popup selec castle to attack, que mujestre cant de recursos y cant de cartas de cada castillo, en vez de numero de hand cards y warriors - TEST
+las acciones de skipping que las muestre en amarillo en el log - TEST
+Agregar tiempo de partida, y tiempo de turno - TEST
+Esc key should cancel all popups or actions, Enter should confirm all actions - TEST
 
 
 🎨 UI/UX
 Animaciones de combate - Cuando un arma ataca, mostrar una animación visual (la carta "vuela" hacia el objetivo)
+cuando movemos warrior, que se arrastre al field
 
 🎮 Gameplay
 Modo vs IA - Un oponente controlado por computadora para jugar solo
-
-Timer de turno - Límite de tiempo por turno para partidas más dinámicas
-
 Efectos especiales visuales - Cuando el Dragon entra al campo, cuando el castillo se completa, etc.
-
-✨ Calidad de Vida
-Tutorial interactivo - Para nuevos jugadores
-
-Guía de cartas - Referencia de todas las cartas y sus efectos
-
-Sonidos - Efectos de sonido para acciones (robar carta, atacar, etc.)
-
-Atajos de teclado - Espacio para skip, Enter para confirmar, etc.
-

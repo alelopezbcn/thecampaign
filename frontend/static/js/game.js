@@ -83,6 +83,42 @@ function setupEventListeners() {
 
     // Game over modal
     document.getElementById('gameover-modal-btn').addEventListener('click', () => location.reload());
+
+    // Global keyboard shortcuts
+    document.addEventListener('keydown', handleGlobalKeyboard);
+}
+
+function handleGlobalKeyboard(e) {
+    // Don't intercept when typing in input fields
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+    const actionConfirmModal = document.getElementById('action-confirm-modal');
+    const gameModal = document.getElementById('game-modal');
+    const endturnPopup = document.getElementById('endturn-popup');
+    const actionPrompt = document.getElementById('action-prompt-container');
+
+    const isActionConfirmOpen = actionConfirmModal && !actionConfirmModal.classList.contains('hidden');
+    const isGameModalOpen = gameModal && !gameModal.classList.contains('hidden');
+    const isEndturnPopupOpen = endturnPopup && !endturnPopup.classList.contains('hidden');
+    const isActionPromptOpen = actionPrompt && !actionPrompt.classList.contains('hidden');
+
+    if (e.key === 'Escape') {
+        if (isActionConfirmOpen) {
+            onActionConfirmNo();
+        } else if (isGameModalOpen) {
+            hideGameModal();
+        } else if (isActionPromptOpen) {
+            cancelAction();
+        }
+    } else if (e.key === 'Enter') {
+        if (isActionConfirmOpen) {
+            onActionConfirmYes();
+        } else if (isGameModalOpen) {
+            hideGameModal();
+        } else if (isEndturnPopupOpen) {
+            sendAction('end_turn');
+        }
+    }
 }
 
 function handleSkipPhase() {
