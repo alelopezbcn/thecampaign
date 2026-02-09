@@ -40,6 +40,7 @@ type Game struct {
 	historyTracker     int
 	gameOver           bool
 	winner             string
+	winnerIdx          int
 	GameStartedAt      time.Time
 	TurnStartedAt      time.Time
 }
@@ -158,6 +159,16 @@ func (g *Game) IsGameOver() (bool, string) {
 	return g.gameOver, g.winner
 }
 
+func (g *Game) isPlayerWinner(playerIdx int) bool {
+	if !g.gameOver {
+		return false
+	}
+	if playerIdx == g.winnerIdx {
+		return true
+	}
+	return g.SameTeam(playerIdx, g.winnerIdx)
+}
+
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
 
 	if !p.CanTakeCards(count) {
@@ -215,6 +226,7 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.gameOver = true
+	g.winnerIdx = g.PlayerIndex(p.Name())
 	if g.Mode == types.GameMode2v2 {
 		g.winner = p.Name() + "'s team"
 	} else {
@@ -229,6 +241,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 	case types.GameMode1v1:
 		g.gameOver = true
 		g.winner = g.CurrentPlayer().Name()
+		g.winnerIdx = g.CurrentTurn
 		return
 
 	case types.GameModeFFA3, types.GameModeFFA5:
@@ -244,6 +257,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		if active == 1 {
 			g.gameOver = true
 			g.winner = lastActive
+			g.winnerIdx = g.PlayerIndex(lastActive)
 		}
 
 	case types.GameMode2v2:
@@ -262,6 +276,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		if allEnemiesEliminated {
 			g.gameOver = true
 			g.winner = g.CurrentPlayer().Name() + "'s team"
+			g.winnerIdx = g.CurrentTurn
 		}
 	}
 

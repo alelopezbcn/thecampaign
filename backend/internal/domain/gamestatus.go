@@ -28,6 +28,7 @@ type GameStatus struct {
 	ModalCards          []gamestatus.Card      `json:"modal_cards"`
 	History             []string               `json:"history"`
 	GameOverMgs         string                 `json:"game_over_msg"`
+	IsWinner            bool                   `json:"is_winner"`
 	GameStartedAt       time.Time              `json:"game_started_at"`
 	TurnStartedAt       time.Time              `json:"turn_started_at"`
 	TurnTimeLimitSecs   int                    `json:"turn_time_limit_secs"`
@@ -91,6 +92,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 
 	if over, winner := game.IsGameOver(); over {
 		gs.GameOverMgs = "Game over! The winner is " + winner
+		gs.IsWinner = game.isPlayerWinner(viewerIdx)
 	}
 
 	return gs

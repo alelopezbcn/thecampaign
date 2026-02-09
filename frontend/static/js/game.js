@@ -346,19 +346,7 @@ function handleGameState(payload) {
     // Check for game over message
     const gameOverMsg = payload.game_status.game_over_msg;
     if (gameOverMsg && gameOverMsg.length > 0) {
-        let isWinner = gameOverMsg.toLowerCase().includes(gameState.playerName.toLowerCase());
-        // In 2v2, also check if any teammate is mentioned in the winner message
-        if (!isWinner && gameState.gameMode === '2v2') {
-            const myTeam = gameState.teamAssignments[gameState.playerName];
-            if (myTeam) {
-                for (const [name, team] of Object.entries(gameState.teamAssignments)) {
-                    if (team === myTeam && gameOverMsg.toLowerCase().includes(name.toLowerCase())) {
-                        isWinner = true;
-                        break;
-                    }
-                }
-            }
-        }
+        const isWinner = checkIsWinner(gameOverMsg, payload.game_status);
         showGameOverModal(isWinner, gameOverMsg);
     }
 
@@ -369,22 +357,17 @@ function handleGameState(payload) {
     }
 }
 
+function checkIsWinner(gameOverMsg, status) {
+    return !!status.is_winner;
+}
+
 function handleGameEnded() {
     showScreen('gameover');
-    const winner = gameState.currentState ? gameState.currentState.current_player : 'Unknown';
-    let isWinner = winner === gameState.playerName;
-    // In 2v2, check if the winner is a teammate
-    if (!isWinner && gameState.gameMode === '2v2') {
-        const myTeam = gameState.teamAssignments[gameState.playerName];
-        const winnerTeam = gameState.teamAssignments[winner];
-        if (myTeam && winnerTeam && myTeam === winnerTeam) {
-            isWinner = true;
-        }
-    }
+    const gameOverMsg = gameState.currentState?.game_over_msg || '';
+    const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
     document.getElementById('gameover-title').textContent =
         isWinner ? 'Victory!' : 'Defeat';
-    document.getElementById('gameover-message').textContent =
-        `${winner} wins the game!`;
+    document.getElementById('gameover-message').textContent = gameOverMsg;
 }
 
 // Screen management
