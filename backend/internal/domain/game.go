@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
@@ -10,10 +11,16 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	maxCastleResourcesFFA = 25
+	maxCastleResources2v2 = 30
+)
+
 type Games []Game
 
 type Game struct {
 	id                 string
+	createdAt          time.Time
 	Mode               types.GameMode
 	Players            []ports.Player
 	Teams              map[int][]int // teamID -> player indices (2v2 only)
@@ -33,6 +40,9 @@ type Game struct {
 	historyTracker     int
 	gameOver           bool
 	winner             string
+	winnerIdx          int
+	GameStartedAt      time.Time
+	TurnStartedAt      time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
@@ -42,6 +52,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		return nil, err
 	}
 
+	now := time.Now()
 	g := &Game{
 		id:                 uuid.NewString(),
 		CurrentTurn:        0,
@@ -53,9 +64,13 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		Players:            make([]ports.Player, len(playerNames)),
 		Mode:               mode,
 		EliminatedPlayers:  make(map[int]bool),
+		GameStartedAt:      now,
+		TurnStartedAt:      now,
 	}
 
+	castleResourcesToWin := maxCastleResourcesFFA
 	if mode == types.GameMode2v2 {
+		castleResourcesToWin = maxCastleResources2v2
 		g.Teams = map[int][]int{
 			1: {0, 2}, // Team 1: Player 1 and Player 3
 			2: {1, 3}, // Team 2: Player 2 and Player 4
@@ -63,7 +78,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	}
 
 	for i, name := range playerNames {
-		p := NewPlayer(name, i, g, g, g, g)
+		p := NewPlayer(name, i, g, g, g, g, castleResourcesToWin)
 		g.Players[i] = p
 	}
 
@@ -144,6 +159,16 @@ func (g *Game) IsGameOver() (bool, string) {
 	return g.gameOver, g.winner
 }
 
+func (g *Game) isPlayerWinner(playerIdx int) bool {
+	if !g.gameOver {
+		return false
+	}
+	if playerIdx == g.winnerIdx {
+		return true
+	}
+	return g.SameTeam(playerIdx, g.winnerIdx)
+}
+
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
 
 	if !p.CanTakeCards(count) {
@@ -201,6 +226,7 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.gameOver = true
+	g.winnerIdx = g.PlayerIndex(p.Name())
 	if g.Mode == types.GameMode2v2 {
 		g.winner = p.Name() + "'s team"
 	} else {
@@ -215,10 +241,11 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 	case types.GameMode1v1:
 		g.gameOver = true
 		g.winner = g.CurrentPlayer().Name()
+		g.winnerIdx = g.CurrentTurn
+		return
 
 	case types.GameModeFFA3, types.GameModeFFA5:
 		g.EliminatedPlayers[eliminatedIdx] = true
-		g.addToHistory(playerName + " has been eliminated!")
 		active := 0
 		var lastActive string
 		for i, p := range g.Players {
@@ -230,11 +257,11 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		if active == 1 {
 			g.gameOver = true
 			g.winner = lastActive
+			g.winnerIdx = g.PlayerIndex(lastActive)
 		}
 
 	case types.GameMode2v2:
 		g.EliminatedPlayers[eliminatedIdx] = true
-		g.addToHistory(playerName + " has been eliminated!")
 		// Check if all enemies of the eliminated player's team are also eliminated
 		// (i.e., the opposing team is fully eliminated)
 		attackerIdx := g.CurrentTurn
@@ -249,7 +276,19 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		if allEnemiesEliminated {
 			g.gameOver = true
 			g.winner = g.CurrentPlayer().Name() + "'s team"
+			g.winnerIdx = g.CurrentTurn
 		}
+	}
+
+	g.addToHistory(playerName + " has been eliminated!")
+	eliminatedPlayer := g.Players[eliminatedIdx]
+	// Move all cards from the eliminated player's hand to the discard pile
+	for _, c := range eliminatedPlayer.Hand().ShowCards() {
+		g.discardPile.Discard(c)
+	}
+	// Move all castled cards to the discard pile
+	for _, c := range eliminatedPlayer.Castle().ResourceCards() {
+		g.discardPile.Discard(c)
 	}
 }
 
@@ -257,6 +296,7 @@ func (g *Game) switchTurn() {
 	g.hasMovedWarrior = false
 	g.hasTraded = false
 	g.currentAction = types.ActionTypeDrawCard
+	g.TurnStartedAt = time.Now()
 
 	for {
 		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
@@ -309,7 +349,22 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		g.addToHistory(fmt.Sprintf("%s has no cards to buy or exceeds hand limit, skipping phase.", p.Name()))
 	}
 	if expectedAction == types.ActionTypeConstruct {
-		if p.CanConstruct() {
+		canConstruct := p.CanConstruct()
+		if !canConstruct {
+			// In 2v2, check if player has resources and any ally has a constructed castle
+			for _, ally := range g.Allies(g.PlayerIndex(p.Name())) {
+				if ally.Castle().IsConstructed() {
+					for _, c := range p.Hand().ShowCards() {
+						if _, ok := c.(ports.Resource); ok {
+							canConstruct = true
+							break
+						}
+					}
+					break
+				}
+			}
+		}
+		if canConstruct {
 			g.currentAction = types.ActionTypeConstruct
 			return gameStatusFn()
 		}

@@ -18,6 +18,7 @@ const (
 	MsgCatapult           MessageType = "catapult"
 	MsgEndTurn            MessageType = "end_turn"
 	MsgSkipPhase          MessageType = "skip_phase"
+	MsgSwapTeam           MessageType = "swap_team"
 
 	// Server to Client messages
 	MsgGameState        MessageType = "game_state"
@@ -57,7 +58,8 @@ type SpecialPowerPayload struct {
 
 // MoveWarriorPayload for moving a warrior to field
 type MoveWarriorPayload struct {
-	WarriorID string `json:"warrior_id"`
+	WarriorID    string `json:"warrior_id"`
+	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // TradePayload for trading cards
@@ -72,7 +74,8 @@ type BuyPayload struct {
 
 // ConstructPayload for constructing castle
 type ConstructPayload struct {
-	CardID string `json:"card_id"`
+	CardID       string `json:"card_id"`
+	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // SpyPayload for spy action
@@ -103,6 +106,7 @@ type GameStatePayload struct {
 // GameStatusDTO is the JSON-friendly game status
 type GameStatusDTO struct {
 	CurrentPlayer  string   `json:"current_player"`
+	TurnPlayer     string   `json:"turn_player"`
 	CurrentAction  string   `json:"current_action"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
@@ -111,6 +115,7 @@ type GameStatusDTO struct {
 	CurrentPlayerHand   []HandCardDTO       `json:"current_player_hand"`
 	CurrentPlayerField  []FieldCardDTO      `json:"current_player_field"`
 	CurrentPlayerCastle CastleDTO           `json:"current_player_castle"`
+	IsEliminated        bool                `json:"is_eliminated"`
 	Opponents           []OpponentStatusDTO `json:"opponents"`
 	GameMode            string              `json:"game_mode"`
 	Cemetery            CemeteryDTO         `json:"cemetery"`
@@ -119,6 +124,10 @@ type GameStatusDTO struct {
 	ModalCards          []CardDTO           `json:"modal_cards,omitempty"`
 	History             []string            `json:"history"`
 	GameOverMsg         string              `json:"game_over_msg,omitempty"`
+	IsWinner            bool                `json:"is_winner"`
+	GameStartedAt       string              `json:"game_started_at"`
+	TurnStartedAt       string              `json:"turn_started_at"`
+	TurnTimeLimitSecs   int                 `json:"turn_time_limit_secs"`
 }
 
 type OpponentStatusDTO struct {
@@ -160,8 +169,10 @@ type GameStartedPayload struct {
 
 // PlayerJoinedPayload when a player joins
 type PlayerJoinedPayload struct {
-	GameMode   string `json:"game_mode"`
-	MaxPlayers int    `json:"max_players"`
-	PlayerName string `json:"player_name"`
+	GameMode   string         `json:"game_mode"`
+	MaxPlayers int            `json:"max_players"`
+	PlayerName string         `json:"player_name"`
+	Players    []string       `json:"players"`
+	Teams      map[string]int `json:"teams,omitempty"`
 }
 

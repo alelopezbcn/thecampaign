@@ -1,31 +1,11 @@
-
-
-Claude
--hacer lobby
--drag and drop?
--cuando movemos warrior, que se arrastre al field
-
-
-
-
-
+add history que tambien ponga el color en que queremos mostrar
+crear game que haga un id uuid, y geere una url para que los players se metan directamente e ingresen su nombre
+llevar cuenta de guerreros matados, da;o hecho? stats en general
 
 🎨 UI/UX
 Animaciones de combate - Cuando un arma ataca, mostrar una animación visual (la carta "vuela" hacia el objetivo)
+cuando movemos warrior, que se arrastre al field
 
 🎮 Gameplay
 Modo vs IA - Un oponente controlado por computadora para jugar solo
-
-Timer de turno - Límite de tiempo por turno para partidas más dinámicas
-
 Efectos especiales visuales - Cuando el Dragon entra al campo, cuando el castillo se completa, etc.
-
-✨ Calidad de Vida
-Tutorial interactivo - Para nuevos jugadores
-
-Guía de cartas - Referencia de todas las cartas y sus efectos
-
-Sonidos - Efectos de sonido para acciones (robar carta, atacar, etc.)
-
-Atajos de teclado - Espacio para skip, Enter para confirmar, etc.
-

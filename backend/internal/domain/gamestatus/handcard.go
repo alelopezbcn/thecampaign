@@ -178,7 +178,7 @@ func NewThiefHandCard(cardID string, action types.ActionType) HandCard {
 }
 
 func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
-	canBuy bool, action types.ActionType) HandCard {
+	allyCastleConstructed bool, canBuy bool, action types.ActionType) HandCard {
 
 	if action != types.ActionTypeBuy && action != types.ActionTypeConstruct {
 		return newHandCard(resource.GetID(), CardTypeResource,
@@ -186,12 +186,12 @@ func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
 	}
 
 	if action == types.ActionTypeConstruct {
-		// If player's castle is already constructed/started, any resource can be added
-		if playerCastleConstructed {
+		// If player's or ally's castle is already constructed, any resource can be added
+		if playerCastleConstructed || allyCastleConstructed {
 			return newHandCard(resource.GetID(), CardTypeResource,
 				resource.Value(), []string{}, true)
 		}
-		// If player's castle hasn't started, only resources that can start construction
+		// If no castle has been started, only resources that can start construction
 		return newHandCard(resource.GetID(), CardTypeResource,
 			resource.Value(), []string{}, resource.CanConstruct())
 	}

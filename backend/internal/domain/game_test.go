@@ -3034,6 +3034,114 @@ func TestGame_Construct(t *testing.T) {
 		}
 		assert.True(t, found, "History should contain construct action")
 	})
+
+	t.Run("Error when constructing on non-ally in 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeConstruct,
+			Mode:          types.GameMode1v1,
+		}
+
+		_, err := g.Construct("Player1", "G1", "Player2")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "can only construct on ally's castle")
+	})
+
+	t.Run("Error when card not in hand for ally construct", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(nil, false)
+
+		g := &Game{
+			Players:       []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			CurrentTurn:   0,
+			currentAction: types.ActionTypeConstruct,
+			Mode:          types.GameMode2v2,
+			Teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
+		}
+
+		_, err := g.Construct("Player1", "G1", "Player2")
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "card not in hand")
+	})
+
+	t.Run("Success constructing on ally castle in 2v2", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer4 := mocks.NewMockPlayer(ctrl)
+		mockProvider := NewMockGameStatusProvider(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+		mockResource := mocks.NewMockResource(ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+		mockHand := mocks.NewMockHand(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle).AnyTimes()
+		mockCastle.EXPECT().IsConstructed().Return(true).AnyTimes()
+		mockCastle.EXPECT().Construct(mockResource).Return(nil)
+		mockPlayer1.EXPECT().Hand().Return(mockHand)
+		mockHand.EXPECT().RemoveCard(mockResource).Return(true)
+
+		// nextAction expectations for ActionTypeEndTurn
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+
+		g := &Game{
+			Players:            []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
+			CurrentTurn:        0,
+			currentAction:      types.ActionTypeConstruct,
+			Mode:               types.GameMode2v2,
+			Teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
+			discardPile:        mockDiscardPile,
+			GameStatusProvider: mockProvider,
+			history:            []string{},
+		}
+
+		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
+
+		status, err := g.Construct("Player1", "G1", "Player2")
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeEndTurn, g.currentAction)
+		// Check history mentions ally castle
+		found := false
+		for _, h := range g.history {
+			if strings.Contains(h, "Player2's castle") {
+				found = true
+				break
+			}
+		}
+		assert.True(t, found, "History should mention ally's castle")
+	})
 }
 
 func TestGame_Spy(t *testing.T) {
@@ -3089,7 +3197,7 @@ func TestGame_Spy(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Spy().Return(nil) // No spy
+		mockPlayer1.EXPECT().HasSpy().Return(false)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
@@ -3100,7 +3208,7 @@ func TestGame_Spy(t *testing.T) {
 		status, err := g.Spy("Player1", "Player2", 1)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a Spy")
+		assert.Contains(t, err.Error(), "player does not have a spy")
 		assert.Equal(t, GameStatus{}, status)
 	})
 
@@ -3110,18 +3218,14 @@ func TestGame_Spy(t *testing.T) {
 
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockSpy := mocks.NewMockSpy(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Spy().Return(mockSpy)
-		mockDiscardPile.EXPECT().Discard(mockSpy)
+		mockPlayer1.EXPECT().HasSpy().Return(true)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.ActionTypeSpySteal,
-			discardPile:   mockDiscardPile,
 		}
 
 		status, err := g.Spy("Player1", "Player2", 3) // Invalid option
@@ -3147,6 +3251,7 @@ func TestGame_Spy(t *testing.T) {
 		revealedCards := []ports.Card{mockRevealedCard}
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer1.EXPECT().HasSpy().Return(true)
 		mockPlayer1.EXPECT().Spy().Return(mockSpy)
 		mockDiscardPile.EXPECT().Discard(mockSpy)
 		mockDeck.EXPECT().Reveal(5).Return(revealedCards)
@@ -3192,6 +3297,7 @@ func TestGame_Spy(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().HasSpy().Return(true)
 		mockPlayer1.EXPECT().Spy().Return(mockSpy)
 		mockDiscardPile.EXPECT().Discard(mockSpy)
 		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
@@ -3274,7 +3380,7 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Thief().Return(nil)
+		mockPlayer1.EXPECT().HasThief().Return(false)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
@@ -3282,7 +3388,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction: types.ActionTypeSpySteal,
 		}
 
-		status, err := g.Steal("Player1", "Player2", 0)
+		status, err := g.Steal("Player1", "Player2", 1)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "player does not have a thief")
@@ -3295,11 +3401,10 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockThief := mocks.NewMockThief(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer1.EXPECT().HasThief().Return(true)
 		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(nil, errors.New("invalid position"))
 
 		g := &Game{
@@ -3330,8 +3435,9 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Thief().Return(mockThief)
+		mockPlayer1.EXPECT().HasThief().Return(true)
 		mockPlayer2.EXPECT().CardStolenFromHand(2).Return(mockStolenCard, nil)
+		mockPlayer1.EXPECT().Thief().Return(mockThief)
 		mockDiscardPile.EXPECT().Discard(mockThief) // Thief goes to discard
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
 
@@ -3373,8 +3479,9 @@ func TestGame_Steal(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().HasThief().Return(true)
+		mockPlayer2.EXPECT().CardStolenFromHand(1).Return(mockStolenCard, nil)
 		mockPlayer1.EXPECT().Thief().Return(mockThief)
-		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(mockStolenCard, nil)
 		mockDiscardPile.EXPECT().Discard(mockThief)
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
 		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
@@ -3393,7 +3500,7 @@ func TestGame_Steal(t *testing.T) {
 
 		mockProvider.EXPECT().GetWithModal(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.Steal("Player1", "Player2", 0)
+		_, err := g.Steal("Player1", "Player2", 1)
 
 		assert.NoError(t, err)
 		found := false
@@ -3461,7 +3568,7 @@ func TestGame_Catapult(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().Catapult().Return(nil)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
 
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
@@ -3487,6 +3594,7 @@ func TestGame_Catapult(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().HasCatapult().Return(true)
 		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCatapult.EXPECT().Attack(mockCastle, 0).Return(nil, errors.New("invalid position"))
@@ -3520,6 +3628,7 @@ func TestGame_Catapult(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer1.EXPECT().HasCatapult().Return(true)
 		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCatapult.EXPECT().Attack(mockCastle, 2).Return(mockStolenGold, nil)
@@ -3630,6 +3739,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		// Target not in player's field
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		// Target not in enemy's field either
@@ -3659,6 +3769,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(nil, false)
@@ -3688,6 +3799,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockResource, true)
@@ -3721,6 +3833,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
@@ -3768,6 +3881,7 @@ func TestGame_SpecialPower(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
+		mockWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		// Target found in own field
 		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
@@ -3887,6 +4001,13 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
 
+		mockHand2 := mocks.NewMockHand(ctrl)
+		mockCastle2 := mocks.NewMockCastle(ctrl)
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().ShowCards().Return([]ports.Card{})
+		mockPlayer2.EXPECT().Castle().Return(mockCastle2)
+		mockCastle2.EXPECT().ResourceCards().Return([]ports.Resource{})
+
 		g := &Game{
 			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
 			CurrentTurn:       0,
@@ -3913,6 +4034,13 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
 
+		mockHand3 := mocks.NewMockHand(ctrl)
+		mockCastle3 := mocks.NewMockCastle(ctrl)
+		mockPlayer3.EXPECT().Hand().Return(mockHand3)
+		mockHand3.EXPECT().ShowCards().Return([]ports.Card{})
+		mockPlayer3.EXPECT().Castle().Return(mockCastle3)
+		mockCastle3.EXPECT().ResourceCards().Return([]ports.Resource{})
+
 		g := &Game{
 			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3},
 			CurrentTurn:       0,
@@ -3932,13 +4060,23 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockPlayers := make([]*mocks.MockPlayer, 5)
 		players := make([]ports.Player, 5)
 		for i := 0; i < 5; i++ {
 			mp := mocks.NewMockPlayer(ctrl)
 			mp.EXPECT().Name().Return(
 				"Player" + string(rune('1'+i))).AnyTimes()
+			mockPlayers[i] = mp
 			players[i] = mp
 		}
+
+		// Mock Hand/Castle for eliminated player (Player2 = index 1)
+		mockHand := mocks.NewMockHand(ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+		mockPlayers[1].EXPECT().Hand().Return(mockHand)
+		mockHand.EXPECT().ShowCards().Return([]ports.Card{})
+		mockPlayers[1].EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().ResourceCards().Return([]ports.Resource{})
 
 		g := &Game{
 			Players:           players,
@@ -3966,6 +4104,13 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
 		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
+
+		mockHand2 := mocks.NewMockHand(ctrl)
+		mockCastle2 := mocks.NewMockCastle(ctrl)
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().ShowCards().Return([]ports.Card{})
+		mockPlayer2.EXPECT().Castle().Return(mockCastle2)
+		mockCastle2.EXPECT().ResourceCards().Return([]ports.Resource{})
 
 		g := &Game{
 			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
@@ -3996,6 +4141,13 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
 		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
+
+		mockHand4 := mocks.NewMockHand(ctrl)
+		mockCastle4 := mocks.NewMockCastle(ctrl)
+		mockPlayer4.EXPECT().Hand().Return(mockHand4)
+		mockHand4.EXPECT().ShowCards().Return([]ports.Card{})
+		mockPlayer4.EXPECT().Castle().Return(mockCastle4)
+		mockCastle4.EXPECT().ResourceCards().Return([]ports.Resource{})
 
 		g := &Game{
 			Players:           []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},

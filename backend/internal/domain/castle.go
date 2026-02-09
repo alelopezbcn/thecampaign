@@ -7,8 +7,6 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-const MaxCastleResources = 25
-
 type castle struct {
 	id                       string
 	isConstructed            bool
@@ -16,14 +14,16 @@ type castle struct {
 	resources                []ports.Resource
 	castleCompletionObserver ports.CastleCompletionObserver
 	player                   ports.Player
+	resourcesToWin           int
 }
 
-func newCastle(p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
+func newCastle(resourcesToWin int, p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
 	return &castle{
 		id:                       "castle_" + p.Name(),
 		resources:                []ports.Resource{},
 		player:                   p,
 		castleCompletionObserver: o,
+		resourcesToWin:           resourcesToWin,
 	}
 }
 
@@ -72,8 +72,12 @@ func (c *castle) Value() int {
 	return total
 }
 
-func (c *castle) ResourceCards() int {
+func (c *castle) ResourceCardsCount() int {
 	return len(c.resources)
+}
+
+func (c *castle) ResourceCards() []ports.Resource {
+	return c.resources
 }
 
 func (c *castle) RemoveGold(position int) (ports.Resource, error) {
@@ -106,12 +110,12 @@ func (c *castle) RemoveGold(position int) (ports.Resource, error) {
 }
 
 func (c *castle) CanBeAttacked() bool {
-	return c.IsConstructed() && c.ResourceCards() > 0
+	return c.IsConstructed() && c.ResourceCardsCount() > 0
 }
 
 func (c *castle) String() string {
 	return fmt.Sprintf("Castle: %v Gold coins (%d cards)",
-		c.Value(), c.ResourceCards())
+		c.Value(), c.ResourceCardsCount())
 }
 
 func (c *castle) addResource(card ports.Card) error {
@@ -121,7 +125,7 @@ func (c *castle) addResource(card ports.Card) error {
 	}
 
 	c.resources = append(c.resources, gold)
-	if c.Value() >= MaxCastleResources {
+	if c.Value() >= c.resourcesToWin {
 		c.castleCompletionObserver.OnCastleCompletion(c.player)
 	}
 

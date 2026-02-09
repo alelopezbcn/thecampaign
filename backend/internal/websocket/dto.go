@@ -49,6 +49,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 
 	return GameStatusDTO{
 		CurrentPlayer:  status.CurrentPlayer,
+		TurnPlayer:     status.TurnPlayer,
 		CurrentAction:  status.CurrentAction,
 		NewCards:       status.NewCards,
 		CanMoveWarrior: status.CanMoveWarrior,
@@ -57,6 +58,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CurrentPlayerHand:   convertHandCards(status.CurrentPlayerHand),
 		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
 		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
+		IsEliminated:        status.IsEliminated,
 		Opponents:           opponents,
 		GameMode:            status.GameMode,
 		Cemetery:            convertCemetery(status.Cemetery),
@@ -65,6 +67,10 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		ModalCards:          convertModalCards(status.ModalCards),
 		History:             status.History,
 		GameOverMsg:         status.GameOverMgs,
+		IsWinner:            status.IsWinner,
+		GameStartedAt:       status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		TurnStartedAt:       status.TurnStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		TurnTimeLimitSecs:   status.TurnTimeLimitSecs,
 	}
 }
 

@@ -12,7 +12,11 @@
       "Bash(go tool cover:*)",
       "Bash(cmd /c:*)",
       "Bash(powershell -Command \"Set-Location ''c:\\\\temp\\\\projects\\\\TheCampaign\\\\backend''; go test -v ./internal/... 2>&1\")",
-      "Bash(powershell -Command \"Set-Location ''c:\\\\temp\\\\projects\\\\TheCampaign\\\\backend''; go test ./internal/... 2>&1 | Select-Object -Last 20\")"
+      "Bash(powershell -Command \"Set-Location ''c:\\\\temp\\\\projects\\\\TheCampaign\\\\backend''; go test ./internal/... 2>&1 | Select-Object -Last 20\")",
+      "Bash(powershell -Command:*)",
+      "Bash(cmd.exe /c \"cd /d c:\\\\temp\\\\projects\\\\TheCampaign\\\\backend && go test -v ./internal/domain/ 1>c:\\\\temp\\\\test_output.txt 2>&1 && type c:\\\\temp\\\\test_output.txt\")",
+      "Bash(dir:*)",
+      "Bash(go vet:*)"
     ]
   }
 }

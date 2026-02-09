@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -17,7 +18,7 @@ func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
 	return p.MoveCardToField(warriorID)
 }
 
-func (g *Game) MoveWarriorToField(playerName, warriorID string) (
+func (g *Game) MoveWarriorToField(playerName, warriorID string, targetPlayerName ...string) (
 	status GameStatus, err error) {
 
 	p := g.CurrentPlayer()
@@ -29,12 +30,41 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string) (
 		return status, errors.New("already moved a warrior this turn")
 	}
 
-	err = p.MoveCardToField(warriorID)
-	if err != nil {
-		return status, fmt.Errorf("moving warrior to field failed: %w", err)
+	// Check if moving to an ally's field (2v2 mode)
+	if len(targetPlayerName) > 0 && targetPlayerName[0] != "" && targetPlayerName[0] != playerName {
+		targetPlayer := g.GetPlayer(targetPlayerName[0])
+		if targetPlayer == nil {
+			return status, fmt.Errorf("target player %s not found", targetPlayerName[0])
+		}
+
+		pIdx := g.PlayerIndex(playerName)
+		tIdx := g.PlayerIndex(targetPlayerName[0])
+		if !g.SameTeam(pIdx, tIdx) {
+			return status, errors.New("can only move warriors to ally's field")
+		}
+
+		c, ok := p.GetCardFromHand(warriorID)
+		if !ok {
+			return status, fmt.Errorf("card with ID %s not found in hand", warriorID)
+		}
+
+		w, ok := c.(ports.Warrior)
+		if !ok {
+			return status, fmt.Errorf("only warrior cards can be moved to field")
+		}
+
+		targetPlayer.Field().AddWarriors(w)
+		p.Hand().RemoveCard(c)
+
+		g.addToHistory(fmt.Sprintf("%s moved warrior to %s's field", p.Name(), targetPlayer.Name()))
+	} else {
+		err = p.MoveCardToField(warriorID)
+		if err != nil {
+			return status, fmt.Errorf("moving warrior to field failed: %w", err)
+		}
+		g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()))
 	}
 
-	g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()))
 	g.hasMovedWarrior = true
 	status = g.GameStatusProvider.Get(p, g)
 
@@ -183,14 +213,27 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, errors.New("warrior card not in field: " + userID)
 	}
 
+	// Determine user warrior type for validation
+	userWarrior, ok := userCard.(ports.Warrior)
+	if !ok {
+		return status, fmt.Errorf("the attacking card is not a warrior")
+	}
+	userType := userWarrior.Type()
+
 	var targetCard ports.Card
+	targetIsAllyOrSelf := false
+
 	// Search own field
 	targetCard, ok = p.GetCardFromField(targetID)
+	if ok {
+		targetIsAllyOrSelf = true
+	}
 	if !ok {
 		// Search ally fields (2v2)
 		for _, ally := range g.Allies(g.PlayerIndex(playerName)) {
 			targetCard, ok = ally.GetCardFromField(targetID)
 			if ok {
+				targetIsAllyOrSelf = true
 				break
 			}
 		}
@@ -208,6 +251,14 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, errors.New("target card not valid: " + targetID)
 	}
 
+	// Validate target side based on warrior type
+	if userType == types.ArcherWarriorType && targetIsAllyOrSelf {
+		return status, errors.New("archer instant kill can only target enemies")
+	}
+	if (userType == types.KnightWarriorType || userType == types.MageWarriorType) && !targetIsAllyOrSelf {
+		return status, errors.New("knight/mage special power can only target allies")
+	}
+
 	weaponCard, ok := p.GetCardFromHand(weaponID)
 	if !ok {
 		return status, errors.New("weapon card not in hand: " + weaponID)
@@ -218,17 +269,12 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 		return status, fmt.Errorf("the card is not a special power")
 	}
 
-	w, ok := userCard.(ports.Warrior)
-	if !ok {
-		return status, fmt.Errorf("the attacking card is not a warrior")
-	}
-
 	t, ok := targetCard.(ports.Warrior)
 	if !ok {
 		return status, fmt.Errorf("the target card is not a warrior")
 	}
 
-	if err = p.UseSpecialPower(w, t, s); err != nil {
+	if err = p.UseSpecialPower(userWarrior, t, s); err != nil {
 		return status, fmt.Errorf("special power action failed: %w", err)
 	}
 
@@ -253,6 +299,10 @@ func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 	if g.currentAction != types.ActionTypeAttack {
 		return status, fmt.Errorf("cannot use catapult in the %s phase",
 			g.currentAction)
+	}
+
+	if !p.HasCatapult() {
+		return status, errors.New("player does not have a catapult to use")
 	}
 
 	targetPlayer, err := g.getTargetPlayer(playerName, targetPlayerName)
@@ -295,12 +345,10 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 			g.currentAction)
 	}
 
-	s := p.Spy()
-	if s == nil {
-		return status, errors.New("player does not have a Spy to use")
+	if !p.HasSpy() {
+		return status, errors.New("player does not have a spy to use")
 	}
 
-	g.OnCardMovedToPile(s)
 	var spiedCards []ports.Card
 
 	switch option {
@@ -321,6 +369,13 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 	default:
 		return status, errors.New("invalid Spy option")
 	}
+
+	s := p.Spy()
+	if s == nil {
+		return status, errors.New("failed to retrieve spy card")
+	}
+
+	g.OnCardMovedToPile(s)
 
 	status = g.nextAction(types.ActionTypeBuy,
 		func() GameStatus {
@@ -343,19 +398,23 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 			g.currentAction)
 	}
 
+	if !p.HasThief() {
+		return status, errors.New("player does not have a thief to steal with")
+	}
+
 	targetPlayer, err := g.getTargetPlayer(playerName, targetPlayerName)
 	if err != nil {
 		return status, err
 	}
 
-	t := p.Thief()
-	if t == nil {
-		return status, errors.New("player does not have a thief to steal with")
-	}
-
 	stolenCard, err := targetPlayer.CardStolenFromHand(cardPosition)
 	if err != nil {
 		return status, fmt.Errorf("stealing card failed: %w", err)
+	}
+
+	t := p.Thief()
+	if t == nil {
+		return status, errors.New("failed to retrieve thief card")
 	}
 
 	g.OnCardMovedToPile(t)
@@ -420,7 +479,7 @@ func (g *Game) Buy(playerName, cardID string) (
 	return status, nil
 }
 
-func (g *Game) Construct(playerName, cardID string) (
+func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) (
 	status GameStatus, err error) {
 
 	p := g.CurrentPlayer()
@@ -433,11 +492,41 @@ func (g *Game) Construct(playerName, cardID string) (
 			g.currentAction)
 	}
 
-	if err = p.Construct(cardID); err != nil {
-		return status, fmt.Errorf("constructing card failed: %w", err)
+	// Check if constructing on ally's castle (2v2 mode)
+	if len(targetPlayerName) > 0 && targetPlayerName[0] != "" && targetPlayerName[0] != playerName {
+		targetPlayer := g.GetPlayer(targetPlayerName[0])
+		if targetPlayer == nil {
+			return status, fmt.Errorf("target player %s not found", targetPlayerName[0])
+		}
+
+		pIdx := g.PlayerIndex(playerName)
+		tIdx := g.PlayerIndex(targetPlayerName[0])
+		if !g.SameTeam(pIdx, tIdx) {
+			return status, errors.New("can only construct on ally's castle")
+		}
+
+		resourceCard, ok := p.GetCardFromHand(cardID)
+		if !ok {
+			return status, errors.New("card not in hand: " + cardID)
+		}
+
+		_, isResource := resourceCard.(ports.Resource)
+		log.Printf("DEBUG Construct ally: player=%s, target=%s, cardID=%s, isResource=%v, cardType=%T, castleConstructed=%v",
+			playerName, targetPlayerName[0], cardID, isResource, resourceCard, targetPlayer.Castle().IsConstructed())
+
+		if err = targetPlayer.Castle().Construct(resourceCard); err != nil {
+			return status, fmt.Errorf("constructing on ally castle failed: %w", err)
+		}
+
+		p.Hand().RemoveCard(resourceCard)
+		g.addToHistory(fmt.Sprintf("%s added gold to %s's castle", p.Name(), targetPlayer.Name()))
+	} else {
+		if err = p.Construct(cardID); err != nil {
+			return status, fmt.Errorf("constructing card failed: %w", err)
+		}
+		g.addToHistory(fmt.Sprintf("%s constructed", p.Name()))
 	}
 
-	g.addToHistory(fmt.Sprintf("%s constructed", p.Name()))
 	status = g.nextAction(types.ActionTypeEndTurn,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)

@@ -20,6 +20,27 @@
                     <label for="game-id">Game ID:</label>
                     <input type="text" id="game-id" placeholder="Enter or create game ID" maxlength="20">
                 </div>
+                <div class="form-group">
+                    <label>Game Mode:</label>
+                    <div class="game-mode-selector" id="game-mode-selector">
+                        <div class="game-mode-option selected" data-mode="1v1">
+                            <span class="mode-name">1v1</span>
+                            <span class="mode-desc">Duel</span>
+                        </div>
+                        <div class="game-mode-option" data-mode="2v2">
+                            <span class="mode-name">2v2</span>
+                            <span class="mode-desc">Teams</span>
+                        </div>
+                        <div class="game-mode-option" data-mode="ffa3">
+                            <span class="mode-name">FFA 3</span>
+                            <span class="mode-desc">3 Players</span>
+                        </div>
+                        <div class="game-mode-option" data-mode="ffa5">
+                            <span class="mode-name">FFA 5</span>
+                            <span class="mode-desc">5 Players</span>
+                        </div>
+                    </div>
+                </div>
                 <button id="join-btn" class="btn btn-primary">Join Game</button>
                 <div id="connection-status" class="status-message"></div>
             </div>
@@ -28,15 +49,30 @@
         <!-- Waiting Screen -->
         <div id="waiting-screen" class="screen hidden">
             <div class="waiting-container">
-                <h2>Waiting for opponent...</h2>
+                <h2>Waiting for players...</h2>
+                <div id="waiting-mode-badge" class="game-mode-badge">1v1</div>
                 <p>Game ID: <span id="current-game-id"></span></p>
-                <p class="hint">Share this Game ID with your opponent</p>
+                <p class="hint">Share this Game ID with other players</p>
+                <div id="waiting-player-count" class="waiting-player-count">0/2 players</div>
+                <div id="waiting-players-list" class="waiting-players-list"></div>
                 <div class="spinner"></div>
             </div>
         </div>
 
         <!-- Game Screen -->
         <div id="game-screen" class="screen hidden">
+            <!-- Game Timers -->
+            <div id="game-timers" class="game-timers">
+                <div class="timer-item">
+                    <span class="timer-label">Game</span>
+                    <span id="game-timer" class="timer-value">00:00</span>
+                </div>
+                <div class="timer-item">
+                    <span class="timer-label">Turn</span>
+                    <span id="turn-timer" class="timer-value">1:00</span>
+                </div>
+            </div>
+
             <!-- Phase Tracker (Top Left) -->
             <div id="phase-tracker" class="phase-tracker">
                 <div id="phase-turn-status" class="phase-turn-status">
@@ -94,26 +130,8 @@
                 </div>
             </div>
 
-            <!-- Enemy Board -->
-            <div class="board enemy-board">
-                <div class="board-label">Enemy Territory</div>
-                <div class="enemy-area">
-                    <div class="castle-area">
-                        <h3>Enemy Castle</h3>
-                        <div id="enemy-castle" class="castle">
-                            <div class="castle-status">Not Constructed</div>
-                        </div>
-                    </div>
-                    <div class="field-area">
-                        <h3>Enemy Field</h3>
-                        <div id="enemy-field" class="field card-container"></div>
-                    </div>
-                    <div class="enemy-hand-area">
-                        <h3>Enemy Hand</h3>
-                        <div id="enemy-hand" class="enemy-hand"></div>
-                    </div>
-                </div>
-            </div>
+            <!-- Opponents Container (dynamically populated) -->
+            <div id="opponents-container" class="opponents-container"></div>
 
             <!-- Deck, Discard Pile and Cemetery Container -->
             <div class="deck-discard-container">

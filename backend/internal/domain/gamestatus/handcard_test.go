@@ -248,7 +248,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(5)
 
-		hc := NewResourceHandCard(resource, false, true, types.ActionTypeAttack)
+		hc := NewResourceHandCard(resource, false, false, true, types.ActionTypeAttack)
 
 		assert.Equal(t, "G1", hc.CardID)
 		assert.Equal(t, CardTypeResource, hc.CardType)
@@ -264,7 +264,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(5)
 
-		hc := NewResourceHandCard(resource, false, true, types.ActionTypeBuy)
+		hc := NewResourceHandCard(resource, false, false, true, types.ActionTypeBuy)
 
 		assert.Equal(t, "G1", hc.CardID)
 		assert.True(t, hc.CanBeUsed)
@@ -278,7 +278,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(1)
 
-		hc := NewResourceHandCard(resource, false, false, types.ActionTypeBuy)
+		hc := NewResourceHandCard(resource, false, false, false, types.ActionTypeBuy)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -291,7 +291,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(5)
 
-		hc := NewResourceHandCard(resource, true, false, types.ActionTypeConstruct)
+		hc := NewResourceHandCard(resource, true, false, false, types.ActionTypeConstruct)
 
 		assert.True(t, hc.CanBeUsed) // Castle constructed, any resource can be added
 	})
@@ -305,7 +305,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().Value().Return(1)
 		resource.EXPECT().CanConstruct().Return(true)
 
-		hc := NewResourceHandCard(resource, false, false, types.ActionTypeConstruct)
+		hc := NewResourceHandCard(resource, false, false, false, types.ActionTypeConstruct)
 
 		assert.True(t, hc.CanBeUsed) // CanConstruct is true
 	})
@@ -319,9 +319,23 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().Value().Return(5)
 		resource.EXPECT().CanConstruct().Return(false)
 
-		hc := NewResourceHandCard(resource, false, false, types.ActionTypeConstruct)
+		hc := NewResourceHandCard(resource, false, false, false, types.ActionTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
+	})
+
+	t.Run("Resource usable in Construct phase when ally castle is constructed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		resource := mocks.NewMockResource(ctrl)
+		resource.EXPECT().GetID().Return("G1")
+		resource.EXPECT().Value().Return(5)
+
+		// Player castle NOT constructed, but ally castle IS
+		hc := NewResourceHandCard(resource, false, true, false, types.ActionTypeConstruct)
+
+		assert.True(t, hc.CanBeUsed) // Ally castle constructed, any resource can be added
 	})
 }
 
