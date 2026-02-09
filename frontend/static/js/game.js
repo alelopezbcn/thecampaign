@@ -1882,10 +1882,9 @@ function renderHistory(newMessages) {
     const container = document.getElementById('history-list');
     if (!container) return;
 
-    // Accumulate new messages
+    // Accumulate new messages (backend sends {msg, color} objects)
     if (newMessages && newMessages.length > 0) {
-        const wrapped = newMessages.map(m => ({ text: m, isError: false }));
-        gameState.historyMessages = gameState.historyMessages.concat(wrapped);
+        gameState.historyMessages = gameState.historyMessages.concat(newMessages);
     }
 
     container.innerHTML = '';
@@ -1897,12 +1896,14 @@ function renderHistory(newMessages) {
 
     gameState.historyMessages.forEach(message => {
         const item = document.createElement('div');
-        const text = message.text || message;
-        let className = 'history-item';
-        if (message.isError) className += ' history-error';
-        else if (text.includes('skipping phase')) className += ' history-skip';
-        item.className = className;
+        const text = message.msg || message.text || message;
+        const color = message.color;
+        item.className = 'history-item' + (message.isError ? ' history-error' : '');
         item.textContent = text;
+        if (color && !message.isError) {
+            item.style.borderLeftColor = color;
+            item.style.color = color;
+        }
         container.appendChild(item);
     });
 

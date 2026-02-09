@@ -970,23 +970,11 @@ body {
     word-wrap: break-word;
 }
 
-.history-item:last-child {
-    border-left-color: #4cd964;
-    background: rgba(76, 217, 100, 0.1);
-    color: #e0e0e0;
-}
-
 .history-error {
     border-left-color: #ff3b30 !important;
     background: rgba(255, 59, 48, 0.15) !important;
     color: #ff6b6b !important;
     font-weight: 600;
-}
-
-.history-skip {
-    border-left-color: #f5a623 !important;
-    background: rgba(245, 166, 35, 0.15) !important;
-    color: #f5c842 !important;
 }
 
 .history-empty {
