@@ -27,6 +27,7 @@ type GameStatus struct {
 	CardsInDeck         int                    `json:"deck"`
 	ModalCards          []gamestatus.Card      `json:"modal_cards"`
 	History             []string               `json:"history"`
+	PlayersOrder        []string               `json:"players_order"`
 	GameOverMgs         string                 `json:"game_over_msg"`
 	IsWinner            bool                   `json:"is_winner"`
 	GameStartedAt       time.Time              `json:"game_started_at"`
@@ -56,6 +57,12 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 ) GameStatus {
 
 	viewerIdx := game.PlayerIndex(viewer.Name())
+
+	playersOrder := make([]string, len(game.Players))
+	for i, p := range game.Players {
+		playersOrder[i] = p.Name()
+	}
+
 	gs := GameStatus{
 		CurrentPlayer:       viewer.Name(),
 		TurnPlayer:          game.CurrentPlayer().Name(),
@@ -71,6 +78,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
 		History:             game.GetHistory(),
+		PlayersOrder:        playersOrder,
 		GameStartedAt:       game.GameStartedAt,
 		TurnStartedAt:       game.TurnStartedAt,
 		TurnTimeLimitSecs:   60,

@@ -90,6 +90,64 @@ body {
     background: rgba(255, 255, 255, 0.08);
 }
 
+/* Generic hidden utility */
+.hidden {
+    display: none !important;
+}
+
+/* Lobby section toggle */
+.lobby-switch-link {
+    margin-top: 15px;
+    font-size: 0.9em;
+    color: #b0b0b0;
+}
+
+.lobby-switch-link a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.lobby-switch-link a:hover {
+    text-decoration: underline;
+}
+
+/* Join game info (URL-based join) */
+.join-game-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 10px;
+    background: rgba(102, 126, 234, 0.1);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+}
+
+.join-game-info p {
+    margin: 8px 0 0;
+    font-size: 1.1em;
+}
+
+/* Share link on waiting screen */
+.share-link-container {
+    display: flex;
+    gap: 8px;
+    margin: 10px auto;
+    max-width: 400px;
+}
+
+.share-url-input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: #e0e0e0;
+    font-size: 0.85em;
+}
+
+.btn-small {
+    padding: 8px 14px;
+    font-size: 0.85em;
+}
+
 /* Buttons */
 .btn {
     padding: 12px 24px;
@@ -741,6 +799,104 @@ body {
     }
 }
 
+/* Player List Panel */
+.player-list-panel {
+    position: fixed;
+    top: 330px; /* repositioned dynamically by JS */
+    left: 10px;
+    background: rgba(20, 20, 35, 0.95);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 12px;
+    padding: 12px 16px;
+    z-index: 50;
+    min-width: 200px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.player-list-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.player-list-icon {
+    font-size: 1em;
+}
+
+.player-list-title {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: #ccc;
+}
+
+.player-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.player-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    color: #b0b0b0;
+    transition: all 0.3s ease;
+}
+
+.player-list-item.is-current-turn {
+    background: rgba(76, 217, 100, 0.15);
+    color: #4cd964;
+    font-weight: 600;
+}
+
+.player-list-item.is-self {
+    color: #a8b8ff;
+}
+
+.player-list-item.is-self.is-current-turn {
+    color: #4cd964;
+}
+
+.player-list-item.is-eliminated {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+.player-list-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #555;
+    flex-shrink: 0;
+}
+
+.player-list-item.is-current-turn .player-list-dot {
+    background: #4cd964;
+    box-shadow: 0 0 6px rgba(76, 217, 100, 0.6);
+    animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.player-list-item.is-ally .player-list-dot {
+    background: #667eea;
+}
+
+.player-list-item.is-ally.is-current-turn .player-list-dot {
+    background: #4cd964;
+}
+
+.player-list-tag {
+    font-size: 0.7em;
+    margin-left: auto;
+    opacity: 0.6;
+}
+
 /* History Panel */
 .history-panel {
     position: fixed;
@@ -751,7 +907,7 @@ body {
     border-radius: 12px;
     padding: 12px 16px;
     z-index: 50;
-    width: 200px;
+    min-width: 200px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     display: flex;
     flex-direction: column;

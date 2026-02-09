@@ -40,16 +40,61 @@ const screens = {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
+    checkUrlParams();
 });
 
+function checkUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const gameID = params.get('game');
+    if (gameID) {
+        gameState.gameID = gameID.toUpperCase();
+        // Show the URL-join section, hide others
+        document.getElementById('create-game-section').classList.add('hidden');
+        document.getElementById('join-url-section').classList.remove('hidden');
+        document.getElementById('join-game-code').textContent = gameState.gameID;
+    }
+}
+
 function setupEventListeners() {
-    // Join screen
-    document.getElementById('join-btn').addEventListener('click', joinGame);
+    // Create game
+    document.getElementById('create-btn').addEventListener('click', createGame);
     document.getElementById('player-name').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') joinGame();
+        if (e.key === 'Enter') createGame();
     });
+
+    // Join by code
+    document.getElementById('join-code-btn').addEventListener('click', joinGameByCode);
     document.getElementById('game-id').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') joinGame();
+        if (e.key === 'Enter') joinGameByCode();
+    });
+    document.getElementById('join-player-name').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinGameByCode();
+    });
+
+    // Join by URL
+    document.getElementById('join-url-btn').addEventListener('click', joinGameByUrl);
+    document.getElementById('url-player-name').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') joinGameByUrl();
+    });
+
+    // Toggle between create/join sections
+    document.getElementById('show-join-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('create-game-section').classList.add('hidden');
+        document.getElementById('join-code-section').classList.remove('hidden');
+    });
+    document.getElementById('show-create-link').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('join-code-section').classList.add('hidden');
+        document.getElementById('create-game-section').classList.remove('hidden');
+    });
+
+    // Copy link button
+    document.getElementById('copy-link-btn').addEventListener('click', () => {
+        const shareUrl = document.getElementById('share-url');
+        navigator.clipboard.writeText(shareUrl.value);
+        document.getElementById('copy-link-btn').textContent = 'Copied!';
+        setTimeout(() => document.getElementById('copy-link-btn').textContent = 'Copy Link', 2000);
     });
 
     // Game mode selector
@@ -143,9 +188,8 @@ function connectWebSocket() {
         reconnectAttempts = 0;
         showStatus('connection-status', 'Connected to server', 'success');
 
-        // If we have game info, rejoin automatically (reconnection)
-        if (gameState.playerName && gameState.gameID) {
-            console.log('Reconnecting to game:', gameState.gameID);
+        // Send join_game for both create (empty gameID) and join/reconnect flows
+        if (gameState.playerName) {
             sendMessage('join_game', {
                 player_name: gameState.playerName,
                 game_id: gameState.gameID,
@@ -229,6 +273,14 @@ function handleError(payload) {
 function handlePlayerJoined(payload) {
     console.log('Player joined:', payload.player_name);
 
+    // Capture server-generated game ID (important for create flow)
+    if (payload.game_id) {
+        gameState.gameID = payload.game_id;
+        // Update URL without reload so the shareable link works
+        const newUrl = `${window.location.pathname}?game=${payload.game_id}`;
+        window.history.replaceState({}, '', newUrl);
+    }
+
     if (payload.game_mode) {
         gameState.gameMode = payload.game_mode;
     }
@@ -305,6 +357,7 @@ function handleGameState(payload) {
 
     updateTurnIndicator();
     updatePhaseIndicator();
+    updatePlayerListPanel();
     startTimers(payload.game_status);
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -378,6 +431,13 @@ function showScreen(screenName) {
 
 function showWaitingScreen() {
     document.getElementById('current-game-id').textContent = gameState.gameID;
+
+    // Populate shareable URL
+    const shareUrl = `${window.location.origin}${window.location.pathname}?game=${gameState.gameID}`;
+    const shareInput = document.getElementById('share-url');
+    if (shareInput) {
+        shareInput.value = shareUrl;
+    }
 
     // Ensure current player is in the list
     if (gameState.playerName && !gameState.waitingPlayers.includes(gameState.playerName)) {
@@ -493,22 +553,44 @@ function showGameScreen(status) {
 }
 
 // Game actions
-function joinGame() {
+function createGame() {
     const playerName = document.getElementById('player-name').value.trim();
-    const gameID = document.getElementById('game-id').value.trim();
-
-    if (!playerName || !gameID) {
-        showStatus('connection-status', 'Please enter both name and game ID', 'error');
+    if (!playerName) {
+        showStatus('connection-status', 'Please enter your name', 'error');
         return;
     }
+    gameState.playerName = playerName;
+    gameState.gameID = ''; // empty = server will generate
+    gameState.waitingPlayers = [];
+    gameState.teamAssignments = {};
+    gameState.maxPlayers = { '1v1': 2, '2v2': 4, 'ffa3': 3, 'ffa5': 5 }[gameState.gameMode] || 2;
+    connectWebSocket();
+}
 
+function joinGameByCode() {
+    const playerName = document.getElementById('join-player-name').value.trim();
+    const gameID = document.getElementById('game-id').value.trim().toUpperCase();
+    if (!playerName || !gameID) {
+        showStatus('connection-status', 'Please enter both name and game code', 'error');
+        return;
+    }
     gameState.playerName = playerName;
     gameState.gameID = gameID;
     gameState.waitingPlayers = [];
     gameState.teamAssignments = {};
-    gameState.maxPlayers = { '1v1': 2, '2v2': 4, 'ffa3': 3, 'ffa5': 5 }[gameState.gameMode] || 2;
+    connectWebSocket();
+}
 
-    // connectWebSocket's onopen will send join_game automatically
+function joinGameByUrl() {
+    const playerName = document.getElementById('url-player-name').value.trim();
+    if (!playerName) {
+        showStatus('connection-status', 'Please enter your name', 'error');
+        return;
+    }
+    gameState.playerName = playerName;
+    // gameState.gameID already set from URL param
+    gameState.waitingPlayers = [];
+    gameState.teamAssignments = {};
     connectWebSocket();
 }
 
@@ -2058,6 +2140,88 @@ function updatePhaseTracker() {
 // Keep old function name for compatibility
 function updatePhaseIndicator() {
     updatePhaseTracker();
+}
+
+function updatePlayerListPanel() {
+    const panel = document.getElementById('player-list-panel');
+    const list = document.getElementById('player-list');
+    if (!panel || !list) return;
+
+    // Hide for 1v1
+    if (gameState.gameMode === '1v1') {
+        panel.classList.add('hidden');
+        repositionLeftPanels();
+        return;
+    }
+
+    panel.classList.remove('hidden');
+
+    const status = gameState.currentState;
+    if (!status) return;
+
+    const turnPlayer = status.turn_player;
+    const opponents = status.opponents || [];
+    const playersOrder = status.players_order || [];
+
+    // Build a lookup for opponent info
+    const opponentMap = {};
+    for (const opp of opponents) {
+        opponentMap[opp.player_name] = opp;
+    }
+
+    list.innerHTML = '';
+
+    // Use server's turn order so all clients see the same list
+    for (const name of playersOrder) {
+        const isSelf = name === gameState.playerName;
+        const opp = opponentMap[name];
+        const isAlly = opp ? (opp.is_ally || false) : false;
+        const isEliminated = isSelf ? (status.is_eliminated || false) : (opp ? opp.is_eliminated : false);
+        const isTurn = name === turnPlayer;
+
+        const li = document.createElement('li');
+        let classes = 'player-list-item';
+        if (isTurn) classes += ' is-current-turn';
+        if (isSelf) classes += ' is-self';
+        if (isAlly) classes += ' is-ally';
+        if (isEliminated) classes += ' is-eliminated';
+        li.className = classes;
+
+        let tag = '';
+        if (isSelf) tag = 'YOU';
+        else if (isAlly) tag = 'ALLY';
+
+        li.innerHTML = `
+            <span class="player-list-dot"></span>
+            <span>${name}</span>
+            ${tag ? `<span class="player-list-tag">${tag}</span>` : ''}
+        `;
+        list.appendChild(li);
+    }
+
+    repositionLeftPanels();
+}
+
+function repositionLeftPanels() {
+    const phaseTracker = document.getElementById('phase-tracker');
+    const playerPanel = document.getElementById('player-list-panel');
+    const historyPanel = document.querySelector('.history-panel');
+
+    if (!phaseTracker) return;
+
+    const phaseBottom = phaseTracker.offsetTop + phaseTracker.offsetHeight + 10;
+
+    if (playerPanel && !playerPanel.classList.contains('hidden')) {
+        playerPanel.style.top = phaseBottom + 'px';
+        const playerBottom = phaseBottom + playerPanel.offsetHeight + 10;
+        if (historyPanel) {
+            historyPanel.style.top = playerBottom + 'px';
+        }
+    } else {
+        if (historyPanel) {
+            historyPanel.style.top = phaseBottom + 'px';
+        }
+    }
 }
 
 function updateActionPrompt(text) {
