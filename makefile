@@ -20,17 +20,10 @@ down:
 logs:
 	docker-compose logs -f
 
-## example: make docker-tag-push TAG=yourtag
+docker-tag-push: TAG = $(shell git describe --tags --abbrev=0)
 docker-tag-push:
-	@if [ -z "$(TAG)" ]; then \
-		TAG=$$(git describe --tags --abbrev=0); \
-		if [ -z "$$TAG" ]; then \
-			echo "TAG variable is required and no git tags found"; \
-			exit 1; \
-		fi; \
-	else \
-		TAG=$(TAG); \
-	fi; \
-	docker build -t thecampaign:$$TAG .; \
-	docker tag thecampaign:$$TAG alelopezcop/thecampaign:$$TAG; \
-	docker push alelopezcop/thecampaign:$$TAG
+	@echo Building and pushing thecampaign:$(TAG)
+	docker login
+	docker build -t thecampaign:$(TAG) .
+	docker tag thecampaign:$(TAG) alelopezcop/thecampaign:$(TAG)
+	docker push alelopezcop/thecampaign:$(TAG)
