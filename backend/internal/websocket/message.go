@@ -100,7 +100,6 @@ type CatapultPayload struct {
 type GameStatePayload struct {
 	GameStatus GameStatusDTO `json:"game_status"`
 	IsYourTurn bool          `json:"is_your_turn"`
-	History    []string      `json:"history,omitempty"`
 }
 
 // GameStatusDTO is the JSON-friendly game status
