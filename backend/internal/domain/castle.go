@@ -7,8 +7,6 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-const MaxCastleResources = 25
-
 type castle struct {
 	id                       string
 	isConstructed            bool
@@ -16,14 +14,16 @@ type castle struct {
 	resources                []ports.Resource
 	castleCompletionObserver ports.CastleCompletionObserver
 	player                   ports.Player
+	resourcesToWin           int
 }
 
-func newCastle(p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
+func newCastle(resourcesToWin int, p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
 	return &castle{
 		id:                       "castle_" + p.Name(),
 		resources:                []ports.Resource{},
 		player:                   p,
 		castleCompletionObserver: o,
+		resourcesToWin:           resourcesToWin,
 	}
 }
 
@@ -125,7 +125,7 @@ func (c *castle) addResource(card ports.Card) error {
 	}
 
 	c.resources = append(c.resources, gold)
-	if c.Value() >= MaxCastleResources {
+	if c.Value() >= c.resourcesToWin {
 		c.castleCompletionObserver.OnCastleCompletion(c.player)
 	}
 

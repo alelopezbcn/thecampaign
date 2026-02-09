@@ -17,7 +17,7 @@ func newTestCastle(ctrl *gomock.Controller) (
 	mockPlayer := mocks.NewMockPlayer(ctrl)
 	mockPlayer.EXPECT().Name().Return("TestPlayer").AnyTimes()
 	castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
-	c := newCastle(mockPlayer, castleObs)
+	c := newCastle(10, mockPlayer, castleObs)
 	return c, mockPlayer, castleObs
 }
 

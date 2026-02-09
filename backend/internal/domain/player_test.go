@@ -22,7 +22,7 @@ func newTestPlayer(t *testing.T, ctrl *gomock.Controller) (
 	castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
 	fieldObs := mocks.NewMockFieldWithoutWarriorsObserver(ctrl)
 
-	p := NewPlayer("TestPlayer", 0, pileObs, cemeteryObs, castleObs, fieldObs)
+	p := NewPlayer("TestPlayer", 0, pileObs, cemeteryObs, castleObs, fieldObs, 10)
 	return p, pileObs, cemeteryObs, castleObs, fieldObs
 }
 

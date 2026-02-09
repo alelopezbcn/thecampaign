@@ -25,6 +25,7 @@ func NewPlayer(name string,
 	warriorMovedToCemeteryObserver ports.WarriorMovedToCemeteryObserver,
 	castleCompletionObserver ports.CastleCompletionObserver,
 	fieldWithoutWarriorsObserver ports.FieldWithoutWarriorsObserver,
+	castleResourcesToWin int,
 ) ports.Player {
 	p := &player{
 		name:                           name,
@@ -34,7 +35,7 @@ func NewPlayer(name string,
 		cardMovedToPileObserver:        cardMovedToPileObserver,
 		warriorMovedToCemeteryObserver: warriorMovedToCemeteryObserver,
 	}
-	p.castle = newCastle(p, castleCompletionObserver)
+	p.castle = newCastle(castleResourcesToWin, p, castleCompletionObserver)
 
 	return p
 }

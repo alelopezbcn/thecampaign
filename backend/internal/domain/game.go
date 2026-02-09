@@ -11,6 +11,11 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	maxCastleResourcesFFA = 25
+	maxCastleResources2v2 = 30
+)
+
 type Games []Game
 
 type Game struct {
@@ -62,7 +67,9 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		TurnStartedAt:      now,
 	}
 
+	castleResourcesToWin := maxCastleResourcesFFA
 	if mode == types.GameMode2v2 {
+		castleResourcesToWin = maxCastleResources2v2
 		g.Teams = map[int][]int{
 			1: {0, 2}, // Team 1: Player 1 and Player 3
 			2: {1, 3}, // Team 2: Player 2 and Player 4
@@ -70,7 +77,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	}
 
 	for i, name := range playerNames {
-		p := NewPlayer(name, i, g, g, g, g)
+		p := NewPlayer(name, i, g, g, g, g, castleResourcesToWin)
 		g.Players[i] = p
 	}
 

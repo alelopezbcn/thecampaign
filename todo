@@ -1,12 +1,6 @@
-cuando un player es eliminated, todas sus cartas deberian ir a la pila de descarte, incluso las del castillo - TEST
-Steal en FFA5 no funciona. En FFA3 me ha funcionado un vez, otras no. TEST
 en 2v2 cuando acaba el juego, solo muestra victory al player que estaba jugando, al aliado le muestra defeat - TEST
-Catapult en FF5 y FFA3 no funciona cuando hay mas de un castillo construido con resources - TEST
-en el popup selec castle to attack, que mujestre cant de recursos y cant de cartas de cada castillo, en vez de numero de hand cards y warriors - TEST
-las acciones de skipping que las muestre en amarillo en el log - TEST
-Agregar tiempo de partida, y tiempo de turno - TEST
-Esc key should cancel all popups or actions, Enter should confirm all actions - TEST
 
+add history que tambien ponga el color en que queremos mostrar
 
 🎨 UI/UX
 Animaciones de combate - Cuando un arma ataca, mostrar una animación visual (la carta "vuela" hacia el objetivo)

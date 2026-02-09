@@ -992,7 +992,7 @@ function handleSpyStealPhaseHandClick(cardID, card) {
             showTargetPlayerModal('Select a player to steal from', enemies, (playerName) => {
                 gameState.actionState.targetPlayer = playerName;
                 showStealModal();
-            });
+            }, (opp) => `${opp.cards_in_hand} cards in hand`);
         }
     }
 }
@@ -2245,12 +2245,17 @@ function getOpponentByName(name) {
 }
 
 // Target Player Selection Modal
-function showTargetPlayerModal(title, opponents, callback) {
+function showTargetPlayerModal(title, opponents, callback, detailFn) {
+    const defaultDetail = (opp) => {
+        const castle = opp.castle || {};
+        return `Castle: ${castle.value || 0}/25 gold, ${castle.resource_cards || 0} resource cards`;
+    };
+    const getDetail = detailFn || defaultDetail;
+
     let content = '<div class="target-player-options">';
     opponents.forEach(opp => {
         const name = opp.player_name;
-        const castle = opp.castle || {};
-        const detail = `Castle: ${castle.value || 0}/25 gold, ${castle.resource_cards || 0} resource cards`;
+        const detail = getDetail(opp);
         content += `
             <div class="target-player-option" onclick="window._targetPlayerCallback('${name}')">
                 <span class="player-icon">⚔</span>
@@ -2388,7 +2393,7 @@ function selectSpyOption(option) {
             showTargetPlayerModal('Whose hand do you want to reveal?', enemies, (playerName) => {
                 gameState.pendingModalAction = 'spy_hand';
                 sendAction('spy', { target_player: playerName, option: option });
-            });
+            }, (opp) => `${opp.cards_in_hand} cards in hand`);
         }
     }
 }
