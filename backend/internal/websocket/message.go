@@ -123,6 +123,7 @@ type GameStatusDTO struct {
 	CardsInDeck         int                 `json:"cards_in_deck"`
 	ModalCards          []CardDTO           `json:"modal_cards,omitempty"`
 	History             []string            `json:"history"`
+	PlayersOrder        []string            `json:"players_order"`
 	GameOverMsg         string              `json:"game_over_msg,omitempty"`
 	IsWinner            bool                `json:"is_winner"`
 	GameStartedAt       string              `json:"game_started_at"`

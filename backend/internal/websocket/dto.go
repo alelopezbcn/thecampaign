@@ -66,6 +66,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CardsInDeck:         status.CardsInDeck,
 		ModalCards:          convertModalCards(status.ModalCards),
 		History:             status.History,
+		PlayersOrder:        status.PlayersOrder,
 		GameOverMsg:         status.GameOverMgs,
 		IsWinner:            status.IsWinner,
 		GameStartedAt:       status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),

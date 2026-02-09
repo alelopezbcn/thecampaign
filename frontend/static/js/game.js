@@ -357,6 +357,7 @@ function handleGameState(payload) {
 
     updateTurnIndicator();
     updatePhaseIndicator();
+    updatePlayerListPanel();
     startTimers(payload.game_status);
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -2139,6 +2140,88 @@ function updatePhaseTracker() {
 // Keep old function name for compatibility
 function updatePhaseIndicator() {
     updatePhaseTracker();
+}
+
+function updatePlayerListPanel() {
+    const panel = document.getElementById('player-list-panel');
+    const list = document.getElementById('player-list');
+    if (!panel || !list) return;
+
+    // Hide for 1v1
+    if (gameState.gameMode === '1v1') {
+        panel.classList.add('hidden');
+        repositionLeftPanels();
+        return;
+    }
+
+    panel.classList.remove('hidden');
+
+    const status = gameState.currentState;
+    if (!status) return;
+
+    const turnPlayer = status.turn_player;
+    const opponents = status.opponents || [];
+    const playersOrder = status.players_order || [];
+
+    // Build a lookup for opponent info
+    const opponentMap = {};
+    for (const opp of opponents) {
+        opponentMap[opp.player_name] = opp;
+    }
+
+    list.innerHTML = '';
+
+    // Use server's turn order so all clients see the same list
+    for (const name of playersOrder) {
+        const isSelf = name === gameState.playerName;
+        const opp = opponentMap[name];
+        const isAlly = opp ? (opp.is_ally || false) : false;
+        const isEliminated = isSelf ? (status.is_eliminated || false) : (opp ? opp.is_eliminated : false);
+        const isTurn = name === turnPlayer;
+
+        const li = document.createElement('li');
+        let classes = 'player-list-item';
+        if (isTurn) classes += ' is-current-turn';
+        if (isSelf) classes += ' is-self';
+        if (isAlly) classes += ' is-ally';
+        if (isEliminated) classes += ' is-eliminated';
+        li.className = classes;
+
+        let tag = '';
+        if (isSelf) tag = 'YOU';
+        else if (isAlly) tag = 'ALLY';
+
+        li.innerHTML = `
+            <span class="player-list-dot"></span>
+            <span>${name}</span>
+            ${tag ? `<span class="player-list-tag">${tag}</span>` : ''}
+        `;
+        list.appendChild(li);
+    }
+
+    repositionLeftPanels();
+}
+
+function repositionLeftPanels() {
+    const phaseTracker = document.getElementById('phase-tracker');
+    const playerPanel = document.getElementById('player-list-panel');
+    const historyPanel = document.querySelector('.history-panel');
+
+    if (!phaseTracker) return;
+
+    const phaseBottom = phaseTracker.offsetTop + phaseTracker.offsetHeight + 10;
+
+    if (playerPanel && !playerPanel.classList.contains('hidden')) {
+        playerPanel.style.top = phaseBottom + 'px';
+        const playerBottom = phaseBottom + playerPanel.offsetHeight + 10;
+        if (historyPanel) {
+            historyPanel.style.top = playerBottom + 'px';
+        }
+    } else {
+        if (historyPanel) {
+            historyPanel.style.top = phaseBottom + 'px';
+        }
+    }
 }
 
 function updateActionPrompt(text) {
