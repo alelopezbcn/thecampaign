@@ -729,7 +729,7 @@ func TestGame_DrawCard(t *testing.T) {
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			history:            []string{},
+			history:            []historyLine{},
 			GameStatusProvider: mockProvider,
 		}
 
@@ -740,7 +740,7 @@ func TestGame_DrawCard(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "drew") && strings.Contains(h, "Player1") {
+			if strings.Contains(h.Msg,"drew") && strings.Contains(h.Msg,"Player1") {
 				found = true
 				break
 			}
@@ -772,7 +772,7 @@ func TestGame_DrawCard(t *testing.T) {
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			history:            []string{},
+			history:            []historyLine{},
 			GameStatusProvider: mockProvider,
 		}
 
@@ -783,7 +783,7 @@ func TestGame_DrawCard(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "can't take more cards") {
+			if strings.Contains(h.Msg,"can't take more cards") {
 				found = true
 				break
 			}
@@ -2099,7 +2099,7 @@ func TestGame_EndTurn(t *testing.T) {
 			CurrentTurn:        0,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
@@ -2109,7 +2109,7 @@ func TestGame_EndTurn(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player2") && strings.Contains(h, "turn") {
+			if strings.Contains(h.Msg,"Player1") && strings.Contains(h.Msg,"turn ended") {
 				found = true
 				break
 			}
@@ -2304,7 +2304,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -2348,7 +2348,7 @@ func TestGame_Attack(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
@@ -2358,7 +2358,7 @@ func TestGame_Attack(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player1") && strings.Contains(h, "attacked") {
+			if strings.Contains(h.Msg,"Player1") && strings.Contains(h.Msg,"attacked") {
 				found = true
 				break
 			}
@@ -2457,7 +2457,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -2492,7 +2492,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction:      types.ActionTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -2527,7 +2527,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction:      types.ActionTypeBuy,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -2561,7 +2561,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction:      types.ActionTypeConstruct,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -2595,7 +2595,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
@@ -2605,7 +2605,7 @@ func TestGame_SkipPhase(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player1") && strings.Contains(h, "skipped") {
+			if strings.Contains(h.Msg,"Player1") && strings.Contains(h.Msg,"skipped") {
 				found = true
 				break
 			}
@@ -2677,7 +2677,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 			CurrentTurn:        0,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -2706,7 +2706,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 			CurrentTurn:        0,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
@@ -2716,7 +2716,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player1") && strings.Contains(h, "moved warrior") {
+			if strings.Contains(h.Msg,"Player1") && strings.Contains(h.Msg,"moved warrior") {
 				found = true
 				break
 			}
@@ -2743,7 +2743,7 @@ func TestGame_MoveWarriorToField(t *testing.T) {
 			CurrentTurn:        1,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
@@ -2879,7 +2879,7 @@ func TestGame_Trade(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
@@ -2985,7 +2985,7 @@ func TestGame_Construct(t *testing.T) {
 			currentAction:      types.ActionTypeConstruct,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -3017,7 +3017,7 @@ func TestGame_Construct(t *testing.T) {
 			currentAction:      types.ActionTypeConstruct,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
@@ -3027,7 +3027,7 @@ func TestGame_Construct(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player1") && strings.Contains(h, "constructed") {
+			if strings.Contains(h.Msg,"Player1") && strings.Contains(h.Msg,"constructed") {
 				found = true
 				break
 			}
@@ -3122,7 +3122,7 @@ func TestGame_Construct(t *testing.T) {
 			Teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -3135,7 +3135,7 @@ func TestGame_Construct(t *testing.T) {
 		// Check history mentions ally castle
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player2's castle") {
+			if strings.Contains(h.Msg,"Player2's castle") {
 				found = true
 				break
 			}
@@ -3268,7 +3268,7 @@ func TestGame_Spy(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(mockPlayer1, g, revealedCards).Return(expectedStatus)
@@ -3314,7 +3314,7 @@ func TestGame_Spy(t *testing.T) {
 			currentAction:      types.ActionTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(mockPlayer1, g, enemyCards).Return(expectedStatus)
@@ -3452,7 +3452,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction:      types.ActionTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(
@@ -3495,7 +3495,7 @@ func TestGame_Steal(t *testing.T) {
 			currentAction:      types.ActionTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
@@ -3505,7 +3505,7 @@ func TestGame_Steal(t *testing.T) {
 		assert.NoError(t, err)
 		found := false
 		for _, h := range g.history {
-			if strings.Contains(h, "Player1") && strings.Contains(h, "stole") {
+			if strings.Contains(h.Msg,"Player1") && strings.Contains(h.Msg,"stole") {
 				found = true
 				break
 			}
@@ -3648,7 +3648,7 @@ func TestGame_Catapult(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -3853,7 +3853,7 @@ func TestGame_SpecialPower(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -3901,7 +3901,7 @@ func TestGame_SpecialPower(t *testing.T) {
 			currentAction:      types.ActionTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []string{},
+			history:            []historyLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -3981,7 +3981,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameMode1v1,
 			EliminatedPlayers: make(map[int]bool),
-			history:           []string{},
+			history:           []historyLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player2")
@@ -4013,14 +4013,14 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameModeFFA3,
 			EliminatedPlayers: make(map[int]bool),
-			history:           []string{},
+			history:           []historyLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player2")
 
 		assert.False(t, g.gameOver)
 		assert.True(t, g.EliminatedPlayers[1])
-		assert.Contains(t, g.history, "Player2 has been eliminated!")
+		assert.Contains(t, g.history, historyLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
 	})
 
 	t.Run("FFA3 last player standing wins", func(t *testing.T) {
@@ -4046,7 +4046,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameModeFFA3,
 			EliminatedPlayers: map[int]bool{1: true}, // Player2 already eliminated
-			history:           []string{},
+			history:           []historyLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player3")
@@ -4083,7 +4083,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameModeFFA5,
 			EliminatedPlayers: make(map[int]bool),
-			history:           []string{},
+			history:           []historyLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player2")
@@ -4118,7 +4118,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			Mode:              types.GameMode2v2,
 			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
 			EliminatedPlayers: make(map[int]bool),
-			history:           []string{},
+			history:           []historyLine{},
 		}
 
 		// Player2 (Team 2) loses warriors, but Player4 (Team 2) is still alive
@@ -4126,7 +4126,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 
 		assert.False(t, g.gameOver)
 		assert.True(t, g.EliminatedPlayers[1])
-		assert.Contains(t, g.history, "Player2 has been eliminated!")
+		assert.Contains(t, g.history, historyLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
 	})
 
 	t.Run("2v2 both enemies eliminated, team wins", func(t *testing.T) {
@@ -4155,7 +4155,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			Mode:              types.GameMode2v2,
 			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
 			EliminatedPlayers: map[int]bool{1: true}, // Player2 already eliminated
-			history:           []string{},
+			history:           []historyLine{},
 		}
 
 		// Player4 (last of Team 2) loses warriors
@@ -4193,30 +4193,46 @@ func TestGame_IsGameOver(t *testing.T) {
 func TestGame_GetHistory(t *testing.T) {
 	t.Run("Returns all history on first call", func(t *testing.T) {
 		g := &Game{
-			history: []string{"msg1", "msg2", "msg3"},
+			history: []historyLine{
+				{Msg: "msg1", Category: types.CategoryInfo},
+				{Msg: "msg2", Category: types.CategoryInfo},
+				{Msg: "msg3", Category: types.CategoryInfo},
+			},
 		}
 
 		result := g.GetHistory()
 
-		assert.Equal(t, []string{"msg1", "msg2", "msg3"}, result)
+		assert.Len(t, result, 3)
+		assert.Equal(t, "msg1", result[0].Msg)
+		assert.Equal(t, "msg3", result[2].Msg)
 	})
 
 	t.Run("Returns only new messages on subsequent calls", func(t *testing.T) {
 		g := &Game{
-			history: []string{"msg1", "msg2"},
+			history: []historyLine{
+				{Msg: "msg1", Category: types.CategoryInfo},
+				{Msg: "msg2", Category: types.CategoryInfo},
+			},
 		}
 
 		_ = g.GetHistory() // First call reads all
 
-		g.history = append(g.history, "msg3", "msg4")
+		g.history = append(g.history,
+			historyLine{Msg: "msg3", Category: types.CategoryInfo},
+			historyLine{Msg: "msg4", Category: types.CategoryInfo},
+		)
 		result := g.GetHistory()
 
-		assert.Equal(t, []string{"msg3", "msg4"}, result)
+		assert.Len(t, result, 2)
+		assert.Equal(t, "msg3", result[0].Msg)
+		assert.Equal(t, "msg4", result[1].Msg)
 	})
 
 	t.Run("Returns empty slice when no new messages", func(t *testing.T) {
 		g := &Game{
-			history: []string{"msg1"},
+			history: []historyLine{
+				{Msg: "msg1", Category: types.CategoryInfo},
+			},
 		}
 
 		_ = g.GetHistory()
@@ -4237,12 +4253,12 @@ func TestGame_OnWarriorMovedToCemetery(t *testing.T) {
 
 		g := &Game{
 			cemetery: mockCemetery,
-			history:  []string{},
+			history:  []historyLine{},
 		}
 
 		g.OnWarriorMovedToCemetery(mockWarrior)
 
-		assert.Contains(t, g.history, "warrior buried in cemetery")
+		assert.Contains(t, g.history, historyLine{Msg: "warrior buried in cemetery", Category: types.CategoryInfo})
 	})
 }
 
@@ -4723,14 +4739,16 @@ func TestGame_OnCardMovedToPile(t *testing.T) {
 
 func TestGame_addToHistory(t *testing.T) {
 	t.Run("Adds message to history", func(t *testing.T) {
-		g := &Game{history: []string{}}
-		g.addToHistory("test message")
-		assert.Equal(t, []string{"test message"}, g.history)
+		g := &Game{history: []historyLine{}}
+		g.addToHistory("test message", types.CategoryInfo)
+		assert.Len(t, g.history, 1)
+		assert.Equal(t, "test message", g.history[0].Msg)
+		assert.Equal(t, types.CategoryInfo, g.history[0].Category)
 	})
 
 	t.Run("Does not add empty message", func(t *testing.T) {
-		g := &Game{history: []string{}}
-		g.addToHistory("")
+		g := &Game{history: []historyLine{}}
+		g.addToHistory("", types.CategoryInfo)
 		assert.Empty(t, g.history)
 	})
 }

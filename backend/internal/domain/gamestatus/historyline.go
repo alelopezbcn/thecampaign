@@ -17,15 +17,15 @@ func NewHistoryLine(msg string, category types.Category) HistoryLine {
 func mapColor(category types.Category) string {
 	switch category {
 	case types.CategoryAction:
-		return "#FF5733"
+		return "#12eb70"
 	case types.CategoryInfo:
 		return "#33C1FF"
 	case types.CategoryError:
 		return "#FF3333"
 	case types.CategorySkip:
-		return "#33FF57"
+		return "#959896"
 	case types.CategoryEndTurn:
-		return "#FF33A8"
+		return "#ef1a1a"
 	case types.CategoryElimination:
 		return "#8E44AD"
 	default:
