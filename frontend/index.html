@@ -12,36 +12,69 @@
         <div id="join-screen" class="screen">
             <div class="join-container">
                 <h1>The Campaign</h1>
-                <div class="form-group">
-                    <label for="player-name">Your Name:</label>
-                    <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
-                </div>
-                <div class="form-group">
-                    <label for="game-id">Game ID:</label>
-                    <input type="text" id="game-id" placeholder="Enter or create game ID" maxlength="20">
-                </div>
-                <div class="form-group">
-                    <label>Game Mode:</label>
-                    <div class="game-mode-selector" id="game-mode-selector">
-                        <div class="game-mode-option selected" data-mode="1v1">
-                            <span class="mode-name">1v1</span>
-                            <span class="mode-desc">Duel</span>
-                        </div>
-                        <div class="game-mode-option" data-mode="2v2">
-                            <span class="mode-name">2v2</span>
-                            <span class="mode-desc">Teams</span>
-                        </div>
-                        <div class="game-mode-option" data-mode="ffa3">
-                            <span class="mode-name">FFA 3</span>
-                            <span class="mode-desc">3 Players</span>
-                        </div>
-                        <div class="game-mode-option" data-mode="ffa5">
-                            <span class="mode-name">FFA 5</span>
-                            <span class="mode-desc">5 Players</span>
+
+                <!-- CREATE GAME (default when no ?game= param) -->
+                <div id="create-game-section">
+                    <div class="form-group">
+                        <label for="player-name">Your Name:</label>
+                        <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label>Game Mode:</label>
+                        <div class="game-mode-selector" id="game-mode-selector">
+                            <div class="game-mode-option selected" data-mode="1v1">
+                                <span class="mode-name">1v1</span>
+                                <span class="mode-desc">Duel</span>
+                            </div>
+                            <div class="game-mode-option" data-mode="2v2">
+                                <span class="mode-name">2v2</span>
+                                <span class="mode-desc">Teams</span>
+                            </div>
+                            <div class="game-mode-option" data-mode="ffa3">
+                                <span class="mode-name">FFA 3</span>
+                                <span class="mode-desc">3 Players</span>
+                            </div>
+                            <div class="game-mode-option" data-mode="ffa5">
+                                <span class="mode-name">FFA 5</span>
+                                <span class="mode-desc">5 Players</span>
+                            </div>
                         </div>
                     </div>
+                    <button id="create-btn" class="btn btn-primary">Create Game</button>
+                    <p class="lobby-switch-link">
+                        Have a game code? <a href="#" id="show-join-link">Join an existing game</a>
+                    </p>
                 </div>
-                <button id="join-btn" class="btn btn-primary">Join Game</button>
+
+                <!-- JOIN GAME BY CODE (shown via "Have a code?" link) -->
+                <div id="join-code-section" class="hidden">
+                    <div class="form-group">
+                        <label for="join-player-name">Your Name:</label>
+                        <input type="text" id="join-player-name" placeholder="Enter your name" maxlength="20">
+                    </div>
+                    <div class="form-group">
+                        <label for="game-id">Game Code:</label>
+                        <input type="text" id="game-id" placeholder="Enter game code" maxlength="10" style="text-transform: uppercase;">
+                    </div>
+                    <button id="join-code-btn" class="btn btn-primary">Join Game</button>
+                    <p class="lobby-switch-link">
+                        <a href="#" id="show-create-link">Back to Create Game</a>
+                    </p>
+                </div>
+
+                <!-- JOIN GAME VIA URL (shown when ?game=XXX is in URL) -->
+                <div id="join-url-section" class="hidden">
+                    <div id="join-game-info" class="join-game-info">
+                        <div id="join-mode-badge" class="game-mode-badge"></div>
+                        <p>Game Code: <strong id="join-game-code"></strong></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="url-player-name">Your Name:</label>
+                        <input type="text" id="url-player-name" placeholder="Enter your name" maxlength="20">
+                    </div>
+                    <button id="join-url-btn" class="btn btn-primary">Join Game</button>
+                </div>
+
                 <div id="connection-status" class="status-message"></div>
             </div>
         </div>
@@ -51,8 +84,11 @@
             <div class="waiting-container">
                 <h2>Waiting for players...</h2>
                 <div id="waiting-mode-badge" class="game-mode-badge">1v1</div>
-                <p>Game ID: <span id="current-game-id"></span></p>
-                <p class="hint">Share this Game ID with other players</p>
+                <p>Game Code: <span id="current-game-id"></span></p>
+                <div class="share-link-container">
+                    <input type="text" id="share-url" class="share-url-input" readonly>
+                    <button id="copy-link-btn" class="btn btn-secondary btn-small">Copy Link</button>
+                </div>
                 <div id="waiting-player-count" class="waiting-player-count">0/2 players</div>
                 <div id="waiting-players-list" class="waiting-players-list"></div>
                 <div class="spinner"></div>

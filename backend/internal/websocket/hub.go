@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"log"
+	"math/rand/v2"
 	"sync"
 	"time"
 
@@ -160,6 +161,17 @@ func maxPlayersForMode(mode types.GameMode) int {
 	}
 }
 
+// generateGameID creates a short 6-character uppercase alphanumeric game ID.
+// Avoids ambiguous characters (I, O, 0, 1).
+func generateGameID() string {
+	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+	id := make([]byte, 6)
+	for i := range id {
+		id[i] = chars[rand.IntN(len(chars))]
+	}
+	return string(id)
+}
+
 // handleJoinGame handles a player joining a game
 func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	data, err := json.Marshal(payload)
@@ -181,9 +193,17 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	client.PlayerName = playerName
 	client.GameID = gameID
 
+	var room *GameRoom
+
 	h.mutex.Lock()
-	room, exists := h.gameRooms[gameID]
-	if !exists {
+	if gameID == "" {
+		// Create mode: generate unique game ID
+		for {
+			gameID = generateGameID()
+			if _, exists := h.gameRooms[gameID]; !exists {
+				break
+			}
+		}
 		room = &GameRoom{
 			ID:              gameID,
 			GameMode:        gameMode,
@@ -192,8 +212,17 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 			TeamAssignments: make(map[string]int),
 		}
 		h.gameRooms[gameID] = room
+		client.GameID = gameID
 		log.Printf("Created new game room: %s (mode: %s, max: %d)",
 			gameID, gameMode, room.MaxPlayers)
+	} else {
+		var exists bool
+		room, exists = h.gameRooms[gameID]
+		if !exists {
+			h.mutex.Unlock()
+			client.SendError("Game not found")
+			return
+		}
 	}
 	h.mutex.Unlock()
 
@@ -224,6 +253,7 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 				allNames = append(allNames, name)
 			}
 			payload := PlayerJoinedPayload{
+				GameID:     room.ID,
 				GameMode:   string(room.GameMode),
 				MaxPlayers: room.MaxPlayers,
 				PlayerName: playerName,
@@ -283,6 +313,7 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		teams := copyTeams(room.TeamAssignments)
 		for _, c := range room.Players {
 			c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
+				GameID:     room.ID,
 				GameMode:   string(room.GameMode),
 				MaxPlayers: room.MaxPlayers,
 				PlayerName: playerName,
@@ -627,6 +658,7 @@ func (h *Hub) handleSwapTeam(client *Client) {
 
 	for _, c := range room.Players {
 		c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
+			GameID:     room.ID,
 			GameMode:   string(room.GameMode),
 			MaxPlayers: room.MaxPlayers,
 			PlayerName: client.PlayerName,

@@ -169,6 +169,7 @@ type GameStartedPayload struct {
 
 // PlayerJoinedPayload when a player joins
 type PlayerJoinedPayload struct {
+	GameID     string         `json:"game_id"`
 	GameMode   string         `json:"game_mode"`
 	MaxPlayers int            `json:"max_players"`
 	PlayerName string         `json:"player_name"`
