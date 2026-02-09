@@ -17,7 +17,7 @@ func newTestCastle(ctrl *gomock.Controller) (
 	mockPlayer := mocks.NewMockPlayer(ctrl)
 	mockPlayer.EXPECT().Name().Return("TestPlayer").AnyTimes()
 	castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
-	c := newCastle(10, mockPlayer, castleObs)
+	c := newCastle(25, mockPlayer, castleObs)
 	return c, mockPlayer, castleObs
 }
 
@@ -158,11 +158,11 @@ func TestCastle_Construct(t *testing.T) {
 		constructCastle(t, c, ctrl)
 
 		gold := mocks.NewMockResource(ctrl)
-		gold.EXPECT().Value().Return(24).AnyTimes()
+		gold.EXPECT().Value().Return(23).AnyTimes()
 
 		err := c.Construct(gold)
 		assert.NoError(t, err)
-		assert.Equal(t, 24, c.Value())
+		assert.Equal(t, 23, c.Value())
 	})
 }
 
