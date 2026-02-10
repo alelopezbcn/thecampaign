@@ -143,7 +143,7 @@ func TestWarriorBase_Heal_RestoresHealthAndDiscardsWeapons(t *testing.T) {
 	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	w.Heal(sp)
-	assert.Equal(t, WarriorMaxHealth, w.health)
+	assert.Equal(t, warriorMaxHealth, w.health)
 	assert.Empty(t, w.attackedBy)
 }
 
@@ -163,7 +163,7 @@ func TestWarriorBase_Heal_NoWeapons(t *testing.T) {
 	discardObs.EXPECT().OnCardMovedToPile(sp)
 
 	w.Heal(sp)
-	assert.Equal(t, WarriorMaxHealth, w.health)
+	assert.Equal(t, warriorMaxHealth, w.health)
 	assert.Empty(t, w.attackedBy)
 }
 

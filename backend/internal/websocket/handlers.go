@@ -187,13 +187,15 @@ func (h *Hub) handleEndTurn(client *Client) {
 	}
 
 	room.mutex.Lock()
-	_, err := room.Game.EndTurn(client.PlayerName)
+	status, err := room.Game.EndTurn(client.PlayerName, false)
 	room.mutex.Unlock()
 
 	if err != nil {
 		client.SendError(err.Error())
 		return
 	}
+
+	h.sendGameStateToAll(client.GameID, status)
 
 	// Auto draw card for the next player and broadcast state
 	h.autoDrawAndBroadcast(client.GameID)

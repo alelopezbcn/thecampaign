@@ -9,6 +9,11 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+const (
+	warriorMaxHealth = 20
+	dragonMaxHealth  = 20
+)
+
 type warriorBase struct {
 	*cardBase
 	*attackableBase
@@ -64,7 +69,7 @@ func (w *warriorBase) IsProtected() (bool, ports.SpecialPower) {
 	return false, nil
 }
 func (w *warriorBase) Heal(sp ports.SpecialPower) {
-	w.health = WarriorMaxHealth
+	w.health = warriorMaxHealth
 	w.attackedBy = append(w.attackedBy, sp)
 	for _, a := range w.attackedBy {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
@@ -91,7 +96,7 @@ func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
 func (w *warriorBase) IsDamaged() bool {
-	return w.health < WarriorMaxHealth
+	return w.health < warriorMaxHealth
 }
 func (w *warriorBase) dead() {
 	for _, a := range w.attackedBy {

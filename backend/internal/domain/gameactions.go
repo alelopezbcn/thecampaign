@@ -568,6 +568,8 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
+	skippedPhase := g.currentAction
+
 	switch g.currentAction {
 	case types.ActionTypeAttack:
 		nextAction = types.ActionTypeSpySteal
@@ -581,7 +583,8 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 		return status, errors.New("cannot skip this phase")
 	}
 
-	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()), types.CategoryAction)
+	g.addToHistory(fmt.Sprintf("%s skipped phase %s", p.Name(), skippedPhase),
+		types.CategorySkip)
 
 	status = g.nextAction(nextAction,
 		func() GameStatus {
@@ -591,13 +594,19 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 	return status, nil
 }
 
-func (g *Game) EndTurn(player string) (status GameStatus, err error) {
+func (g *Game) EndTurn(player string, expired bool) (status GameStatus, err error) {
 	p := g.CurrentPlayer()
 	if p.Name() != player {
 		return status, fmt.Errorf("%s not your turn", player)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s's turn ended", p.Name()), types.CategoryEndTurn)
+	if expired {
+		g.addToHistory(fmt.Sprintf("%s's turn expired", p.Name()),
+			types.CategorySkip)
+	} else {
+		g.addToHistory(fmt.Sprintf("%s ended their turn", p.Name()),
+			types.CategoryAction)
+	}
 
 	g.switchTurn()
 	status = g.nextAction(types.ActionTypeDrawCard,

@@ -362,7 +362,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 
 		expectedAction = types.ActionTypeConstruct
-		g.addToHistory(fmt.Sprintf("%s has no cards to buy (without exceeding hand limit.", p.Name()),
+		g.addToHistory(fmt.Sprintf("%s has no cards to buy (without exceeding hand limit).", p.Name()),
 			types.CategorySkip)
 	}
 
