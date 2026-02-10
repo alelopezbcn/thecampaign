@@ -84,11 +84,17 @@ func (h *Hub) Run() {
 					disconnectedPlayerName = client.PlayerName
 					if room, exists := h.gameRooms[client.GameID]; exists {
 						room.mutex.Lock()
-						delete(room.Players, client.PlayerName)
-						delete(room.TeamAssignments, client.PlayerName)
-						if len(room.Players) == 0 {
-							delete(h.gameRooms, client.GameID)
-							log.Printf("Game room %s removed (empty)", client.GameID)
+						if room.Game != nil {
+							// Game in progress: keep player slot for reconnection
+							room.Players[client.PlayerName] = nil
+						} else {
+							// Waiting room: remove normally
+							delete(room.Players, client.PlayerName)
+							delete(room.TeamAssignments, client.PlayerName)
+							if len(room.Players) == 0 {
+								delete(h.gameRooms, client.GameID)
+								log.Printf("Game room %s removed (empty)", client.GameID)
+							}
 						}
 						room.mutex.Unlock()
 					}
@@ -228,23 +234,28 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 
 	room.mutex.Lock()
 
-	// Reconnection: player name already exists in this game
+	// Reconnection: player name already exists in this game (includes nil = disconnected)
 	if oldClient, exists := room.Players[playerName]; exists {
 		room.Players[playerName] = client
 		gameInProgress := room.Game != nil
 
-		// Close old client connection
-		h.mutex.Lock()
-		if _, ok := h.clients[oldClient]; ok {
-			delete(h.clients, oldClient)
-			close(oldClient.send)
+		// Close old client connection if still active
+		if oldClient != nil {
+			h.mutex.Lock()
+			if _, ok := h.clients[oldClient]; ok {
+				delete(h.clients, oldClient)
+				close(oldClient.send)
+			}
+			h.mutex.Unlock()
 		}
-		h.mutex.Unlock()
 
 		log.Printf("Player %s reconnected to game %s", playerName, gameID)
 
 		if gameInProgress {
 			room.mutex.Unlock()
+			h.broadcastToGame(gameID, MsgError, ErrorPayload{
+				Message: playerName + " reconnected",
+			})
 			h.sendReconnectState(gameID, playerName)
 		} else {
 			// Send full waiting room state including teams
@@ -312,6 +323,9 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		}
 		teams := copyTeams(room.TeamAssignments)
 		for _, c := range room.Players {
+			if c == nil {
+				continue
+			}
 			c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
 				GameID:     room.ID,
 				GameMode:   string(room.GameMode),
@@ -351,6 +365,9 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		room.mutex.Unlock()
 		log.Printf("Error creating game: %v", err)
 		for _, c := range room.Players {
+			if c == nil {
+				continue
+			}
 			c.SendError("Failed to create game: " + err.Error())
 		}
 		return
@@ -375,6 +392,9 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 
 	// Notify all players that the game started
 	for name, c := range room.Players {
+		if c == nil {
+			continue
+		}
 		c.SendMessage(MsgGameStarted, GameStartedPayload{
 			GameID:   gameID,
 			Players:  playerNames,
@@ -552,6 +572,9 @@ func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus domain.GameS
 	currentPlayerName := room.Game.CurrentPlayer().Name()
 
 	for playerName, client := range room.Players {
+		if client == nil {
+			continue
+		}
 		isCurrentPlayer := playerName == currentPlayerName
 
 		var status domain.GameStatus
@@ -587,7 +610,9 @@ func (h *Hub) broadcastToGame(gameID string, msgType MessageType, payload interf
 	defer room.mutex.RUnlock()
 
 	for _, client := range room.Players {
-		client.SendMessage(msgType, payload)
+		if client != nil {
+			client.SendMessage(msgType, payload)
+		}
 	}
 }
 
@@ -657,6 +682,9 @@ func (h *Hub) handleSwapTeam(client *Client) {
 	teams := copyTeams(room.TeamAssignments)
 
 	for _, c := range room.Players {
+		if c == nil {
+			continue
+		}
 		c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
 			GameID:     room.ID,
 			GameMode:   string(room.GameMode),
