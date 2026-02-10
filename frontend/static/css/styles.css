@@ -1172,6 +1172,12 @@ body {
     transform: translateY(-3px);
 }
 
+.opponent-castle-area,
+.opponent-field-area {
+    display: flex;
+    flex-direction: column;
+}
+
 .opponent-castle-area h4,
 .opponent-field-area h4 {
     margin-bottom: 4px;

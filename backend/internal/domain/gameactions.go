@@ -602,10 +602,10 @@ func (g *Game) EndTurn(player string, expired bool) (status GameStatus, err erro
 
 	if expired {
 		g.addToHistory(fmt.Sprintf("%s's turn expired", p.Name()),
-			types.CategorySkip)
+			types.CategoryTurnExpired)
 	} else {
 		g.addToHistory(fmt.Sprintf("%s ended their turn", p.Name()),
-			types.CategoryAction)
+			types.CategoryEndTurn)
 	}
 
 	g.switchTurn()

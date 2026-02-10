@@ -24,6 +24,10 @@ func mapColor(category types.Category) string {
 		return "#FF3333"
 	case types.CategorySkip:
 		return "#959896"
+	case types.CategoryEndTurn:
+		return "#F39C12"
+	case types.CategoryTurnExpired:
+		return "#f65b07"
 	case types.CategoryElimination:
 		return "#8E44AD"
 	default:
