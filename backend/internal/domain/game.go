@@ -36,7 +36,7 @@ type Game struct {
 	cemetery           ports.Cemetery
 	dealer             ports.Dealer
 	GameStatusProvider GameStatusProvider
-	history            []string
+	history            []historyLine
 	historyTracker     int
 	gameOver           bool
 	winner             string
@@ -58,7 +58,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		CurrentTurn:        0,
 		discardPile:        newDiscardPile(),
 		cemetery:           newCemetery(),
-		history:            []string{},
+		history:            []historyLine{},
 		dealer:             dealer,
 		GameStatusProvider: gameStatusProvider,
 		Players:            make([]ports.Player, len(playerNames)),
@@ -197,15 +197,19 @@ func (g *Game) shuffleDiscardPileIntoDeck() {
 	g.deck.Replenish(g.discardPile.Empty())
 }
 
-func (g *Game) addToHistory(msg string) {
+func (g *Game) addToHistory(msg string, cat types.Category) {
 	if len(msg) == 0 {
 		return
 	}
 
-	g.history = append(g.history, msg)
+	hl := historyLine{
+		Msg:      msg,
+		Category: cat,
+	}
+	g.history = append(g.history, hl)
 }
 
-func (g *Game) GetHistory() []string {
+func (g *Game) GetHistory() []historyLine {
 	if g.historyTracker == 0 {
 		g.historyTracker = len(g.history)
 		return g.history
@@ -221,7 +225,8 @@ func (g *Game) OnCardMovedToPile(card ports.Card) {
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 	g.cemetery.AddCorp(warrior)
-	g.addToHistory("warrior buried in cemetery")
+
+	g.addToHistory("warrior buried in cemetery", types.CategoryInfo)
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
@@ -280,7 +285,8 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		}
 	}
 
-	g.addToHistory(playerName + " has been eliminated!")
+	g.addToHistory(playerName+" has been eliminated!", types.CategoryElimination)
+
 	eliminatedPlayer := g.Players[eliminatedIdx]
 	// Move all cards from the eliminated player's hand to the discard pile
 	for _, c := range eliminatedPlayer.Hand().ShowCards() {
@@ -327,27 +333,39 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 
 		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
 			g.currentAction = types.ActionTypeAttack
+
 			return gameStatusFn()
 		}
+
 		expectedAction = types.ActionTypeSpySteal
-		g.addToHistory(fmt.Sprintf("%s has no cards to attack, skipping phase.", p.Name()))
+		g.addToHistory(fmt.Sprintf("%s has no cards to attack.", p.Name()),
+			types.CategorySkip)
 	}
+
 	if expectedAction == types.ActionTypeSpySteal {
 		if p.HasSpy() || p.HasThief() {
 			g.currentAction = types.ActionTypeSpySteal
+
 			return gameStatusFn()
 		}
+
 		expectedAction = types.ActionTypeBuy
-		g.addToHistory(fmt.Sprintf("%s has no Spy or Thief to steal, skipping phase.", p.Name()))
+		g.addToHistory(fmt.Sprintf("%s has no Spy or Thief to steal.", p.Name()),
+			types.CategorySkip)
 	}
+
 	if expectedAction == types.ActionTypeBuy {
 		if p.CanBuy() {
 			g.currentAction = types.ActionTypeBuy
+
 			return gameStatusFn()
 		}
+
 		expectedAction = types.ActionTypeConstruct
-		g.addToHistory(fmt.Sprintf("%s has no cards to buy or exceeds hand limit, skipping phase.", p.Name()))
+		g.addToHistory(fmt.Sprintf("%s has no cards to buy (without exceeding hand limit).", p.Name()),
+			types.CategorySkip)
 	}
+
 	if expectedAction == types.ActionTypeConstruct {
 		canConstruct := p.CanConstruct()
 		if !canConstruct {
@@ -366,17 +384,22 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 		if canConstruct {
 			g.currentAction = types.ActionTypeConstruct
+
 			return gameStatusFn()
 		}
+
 		expectedAction = types.ActionTypeEndTurn
-		g.addToHistory(fmt.Sprintf("%s has no cards to construct, skipping phase.", p.Name()))
+		g.addToHistory(fmt.Sprintf("%s has no cards to construct.", p.Name()),
+			types.CategorySkip)
 	}
 
 	if expectedAction == types.ActionTypeEndTurn {
 		g.currentAction = types.ActionTypeEndTurn
+
 		return gameStatusFn()
 	}
 
 	g.currentAction = types.ActionTypeDrawCard
+
 	return gameStatusFn()
 }

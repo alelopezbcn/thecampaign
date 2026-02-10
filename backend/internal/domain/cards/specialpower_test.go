@@ -12,8 +12,8 @@ import (
 func TestNewSpecialPower(t *testing.T) {
 	sp := NewSpecialPower("sp1")
 	assert.Equal(t, "SP1", sp.GetID())
-	assert.Equal(t, SpecialPowerMaxHealth, sp.Health())
-	assert.Equal(t, SpecialPowerDamage, sp.DamageAmount())
+	assert.Equal(t, specialPowerMaxHealth, sp.Health())
+	assert.Equal(t, specialPowerDamage, sp.DamageAmount())
 	// String() returns format: "WeaponType (DamageAmount)"
 	assert.Contains(t, sp.String(), "Special Power")
 	assert.Contains(t, sp.String(), "10")

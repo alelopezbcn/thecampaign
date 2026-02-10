@@ -5,20 +5,20 @@ type MessageType string
 
 const (
 	// Client to Server messages
-	MsgJoinGame MessageType = "join_game"
-	MsgDrawCard MessageType = "draw_card"
-	MsgAttack             MessageType = "attack"
-	MsgSpecialPower       MessageType = "special_power"
-	MsgMoveWarrior        MessageType = "move_warrior"
-	MsgTrade              MessageType = "trade"
-	MsgBuy                MessageType = "buy"
-	MsgConstruct          MessageType = "construct"
-	MsgSpy                MessageType = "spy"
-	MsgSteal              MessageType = "steal"
-	MsgCatapult           MessageType = "catapult"
-	MsgEndTurn            MessageType = "end_turn"
-	MsgSkipPhase          MessageType = "skip_phase"
-	MsgSwapTeam           MessageType = "swap_team"
+	MsgJoinGame     MessageType = "join_game"
+	MsgDrawCard     MessageType = "draw_card"
+	MsgAttack       MessageType = "attack"
+	MsgSpecialPower MessageType = "special_power"
+	MsgMoveWarrior  MessageType = "move_warrior"
+	MsgTrade        MessageType = "trade"
+	MsgBuy          MessageType = "buy"
+	MsgConstruct    MessageType = "construct"
+	MsgSpy          MessageType = "spy"
+	MsgSteal        MessageType = "steal"
+	MsgCatapult     MessageType = "catapult"
+	MsgEndTurn      MessageType = "end_turn"
+	MsgSkipPhase    MessageType = "skip_phase"
+	MsgSwapTeam     MessageType = "swap_team"
 
 	// Server to Client messages
 	MsgGameState        MessageType = "game_state"
@@ -26,7 +26,7 @@ const (
 	MsgGameStarted      MessageType = "game_started"
 	MsgWaitingForPlayer MessageType = "waiting_for_player"
 	MsgPlayerJoined     MessageType = "player_joined"
-	MsgGameEnded MessageType = "game_ended"
+	MsgGameEnded        MessageType = "game_ended"
 )
 
 // Message is the base WebSocket message structure
@@ -100,7 +100,6 @@ type CatapultPayload struct {
 type GameStatePayload struct {
 	GameStatus GameStatusDTO `json:"game_status"`
 	IsYourTurn bool          `json:"is_your_turn"`
-	History    []string      `json:"history,omitempty"`
 }
 
 // GameStatusDTO is the JSON-friendly game status
@@ -122,7 +121,7 @@ type GameStatusDTO struct {
 	DiscardPile         DiscardPileDTO      `json:"discard_pile"`
 	CardsInDeck         int                 `json:"cards_in_deck"`
 	ModalCards          []CardDTO           `json:"modal_cards,omitempty"`
-	History             []string            `json:"history"`
+	History             []HistoryLineDTO    `json:"history"`
 	PlayersOrder        []string            `json:"players_order"`
 	GameOverMsg         string              `json:"game_over_msg,omitempty"`
 	IsWinner            bool                `json:"is_winner"`
@@ -156,6 +155,12 @@ type FieldCardDTO struct {
 	ProtectedBy *CardDTO  `json:"protected_by,omitempty"`
 }
 
+// HistoryLineDTO represents a line in the game history with color for UI display
+type HistoryLineDTO struct {
+	Msg   string `json:"msg"`
+	Color string `json:"color"`
+}
+
 // ErrorPayload for error messages
 type ErrorPayload struct {
 	Message string `json:"message"`
@@ -177,4 +182,3 @@ type PlayerJoinedPayload struct {
 	Players    []string       `json:"players"`
 	Teams      map[string]int `json:"teams,omitempty"`
 }
-

@@ -7,7 +7,10 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-const SpecialPowerDamage = 10
+const (
+	specialPowerDamage    = 10
+	specialPowerMaxHealth = 10
+)
 
 type specialPower struct {
 	*cardBase
@@ -18,8 +21,8 @@ type specialPower struct {
 func NewSpecialPower(id string) ports.SpecialPower {
 	return &specialPower{
 		cardBase:       newCardBase(id, "Special Power"),
-		attackableBase: newAttackableBase(SpecialPowerMaxHealth),
-		weaponBase:     newWeaponBase(SpecialPowerDamage, types.SpecialPowerWeaponType),
+		attackableBase: newAttackableBase(specialPowerMaxHealth),
+		weaponBase:     newWeaponBase(specialPowerDamage, types.SpecialPowerWeaponType),
 	}
 }
 

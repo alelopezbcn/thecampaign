@@ -65,7 +65,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		DiscardPile:         convertDiscardPile(status.DiscardPile),
 		CardsInDeck:         status.CardsInDeck,
 		ModalCards:          convertModalCards(status.ModalCards),
-		History:             status.History,
+		History:             convertHistory(status.History),
 		PlayersOrder:        status.PlayersOrder,
 		GameOverMsg:         status.GameOverMgs,
 		IsWinner:            status.IsWinner,
@@ -195,4 +195,18 @@ func convertDiscardPile(discardPile gamestatus.DiscardPile) DiscardPileDTO {
 	}
 
 	return dto
+}
+
+func convertHistory(historyLine []gamestatus.HistoryLine) []HistoryLineDTO {
+	if historyLine == nil {
+		return nil
+	}
+	dtos := make([]HistoryLineDTO, len(historyLine))
+	for i, hl := range historyLine {
+		dtos[i] = HistoryLineDTO{
+			Msg:   hl.Msg,
+			Color: hl.Color,
+		}
+	}
+	return dtos
 }

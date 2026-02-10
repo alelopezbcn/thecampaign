@@ -16,23 +16,23 @@ type GameStatus struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand   []gamestatus.HandCard  `json:"current_player_hand"`
-	CurrentPlayerField  []gamestatus.FieldCard `json:"current_player_field"`
-	CurrentPlayerCastle gamestatus.Castle      `json:"current_player_castle"`
-	IsEliminated        bool                   `json:"is_eliminated"`
-	Opponents           []OpponentStatus       `json:"opponents"`
-	GameMode            string                 `json:"game_mode"`
-	Cemetery            gamestatus.Cemetery    `json:"cemetery"`
-	DiscardPile         gamestatus.DiscardPile `json:"discard_pile"`
-	CardsInDeck         int                    `json:"deck"`
-	ModalCards          []gamestatus.Card      `json:"modal_cards"`
-	History             []string               `json:"history"`
-	PlayersOrder        []string               `json:"players_order"`
-	GameOverMgs         string                 `json:"game_over_msg"`
-	IsWinner            bool                   `json:"is_winner"`
-	GameStartedAt       time.Time              `json:"game_started_at"`
-	TurnStartedAt       time.Time              `json:"turn_started_at"`
-	TurnTimeLimitSecs   int                    `json:"turn_time_limit_secs"`
+	CurrentPlayerHand   []gamestatus.HandCard    `json:"current_player_hand"`
+	CurrentPlayerField  []gamestatus.FieldCard   `json:"current_player_field"`
+	CurrentPlayerCastle gamestatus.Castle        `json:"current_player_castle"`
+	IsEliminated        bool                     `json:"is_eliminated"`
+	Opponents           []OpponentStatus         `json:"opponents"`
+	GameMode            string                   `json:"game_mode"`
+	Cemetery            gamestatus.Cemetery      `json:"cemetery"`
+	DiscardPile         gamestatus.DiscardPile   `json:"discard_pile"`
+	CardsInDeck         int                      `json:"deck"`
+	ModalCards          []gamestatus.Card        `json:"modal_cards"`
+	History             []gamestatus.HistoryLine `json:"history"`
+	PlayersOrder        []string                 `json:"players_order"`
+	GameOverMgs         string                   `json:"game_over_msg"`
+	IsWinner            bool                     `json:"is_winner"`
+	GameStartedAt       time.Time                `json:"game_started_at"`
+	TurnStartedAt       time.Time                `json:"turn_started_at"`
+	TurnTimeLimitSecs   int                      `json:"turn_time_limit_secs"`
 }
 
 type OpponentStatus struct {
@@ -77,11 +77,17 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
-		History:             game.GetHistory(),
+		History:             []gamestatus.HistoryLine{},
 		PlayersOrder:        playersOrder,
 		GameStartedAt:       game.GameStartedAt,
 		TurnStartedAt:       game.TurnStartedAt,
 		TurnTimeLimitSecs:   60,
+	}
+
+	for _, line := range game.GetHistory() {
+		gs.History = append(gs.History, gamestatus.NewHistoryLine(
+			line.Msg, line.Category))
+
 	}
 
 	if len(newCards) > 0 {

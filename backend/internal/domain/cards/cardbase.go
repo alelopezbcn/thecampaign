@@ -6,12 +6,6 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-const (
-	WarriorMaxHealth      = 20
-	DragonMaxHealth       = 20
-	SpecialPowerMaxHealth = 10
-)
-
 type cardBase struct {
 	id                      string
 	name                    string

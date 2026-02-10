@@ -56,13 +56,15 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string, targetPlayerName
 		targetPlayer.Field().AddWarriors(w)
 		p.Hand().RemoveCard(c)
 
-		g.addToHistory(fmt.Sprintf("%s moved warrior to %s's field", p.Name(), targetPlayer.Name()))
+		g.addToHistory(fmt.Sprintf("%s moved warrior to %s's field", p.Name(),
+			targetPlayer.Name()), types.CategoryAction)
 	} else {
 		err = p.MoveCardToField(warriorID)
 		if err != nil {
 			return status, fmt.Errorf("moving warrior to field failed: %w", err)
 		}
-		g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()))
+		g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()),
+			types.CategoryAction)
 	}
 
 	g.hasMovedWarrior = true
@@ -103,7 +105,8 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 
 	p.TakeCards(cards...)
 
-	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()))
+	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()), types.CategoryAction)
+
 	g.hasTraded = true
 	g.CanTrade = false
 	status = g.GameStatusProvider.Get(p, g, cards...)
@@ -123,18 +126,24 @@ func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
 	if err != nil {
 		if errors.Is(err, ErrHandLimitExceeded) {
 			// Player has max cards, skip drawing but continue to attack phase
-			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()))
+			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()),
+				types.CategoryError)
+
 			status = g.nextAction(types.ActionTypeAttack,
 				func() GameStatus {
 					return g.GameStatusProvider.Get(p, g)
 				})
+
 			return status, nil
 		}
+
 		return status, fmt.Errorf("drawing card failed: %w", err)
 	}
 
 	p.TakeCards(cards...)
-	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()))
+
+	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
+
 	status = g.nextAction(types.ActionTypeAttack,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g, cards...)
@@ -186,7 +195,9 @@ func (g *Game) Attack(playerName, targetPlayerName, targetID, weaponID string) (
 	}
 
 	g.addToHistory(fmt.Sprintf("%s attacked %s with %s",
-		playerName, t.String(), w.String()))
+		playerName, t.String(), w.String()),
+		types.CategoryAction)
+
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -279,7 +290,8 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 	}
 
 	g.addToHistory(fmt.Sprintf("%s used special power on %s",
-		playerName, t.String()))
+		playerName, t.String()), types.CategoryAction)
+
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -323,7 +335,9 @@ func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 	g.OnCardMovedToPile(stolenGold)
 
 	g.addToHistory(fmt.Sprintf("%s removed %d gold from %s's castle",
-		p.Name(), stolenGold.Value(), targetPlayer.Name()))
+		p.Name(), stolenGold.Value(), targetPlayer.Name()),
+		types.CategoryAction)
+
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -354,7 +368,9 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 	switch option {
 	case 1:
 		// Reveal top 5 cards from deck
-		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()))
+		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()),
+			types.CategoryAction)
+
 		spiedCards = g.deck.Reveal(5)
 	case 2:
 		// Reveal target's cards
@@ -364,7 +380,8 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 		}
 
 		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
-			p.Name(), targetPlayer.Name()))
+			p.Name(), targetPlayer.Name()), types.CategoryAction)
+
 		spiedCards = targetPlayer.Hand().ShowCards()
 	default:
 		return status, errors.New("invalid Spy option")
@@ -421,7 +438,8 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 	p.TakeCards(stolenCard)
 
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
-		p.Name(), targetPlayer.Name()))
+		p.Name(), targetPlayer.Name()), types.CategoryAction)
+
 	status = g.nextAction(types.ActionTypeBuy,
 		func() GameStatus {
 			return g.GameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
@@ -470,7 +488,10 @@ func (g *Game) Buy(playerName, cardID string) (
 	p.TakeCards(cards...)
 
 	g.OnCardMovedToPile(resourceCard)
-	g.addToHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy))
+
+	g.addToHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy),
+		types.CategoryAction)
+
 	status = g.nextAction(types.ActionTypeConstruct,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g, cards...)
@@ -519,12 +540,16 @@ func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) 
 		}
 
 		p.Hand().RemoveCard(resourceCard)
-		g.addToHistory(fmt.Sprintf("%s added gold to %s's castle", p.Name(), targetPlayer.Name()))
+
+		g.addToHistory(fmt.Sprintf("%s added gold to %s's castle", p.Name(),
+			targetPlayer.Name()), types.CategoryAction)
 	} else {
+
 		if err = p.Construct(cardID); err != nil {
 			return status, fmt.Errorf("constructing card failed: %w", err)
 		}
-		g.addToHistory(fmt.Sprintf("%s constructed", p.Name()))
+
+		g.addToHistory(fmt.Sprintf("%s constructed", p.Name()), types.CategoryAction)
 	}
 
 	status = g.nextAction(types.ActionTypeEndTurn,
@@ -543,6 +568,8 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
+	skippedPhase := g.currentAction
+
 	switch g.currentAction {
 	case types.ActionTypeAttack:
 		nextAction = types.ActionTypeSpySteal
@@ -556,7 +583,9 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 		return status, errors.New("cannot skip this phase")
 	}
 
-	g.addToHistory(fmt.Sprintf("%s skipped phase", p.Name()))
+	g.addToHistory(fmt.Sprintf("%s skipped phase %s", p.Name(), skippedPhase),
+		types.CategorySkip)
+
 	status = g.nextAction(nextAction,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -565,10 +594,18 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 	return status, nil
 }
 
-func (g *Game) EndTurn(player string) (status GameStatus, err error) {
+func (g *Game) EndTurn(player string, expired bool) (status GameStatus, err error) {
 	p := g.CurrentPlayer()
 	if p.Name() != player {
 		return status, fmt.Errorf("%s not your turn", player)
+	}
+
+	if expired {
+		g.addToHistory(fmt.Sprintf("%s's turn expired", p.Name()),
+			types.CategoryTurnExpired)
+	} else {
+		g.addToHistory(fmt.Sprintf("%s ended their turn", p.Name()),
+			types.CategoryEndTurn)
 	}
 
 	g.switchTurn()
@@ -576,8 +613,6 @@ func (g *Game) EndTurn(player string) (status GameStatus, err error) {
 		func() GameStatus {
 			return g.GameStatusProvider.Get(g.CurrentPlayer(), g)
 		})
-
-	g.addToHistory(fmt.Sprintf("is %s's turn", g.CurrentPlayer().Name()))
 
 	return status, nil
 }
