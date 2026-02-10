@@ -3,6 +3,7 @@ let ws = null;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
 let timerInterval = null;
+const MAX_RECONNECT_ATTEMPTS = 20;
 let gameState = {
     playerName: '',
     gameID: '',
@@ -186,6 +187,10 @@ function connectWebSocket() {
     ws.onopen = () => {
         console.log('WebSocket connected');
         reconnectAttempts = 0;
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+        }
         showStatus('connection-status', 'Connected to server', 'success');
 
         // Send join_game for both create (empty gameID) and join/reconnect flows
@@ -213,8 +218,14 @@ function connectWebSocket() {
         console.log('WebSocket closed');
         ws = null;
 
-        // Only auto-reconnect if we were in a game
-        if (gameState.playerName && gameState.gameID) {
+        // Clear any pending reconnect timer
+        if (reconnectTimer) {
+            clearTimeout(reconnectTimer);
+            reconnectTimer = null;
+        }
+
+        // Only auto-reconnect if we were in a game and under the retry limit
+        if (gameState.playerName && gameState.gameID && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
             reconnectAttempts++;
             showStatus('connection-status', `Reconnecting in ${delay / 1000}s... (attempt ${reconnectAttempts})`, 'error');
@@ -222,6 +233,8 @@ function connectWebSocket() {
                 console.log(`Reconnect attempt ${reconnectAttempts}`);
                 connectWebSocket();
             }, delay);
+        } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+            showStatus('connection-status', 'Could not reconnect. Please refresh the page.', 'error');
         } else {
             showStatus('connection-status', 'Disconnected from server', 'error');
         }
