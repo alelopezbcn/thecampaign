@@ -68,13 +68,13 @@ func (d *dealer) OtherCards(playerCount int) (other []ports.Card) {
 		other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
 		other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
 		if i == 5 || i == 7 {
-			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
+			other = append(other, NewGold(fmt.Sprintf("gr%d", i), i))
 		}
 		if playerCount > 3 {
-			other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
-			other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
-			other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
-			other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
+			other = append(other, NewSword(fmt.Sprintf("er%d", i), i))
+			other = append(other, NewArrow(fmt.Sprintf("fr%d", i), i))
+			other = append(other, NewPoison(fmt.Sprintf("pr%d", i), i))
+			other = append(other, NewGold(fmt.Sprintf("grr%d", i), i))
 		}
 	}
 

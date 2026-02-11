@@ -1631,17 +1631,26 @@ function renderCastleInto(container, castle) {
     container.className = 'castle';
     if (isConstructed) container.classList.add('constructed');
 
-    container.innerHTML = `
-        <div class="castle-icon"></div>
-        <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
-        ${isConstructed ? `
-            <div class="castle-info">
-                <div class="castle-value">${castleValue}/25</div>
-                <div class="castle-value-label">Value</div>
-                <div class="castle-resources">${resourceCount} resource cards</div>
+    if (isConstructed) {
+        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
+        container.innerHTML = `
+            <div class="castle-image">
+                <img src="/static/img/cards/castle.webp" alt="Castle" draggable="false">
             </div>
-        ` : ''}
-    `;
+            <div class="castle-progress">
+                <div class="castle-progress-bar">
+                    <div class="castle-progress-fill" style="width: ${progressPct}%"></div>
+                </div>
+                <div class="castle-progress-label">${castleValue}/${castleGoal}</div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="castle-icon"></div>
+            <div class="castle-status">Not Constructed</div>
+        `;
+    }
 }
 
 function renderOpponentHandInto(container, cardCount) {
@@ -1829,17 +1838,26 @@ function renderCastle(containerId, castle) {
         container.classList.add('constructed');
     }
 
-    container.innerHTML = `
-        <div class="castle-icon"></div>
-        <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
-        ${isConstructed ? `
-            <div class="castle-info">
-                <div class="castle-value">${castleValue}/25</div>
-                <div class="castle-value-label">Value</div>
-                <div class="castle-resources">${resourceCount} resource cards</div>
+    if (isConstructed) {
+        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
+        container.innerHTML = `
+            <div class="castle-image">
+                <img src="/static/img/cards/castle.webp" alt="Castle" draggable="false">
             </div>
-        ` : ''}
-    `;
+            <div class="castle-progress">
+                <div class="castle-progress-bar">
+                    <div class="castle-progress-fill" style="width: ${progressPct}%"></div>
+                </div>
+                <div class="castle-progress-label">${castleValue}/${castleGoal}</div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="castle-icon"></div>
+            <div class="castle-status">Not Constructed</div>
+        `;
+    }
 }
 
 function renderCemetery(cemetery) {
