@@ -1519,8 +1519,8 @@ body {
 
 /* Card Back Design */
 .card-back {
-    width: 110px;
-    height: 143px;
+    width: 121px;
+    height: 157px;
     border-radius: 8px;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
     box-shadow:
@@ -1657,8 +1657,8 @@ body {
 
 /* Card Styles */
 .card {
-    width: 110px;
-    height: 143px;
+    width: 121px;
+    height: 157px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
@@ -1880,15 +1880,34 @@ body {
 }
 
 .card.unusable {
-    opacity: 0.55;
     pointer-events: none;
-    filter: saturate(0.5);
-    border-style: dashed !important;
-    border-color: rgba(150, 150, 150, 0.5) !important;
 }
 
 .card.unusable:hover {
     transform: none;
+}
+
+.card.usable {
+    position: relative;
+}
+
+.card.usable::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 6px;
+    border-radius: 3px;
+    background: #4cd964;
+    box-shadow: 0 0 8px rgba(76, 217, 100, 0.6);
+    animation: usableMarkerPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes usableMarkerPulse {
+    0%, 100% { opacity: 0.8; box-shadow: 0 0 8px rgba(76, 217, 100, 0.6); }
+    50% { opacity: 1; box-shadow: 0 0 14px rgba(76, 217, 100, 0.9); }
 }
 
 .card.valid-target {
@@ -2261,7 +2280,7 @@ body {
     }
 
     .card {
-        width: 100px;
+        width: 110px;
         font-size: 0.9em;
     }
 }
@@ -2273,7 +2292,7 @@ body {
     }
 
     .card {
-        width: 90px;
+        width: 99px;
         font-size: 0.85em;
         padding: 8px;
     }

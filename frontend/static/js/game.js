@@ -1384,7 +1384,10 @@ function hideConfirmButtons() {
 function cancelAction() {
     resetActionState();
     updateActionPrompt('');
-    // resetActionState already clears visual selections (selected, valid-target classes)
+    // Re-render board to recalculate usable/unusable classes for the current phase
+    if (gameState.currentState) {
+        renderGameBoard(gameState.currentState);
+    }
 }
 
 function toggleCardSelection(cardID, context) {
@@ -1721,12 +1724,16 @@ function createCardElement(card, context) {
         else if (currentAction === 'trade') {
             if (card.can_be_traded === false) {
                 div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
             }
         }
         // During move_warrior action, only warriors are usable
         else if (currentAction === 'move_warrior') {
             if (cardType !== 'warrior') {
                 div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
             }
         }
         // Warriors are only usable during move_warrior action
@@ -1737,6 +1744,8 @@ function createCardElement(card, context) {
         else if (status && ['attack', 'spy/steal', 'buy', 'construct'].includes(status.current_action)) {
             if (card.can_be_used === false) {
                 div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
             }
         }
     }
