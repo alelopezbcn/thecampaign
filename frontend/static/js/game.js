@@ -1384,7 +1384,10 @@ function hideConfirmButtons() {
 function cancelAction() {
     resetActionState();
     updateActionPrompt('');
-    // resetActionState already clears visual selections (selected, valid-target classes)
+    // Re-render board to recalculate usable/unusable classes for the current phase
+    if (gameState.currentState) {
+        renderGameBoard(gameState.currentState);
+    }
 }
 
 function toggleCardSelection(cardID, context) {
@@ -1628,17 +1631,26 @@ function renderCastleInto(container, castle) {
     container.className = 'castle';
     if (isConstructed) container.classList.add('constructed');
 
-    container.innerHTML = `
-        <div class="castle-icon"></div>
-        <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
-        ${isConstructed ? `
-            <div class="castle-info">
-                <div class="castle-value">${castleValue}/25</div>
-                <div class="castle-value-label">Value</div>
-                <div class="castle-resources">${resourceCount} resource cards</div>
+    if (isConstructed) {
+        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
+        container.innerHTML = `
+            <div class="castle-image">
+                <img src="/static/img/cards/castle.webp" alt="Castle" draggable="false">
             </div>
-        ` : ''}
-    `;
+            <div class="castle-progress">
+                <div class="castle-progress-bar">
+                    <div class="castle-progress-fill" style="width: ${progressPct}%"></div>
+                </div>
+                <div class="castle-progress-label">${castleValue}/${castleGoal}</div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="castle-icon"></div>
+            <div class="castle-status">Not Constructed</div>
+        `;
+    }
 }
 
 function renderOpponentHandInto(container, cardCount) {
@@ -1693,10 +1705,18 @@ function createCardElement(card, context) {
     const cardType = getCardType(card);
     div.classList.add(cardType);
 
-    // Apply card color from backend (with transparency for background)
+    // Check if we have an image for this card
+    const imageUrl = getCardImageUrl(card);
+    if (imageUrl) {
+        div.classList.add('has-image');
+    }
+
+    // Apply card color from backend
     if (card.color) {
-        const bgColor = hexToRgba(card.color, 0.3);
-        div.style.setProperty('background', bgColor, 'important');
+        if (!imageUrl) {
+            const bgColor = hexToRgba(card.color, 0.3);
+            div.style.setProperty('background', bgColor, 'important');
+        }
         div.style.setProperty('border-color', card.color, 'important');
     }
 
@@ -1713,12 +1733,16 @@ function createCardElement(card, context) {
         else if (currentAction === 'trade') {
             if (card.can_be_traded === false) {
                 div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
             }
         }
         // During move_warrior action, only warriors are usable
         else if (currentAction === 'move_warrior') {
             if (cardType !== 'warrior') {
                 div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
             }
         }
         // Warriors are only usable during move_warrior action
@@ -1729,6 +1753,8 @@ function createCardElement(card, context) {
         else if (status && ['attack', 'spy/steal', 'buy', 'construct'].includes(status.current_action)) {
             if (card.can_be_used === false) {
                 div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
             }
         }
     }
@@ -1755,17 +1781,30 @@ function createCardElement(card, context) {
     ` : '';
 
     // Create card HTML
-    div.innerHTML = `
-        ${shieldHtml}
-        <div class="card-header">
-            <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
-            <span class="card-type ${cardType}">${card.type || cardType}</span>
-        </div>
-        <div class="card-content">
-            <div class="card-name">${getCardName(card)}</div>
-            ${getCardStats(card, cardType)}
-        </div>
-    `;
+    if (imageUrl) {
+        div.innerHTML = `
+            ${shieldHtml}
+            <div class="card-image">
+                <img src="${imageUrl}" alt="${getCardName(card)}" draggable="false">
+            </div>
+            <div class="card-info">
+                <span class="card-name">${getCardName(card)}</span>
+                ${getCardStatBadge(card, cardType)}
+            </div>
+        `;
+    } else {
+        div.innerHTML = `
+            ${shieldHtml}
+            <div class="card-header">
+                <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
+                <span class="card-type ${cardType}">${card.type || cardType}</span>
+            </div>
+            <div class="card-content">
+                <div class="card-name">${getCardName(card)}</div>
+                ${getCardStats(card, cardType)}
+            </div>
+        `;
+    }
 
     // Add protected class for styling
     if (isProtected) {
@@ -1799,17 +1838,26 @@ function renderCastle(containerId, castle) {
         container.classList.add('constructed');
     }
 
-    container.innerHTML = `
-        <div class="castle-icon"></div>
-        <div class="castle-status">${isConstructed ? 'Constructed' : 'Not Constructed'}</div>
-        ${isConstructed ? `
-            <div class="castle-info">
-                <div class="castle-value">${castleValue}/25</div>
-                <div class="castle-value-label">Value</div>
-                <div class="castle-resources">${resourceCount} resource cards</div>
+    if (isConstructed) {
+        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
+        container.innerHTML = `
+            <div class="castle-image">
+                <img src="/static/img/cards/castle.webp" alt="Castle" draggable="false">
             </div>
-        ` : ''}
-    `;
+            <div class="castle-progress">
+                <div class="castle-progress-bar">
+                    <div class="castle-progress-fill" style="width: ${progressPct}%"></div>
+                </div>
+                <div class="castle-progress-label">${castleValue}/${castleGoal}</div>
+            </div>
+        `;
+    } else {
+        container.innerHTML = `
+            <div class="castle-icon"></div>
+            <div class="castle-status">Not Constructed</div>
+        `;
+    }
 }
 
 function renderCemetery(cemetery) {
@@ -2045,6 +2093,42 @@ function getCardStats(card, cardType) {
 
     stats += '</div>';
     return stats;
+}
+
+// Card image mapping: card key -> image filename
+// Key is derived from sub_type (e.g. "Knight") or type (e.g. "Resource") lowercased
+const CARD_IMAGES = {
+    'knight': 'knight.webp',
+    'archer': 'archer.webp',
+    'mage': 'mage.webp',
+    'dragon': 'dragon.webp',
+    'sword': 'sword.webp',
+    'arrow': 'arrow.webp',
+    'poison': 'poison.webp',
+    'resource': 'gold.webp',
+    'specialpower': 'specialpower.webp',
+    'spy': 'spy.webp',
+    'thief': 'thief.webp',
+    'catapult': 'catapult.webp',
+};
+
+function getCardImageUrl(card) {
+    const key = (card.sub_type || card.type || '').toLowerCase();
+    if (key && CARD_IMAGES[key]) {
+        return `/static/img/cards/${CARD_IMAGES[key]}`;
+    }
+    return null;
+}
+
+function getCardStatBadge(card, cardType) {
+    if (cardType === 'warrior') {
+        return `<span class="card-stat-badge warrior">HP ${card.value || 0}</span>`;
+    } else if (cardType === 'weapon') {
+        return `<span class="card-stat-badge weapon">DMG ${card.value || 0}</span>`;
+    } else if (cardType === 'resource') {
+        return `<span class="card-stat-badge resource">${card.value || 0}</span>`;
+    }
+    return '';
 }
 
 function isWarrior(card) {
@@ -2334,6 +2418,7 @@ function renderCardForModal(card, options = {}) {
     const cardName = getCardName(card);
     const bgColor = card.color ? hexToRgba(card.color, 0.3) : '';
     const borderColor = card.color || '';
+    const imageUrl = getCardImageUrl(card);
 
     let wrapperClass = 'card-wrapper';
     let badgeHtml = '';
@@ -2342,17 +2427,32 @@ function renderCardForModal(card, options = {}) {
         badgeHtml = '<div class="double-damage-badge">x2 DMG</div>';
     }
 
-    const cardHtml = `
-        <div class="card ${cardType}" style="${bgColor ? `background: ${bgColor};` : ''} ${borderColor ? `border-color: ${borderColor};` : ''}">
-            <div class="card-header">
-                <span class="card-type ${cardType}">${card.type || cardType}</span>
+    let cardHtml;
+    if (imageUrl) {
+        cardHtml = `
+            <div class="card ${cardType} has-image" style="${borderColor ? `border-color: ${borderColor};` : ''}">
+                <div class="card-image">
+                    <img src="${imageUrl}" alt="${cardName}" draggable="false">
+                </div>
+                <div class="card-info">
+                    <span class="card-name">${cardName}</span>
+                    ${getCardStatBadge(card, cardType)}
+                </div>
             </div>
-            <div class="card-content">
-                <div class="card-name">${cardName}</div>
-                ${getCardStats(card, cardType)}
+        `;
+    } else {
+        cardHtml = `
+            <div class="card ${cardType}" style="${bgColor ? `background: ${bgColor};` : ''} ${borderColor ? `border-color: ${borderColor};` : ''}">
+                <div class="card-header">
+                    <span class="card-type ${cardType}">${card.type || cardType}</span>
+                </div>
+                <div class="card-content">
+                    <div class="card-name">${cardName}</div>
+                    ${getCardStats(card, cardType)}
+                </div>
             </div>
-        </div>
-    `;
+        `;
+    }
 
     if (badgeHtml) {
         return `<div class="${wrapperClass}">${badgeHtml}${cardHtml}</div>`;
@@ -2627,10 +2727,6 @@ function showCardsModal(cards, title, subtitle, showPositionIndicators = false) 
     } else {
         cards.forEach((rawCard, index) => {
             const card = normalizeCard(rawCard);
-            const cardType = getCardType(card);
-            const cardName = getCardName(card);
-            const bgColor = card.color ? hexToRgba(card.color, 0.3) : '';
-            const borderColor = card.color || '';
 
             // Position indicator for deck cards
             let positionBadge = '';
@@ -2642,18 +2738,10 @@ function showCardsModal(cards, title, subtitle, showPositionIndicators = false) 
                 positionBadge = `<span class="position-badge" style="${badgeStyle} padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-left: 5px;">${positionLabel}</span>`;
             }
 
-            content += `
-                <div class="card ${cardType}" style="${bgColor ? `background: ${bgColor};` : ''} ${borderColor ? `border-color: ${borderColor};` : ''}">
-                    <div class="card-header">
-                        <span class="card-type ${cardType}">${card.type || cardType}</span>
-                        ${positionBadge}
-                    </div>
-                    <div class="card-content">
-                        <div class="card-name">${cardName}</div>
-                        ${getCardStats(card, cardType)}
-                    </div>
-                </div>
-            `;
+            content += renderCardForModal(card);
+            if (positionBadge) {
+                content += positionBadge;
+            }
         });
     }
 
