@@ -51,6 +51,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CurrentPlayer:  status.CurrentPlayer,
 		TurnPlayer:     status.TurnPlayer,
 		CurrentAction:  status.CurrentAction,
+		LastAction:     status.LastAction,
 		NewCards:       status.NewCards,
 		CanMoveWarrior: status.CanMoveWarrior,
 		CanTrade:       status.CanTrade,

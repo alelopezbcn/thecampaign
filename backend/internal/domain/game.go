@@ -38,6 +38,7 @@ type Game struct {
 	GameStatusProvider GameStatusProvider
 	history            []historyLine
 	historyTracker     int
+	lastAction         string
 	gameOver           bool
 	winner             string
 	winnerIdx          int

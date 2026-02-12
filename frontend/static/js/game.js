@@ -352,6 +352,18 @@ function handleGameState(payload) {
         checkForEliminations(previousState, payload.game_status);
     }
 
+    // Detect killed warriors and clone their DOM elements before re-render
+    let killedWarriors = [];
+    if (previousState) {
+        killedWarriors = prepareDeathAnimations(previousState, payload.game_status);
+    }
+
+    // Detect hand cards that will vanish before re-render
+    let vanishedCards = [];
+    if (previousState) {
+        vanishedCards = prepareHandCardVanish(previousState, payload.game_status);
+    }
+
     // Schedule damage feedback after render (needs DOM elements to exist)
     if (previousState) {
         setTimeout(() => showDamageFeedback(previousState, payload.game_status), 50);
@@ -367,6 +379,33 @@ function handleGameState(payload) {
     updateActionPrompt('');
 
     showGameScreen(payload.game_status);
+
+    // Play death animations for killed warriors after re-render
+    if (killedWarriors.length > 0) {
+        playDeathAnimations(killedWarriors);
+    }
+
+    // Play vanish animations for consumed hand cards
+    if (vanishedCards.length > 0) {
+        playCardVanishAnimations(vanishedCards);
+    }
+
+    // Show protection animations for newly shielded warriors
+    if (previousState) {
+        const newlyProtected = detectNewProtections(previousState, payload.game_status);
+        if (newlyProtected.length > 0) {
+            setTimeout(() => showProtectionAnimations(newlyProtected), 50);
+        }
+    }
+
+    // Show castle construction and gold addition animations
+    if (previousState) {
+        setTimeout(() => {
+            const changes = detectCastleChanges(previousState, payload.game_status);
+            changes.constructions.forEach(c => showCastleConstructionAnimation(c));
+            changes.goldAdded.forEach(c => showCastleGoldAnimation(c));
+        }, 50);
+    }
 
     updateTurnIndicator();
     updatePhaseIndicator();
@@ -1424,9 +1463,14 @@ function extractFieldHP(status) {
 }
 
 // Show floating damage numbers when warriors take damage
+let screenFlashShown = false;
+
 function showDamageFeedback(previousState, newState) {
     const previousHP = extractFieldHP(previousState);
     const newHP = extractFieldHP(newState);
+
+    // Reset screen flash flag so only one flash per damage batch
+    screenFlashShown = false;
 
     // Check for HP changes
     for (const cardId in previousHP) {
@@ -1439,16 +1483,164 @@ function showDamageFeedback(previousState, newState) {
     // Check for healed warriors (HP increased)
     for (const cardId in previousHP) {
         if (newHP[cardId] !== undefined && newHP[cardId] > previousHP[cardId]) {
-            const healed = newHP[cardId] - previousHP[cardId];
-            showFloatingHeal(cardId, healed);
+            showFloatingHeal(cardId, previousHP[cardId], newHP[cardId]);
         }
     }
+}
+
+// Display attack impact animation on a card
+function showAttackAnimation(cardElement) {
+    // Add shake + red glow
+    cardElement.classList.add('taking-damage');
+
+    // Create slash overlay
+    const slashContainer = document.createElement('div');
+    slashContainer.className = 'attack-slash-container';
+
+    const slash1 = document.createElement('div');
+    slash1.className = 'slash-line slash-line-1';
+
+    const slash2 = document.createElement('div');
+    slash2.className = 'slash-line slash-line-2';
+
+    slashContainer.appendChild(slash1);
+    slashContainer.appendChild(slash2);
+    cardElement.appendChild(slashContainer);
+
+    // Screen flash (once per damage batch)
+    if (!screenFlashShown) {
+        screenFlashShown = true;
+        showScreenFlash();
+    }
+
+    // Cleanup after animations complete
+    setTimeout(() => {
+        cardElement.classList.remove('taking-damage');
+        slashContainer.remove();
+    }, 2000);
+}
+
+// Brief flash across the screen (red for attacks, orange for fire kills)
+function showScreenFlash(isFire) {
+    const flash = document.createElement('div');
+    flash.className = 'screen-flash-overlay' + (isFire ? ' fire-flash' : '');
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+}
+
+// Detect killed warriors and clone their elements before DOM re-render
+function prepareDeathAnimations(previousState, newState) {
+    const previousHP = extractFieldHP(previousState);
+    const newHP = extractFieldHP(newState);
+    const isInstantKill = newState.last_action === 'special_power';
+    const killed = [];
+
+    for (const cardId in previousHP) {
+        // Card existed before but is gone now = killed
+        if (newHP[cardId] === undefined) {
+            const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+            if (!cardElement) continue;
+
+            const rect = cardElement.getBoundingClientRect();
+            const clone = cardElement.cloneNode(true);
+            const damage = previousHP[cardId]; // full HP was the lethal damage
+
+            killed.push({ clone, rect, cardId, damage, isInstantKill });
+        }
+    }
+
+    return killed;
+}
+
+// Play death animations for killed warriors using cloned elements
+function playDeathAnimations(killedWarriors) {
+    // Screen flash for the kills
+    const hasFireKill = killedWarriors.some(k => k.isInstantKill);
+    if (!screenFlashShown) {
+        screenFlashShown = true;
+        showScreenFlash(hasFireKill);
+    }
+
+    killedWarriors.forEach(({ clone, rect, damage, isInstantKill }) => {
+        // Create ghost container positioned where the card was
+        const ghost = document.createElement('div');
+        ghost.className = 'death-ghost' + (isInstantKill ? ' fire-kill' : '');
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+
+        // Style the clone to fill the ghost container
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+        clone.style.margin = '0';
+        clone.classList.add('death-slash-phase');
+        ghost.appendChild(clone);
+
+        // Add slash marks on the ghost
+        const slashContainer = document.createElement('div');
+        slashContainer.className = 'attack-slash-container';
+        const slash1 = document.createElement('div');
+        slash1.className = 'slash-line slash-line-1';
+        const slash2 = document.createElement('div');
+        slash2.className = 'slash-line slash-line-2';
+        slashContainer.appendChild(slash1);
+        slashContainer.appendChild(slash2);
+        ghost.appendChild(slashContainer);
+
+        // Add floating damage number
+        const floatingNum = document.createElement('div');
+        floatingNum.className = 'floating-damage';
+        floatingNum.textContent = `-${damage}`;
+        ghost.appendChild(floatingNum);
+
+        // Add fire particles for instant kill
+        if (isInstantKill) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'fire-particle';
+                const xMid = (Math.random() - 0.5) * 40;
+                const xEnd = xMid + (Math.random() - 0.5) * 30;
+                const yMid = -20 - Math.random() * 40;
+                const yEnd = -50 - Math.random() * 60;
+                particle.style.setProperty('--particle-x', xMid + 'px');
+                particle.style.setProperty('--particle-x-end', xEnd + 'px');
+                particle.style.setProperty('--particle-y', yMid + 'px');
+                particle.style.setProperty('--particle-y-end', yEnd + 'px');
+                particle.style.setProperty('--particle-delay', (Math.random() * 0.5) + 's');
+                particle.style.setProperty('--particle-duration', (0.8 + Math.random() * 0.8) + 's');
+                particle.style.left = (20 + Math.random() * 60) + '%';
+                particle.style.top = (20 + Math.random() * 60) + '%';
+                ghost.appendChild(particle);
+            }
+        }
+
+        document.body.appendChild(ghost);
+
+        // After attack animation, start death animation
+        setTimeout(() => {
+            slashContainer.remove();
+            ghost.classList.add('dying');
+
+            // Add skull overlay
+            const skull = document.createElement('div');
+            skull.className = 'death-skull';
+            skull.textContent = isInstantKill ? '\u{1F525}' : '\u{1F480}';
+            ghost.appendChild(skull);
+        }, 1000);
+
+        // Cleanup everything (fire kills get extra time for particles)
+        setTimeout(() => ghost.remove(), isInstantKill ? 3500 : 2500);
+    });
 }
 
 // Display floating damage number on a card
 function showFloatingDamage(cardId, damage) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
+
+    // Play attack impact animation
+    showAttackAnimation(cardElement);
 
     const floatingNum = document.createElement('div');
     floatingNum.className = 'floating-damage';
@@ -1459,18 +1651,214 @@ function showFloatingDamage(cardId, damage) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display floating heal number on a card
-function showFloatingHeal(cardId, amount) {
+// Display heal animation on a card with green cross and count-up
+function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
 
-    const floatingNum = document.createElement('div');
-    floatingNum.className = 'floating-heal';
-    floatingNum.textContent = `+${amount}`;
-    cardElement.appendChild(floatingNum);
+    // Green glow on card
+    cardElement.classList.add('healing');
+    setTimeout(() => cardElement.classList.remove('healing'), 2500);
 
-    // Remove after animation completes
-    setTimeout(() => floatingNum.remove(), 3500);
+    // Green cross overlay
+    const cross = document.createElement('div');
+    cross.className = 'heal-cross';
+    cross.textContent = '\u271A';
+    cardElement.appendChild(cross);
+    setTimeout(() => cross.remove(), 2000);
+
+    // Count-up number
+    const countup = document.createElement('div');
+    countup.className = 'heal-countup';
+    countup.textContent = fromHp;
+    cardElement.appendChild(countup);
+
+    let current = fromHp;
+    const interval = setInterval(() => {
+        current++;
+        countup.textContent = current;
+        if (current >= toHp) {
+            clearInterval(interval);
+        }
+    }, 80);
+
+    setTimeout(() => countup.remove(), 3500);
+}
+
+// Extract protection state from game status
+function extractProtectionState(status) {
+    const protMap = {};
+    if (status) {
+        (status.current_player_field || []).forEach(card => {
+            if (card.protected_by && card.protected_by.id) {
+                protMap[card.id] = card.protected_by.id;
+            }
+        });
+        (status.opponents || []).forEach(opp => {
+            (opp.field || []).forEach(card => {
+                if (card.protected_by && card.protected_by.id) {
+                    protMap[card.id] = card.protected_by.id;
+                }
+            });
+        });
+    }
+    return protMap;
+}
+
+// Detect warriors that just gained protection
+function detectNewProtections(previousState, newState) {
+    const prevProt = extractProtectionState(previousState);
+    const newProt = extractProtectionState(newState);
+    const newlyProtected = [];
+
+    for (const cardId in newProt) {
+        if (!prevProt[cardId]) {
+            newlyProtected.push(cardId);
+        }
+    }
+    return newlyProtected;
+}
+
+// Show shield activation animation on newly protected cards
+function showProtectionAnimations(cardIds) {
+    cardIds.forEach(cardId => {
+        const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+        if (!cardElement) return;
+
+        // Teal glow on card
+        cardElement.classList.add('shield-activating');
+        setTimeout(() => cardElement.classList.remove('shield-activating'), 2000);
+
+        // Expanding shield circle
+        const circle = document.createElement('div');
+        circle.className = 'shield-expand-overlay';
+        cardElement.appendChild(circle);
+        setTimeout(() => circle.remove(), 1600);
+    });
+}
+
+// Detect hand cards that will vanish on re-render (used/consumed cards)
+function prepareHandCardVanish(previousState, newState) {
+    if (!previousState || !previousState.current_player_hand) return [];
+
+    const prevHandIds = new Set(previousState.current_player_hand.map(c => c.id));
+    const newHandIds = new Set((newState.current_player_hand || []).map(c => c.id));
+    const newCardIds = new Set(newState.new_cards || []);
+    const vanished = [];
+
+    for (const cardId of prevHandIds) {
+        // Card was in hand before, not in hand now, and not a newly-received card
+        if (!newHandIds.has(cardId) && !newCardIds.has(cardId)) {
+            const cardElement = document.querySelector(`#player-hand .card[data-card-id="${cardId}"]`);
+            if (!cardElement) continue;
+
+            const rect = cardElement.getBoundingClientRect();
+            const clone = cardElement.cloneNode(true);
+            vanished.push({ clone, rect });
+        }
+    }
+
+    return vanished;
+}
+
+// Play vanish animations for consumed hand cards
+function playCardVanishAnimations(vanishedCards) {
+    vanishedCards.forEach(({ clone, rect }) => {
+        const ghost = document.createElement('div');
+        ghost.className = 'card-vanish-ghost';
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+        clone.style.margin = '0';
+        ghost.appendChild(clone);
+
+        document.body.appendChild(ghost);
+        setTimeout(() => ghost.remove(), 900);
+    });
+}
+
+// Detect castle construction and gold additions
+function detectCastleChanges(previousState, newState) {
+    const constructions = [];
+    const goldAdded = [];
+
+    // Player's own castle
+    const prevCastle = previousState.current_player_castle || {};
+    const newCastle = newState.current_player_castle || {};
+
+    if (!prevCastle.constructed && newCastle.constructed) {
+        constructions.push({ containerId: 'player-castle' });
+    } else if (newCastle.constructed && (newCastle.value || 0) > (prevCastle.value || 0)) {
+        goldAdded.push({ containerId: 'player-castle', amount: (newCastle.value || 0) - (prevCastle.value || 0) });
+    }
+
+    // Opponent castles
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    newOpponents.forEach((newOpp, idx) => {
+        const prevOpp = prevOpponents.find(p => p.player_name === newOpp.player_name);
+        if (!prevOpp) return;
+
+        const prevC = prevOpp.castle || {};
+        const newC = newOpp.castle || {};
+
+        // Find opponent castle container by player name
+        const oppArea = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+        if (!oppArea) return;
+        const castleContainer = oppArea.querySelector('.castle');
+        if (!castleContainer) return;
+
+        if (!prevC.constructed && newC.constructed) {
+            constructions.push({ container: castleContainer });
+        } else if (newC.constructed && (newC.value || 0) > (prevC.value || 0)) {
+            goldAdded.push({ container: castleContainer, amount: (newC.value || 0) - (prevC.value || 0) });
+        }
+    });
+
+    return { constructions, goldAdded };
+}
+
+// Castle construction celebration animation
+function showCastleConstructionAnimation(change) {
+    const container = change.container || document.getElementById(change.containerId);
+    if (!container) return;
+
+    container.style.position = 'relative';
+    container.classList.add('castle-just-constructed');
+
+    const text = document.createElement('div');
+    text.className = 'castle-construct-text';
+    text.textContent = 'Castle Built!';
+    container.appendChild(text);
+
+    setTimeout(() => {
+        container.classList.remove('castle-just-constructed');
+        text.remove();
+    }, 3000);
+}
+
+// Castle gold addition animation
+function showCastleGoldAnimation(change) {
+    const container = change.container || document.getElementById(change.containerId);
+    if (!container) return;
+
+    container.style.position = 'relative';
+    container.classList.add('castle-gold-added');
+
+    const floatingGold = document.createElement('div');
+    floatingGold.className = 'castle-gold-floating';
+    floatingGold.textContent = `+${change.amount}`;
+    container.appendChild(floatingGold);
+
+    setTimeout(() => {
+        container.classList.remove('castle-gold-added');
+        floatingGold.remove();
+    }, 2500);
 }
 
 function renderGameBoard(status) {

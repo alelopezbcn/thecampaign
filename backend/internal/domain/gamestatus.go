@@ -12,6 +12,7 @@ type GameStatus struct {
 	CurrentPlayer  string   `json:"current_player"`
 	TurnPlayer     string   `json:"turn_player"`
 	CurrentAction  string   `json:"current_action"`
+	LastAction     string   `json:"last_action,omitempty"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
@@ -67,6 +68,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		CurrentPlayer:       viewer.Name(),
 		TurnPlayer:          game.CurrentPlayer().Name(),
 		CurrentAction:       string(game.currentAction),
+		LastAction:          game.lastAction,
 		GameMode:            string(game.Mode),
 		NewCards:            []string{},
 		CurrentPlayerHand:   []gamestatus.HandCard{},
