@@ -107,6 +107,7 @@ type GameStatusDTO struct {
 	CurrentPlayer  string   `json:"current_player"`
 	TurnPlayer     string   `json:"turn_player"`
 	CurrentAction  string   `json:"current_action"`
+	LastAction     string   `json:"last_action,omitempty"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`

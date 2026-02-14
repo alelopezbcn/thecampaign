@@ -3,6 +3,7 @@ let ws = null;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
 let timerInterval = null;
+let pendingAnimationsCallback = null; // Deferred animations waiting for modal close
 const MAX_RECONNECT_ATTEMPTS = 20;
 let gameState = {
     playerName: '',
@@ -352,12 +353,44 @@ function handleGameState(payload) {
         checkForEliminations(previousState, payload.game_status);
     }
 
-    // Schedule damage feedback after render (needs DOM elements to exist)
+    // Detect killed warriors and clone their DOM elements before re-render
+    let killedWarriors = [];
     if (previousState) {
-        setTimeout(() => showDamageFeedback(previousState, payload.game_status), 50);
+        killedWarriors = prepareDeathAnimations(previousState, payload.game_status);
     }
+
+    // Detect hand cards that will vanish before re-render
+    let vanishedCards = [];
+    if (previousState) {
+        vanishedCards = prepareHandCardVanish(previousState, payload.game_status);
+    }
+
+    // Detect steal and clone opponent card-back before re-render
+    let stealData = null;
+    if (previousState) {
+        stealData = prepareStealAnimation(previousState, payload.game_status);
+    }
+
+    // Detect deck draw for animation
+    let deckDrawInfo = null;
+    if (previousState) {
+        deckDrawInfo = detectDeckDraw(previousState, payload.game_status);
+    }
+
+    // Determine if a result modal will be shown (check before resetActionState)
+    const _newCards = payload.game_status.new_cards || [];
+    const _modalCards = payload.game_status.modal_cards || [];
+    const willShowResultModal = (
+        (_newCards.length > 0 && payload.is_your_turn && gameState.pendingAction &&
+         ['buy', 'trade'].includes(gameState.pendingAction)) ||
+        (_modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction)
+    );
+
+    // Clear any stale deferred animations from a previous state update
+    pendingAnimationsCallback = null;
+
     // Use the first card from new_cards array for highlighting
-    gameState.newlyDrawnCards = payload.game_status.new_cards || [];
+    gameState.newlyDrawnCards = _newCards;
     console.log('gameState.newlyDrawnCards set to:', gameState.newlyDrawnCards);
 
     // Reset action state when game state updates
@@ -368,13 +401,59 @@ function handleGameState(payload) {
 
     showGameScreen(payload.game_status);
 
+    // Bundle all post-render animations
+    const playAllAnimations = () => {
+        if (previousState) {
+            setTimeout(() => showDamageFeedback(previousState, payload.game_status), 50);
+        }
+        if (killedWarriors.length > 0) {
+            playDeathAnimations(killedWarriors);
+        }
+        if (vanishedCards.length > 0) {
+            playCardVanishAnimations(vanishedCards);
+        }
+        if (previousState) {
+            const newlyProtected = detectNewProtections(previousState, payload.game_status);
+            if (newlyProtected.length > 0) {
+                setTimeout(() => showProtectionAnimations(newlyProtected), 50);
+            }
+        }
+        if (previousState) {
+            setTimeout(() => {
+                const changes = detectCastleChanges(previousState, payload.game_status);
+                changes.constructions.forEach(c => showCastleConstructionAnimation(c));
+                changes.goldAdded.forEach(c => showCastleGoldAnimation(c));
+            }, 50);
+        }
+        if (stealData) {
+            playStealAnimation(stealData);
+        }
+        if (deckDrawInfo) {
+            setTimeout(() => playDeckDrawAnimation(deckDrawInfo), 50);
+        }
+        if (previousState) {
+            setTimeout(() => {
+                const pileChanges = detectPileAndCemeteryChanges(previousState, payload.game_status);
+                if (pileChanges.pileAdded) showPileAnimation();
+                if (pileChanges.cemeteryAdded) showCemeteryAnimation();
+            }, 50);
+        }
+    };
+
+    // Defer animations until modal close, or play immediately
+    if (willShowResultModal) {
+        pendingAnimationsCallback = playAllAnimations;
+    } else {
+        playAllAnimations();
+    }
+
     updateTurnIndicator();
     updatePhaseIndicator();
     updatePlayerListPanel();
     startTimers(payload.game_status);
 
     // Check if we have new cards from a pending action (trade or buy)
-    const newCards = payload.game_status.new_cards || [];
+    const newCards = _newCards;
     if (newCards.length > 0 && payload.is_your_turn && gameState.pendingAction) {
         // Find the full card data for the new cards
         const acquiredCards = payload.game_status.current_player_hand.filter(
@@ -391,7 +470,7 @@ function handleGameState(payload) {
     }
 
     // Check if we have modal cards from spy/steal action
-    const modalCards = payload.game_status.modal_cards || [];
+    const modalCards = _modalCards;
     console.log('Modal cards check:', {
         modalCards: modalCards,
         modalCardsLength: modalCards.length,
@@ -1424,9 +1503,14 @@ function extractFieldHP(status) {
 }
 
 // Show floating damage numbers when warriors take damage
+let screenFlashShown = false;
+
 function showDamageFeedback(previousState, newState) {
     const previousHP = extractFieldHP(previousState);
     const newHP = extractFieldHP(newState);
+
+    // Reset screen flash flag so only one flash per damage batch
+    screenFlashShown = false;
 
     // Check for HP changes
     for (const cardId in previousHP) {
@@ -1439,16 +1523,164 @@ function showDamageFeedback(previousState, newState) {
     // Check for healed warriors (HP increased)
     for (const cardId in previousHP) {
         if (newHP[cardId] !== undefined && newHP[cardId] > previousHP[cardId]) {
-            const healed = newHP[cardId] - previousHP[cardId];
-            showFloatingHeal(cardId, healed);
+            showFloatingHeal(cardId, previousHP[cardId], newHP[cardId]);
         }
     }
+}
+
+// Display attack impact animation on a card
+function showAttackAnimation(cardElement) {
+    // Add shake + red glow
+    cardElement.classList.add('taking-damage');
+
+    // Create slash overlay
+    const slashContainer = document.createElement('div');
+    slashContainer.className = 'attack-slash-container';
+
+    const slash1 = document.createElement('div');
+    slash1.className = 'slash-line slash-line-1';
+
+    const slash2 = document.createElement('div');
+    slash2.className = 'slash-line slash-line-2';
+
+    slashContainer.appendChild(slash1);
+    slashContainer.appendChild(slash2);
+    cardElement.appendChild(slashContainer);
+
+    // Screen flash (once per damage batch)
+    if (!screenFlashShown) {
+        screenFlashShown = true;
+        showScreenFlash();
+    }
+
+    // Cleanup after animations complete
+    setTimeout(() => {
+        cardElement.classList.remove('taking-damage');
+        slashContainer.remove();
+    }, 2000);
+}
+
+// Brief flash across the screen (red for attacks, orange for fire kills)
+function showScreenFlash(isFire) {
+    const flash = document.createElement('div');
+    flash.className = 'screen-flash-overlay' + (isFire ? ' fire-flash' : '');
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 600);
+}
+
+// Detect killed warriors and clone their elements before DOM re-render
+function prepareDeathAnimations(previousState, newState) {
+    const previousHP = extractFieldHP(previousState);
+    const newHP = extractFieldHP(newState);
+    const isInstantKill = newState.last_action === 'special_power';
+    const killed = [];
+
+    for (const cardId in previousHP) {
+        // Card existed before but is gone now = killed
+        if (newHP[cardId] === undefined) {
+            const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+            if (!cardElement) continue;
+
+            const rect = cardElement.getBoundingClientRect();
+            const clone = cardElement.cloneNode(true);
+            const damage = previousHP[cardId]; // full HP was the lethal damage
+
+            killed.push({ clone, rect, cardId, damage, isInstantKill });
+        }
+    }
+
+    return killed;
+}
+
+// Play death animations for killed warriors using cloned elements
+function playDeathAnimations(killedWarriors) {
+    // Screen flash for the kills
+    const hasFireKill = killedWarriors.some(k => k.isInstantKill);
+    if (!screenFlashShown) {
+        screenFlashShown = true;
+        showScreenFlash(hasFireKill);
+    }
+
+    killedWarriors.forEach(({ clone, rect, damage, isInstantKill }) => {
+        // Create ghost container positioned where the card was
+        const ghost = document.createElement('div');
+        ghost.className = 'death-ghost' + (isInstantKill ? ' fire-kill' : '');
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+
+        // Style the clone to fill the ghost container
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+        clone.style.margin = '0';
+        clone.classList.add('death-slash-phase');
+        ghost.appendChild(clone);
+
+        // Add slash marks on the ghost
+        const slashContainer = document.createElement('div');
+        slashContainer.className = 'attack-slash-container';
+        const slash1 = document.createElement('div');
+        slash1.className = 'slash-line slash-line-1';
+        const slash2 = document.createElement('div');
+        slash2.className = 'slash-line slash-line-2';
+        slashContainer.appendChild(slash1);
+        slashContainer.appendChild(slash2);
+        ghost.appendChild(slashContainer);
+
+        // Add floating damage number
+        const floatingNum = document.createElement('div');
+        floatingNum.className = 'floating-damage';
+        floatingNum.textContent = `-${damage}`;
+        ghost.appendChild(floatingNum);
+
+        // Add fire particles for instant kill
+        if (isInstantKill) {
+            for (let i = 0; i < 10; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'fire-particle';
+                const xMid = (Math.random() - 0.5) * 40;
+                const xEnd = xMid + (Math.random() - 0.5) * 30;
+                const yMid = -20 - Math.random() * 40;
+                const yEnd = -50 - Math.random() * 60;
+                particle.style.setProperty('--particle-x', xMid + 'px');
+                particle.style.setProperty('--particle-x-end', xEnd + 'px');
+                particle.style.setProperty('--particle-y', yMid + 'px');
+                particle.style.setProperty('--particle-y-end', yEnd + 'px');
+                particle.style.setProperty('--particle-delay', (Math.random() * 0.5) + 's');
+                particle.style.setProperty('--particle-duration', (0.8 + Math.random() * 0.8) + 's');
+                particle.style.left = (20 + Math.random() * 60) + '%';
+                particle.style.top = (20 + Math.random() * 60) + '%';
+                ghost.appendChild(particle);
+            }
+        }
+
+        document.body.appendChild(ghost);
+
+        // After attack animation, start death animation
+        setTimeout(() => {
+            slashContainer.remove();
+            ghost.classList.add('dying');
+
+            // Add skull overlay
+            const skull = document.createElement('div');
+            skull.className = 'death-skull';
+            skull.textContent = isInstantKill ? '\u{1F525}' : '\u{1F480}';
+            ghost.appendChild(skull);
+        }, 1000);
+
+        // Cleanup everything (fire kills get extra time for particles)
+        setTimeout(() => ghost.remove(), isInstantKill ? 3500 : 2500);
+    });
 }
 
 // Display floating damage number on a card
 function showFloatingDamage(cardId, damage) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
+
+    // Play attack impact animation
+    showAttackAnimation(cardElement);
 
     const floatingNum = document.createElement('div');
     floatingNum.className = 'floating-damage';
@@ -1459,18 +1691,380 @@ function showFloatingDamage(cardId, damage) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display floating heal number on a card
-function showFloatingHeal(cardId, amount) {
+// Display heal animation on a card with green cross and count-up
+function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
 
-    const floatingNum = document.createElement('div');
-    floatingNum.className = 'floating-heal';
-    floatingNum.textContent = `+${amount}`;
-    cardElement.appendChild(floatingNum);
+    // Green glow on card
+    cardElement.classList.add('healing');
+    setTimeout(() => cardElement.classList.remove('healing'), 2500);
 
-    // Remove after animation completes
-    setTimeout(() => floatingNum.remove(), 3500);
+    // Green cross overlay
+    const cross = document.createElement('div');
+    cross.className = 'heal-cross';
+    cross.textContent = '\u271A';
+    cardElement.appendChild(cross);
+    setTimeout(() => cross.remove(), 2000);
+
+    // Count-up number
+    const countup = document.createElement('div');
+    countup.className = 'heal-countup';
+    countup.textContent = fromHp;
+    cardElement.appendChild(countup);
+
+    let current = fromHp;
+    const interval = setInterval(() => {
+        current++;
+        countup.textContent = current;
+        if (current >= toHp) {
+            clearInterval(interval);
+        }
+    }, 80);
+
+    setTimeout(() => countup.remove(), 3500);
+}
+
+// Extract protection state from game status
+function extractProtectionState(status) {
+    const protMap = {};
+    if (status) {
+        (status.current_player_field || []).forEach(card => {
+            if (card.protected_by && card.protected_by.id) {
+                protMap[card.id] = card.protected_by.id;
+            }
+        });
+        (status.opponents || []).forEach(opp => {
+            (opp.field || []).forEach(card => {
+                if (card.protected_by && card.protected_by.id) {
+                    protMap[card.id] = card.protected_by.id;
+                }
+            });
+        });
+    }
+    return protMap;
+}
+
+// Detect warriors that just gained protection
+function detectNewProtections(previousState, newState) {
+    const prevProt = extractProtectionState(previousState);
+    const newProt = extractProtectionState(newState);
+    const newlyProtected = [];
+
+    for (const cardId in newProt) {
+        if (!prevProt[cardId]) {
+            newlyProtected.push(cardId);
+        }
+    }
+    return newlyProtected;
+}
+
+// Show shield activation animation on newly protected cards
+function showProtectionAnimations(cardIds) {
+    cardIds.forEach(cardId => {
+        const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+        if (!cardElement) return;
+
+        // Teal glow on card
+        cardElement.classList.add('shield-activating');
+        setTimeout(() => cardElement.classList.remove('shield-activating'), 2000);
+
+        // Expanding shield circle
+        const circle = document.createElement('div');
+        circle.className = 'shield-expand-overlay';
+        cardElement.appendChild(circle);
+        setTimeout(() => circle.remove(), 1600);
+    });
+}
+
+// Detect hand cards that will vanish on re-render (used/consumed cards)
+function prepareHandCardVanish(previousState, newState) {
+    if (!previousState || !previousState.current_player_hand) return [];
+
+    const prevHandIds = new Set(previousState.current_player_hand.map(c => c.id));
+    const newHandIds = new Set((newState.current_player_hand || []).map(c => c.id));
+    const newCardIds = new Set(newState.new_cards || []);
+    const vanished = [];
+
+    for (const cardId of prevHandIds) {
+        // Card was in hand before, not in hand now, and not a newly-received card
+        if (!newHandIds.has(cardId) && !newCardIds.has(cardId)) {
+            const cardElement = document.querySelector(`#player-hand .card[data-card-id="${cardId}"]`);
+            if (!cardElement) continue;
+
+            const rect = cardElement.getBoundingClientRect();
+            const clone = cardElement.cloneNode(true);
+            vanished.push({ clone, rect });
+        }
+    }
+
+    return vanished;
+}
+
+// Play vanish animations for consumed hand cards
+function playCardVanishAnimations(vanishedCards) {
+    vanishedCards.forEach(({ clone, rect }) => {
+        const ghost = document.createElement('div');
+        ghost.className = 'card-vanish-ghost';
+        ghost.style.left = rect.left + 'px';
+        ghost.style.top = rect.top + 'px';
+        ghost.style.width = rect.width + 'px';
+        ghost.style.height = rect.height + 'px';
+
+        clone.style.width = '100%';
+        clone.style.height = '100%';
+        clone.style.margin = '0';
+        ghost.appendChild(clone);
+
+        document.body.appendChild(ghost);
+        setTimeout(() => ghost.remove(), 900);
+    });
+}
+
+// Detect castle construction and gold additions
+function detectCastleChanges(previousState, newState) {
+    const constructions = [];
+    const goldAdded = [];
+
+    // Player's own castle
+    const prevCastle = previousState.current_player_castle || {};
+    const newCastle = newState.current_player_castle || {};
+
+    if (!prevCastle.constructed && newCastle.constructed) {
+        constructions.push({ containerId: 'player-castle' });
+    } else if (newCastle.constructed && (newCastle.value || 0) > (prevCastle.value || 0)) {
+        goldAdded.push({ containerId: 'player-castle', amount: (newCastle.value || 0) - (prevCastle.value || 0) });
+    }
+
+    // Opponent castles
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    newOpponents.forEach((newOpp, idx) => {
+        const prevOpp = prevOpponents.find(p => p.player_name === newOpp.player_name);
+        if (!prevOpp) return;
+
+        const prevC = prevOpp.castle || {};
+        const newC = newOpp.castle || {};
+
+        // Find opponent castle container by player name
+        const oppArea = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+        if (!oppArea) return;
+        const castleContainer = oppArea.querySelector('.castle');
+        if (!castleContainer) return;
+
+        if (!prevC.constructed && newC.constructed) {
+            constructions.push({ container: castleContainer });
+        } else if (newC.constructed && (newC.value || 0) > (prevC.value || 0)) {
+            goldAdded.push({ container: castleContainer, amount: (newC.value || 0) - (prevC.value || 0) });
+        }
+    });
+
+    return { constructions, goldAdded };
+}
+
+// Castle construction celebration animation
+function showCastleConstructionAnimation(change) {
+    const container = change.container || document.getElementById(change.containerId);
+    if (!container) return;
+
+    container.style.position = 'relative';
+    container.classList.add('castle-just-constructed');
+
+    const text = document.createElement('div');
+    text.className = 'castle-construct-text';
+    text.textContent = 'Castle Built!';
+    container.appendChild(text);
+
+    setTimeout(() => {
+        container.classList.remove('castle-just-constructed');
+        text.remove();
+    }, 3000);
+}
+
+// Castle gold addition animation
+function showCastleGoldAnimation(change) {
+    const container = change.container || document.getElementById(change.containerId);
+    if (!container) return;
+
+    container.style.position = 'relative';
+    container.classList.add('castle-gold-added');
+
+    const floatingGold = document.createElement('div');
+    floatingGold.className = 'castle-gold-floating';
+    floatingGold.textContent = `+${change.amount}`;
+    container.appendChild(floatingGold);
+
+    setTimeout(() => {
+        container.classList.remove('castle-gold-added');
+        floatingGold.remove();
+    }, 2500);
+}
+
+// Detect steal action and clone a card-back from the victim's hand before re-render
+function prepareStealAnimation(previousState, newState) {
+    if (newState.last_action !== 'steal') return null;
+    // Only animate for the thief (the player whose turn it is)
+    if (newState.turn_player !== newState.current_player) return null;
+
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    for (const newOpp of newOpponents) {
+        const prevOpp = prevOpponents.find(o => o.player_name === newOpp.player_name);
+        if (!prevOpp) continue;
+        if ((prevOpp.cards_in_hand || 0) > (newOpp.cards_in_hand || 0)) {
+            const oppBoard = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+            if (!oppBoard) continue;
+            const cardBacks = oppBoard.querySelectorAll('.opponent-hand-card');
+            if (cardBacks.length === 0) continue;
+
+            const lastCard = cardBacks[cardBacks.length - 1];
+            const rect = lastCard.getBoundingClientRect();
+            const clone = lastCard.cloneNode(true);
+
+            return { clone, rect };
+        }
+    }
+    return null;
+}
+
+// Play steal animation: card-back flies from victim's hand to player's hand
+function playStealAnimation(stealData) {
+    if (!stealData) return;
+
+    const { clone, rect } = stealData;
+    const playerHand = document.getElementById('player-hand');
+    if (!playerHand) return;
+    const targetRect = playerHand.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (rect.left + rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (rect.top + rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'steal-card-ghost';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    clone.style.width = '100%';
+    clone.style.height = '100%';
+    clone.style.margin = '0';
+    ghost.appendChild(clone);
+
+    document.body.appendChild(ghost);
+    setTimeout(() => ghost.remove(), 1300);
+}
+
+// Detect deck count decrease for draw animation
+function detectDeckDraw(previousState, newState) {
+    if (!previousState) return null;
+    const prevDeckCount = previousState.cards_in_deck || 0;
+    const newDeckCount = newState.cards_in_deck || 0;
+    const newCards = newState.new_cards || [];
+
+    // Deck decreased and we received new cards (we're the one who drew/bought/traded)
+    if (prevDeckCount > newDeckCount && newCards.length > 0) {
+        return { count: Math.min(prevDeckCount - newDeckCount, 3) };
+    }
+    return null;
+}
+
+// Play deck draw animation: card-backs fly from deck to player's hand
+function playDeckDrawAnimation(drawInfo) {
+    if (!drawInfo) return;
+
+    const deckElement = document.getElementById('deck');
+    if (!deckElement) return;
+    const deckRect = deckElement.getBoundingClientRect();
+
+    const playerHand = document.getElementById('player-hand');
+    if (!playerHand) return;
+    const handRect = playerHand.getBoundingClientRect();
+
+    const dx = (handRect.left + handRect.width / 2) - (deckRect.left + deckRect.width / 2);
+    const dy = (handRect.top + handRect.height / 2) - (deckRect.top + deckRect.height / 2);
+
+    for (let i = 0; i < drawInfo.count; i++) {
+        setTimeout(() => {
+            const ghost = document.createElement('div');
+            ghost.className = 'deck-draw-ghost';
+            ghost.style.left = deckRect.left + 'px';
+            ghost.style.top = deckRect.top + 'px';
+            ghost.style.width = (deckRect.width * 0.6) + 'px';
+            ghost.style.height = (deckRect.height * 0.6) + 'px';
+            ghost.style.setProperty('--dx', dx + 'px');
+            ghost.style.setProperty('--dy', dy + 'px');
+
+            ghost.innerHTML = `
+                <div class="card-back" style="width:100%;height:100%;">
+                    <div class="card-back-design">
+                        <div class="card-back-border">
+                            <div class="card-back-inner">
+                                <div class="card-back-pattern"></div>
+                                <div class="card-back-emblem">\u2694</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(ghost);
+            setTimeout(() => ghost.remove(), 900);
+        }, i * 150);
+    }
+}
+
+// Detect discard pile and cemetery count changes
+function detectPileAndCemeteryChanges(previousState, newState) {
+    const changes = { pileAdded: false, cemeteryAdded: false };
+
+    const prevPile = previousState.discard_pile || {};
+    const newPile = newState.discard_pile || {};
+    if ((newPile.cards || 0) > (prevPile.cards || 0)) {
+        changes.pileAdded = true;
+    }
+
+    const prevCem = previousState.cemetery || {};
+    const newCem = newState.cemetery || {};
+    if ((newCem.corps || 0) > (prevCem.corps || 0)) {
+        changes.cemeteryAdded = true;
+    }
+
+    return changes;
+}
+
+// Show discard pile flash and card appear animation
+function showPileAnimation() {
+    const pileElement = document.getElementById('discard-pile');
+    if (!pileElement) return;
+
+    pileElement.classList.add('pile-flash');
+    setTimeout(() => pileElement.classList.remove('pile-flash'), 1500);
+
+    const lastCard = document.querySelector('#discard-pile-last-card .card');
+    if (lastCard) {
+        lastCard.classList.add('pile-new-card');
+        setTimeout(() => lastCard.classList.remove('pile-new-card'), 1000);
+    }
+}
+
+// Show cemetery flash and corpse appear animation
+function showCemeteryAnimation() {
+    const cemElement = document.getElementById('cemetery');
+    if (!cemElement) return;
+
+    cemElement.classList.add('cemetery-flash');
+    setTimeout(() => cemElement.classList.remove('cemetery-flash'), 1500);
+
+    const lastCorp = document.querySelector('#cemetery-last-corp .card');
+    if (lastCorp) {
+        lastCorp.classList.add('cemetery-new-corp');
+        setTimeout(() => lastCorp.classList.remove('cemetery-new-corp'), 1200);
+    }
 }
 
 function renderGameBoard(status) {
@@ -2370,6 +2964,13 @@ function hideGameModal() {
     modal.classList.add('hidden');
     resetActionState();
     updateActionPrompt('');
+
+    // Play deferred animations that were waiting for modal close
+    if (pendingAnimationsCallback) {
+        const callback = pendingAnimationsCallback;
+        pendingAnimationsCallback = null;
+        callback();
+    }
 }
 
 // Action Confirm Modal Functions

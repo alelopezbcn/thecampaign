@@ -68,6 +68,7 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string, targetPlayerName
 	}
 
 	g.hasMovedWarrior = true
+	g.lastAction = "move_warrior"
 	status = g.GameStatusProvider.Get(p, g)
 
 	return status, nil
@@ -107,6 +108,7 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 
 	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()), types.CategoryAction)
 
+	g.lastAction = "trade"
 	g.hasTraded = true
 	g.CanTrade = false
 	status = g.GameStatusProvider.Get(p, g, cards...)
@@ -144,6 +146,7 @@ func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
 
 	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
 
+	g.lastAction = "draw"
 	status = g.nextAction(types.ActionTypeAttack,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g, cards...)
@@ -198,6 +201,7 @@ func (g *Game) Attack(playerName, targetPlayerName, targetID, weaponID string) (
 		playerName, t.String(), w.String()),
 		types.CategoryAction)
 
+	g.lastAction = "attack"
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -292,6 +296,7 @@ func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 	g.addToHistory(fmt.Sprintf("%s used special power on %s",
 		playerName, t.String()), types.CategoryAction)
 
+	g.lastAction = "special_power"
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -338,6 +343,7 @@ func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 		p.Name(), stolenGold.Value(), targetPlayer.Name()),
 		types.CategoryAction)
 
+	g.lastAction = "catapult"
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -394,6 +400,7 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 
 	g.OnCardMovedToPile(s)
 
+	g.lastAction = "spy"
 	status = g.nextAction(types.ActionTypeBuy,
 		func() GameStatus {
 			return g.GameStatusProvider.GetWithModal(p, g, spiedCards)
@@ -440,6 +447,7 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), targetPlayer.Name()), types.CategoryAction)
 
+	g.lastAction = "steal"
 	status = g.nextAction(types.ActionTypeBuy,
 		func() GameStatus {
 			return g.GameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
@@ -492,6 +500,7 @@ func (g *Game) Buy(playerName, cardID string) (
 	g.addToHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy),
 		types.CategoryAction)
 
+	g.lastAction = "buy"
 	status = g.nextAction(types.ActionTypeConstruct,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g, cards...)
@@ -552,6 +561,7 @@ func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) 
 		g.addToHistory(fmt.Sprintf("%s constructed", p.Name()), types.CategoryAction)
 	}
 
+	g.lastAction = "construct"
 	status = g.nextAction(types.ActionTypeEndTurn,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -586,6 +596,7 @@ func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
 	g.addToHistory(fmt.Sprintf("%s skipped phase %s", p.Name(), skippedPhase),
 		types.CategorySkip)
 
+	g.lastAction = "skip"
 	status = g.nextAction(nextAction,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
@@ -608,6 +619,7 @@ func (g *Game) EndTurn(player string, expired bool) (status GameStatus, err erro
 			types.CategoryEndTurn)
 	}
 
+	g.lastAction = "end_turn"
 	g.switchTurn()
 	status = g.nextAction(types.ActionTypeDrawCard,
 		func() GameStatus {
