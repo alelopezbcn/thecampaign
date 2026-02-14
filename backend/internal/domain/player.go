@@ -365,7 +365,7 @@ func (p *player) OnCardMovedToPile(card ports.Card) {
 
 func (p *player) OnWarriorDead(warrior ports.Warrior) {
 	if !p.field.RemoveWarrior(warrior) {
-		panic("warrior not found in player field")
+		fmt.Println("warrior not found in player field")
 	}
 	p.warriorMovedToCemeteryObserver.OnWarriorMovedToCemetery(warrior)
 }

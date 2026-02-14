@@ -12,7 +12,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-const turnTimeLimit = 60 * time.Second
+const turnTimeLimit = 120 * time.Second
 
 // ClientMessage represents a message from a client
 type ClientMessage struct {
