@@ -2,7 +2,6 @@ package domain
 
 import (
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
@@ -339,8 +338,6 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 
 		expectedAction = types.ActionTypeSpySteal
-		g.addToHistory(fmt.Sprintf("%s has no cards to attack.", p.Name()),
-			types.CategorySkip)
 	}
 
 	if expectedAction == types.ActionTypeSpySteal {
@@ -351,8 +348,6 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 
 		expectedAction = types.ActionTypeBuy
-		g.addToHistory(fmt.Sprintf("%s has no Spy or Thief to steal.", p.Name()),
-			types.CategorySkip)
 	}
 
 	if expectedAction == types.ActionTypeBuy {
@@ -363,8 +358,6 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 
 		expectedAction = types.ActionTypeConstruct
-		g.addToHistory(fmt.Sprintf("%s has no cards to buy (without exceeding hand limit).", p.Name()),
-			types.CategorySkip)
 	}
 
 	if expectedAction == types.ActionTypeConstruct {
@@ -390,8 +383,6 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 
 		expectedAction = types.ActionTypeEndTurn
-		g.addToHistory(fmt.Sprintf("%s has no cards to construct.", p.Name()),
-			types.CategorySkip)
 	}
 
 	if expectedAction == types.ActionTypeEndTurn {

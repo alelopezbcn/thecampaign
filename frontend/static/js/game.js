@@ -3,6 +3,7 @@ let ws = null;
 let reconnectAttempts = 0;
 let reconnectTimer = null;
 let timerInterval = null;
+let pendingAnimationsCallback = null; // Deferred animations waiting for modal close
 const MAX_RECONNECT_ATTEMPTS = 20;
 let gameState = {
     playerName: '',
@@ -364,12 +365,32 @@ function handleGameState(payload) {
         vanishedCards = prepareHandCardVanish(previousState, payload.game_status);
     }
 
-    // Schedule damage feedback after render (needs DOM elements to exist)
+    // Detect steal and clone opponent card-back before re-render
+    let stealData = null;
     if (previousState) {
-        setTimeout(() => showDamageFeedback(previousState, payload.game_status), 50);
+        stealData = prepareStealAnimation(previousState, payload.game_status);
     }
+
+    // Detect deck draw for animation
+    let deckDrawInfo = null;
+    if (previousState) {
+        deckDrawInfo = detectDeckDraw(previousState, payload.game_status);
+    }
+
+    // Determine if a result modal will be shown (check before resetActionState)
+    const _newCards = payload.game_status.new_cards || [];
+    const _modalCards = payload.game_status.modal_cards || [];
+    const willShowResultModal = (
+        (_newCards.length > 0 && payload.is_your_turn && gameState.pendingAction &&
+         ['buy', 'trade'].includes(gameState.pendingAction)) ||
+        (_modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction)
+    );
+
+    // Clear any stale deferred animations from a previous state update
+    pendingAnimationsCallback = null;
+
     // Use the first card from new_cards array for highlighting
-    gameState.newlyDrawnCards = payload.game_status.new_cards || [];
+    gameState.newlyDrawnCards = _newCards;
     console.log('gameState.newlyDrawnCards set to:', gameState.newlyDrawnCards);
 
     // Reset action state when game state updates
@@ -380,31 +401,50 @@ function handleGameState(payload) {
 
     showGameScreen(payload.game_status);
 
-    // Play death animations for killed warriors after re-render
-    if (killedWarriors.length > 0) {
-        playDeathAnimations(killedWarriors);
-    }
-
-    // Play vanish animations for consumed hand cards
-    if (vanishedCards.length > 0) {
-        playCardVanishAnimations(vanishedCards);
-    }
-
-    // Show protection animations for newly shielded warriors
-    if (previousState) {
-        const newlyProtected = detectNewProtections(previousState, payload.game_status);
-        if (newlyProtected.length > 0) {
-            setTimeout(() => showProtectionAnimations(newlyProtected), 50);
+    // Bundle all post-render animations
+    const playAllAnimations = () => {
+        if (previousState) {
+            setTimeout(() => showDamageFeedback(previousState, payload.game_status), 50);
         }
-    }
+        if (killedWarriors.length > 0) {
+            playDeathAnimations(killedWarriors);
+        }
+        if (vanishedCards.length > 0) {
+            playCardVanishAnimations(vanishedCards);
+        }
+        if (previousState) {
+            const newlyProtected = detectNewProtections(previousState, payload.game_status);
+            if (newlyProtected.length > 0) {
+                setTimeout(() => showProtectionAnimations(newlyProtected), 50);
+            }
+        }
+        if (previousState) {
+            setTimeout(() => {
+                const changes = detectCastleChanges(previousState, payload.game_status);
+                changes.constructions.forEach(c => showCastleConstructionAnimation(c));
+                changes.goldAdded.forEach(c => showCastleGoldAnimation(c));
+            }, 50);
+        }
+        if (stealData) {
+            playStealAnimation(stealData);
+        }
+        if (deckDrawInfo) {
+            setTimeout(() => playDeckDrawAnimation(deckDrawInfo), 50);
+        }
+        if (previousState) {
+            setTimeout(() => {
+                const pileChanges = detectPileAndCemeteryChanges(previousState, payload.game_status);
+                if (pileChanges.pileAdded) showPileAnimation();
+                if (pileChanges.cemeteryAdded) showCemeteryAnimation();
+            }, 50);
+        }
+    };
 
-    // Show castle construction and gold addition animations
-    if (previousState) {
-        setTimeout(() => {
-            const changes = detectCastleChanges(previousState, payload.game_status);
-            changes.constructions.forEach(c => showCastleConstructionAnimation(c));
-            changes.goldAdded.forEach(c => showCastleGoldAnimation(c));
-        }, 50);
+    // Defer animations until modal close, or play immediately
+    if (willShowResultModal) {
+        pendingAnimationsCallback = playAllAnimations;
+    } else {
+        playAllAnimations();
     }
 
     updateTurnIndicator();
@@ -413,7 +453,7 @@ function handleGameState(payload) {
     startTimers(payload.game_status);
 
     // Check if we have new cards from a pending action (trade or buy)
-    const newCards = payload.game_status.new_cards || [];
+    const newCards = _newCards;
     if (newCards.length > 0 && payload.is_your_turn && gameState.pendingAction) {
         // Find the full card data for the new cards
         const acquiredCards = payload.game_status.current_player_hand.filter(
@@ -430,7 +470,7 @@ function handleGameState(payload) {
     }
 
     // Check if we have modal cards from spy/steal action
-    const modalCards = payload.game_status.modal_cards || [];
+    const modalCards = _modalCards;
     console.log('Modal cards check:', {
         modalCards: modalCards,
         modalCardsLength: modalCards.length,
@@ -1861,6 +1901,172 @@ function showCastleGoldAnimation(change) {
     }, 2500);
 }
 
+// Detect steal action and clone a card-back from the victim's hand before re-render
+function prepareStealAnimation(previousState, newState) {
+    if (newState.last_action !== 'steal') return null;
+    // Only animate for the thief (the player whose turn it is)
+    if (newState.turn_player !== newState.current_player) return null;
+
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    for (const newOpp of newOpponents) {
+        const prevOpp = prevOpponents.find(o => o.player_name === newOpp.player_name);
+        if (!prevOpp) continue;
+        if ((prevOpp.cards_in_hand || 0) > (newOpp.cards_in_hand || 0)) {
+            const oppBoard = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+            if (!oppBoard) continue;
+            const cardBacks = oppBoard.querySelectorAll('.opponent-hand-card');
+            if (cardBacks.length === 0) continue;
+
+            const lastCard = cardBacks[cardBacks.length - 1];
+            const rect = lastCard.getBoundingClientRect();
+            const clone = lastCard.cloneNode(true);
+
+            return { clone, rect };
+        }
+    }
+    return null;
+}
+
+// Play steal animation: card-back flies from victim's hand to player's hand
+function playStealAnimation(stealData) {
+    if (!stealData) return;
+
+    const { clone, rect } = stealData;
+    const playerHand = document.getElementById('player-hand');
+    if (!playerHand) return;
+    const targetRect = playerHand.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (rect.left + rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (rect.top + rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'steal-card-ghost';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    clone.style.width = '100%';
+    clone.style.height = '100%';
+    clone.style.margin = '0';
+    ghost.appendChild(clone);
+
+    document.body.appendChild(ghost);
+    setTimeout(() => ghost.remove(), 1300);
+}
+
+// Detect deck count decrease for draw animation
+function detectDeckDraw(previousState, newState) {
+    if (!previousState) return null;
+    const prevDeckCount = previousState.cards_in_deck || 0;
+    const newDeckCount = newState.cards_in_deck || 0;
+    const newCards = newState.new_cards || [];
+
+    // Deck decreased and we received new cards (we're the one who drew/bought/traded)
+    if (prevDeckCount > newDeckCount && newCards.length > 0) {
+        return { count: Math.min(prevDeckCount - newDeckCount, 3) };
+    }
+    return null;
+}
+
+// Play deck draw animation: card-backs fly from deck to player's hand
+function playDeckDrawAnimation(drawInfo) {
+    if (!drawInfo) return;
+
+    const deckElement = document.getElementById('deck');
+    if (!deckElement) return;
+    const deckRect = deckElement.getBoundingClientRect();
+
+    const playerHand = document.getElementById('player-hand');
+    if (!playerHand) return;
+    const handRect = playerHand.getBoundingClientRect();
+
+    const dx = (handRect.left + handRect.width / 2) - (deckRect.left + deckRect.width / 2);
+    const dy = (handRect.top + handRect.height / 2) - (deckRect.top + deckRect.height / 2);
+
+    for (let i = 0; i < drawInfo.count; i++) {
+        setTimeout(() => {
+            const ghost = document.createElement('div');
+            ghost.className = 'deck-draw-ghost';
+            ghost.style.left = deckRect.left + 'px';
+            ghost.style.top = deckRect.top + 'px';
+            ghost.style.width = (deckRect.width * 0.6) + 'px';
+            ghost.style.height = (deckRect.height * 0.6) + 'px';
+            ghost.style.setProperty('--dx', dx + 'px');
+            ghost.style.setProperty('--dy', dy + 'px');
+
+            ghost.innerHTML = `
+                <div class="card-back" style="width:100%;height:100%;">
+                    <div class="card-back-design">
+                        <div class="card-back-border">
+                            <div class="card-back-inner">
+                                <div class="card-back-pattern"></div>
+                                <div class="card-back-emblem">\u2694</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(ghost);
+            setTimeout(() => ghost.remove(), 900);
+        }, i * 150);
+    }
+}
+
+// Detect discard pile and cemetery count changes
+function detectPileAndCemeteryChanges(previousState, newState) {
+    const changes = { pileAdded: false, cemeteryAdded: false };
+
+    const prevPile = previousState.discard_pile || {};
+    const newPile = newState.discard_pile || {};
+    if ((newPile.cards || 0) > (prevPile.cards || 0)) {
+        changes.pileAdded = true;
+    }
+
+    const prevCem = previousState.cemetery || {};
+    const newCem = newState.cemetery || {};
+    if ((newCem.corps || 0) > (prevCem.corps || 0)) {
+        changes.cemeteryAdded = true;
+    }
+
+    return changes;
+}
+
+// Show discard pile flash and card appear animation
+function showPileAnimation() {
+    const pileElement = document.getElementById('discard-pile');
+    if (!pileElement) return;
+
+    pileElement.classList.add('pile-flash');
+    setTimeout(() => pileElement.classList.remove('pile-flash'), 1500);
+
+    const lastCard = document.querySelector('#discard-pile-last-card .card');
+    if (lastCard) {
+        lastCard.classList.add('pile-new-card');
+        setTimeout(() => lastCard.classList.remove('pile-new-card'), 1000);
+    }
+}
+
+// Show cemetery flash and corpse appear animation
+function showCemeteryAnimation() {
+    const cemElement = document.getElementById('cemetery');
+    if (!cemElement) return;
+
+    cemElement.classList.add('cemetery-flash');
+    setTimeout(() => cemElement.classList.remove('cemetery-flash'), 1500);
+
+    const lastCorp = document.querySelector('#cemetery-last-corp .card');
+    if (lastCorp) {
+        lastCorp.classList.add('cemetery-new-corp');
+        setTimeout(() => lastCorp.classList.remove('cemetery-new-corp'), 1200);
+    }
+}
+
 function renderGameBoard(status) {
     // Render all opponent boards
     renderOpponents(status.opponents || []);
@@ -2758,6 +2964,13 @@ function hideGameModal() {
     modal.classList.add('hidden');
     resetActionState();
     updateActionPrompt('');
+
+    // Play deferred animations that were waiting for modal close
+    if (pendingAnimationsCallback) {
+        const callback = pendingAnimationsCallback;
+        pendingAnimationsCallback = null;
+        callback();
+    }
 }
 
 // Action Confirm Modal Functions
