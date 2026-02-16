@@ -21,6 +21,7 @@ let gameState = {
     waitingPlayers: [], // Track players who have joined the waiting room
     maxPlayers: 2, // Max players for current game mode
     teamAssignments: {}, // playerName -> teamNumber (1 or 2), 2v2 only
+    isCreator: false, // Whether this player created the room
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -125,6 +126,22 @@ function setupEventListeners() {
     document.getElementById('action-confirm-yes').addEventListener('click', onActionConfirmYes);
     document.getElementById('action-confirm-no').addEventListener('click', onActionConfirmNo);
 
+    // Start game button
+    document.getElementById('start-game-btn').addEventListener('click', () => {
+        sendAction('start_game');
+        document.getElementById('start-game-btn').disabled = true;
+        document.getElementById('start-game-btn').textContent = 'Starting...';
+    });
+
+    // Turn transition modal close
+    document.getElementById('turn-transition-close').addEventListener('click', hideTurnTransitionModal);
+
+    // Stolen card modal close
+    document.getElementById('stolen-card-close').addEventListener('click', hideStolenCardModal);
+
+    // Spy notification modal close
+    document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
+
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
 
@@ -133,6 +150,21 @@ function setupEventListeners() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
+
+    // Close modals when clicking outside content
+    const modalOverlays = [
+        { id: 'game-modal', hide: hideGameModal },
+        { id: 'action-confirm-modal', hide: onActionConfirmNo },
+        { id: 'turn-transition-modal', hide: hideTurnTransitionModal },
+        { id: 'stolen-card-modal', hide: hideStolenCardModal },
+        { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
+        { id: 'gameover-modal', hide: () => location.reload() },
+    ];
+    modalOverlays.forEach(({ id, hide }) => {
+        document.getElementById(id).addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) hide();
+        });
+    });
 }
 
 function handleGlobalKeyboard(e) {
@@ -149,8 +181,21 @@ function handleGlobalKeyboard(e) {
     const isEndturnPopupOpen = endturnPopup && !endturnPopup.classList.contains('hidden');
     const isActionPromptOpen = actionPrompt && !actionPrompt.classList.contains('hidden');
 
+    const turnTransitionModal = document.getElementById('turn-transition-modal');
+    const stolenCardModal = document.getElementById('stolen-card-modal');
+    const spyNotificationModal = document.getElementById('spy-notification-modal');
+    const isTurnTransitionOpen = turnTransitionModal && !turnTransitionModal.classList.contains('hidden');
+    const isStolenCardOpen = stolenCardModal && !stolenCardModal.classList.contains('hidden');
+    const isSpyNotificationOpen = spyNotificationModal && !spyNotificationModal.classList.contains('hidden');
+
     if (e.key === 'Escape') {
-        if (isActionConfirmOpen) {
+        if (isTurnTransitionOpen) {
+            hideTurnTransitionModal();
+        } else if (isStolenCardOpen) {
+            hideStolenCardModal();
+        } else if (isSpyNotificationOpen) {
+            hideSpyNotificationModal();
+        } else if (isActionConfirmOpen) {
             onActionConfirmNo();
         } else if (isGameModalOpen) {
             hideGameModal();
@@ -322,7 +367,6 @@ function handleGameStarted(payload) {
     gameState.gameID = payload.game_id;
 
     document.getElementById('current-game-id').textContent = payload.game_id;
-    document.getElementById('player-name-display').textContent = payload.your_name;
 }
 
 function handleGameState(payload) {
@@ -371,6 +415,18 @@ function handleGameState(payload) {
         stealData = prepareStealAnimation(previousState, payload.game_status);
     }
 
+    // Detect warrior move for animation (before re-render)
+    let warriorMoveData = null;
+    if (previousState) {
+        warriorMoveData = prepareWarriorMoveAnimation(previousState, payload.game_status);
+    }
+
+    // Detect weapon attack for animation (before re-render)
+    let attackAnimData = null;
+    if (previousState) {
+        attackAnimData = prepareAttackAnimation(previousState, payload.game_status);
+    }
+
     // Detect deck draw for animation
     let deckDrawInfo = null;
     if (previousState) {
@@ -380,10 +436,12 @@ function handleGameState(payload) {
     // Determine if a result modal will be shown (check before resetActionState)
     const _newCards = payload.game_status.new_cards || [];
     const _modalCards = payload.game_status.modal_cards || [];
-    const willShowResultModal = (
-        (_newCards.length > 0 && payload.is_your_turn && gameState.pendingAction &&
-         ['buy', 'trade'].includes(gameState.pendingAction)) ||
-        (_modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction)
+    const willShowBuyTradeModal = (
+        _newCards.length > 0 && payload.is_your_turn && gameState.pendingAction &&
+        ['buy', 'trade'].includes(gameState.pendingAction)
+    );
+    const willShowSpyStealModal = (
+        _modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction
     );
 
     // Clear any stale deferred animations from a previous state update
@@ -417,13 +475,24 @@ function handleGameState(payload) {
             if (newlyProtected.length > 0) {
                 setTimeout(() => showProtectionAnimations(newlyProtected), 50);
             }
+            const brokenShields = detectBrokenShields(previousState, payload.game_status);
+            if (brokenShields.length > 0) {
+                setTimeout(() => showShieldBreakAnimations(brokenShields), 50);
+            }
         }
         if (previousState) {
             setTimeout(() => {
                 const changes = detectCastleChanges(previousState, payload.game_status);
                 changes.constructions.forEach(c => showCastleConstructionAnimation(c));
                 changes.goldAdded.forEach(c => showCastleGoldAnimation(c));
+                changes.goldRemoved.forEach(c => showCastleAttackAnimation(c));
             }, 50);
+        }
+        if (warriorMoveData) {
+            playWarriorMoveAnimation(warriorMoveData, payload.game_status);
+        }
+        if (attackAnimData) {
+            playAttackAnimation(attackAnimData, payload.game_status);
         }
         if (stealData) {
             playStealAnimation(stealData);
@@ -440,8 +509,9 @@ function handleGameState(payload) {
         }
     };
 
-    // Defer animations until modal close, or play immediately
-    if (willShowResultModal) {
+    // For buy/trade: defer animations until modal close (show modal first)
+    // For spy/steal: play animations first, then show result modal after animations finish
+    if (willShowBuyTradeModal) {
         pendingAnimationsCallback = playAllAnimations;
     } else {
         playAllAnimations();
@@ -451,6 +521,23 @@ function handleGameState(payload) {
     updatePhaseIndicator();
     updatePlayerListPanel();
     startTimers(payload.game_status);
+
+    // Detect turn change and show transition modal
+    if (previousState && previousState.turn_player !== payload.game_status.turn_player) {
+        showTurnTransitionModal(payload.game_status.turn_player);
+    }
+
+    // Detect if a card was stolen from us
+    const stolenCards = payload.game_status.stolen_from_you_card;
+    if (stolenCards && stolenCards.length > 0) {
+        showStolenCardModal(stolenCards[0]);
+    }
+
+    // Detect spy notification
+    const spyNotification = payload.game_status.spy_notification;
+    if (spyNotification) {
+        showSpyNotificationModal(spyNotification);
+    }
 
     // Check if we have new cards from a pending action (trade or buy)
     const newCards = _newCards;
@@ -470,22 +557,21 @@ function handleGameState(payload) {
     }
 
     // Check if we have modal cards from spy/steal action
+    // Show after animations finish so player sees the steal/spy animation first
     const modalCards = _modalCards;
-    console.log('Modal cards check:', {
-        modalCards: modalCards,
-        modalCardsLength: modalCards.length,
-        isYourTurn: payload.is_your_turn,
-        pendingModalAction: gameState.pendingModalAction
-    });
     if (modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction) {
-        if (gameState.pendingModalAction === 'spy_deck') {
-            showCardsModal(modalCards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
-        } else if (gameState.pendingModalAction === 'spy_hand') {
-            showCardsModal(modalCards, 'Enemy Hand', "These are the cards in your opponent's hand");
-        } else if (gameState.pendingModalAction === 'steal') {
-            showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
-        }
-        gameState.pendingModalAction = null; // Clear after handling
+        const action = gameState.pendingModalAction;
+        gameState.pendingModalAction = null;
+        const animDelay = 1400; // Wait for animations to finish
+        setTimeout(() => {
+            if (action === 'spy_deck') {
+                showCardsModal(modalCards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
+            } else if (action === 'spy_hand') {
+                showCardsModal(modalCards, 'Enemy Hand', "These are the cards in your opponent's hand");
+            } else if (action === 'steal') {
+                showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
+            }
+        }, animDelay);
     }
 
     // Check for game over message
@@ -507,12 +593,9 @@ function checkIsWinner(gameOverMsg, status) {
 }
 
 function handleGameEnded() {
-    showScreen('gameover');
-    const gameOverMsg = gameState.currentState?.game_over_msg || '';
+    const gameOverMsg = gameState.currentState?.game_over_msg || 'Game Over!';
     const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
-    document.getElementById('gameover-title').textContent =
-        isWinner ? 'Victory!' : 'Defeat';
-    document.getElementById('gameover-message').textContent = gameOverMsg;
+    showGameOverModal(isWinner, gameOverMsg);
 }
 
 // Screen management
@@ -551,6 +634,21 @@ function updateWaitingScreen() {
 
     if (countEl) {
         countEl.textContent = `${gameState.waitingPlayers.length}/${gameState.maxPlayers} players`;
+    }
+
+    // Show start button only for room creator, enable when all joined
+    const startBtn = document.getElementById('start-game-btn');
+    if (startBtn) {
+        if (!gameState.isCreator) {
+            startBtn.style.display = 'none';
+        } else {
+            startBtn.style.display = '';
+            const allJoined = gameState.waitingPlayers.length >= gameState.maxPlayers;
+            startBtn.disabled = !allJoined;
+            if (allJoined) {
+                startBtn.textContent = 'Start Game';
+            }
+        }
     }
 
     if (!listEl) return;
@@ -653,6 +751,7 @@ function createGame() {
     }
     gameState.playerName = playerName;
     gameState.gameID = ''; // empty = server will generate
+    gameState.isCreator = true;
     gameState.waitingPlayers = [];
     gameState.teamAssignments = {};
     gameState.maxPlayers = { '1v1': 2, '2v2': 4, 'ffa3': 3, 'ffa5': 5 }[gameState.gameMode] || 2;
@@ -1015,24 +1114,39 @@ function showAttackConfirmModal(weapon, target) {
     const targetId = target?.id;
     const multiplier = weapon?.dmg_mult?.[targetId] || 1;
     const effectiveDmg = weaponDmg * multiplier;
-    const resultingHp = Math.max(0, targetHp - effectiveDmg);
-    const willDie = resultingHp <= 0;
-
     const hasDoubleDamage = multiplier > 1;
+
+    const isProtected = target?.protected_by && target.protected_by.id;
+    const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
 
     let cardsHtml = renderCardForModal(weapon, { showDoubleDamage: hasDoubleDamage });
     cardsHtml += renderArrow();
-    cardsHtml += renderCardForModal(target);
+    cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp });
 
     let description;
-    const hpPreview = willDie
-        ? `<span class="hp-preview hp-fatal">💀 FATAL</span>`
-        : `<span class="hp-preview">${targetHp} → ${resultingHp} HP</span>`;
-
+    let dmgLabel;
     if (hasDoubleDamage) {
-        description = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG) → ${targetName} ${hpPreview}`;
+        dmgLabel = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
     } else {
-        description = `${weaponName} (${weaponDmg} DMG) → ${targetName} ${hpPreview}`;
+        dmgLabel = `${weaponName} (${weaponDmg} DMG)`;
+    }
+
+    if (isProtected) {
+        const shieldAfter = Math.max(0, shieldHp - effectiveDmg);
+        const shieldDestroyed = shieldAfter <= 0;
+        const shieldPreview = shieldDestroyed
+            ? `<span class="hp-preview hp-fatal">💥 DESTROYED</span>`
+            : `<span class="hp-preview shield-hp">🛡️ ${shieldHp} → ${shieldAfter}</span>`;
+        description = `${dmgLabel} → ${targetName}<br>` +
+            `<span class="shield-info">🛡️ Shield absorbs damage — Warrior takes 0 DMG</span><br>` +
+            `Shield: ${shieldPreview}`;
+    } else {
+        const resultingHp = Math.max(0, targetHp - effectiveDmg);
+        const willDie = resultingHp <= 0;
+        const hpPreview = willDie
+            ? `<span class="hp-preview hp-fatal">💀 FATAL</span>`
+            : `<span class="hp-preview">${targetHp} → ${resultingHp} HP</span>`;
+        description = `${dmgLabel} → ${targetName} ${hpPreview}`;
     }
 
     showActionConfirmModal({
@@ -1059,10 +1173,18 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
     let title = 'Special Power';
     let description = '';
 
+    const isProtected = target?.protected_by && target.protected_by.id;
+    const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
+
     switch (userType) {
         case 'archer':
             title = 'Instant Kill';
-            description = `${userName} will instantly kill ${targetName}`;
+            if (isProtected) {
+                description = `${userName} targets ${targetName}<br>` +
+                    `<span class="shield-info">🛡️ Shield blocks the kill — Shield destroyed, warrior survives</span>`;
+            } else {
+                description = `${userName} will instantly kill ${targetName}`;
+            }
             break;
         case 'knight':
             title = 'Protect';
@@ -1078,7 +1200,7 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
 
     let cardsHtml = renderCardForModal(user);
     cardsHtml += renderArrow();
-    cardsHtml += renderCardForModal(target);
+    cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp });
 
     showActionConfirmModal({
         title: title,
@@ -1777,6 +1899,58 @@ function showProtectionAnimations(cardIds) {
     });
 }
 
+// Detect warriors that lost their shield (was protected, now not, warrior still alive)
+function detectBrokenShields(previousState, newState) {
+    const prevProt = extractProtectionState(previousState);
+    const newProt = extractProtectionState(newState);
+    const newFieldIds = new Set();
+    (newState.current_player_field || []).forEach(c => newFieldIds.add(c.id));
+    (newState.opponents || []).forEach(opp => {
+        (opp.field || []).forEach(c => newFieldIds.add(c.id));
+    });
+
+    const broken = [];
+    for (const cardId in prevProt) {
+        // Had a shield before, doesn't have one now, but warrior still on field
+        if (!newProt[cardId] && newFieldIds.has(cardId)) {
+            broken.push(cardId);
+        }
+    }
+    return broken;
+}
+
+// Show shield break animation on cards that lost protection
+function showShieldBreakAnimations(cardIds) {
+    cardIds.forEach(cardId => {
+        const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+        if (!cardElement) return;
+
+        cardElement.classList.add('shield-breaking');
+        setTimeout(() => cardElement.classList.remove('shield-breaking'), 2200);
+
+        // Screen flash for shield break
+        const flash = document.createElement('div');
+        flash.className = 'screen-flash-overlay';
+        flash.style.background = 'radial-gradient(ellipse at center, rgba(78, 205, 196, 0.3) 0%, rgba(78, 205, 196, 0.05) 70%, transparent 100%)';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 600);
+
+        // Shattering shield fragments
+        for (let i = 0; i < 10; i++) {
+            const angle = (i * 36 + Math.random() * 20) * Math.PI / 180;
+            const dist = 50 + Math.random() * 50;
+            const frag = document.createElement('div');
+            frag.className = 'shield-fragment';
+            frag.textContent = '🛡️';
+            frag.style.setProperty('--tx', (Math.cos(angle) * dist) + 'px');
+            frag.style.setProperty('--ty', (Math.sin(angle) * dist) + 'px');
+            frag.style.animationDelay = (Math.random() * 0.15) + 's';
+            cardElement.appendChild(frag);
+            setTimeout(() => frag.remove(), 1600);
+        }
+    });
+}
+
 // Detect hand cards that will vanish on re-render (used/consumed cards)
 function prepareHandCardVanish(previousState, newState) {
     if (!previousState || !previousState.current_player_hand) return [];
@@ -1860,7 +2034,30 @@ function detectCastleChanges(previousState, newState) {
         }
     });
 
-    return { constructions, goldAdded };
+    // Detect gold removed (catapult attack)
+    const goldRemoved = [];
+
+    // Player's own castle attacked
+    if (newCastle.constructed && (newCastle.value || 0) < (prevCastle.value || 0)) {
+        goldRemoved.push({ containerId: 'player-castle', amount: (prevCastle.value || 0) - (newCastle.value || 0) });
+    }
+
+    // Opponent castles attacked
+    newOpponents.forEach(newOpp => {
+        const prevOpp = prevOpponents.find(p => p.player_name === newOpp.player_name);
+        if (!prevOpp) return;
+        const prevC = prevOpp.castle || {};
+        const newC = newOpp.castle || {};
+        if (newC.constructed && (newC.value || 0) < (prevC.value || 0)) {
+            const oppArea = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+            if (!oppArea) return;
+            const castleContainer = oppArea.querySelector('.castle');
+            if (!castleContainer) return;
+            goldRemoved.push({ container: castleContainer, amount: (prevC.value || 0) - (newC.value || 0) });
+        }
+    });
+
+    return { constructions, goldAdded, goldRemoved };
 }
 
 // Castle construction celebration animation
@@ -1901,7 +2098,183 @@ function showCastleGoldAnimation(change) {
     }, 2500);
 }
 
+// Castle attack animation (catapult - gold removed)
+function showCastleAttackAnimation(change) {
+    const container = change.container || document.getElementById(change.containerId);
+    if (!container) return;
+
+    container.style.position = 'relative';
+    container.classList.add('castle-attacked');
+
+    // Floating damage number
+    const floatingDmg = document.createElement('div');
+    floatingDmg.className = 'castle-attack-floating';
+    floatingDmg.textContent = `-${change.amount}`;
+    container.appendChild(floatingDmg);
+
+    // Impact flash
+    const flash = document.createElement('div');
+    flash.className = 'castle-attack-flash';
+    container.appendChild(flash);
+
+    setTimeout(() => {
+        container.classList.remove('castle-attacked');
+        floatingDmg.remove();
+        flash.remove();
+    }, 3000);
+}
+
 // Detect steal action and clone a card-back from the victim's hand before re-render
+// Prepare warrior move animation: capture source position before re-render
+function prepareWarriorMoveAnimation(previousState, newState) {
+    if (newState.last_action !== 'move_warrior') return null;
+    const warriorID = newState.last_moved_warrior_id;
+    if (!warriorID) return null;
+
+    const turnPlayer = newState.turn_player;
+    const isMyMove = turnPlayer === newState.current_player;
+
+    if (isMyMove) {
+        // Active player: clone the warrior card from hand
+        const handCard = document.querySelector(`#player-hand .card[data-card-id="${warriorID}"]`);
+        if (!handCard) return null;
+        const rect = handCard.getBoundingClientRect();
+        const clone = handCard.cloneNode(true);
+        return { type: 'self', clone, rect, warriorID };
+    } else {
+        // Opponent view: capture their hand area position
+        const oppBoard = document.querySelector(`[data-opponent-name="${turnPlayer}"]`);
+        if (!oppBoard) return null;
+        const cardBacks = oppBoard.querySelectorAll('.opponent-hand-card');
+        if (cardBacks.length === 0) return null;
+        const lastCard = cardBacks[cardBacks.length - 1];
+        const rect = lastCard.getBoundingClientRect();
+        const clone = lastCard.cloneNode(true);
+        return { type: 'opponent', clone, rect, warriorID, turnPlayer };
+    }
+}
+
+// Play warrior move animation: animate from hand to field after re-render
+function playWarriorMoveAnimation(data, status) {
+    if (!data) return;
+
+    let targetEl;
+    if (data.type === 'self') {
+        // Find the warrior now in player's field
+        targetEl = document.querySelector(`#player-field .card[data-card-id="${data.warriorID}"]`);
+    } else {
+        // Find the new warrior in opponent's field
+        const oppBoard = document.querySelector(`[data-opponent-name="${data.turnPlayer}"]`);
+        if (oppBoard) {
+            targetEl = oppBoard.querySelector(`.card[data-card-id="${data.warriorID}"]`);
+        }
+    }
+
+    if (!targetEl) return;
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (data.rect.left + data.rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (data.rect.top + data.rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'warrior-move-ghost';
+    ghost.style.left = data.rect.left + 'px';
+    ghost.style.top = data.rect.top + 'px';
+    ghost.style.width = data.rect.width + 'px';
+    ghost.style.height = data.rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    data.clone.style.width = '100%';
+    data.clone.style.height = '100%';
+    data.clone.style.margin = '0';
+    ghost.appendChild(data.clone);
+
+    document.body.appendChild(ghost);
+    setTimeout(() => ghost.remove(), 1200);
+}
+
+// Prepare attack animation: capture weapon card position before re-render
+function prepareAttackAnimation(previousState, newState) {
+    if (newState.last_action !== 'attack') return null;
+    const weaponID = newState.last_attack_weapon_id;
+    const targetID = newState.last_attack_target_id;
+    const targetPlayer = newState.last_attack_target_player;
+    if (!weaponID || !targetID || !targetPlayer) return null;
+
+    const turnPlayer = newState.turn_player;
+    const isMyAttack = turnPlayer === newState.current_player;
+
+    if (isMyAttack) {
+        // Attacker view: clone weapon card from hand (it was just used)
+        const handCard = document.querySelector(`#player-hand .card[data-card-id="${weaponID}"]`);
+        if (!handCard) return null;
+        const rect = handCard.getBoundingClientRect();
+        const clone = handCard.cloneNode(true);
+        return { type: 'self', clone, rect, targetID, targetPlayer };
+    } else {
+        // Opponent view: capture opponent hand area for card-back
+        const oppBoard = document.querySelector(`[data-opponent-name="${turnPlayer}"]`);
+        if (!oppBoard) return null;
+        const cardBacks = oppBoard.querySelectorAll('.opponent-hand-card');
+        if (cardBacks.length === 0) return null;
+        const lastCard = cardBacks[cardBacks.length - 1];
+        const rect = lastCard.getBoundingClientRect();
+        const clone = lastCard.cloneNode(true);
+        return { type: 'opponent', clone, rect, targetID, targetPlayer, turnPlayer };
+    }
+}
+
+// Play attack animation: animate weapon card flying from hand to target warrior
+function playAttackAnimation(data, status) {
+    if (!data) return;
+
+    let targetEl;
+    const targetPlayer = data.targetPlayer;
+    const isTargetMe = targetPlayer === status.current_player;
+
+    if (isTargetMe) {
+        // Target is on my field
+        targetEl = document.querySelector(`#player-field .card[data-card-id="${data.targetID}"]`);
+    } else {
+        // Target is on an opponent's field
+        const oppBoard = document.querySelector(`[data-opponent-name="${targetPlayer}"]`);
+        if (oppBoard) {
+            targetEl = oppBoard.querySelector(`.card[data-card-id="${data.targetID}"]`);
+        }
+    }
+
+    if (!targetEl) return;
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (data.rect.left + data.rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (data.rect.top + data.rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'attack-fly-ghost';
+    ghost.style.left = data.rect.left + 'px';
+    ghost.style.top = data.rect.top + 'px';
+    ghost.style.width = data.rect.width + 'px';
+    ghost.style.height = data.rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    data.clone.style.width = '100%';
+    data.clone.style.height = '100%';
+    data.clone.style.margin = '0';
+    ghost.appendChild(data.clone);
+
+    document.body.appendChild(ghost);
+
+    // On impact, trigger a flash on the target card
+    setTimeout(() => {
+        targetEl.classList.add('attack-impact');
+        setTimeout(() => targetEl.classList.remove('attack-impact'), 600);
+    }, 900);
+
+    setTimeout(() => ghost.remove(), 1300);
+}
+
 function prepareStealAnimation(previousState, newState) {
     if (newState.last_action !== 'steal') return null;
     // Only animate for the thief (the player whose turn it is)
@@ -2048,7 +2421,7 @@ function showPileAnimation() {
     const lastCard = document.querySelector('#discard-pile-last-card .card');
     if (lastCard) {
         lastCard.classList.add('pile-new-card');
-        setTimeout(() => lastCard.classList.remove('pile-new-card'), 1000);
+        setTimeout(() => lastCard.classList.remove('pile-new-card'), 1200);
     }
 }
 
@@ -2070,6 +2443,16 @@ function showCemeteryAnimation() {
 function renderGameBoard(status) {
     // Render all opponent boards
     renderOpponents(status.opponents || []);
+
+    // Active player board glow
+    const playerBoard = document.querySelector('.player-board');
+    if (playerBoard) {
+        if (status.turn_player === status.current_player) {
+            playerBoard.classList.add('active-turn');
+        } else {
+            playerBoard.classList.remove('active-turn');
+        }
+    }
 
     // Render player field
     renderCards('player-field', status.current_player_field);
@@ -2150,6 +2533,9 @@ function renderOpponents(opponents) {
         board.dataset.opponentName = opponent.player_name;
         if (opponent.is_ally) board.classList.add('ally');
         if (opponent.is_eliminated) board.classList.add('eliminated');
+        if (gameState.currentState && opponent.player_name === gameState.currentState.turn_player) {
+            board.classList.add('active-turn');
+        }
 
         // Header
         const header = document.createElement('div');
@@ -2973,6 +3359,104 @@ function hideGameModal() {
     }
 }
 
+// Turn Transition Modal
+let turnTransitionTimer = null;
+
+function showTurnTransitionModal(playerName) {
+    // Don't show on the very first state (game just started)
+    if (!gameState.currentState) return;
+
+    const modal = document.getElementById('turn-transition-modal');
+    const playerEl = document.getElementById('turn-transition-player');
+    const bar = document.getElementById('turn-transition-bar');
+
+    if (!modal || !playerEl || !bar) return;
+
+    const isYou = playerName === gameState.playerName;
+    playerEl.textContent = isYou ? 'Your Turn!' : `${playerName}'s Turn`;
+
+    // Reset and start countdown bar animation
+    bar.style.animation = 'none';
+    bar.offsetHeight; // force reflow
+    bar.style.animation = 'countdown 3s linear forwards';
+
+    modal.classList.remove('hidden');
+
+    // Clear any existing timer
+    if (turnTransitionTimer) clearTimeout(turnTransitionTimer);
+    turnTransitionTimer = setTimeout(() => {
+        hideTurnTransitionModal();
+    }, 3000);
+}
+
+function hideTurnTransitionModal() {
+    const modal = document.getElementById('turn-transition-modal');
+    modal.classList.add('hidden');
+    if (turnTransitionTimer) {
+        clearTimeout(turnTransitionTimer);
+        turnTransitionTimer = null;
+    }
+}
+
+// Stolen Card Notification Modal
+let stolenCardTimer = null;
+
+function showStolenCardModal(card) {
+    const modal = document.getElementById('stolen-card-modal');
+    const container = document.getElementById('stolen-card-container');
+    const text = document.getElementById('stolen-card-text');
+
+    if (!modal || !container || !text) return;
+
+    // Render the stolen card
+    const cardName = card.sub_type || card.type;
+    container.innerHTML = renderCardForModal(card);
+    text.textContent = `${cardName} was stolen from you!`;
+
+    modal.classList.remove('hidden');
+
+    if (stolenCardTimer) clearTimeout(stolenCardTimer);
+    stolenCardTimer = setTimeout(() => {
+        hideStolenCardModal();
+    }, 4000);
+}
+
+function hideStolenCardModal() {
+    const modal = document.getElementById('stolen-card-modal');
+    modal.classList.add('hidden');
+    if (stolenCardTimer) {
+        clearTimeout(stolenCardTimer);
+        stolenCardTimer = null;
+    }
+}
+
+// Spy Notification Modal
+let spyNotificationTimer = null;
+
+function showSpyNotificationModal(message) {
+    const modal = document.getElementById('spy-notification-modal');
+    const textEl = document.getElementById('spy-notification-text');
+
+    if (!modal || !textEl) return;
+
+    textEl.textContent = message;
+    modal.classList.remove('hidden');
+
+    if (spyNotificationTimer) clearTimeout(spyNotificationTimer);
+    spyNotificationTimer = setTimeout(() => {
+        hideSpyNotificationModal();
+    }, 3000);
+}
+
+function hideSpyNotificationModal() {
+    const modal = document.getElementById('spy-notification-modal');
+    if (modal) modal.classList.add('hidden');
+    if (spyNotificationTimer) {
+        clearTimeout(spyNotificationTimer);
+        spyNotificationTimer = null;
+    }
+}
+
 // Action Confirm Modal Functions
 let actionConfirmCallback = null;
 
@@ -3026,6 +3510,9 @@ function renderCardForModal(card, options = {}) {
 
     if (options.showDoubleDamage) {
         badgeHtml = '<div class="double-damage-badge">x2 DMG</div>';
+    }
+    if (options.showShield) {
+        badgeHtml += `<div class="shield-badge">🛡️ ${options.shieldHp} HP</div>`;
     }
 
     let cardHtml;

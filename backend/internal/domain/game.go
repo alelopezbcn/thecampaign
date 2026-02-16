@@ -38,7 +38,14 @@ type Game struct {
 	history            []historyLine
 	historyTracker     int
 	lastAction         string
-	gameOver           bool
+	lastMovedWarriorID string
+	lastStolenFrom     string
+	lastStolenCard     ports.Card
+	lastSpyInfo          string // "deck" or target player name
+	lastAttackWeaponID   string
+	lastAttackTargetID   string
+	lastAttackTargetPlayer string
+	gameOver             bool
 	winner             string
 	winnerIdx          int
 	GameStartedAt      time.Time
@@ -301,6 +308,13 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 func (g *Game) switchTurn() {
 	g.hasMovedWarrior = false
 	g.hasTraded = false
+	g.lastMovedWarriorID = ""
+	g.lastStolenFrom = ""
+	g.lastStolenCard = nil
+	g.lastSpyInfo = ""
+	g.lastAttackWeaponID = ""
+	g.lastAttackTargetID = ""
+	g.lastAttackTargetPlayer = ""
 	g.currentAction = types.ActionTypeDrawCard
 	g.TurnStartedAt = time.Now()
 

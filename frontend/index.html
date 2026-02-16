@@ -91,6 +91,7 @@
                 </div>
                 <div id="waiting-player-count" class="waiting-player-count">0/2 players</div>
                 <div id="waiting-players-list" class="waiting-players-list"></div>
+                <button id="start-game-btn" class="btn btn-primary start-game-btn" disabled>Start Game</button>
                 <div class="spinner"></div>
             </div>
         </div>
@@ -165,14 +166,6 @@
                     <span class="history-title">History</span>
                 </div>
                 <div id="history-list" class="history-list"></div>
-            </div>
-
-            <!-- Top Bar -->
-            <div class="game-header">
-                <div class="player-info">
-                    <span class="player-label">Commander</span>
-                    <span id="player-name-display" class="player-name"></span>
-                </div>
             </div>
 
             <!-- Opponents Container (dynamically populated) -->
@@ -317,6 +310,38 @@
                     <span class="decoration-sword">⚔</span>
                 </div>
                 <button id="gameover-modal-btn" class="btn btn-primary btn-large">Play Again</button>
+            </div>
+        </div>
+
+        <!-- Turn Transition Modal -->
+        <div id="turn-transition-modal" class="turn-transition-modal hidden">
+            <div class="turn-transition-content">
+                <div class="turn-transition-icon">&#9876;</div>
+                <h2 class="turn-transition-title">Next Turn</h2>
+                <p id="turn-transition-player" class="turn-transition-player"></p>
+                <div class="turn-transition-bar-container">
+                    <div id="turn-transition-bar" class="turn-transition-bar"></div>
+                </div>
+                <button id="turn-transition-close" class="btn btn-secondary btn-small">Got it</button>
+            </div>
+        </div>
+
+        <!-- Stolen Card Notification Modal -->
+        <div id="stolen-card-modal" class="stolen-card-modal hidden">
+            <div class="stolen-card-content">
+                <div class="stolen-card-icon">&#128163;</div>
+                <h2 class="stolen-card-title">You were robbed!</h2>
+                <div id="stolen-card-container" class="stolen-card-container"></div>
+                <p id="stolen-card-text" class="stolen-card-text"></p>
+                <button id="stolen-card-close" class="btn btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
+
+        <!-- Spy Notification Modal -->
+        <div id="spy-notification-modal" class="spy-notification-modal hidden">
+            <div class="spy-notification-content">
+                <p id="spy-notification-text" class="spy-notification-text"></p>
+                <button id="spy-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
             </div>
         </div>
 
