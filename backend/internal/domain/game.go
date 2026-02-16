@@ -41,8 +41,11 @@ type Game struct {
 	lastMovedWarriorID string
 	lastStolenFrom     string
 	lastStolenCard     ports.Card
-	lastSpyInfo        string // "deck" or target player name
-	gameOver           bool
+	lastSpyInfo          string // "deck" or target player name
+	lastAttackWeaponID   string
+	lastAttackTargetID   string
+	lastAttackTargetPlayer string
+	gameOver             bool
 	winner             string
 	winnerIdx          int
 	GameStartedAt      time.Time
@@ -309,6 +312,9 @@ func (g *Game) switchTurn() {
 	g.lastStolenFrom = ""
 	g.lastStolenCard = nil
 	g.lastSpyInfo = ""
+	g.lastAttackWeaponID = ""
+	g.lastAttackTargetID = ""
+	g.lastAttackTargetPlayer = ""
 	g.currentAction = types.ActionTypeDrawCard
 	g.TurnStartedAt = time.Now()
 

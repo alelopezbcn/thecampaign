@@ -204,6 +204,9 @@ func (g *Game) Attack(playerName, targetPlayerName, targetID, weaponID string) (
 		types.CategoryAction)
 
 	g.lastAction = "attack"
+	g.lastAttackWeaponID = weaponID
+	g.lastAttackTargetID = targetID
+	g.lastAttackTargetPlayer = targetPlayerName
 	status = g.nextAction(types.ActionTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)

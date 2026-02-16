@@ -521,35 +521,6 @@ body {
     padding-left: 250px; /* Space for phase tracker and history */
 }
 
-.game-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 20px;
-    margin-bottom: 10px;
-}
-
-.player-info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-}
-
-.player-label {
-    font-size: 0.7em;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    color: #666;
-}
-
-.player-name {
-    font-size: 1.4em;
-    font-weight: 300;
-    letter-spacing: 1px;
-    color: #d0d0d0;
-}
-
 .turn-indicator {
     padding: 6px 12px;
     border-radius: 20px;
@@ -3544,6 +3515,109 @@ body {
     }
 }
 
+/* ========== Shield Break Animation ========== */
+
+.card.shield-breaking {
+    animation: shieldBreakFlash 2s ease-out !important;
+    z-index: 20;
+}
+
+@keyframes shieldBreakFlash {
+    0% {
+        box-shadow: 0 0 20px rgba(78, 205, 196, 0.8), 0 0 40px rgba(78, 205, 196, 0.4);
+        border-color: #4ecdc4;
+        transform: scale(1);
+    }
+    8% {
+        box-shadow: 0 0 50px rgba(255, 255, 255, 0.9), 0 0 80px rgba(78, 205, 196, 0.8);
+        border-color: #ffffff;
+        transform: scale(1.12);
+    }
+    15% {
+        box-shadow: 0 0 60px rgba(255, 80, 30, 0.9), 0 0 100px rgba(255, 40, 0, 0.5);
+        border-color: #ff5020;
+        transform: scale(1.08);
+        filter: brightness(1.8);
+    }
+    25% {
+        transform: scale(0.95) rotate(-2deg);
+        filter: brightness(1.4);
+    }
+    35% {
+        transform: scale(1.03) rotate(1deg);
+        filter: brightness(1.1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(255, 80, 30, 0.5), 0 0 60px rgba(255, 40, 0, 0.2);
+        border-color: #ff8855;
+        transform: scale(1);
+        filter: brightness(1);
+    }
+    100% {
+        box-shadow: none;
+        border-color: inherit;
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+.shield-fragment {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    font-size: 18px;
+    pointer-events: none;
+    z-index: 30;
+    opacity: 0;
+    animation: shieldFragmentFly 1.4s ease-out forwards;
+    text-shadow: 0 0 8px rgba(78, 205, 196, 0.8);
+}
+
+@keyframes shieldFragmentFly {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg) scale(1.2);
+        opacity: 1;
+        filter: brightness(2);
+    }
+    20% {
+        opacity: 1;
+        filter: brightness(1.5);
+    }
+    100% {
+        transform: translate(
+            calc(-50% + var(--tx) * 1.5),
+            calc(-50% + var(--ty) * 1.5)
+        ) rotate(240deg) scale(0.2);
+        opacity: 0;
+        filter: brightness(0.5);
+    }
+}
+
+/* Shield badge for attack confirm modal */
+.shield-badge {
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    background: linear-gradient(135deg, #4ecdc4, #2eaa9b);
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 3px 8px;
+    border-radius: 10px;
+    z-index: 10;
+    box-shadow: 0 2px 6px rgba(78, 205, 196, 0.5);
+}
+
+.shield-info {
+    color: #4ecdc4;
+    font-weight: bold;
+    font-size: 0.9em;
+}
+
+.shield-hp {
+    color: #4ecdc4 !important;
+}
+
 /* ========== Card Vanish Animation ========== */
 
 .card-vanish-ghost {
@@ -3882,6 +3956,59 @@ body {
         transform: translate(var(--dx), var(--dy)) scale(1) rotate(0deg);
         opacity: 0;
         filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+}
+
+/* ============================================================
+   FEATURE: Attack Fly Animation
+   ============================================================ */
+
+.attack-fly-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    animation: attackFly 1.2s ease-in-out forwards;
+}
+
+@keyframes attackFly {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+    30% {
+        transform: translate(calc(var(--dx) * 0.2), calc(var(--dy) * 0.2 - 20px)) scale(1.15) rotate(-3deg);
+        opacity: 1;
+        filter: brightness(1.4) drop-shadow(0 0 14px rgba(255, 60, 60, 0.7));
+    }
+    80% {
+        transform: translate(calc(var(--dx) * 0.9), calc(var(--dy) * 0.9)) scale(0.8) rotate(2deg);
+        opacity: 0.9;
+        filter: brightness(1.2) drop-shadow(0 0 10px rgba(255, 60, 60, 0.5));
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.5) rotate(0deg);
+        opacity: 0;
+        filter: brightness(2) drop-shadow(0 0 20px rgba(255, 60, 60, 0.9));
+    }
+}
+
+.attack-impact {
+    animation: attackImpactFlash 0.6s ease-out !important;
+}
+
+@keyframes attackImpactFlash {
+    0% {
+        filter: brightness(1);
+        transform: scale(1);
+    }
+    20% {
+        filter: brightness(2) drop-shadow(0 0 15px rgba(255, 50, 50, 0.8));
+        transform: scale(1.08);
+    }
+    100% {
+        filter: brightness(1);
+        transform: scale(1);
     }
 }
 

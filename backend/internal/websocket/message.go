@@ -123,7 +123,10 @@ type GameStatusDTO struct {
 	DiscardPile         DiscardPileDTO      `json:"discard_pile"`
 	CardsInDeck         int                 `json:"cards_in_deck"`
 	ModalCards          []CardDTO           `json:"modal_cards,omitempty"`
-	LastMovedWarriorID  string              `json:"last_moved_warrior_id,omitempty"`
+	LastMovedWarriorID    string              `json:"last_moved_warrior_id,omitempty"`
+	LastAttackWeaponID    string              `json:"last_attack_weapon_id,omitempty"`
+	LastAttackTargetID    string              `json:"last_attack_target_id,omitempty"`
+	LastAttackTargetPlayer string             `json:"last_attack_target_player,omitempty"`
 	StolenFromYouCard   []CardDTO           `json:"stolen_from_you_card,omitempty"`
 	SpyNotification     string              `json:"spy_notification,omitempty"`
 	History             []HistoryLineDTO    `json:"history"`

@@ -150,6 +150,21 @@ function setupEventListeners() {
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
+
+    // Close modals when clicking outside content
+    const modalOverlays = [
+        { id: 'game-modal', hide: hideGameModal },
+        { id: 'action-confirm-modal', hide: onActionConfirmNo },
+        { id: 'turn-transition-modal', hide: hideTurnTransitionModal },
+        { id: 'stolen-card-modal', hide: hideStolenCardModal },
+        { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
+        { id: 'gameover-modal', hide: () => location.reload() },
+    ];
+    modalOverlays.forEach(({ id, hide }) => {
+        document.getElementById(id).addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) hide();
+        });
+    });
 }
 
 function handleGlobalKeyboard(e) {
@@ -352,7 +367,6 @@ function handleGameStarted(payload) {
     gameState.gameID = payload.game_id;
 
     document.getElementById('current-game-id').textContent = payload.game_id;
-    document.getElementById('player-name-display').textContent = payload.your_name;
 }
 
 function handleGameState(payload) {
@@ -407,6 +421,12 @@ function handleGameState(payload) {
         warriorMoveData = prepareWarriorMoveAnimation(previousState, payload.game_status);
     }
 
+    // Detect weapon attack for animation (before re-render)
+    let attackAnimData = null;
+    if (previousState) {
+        attackAnimData = prepareAttackAnimation(previousState, payload.game_status);
+    }
+
     // Detect deck draw for animation
     let deckDrawInfo = null;
     if (previousState) {
@@ -453,6 +473,10 @@ function handleGameState(payload) {
             if (newlyProtected.length > 0) {
                 setTimeout(() => showProtectionAnimations(newlyProtected), 50);
             }
+            const brokenShields = detectBrokenShields(previousState, payload.game_status);
+            if (brokenShields.length > 0) {
+                setTimeout(() => showShieldBreakAnimations(brokenShields), 50);
+            }
         }
         if (previousState) {
             setTimeout(() => {
@@ -464,6 +488,9 @@ function handleGameState(payload) {
         }
         if (warriorMoveData) {
             playWarriorMoveAnimation(warriorMoveData, payload.game_status);
+        }
+        if (attackAnimData) {
+            playAttackAnimation(attackAnimData, payload.game_status);
         }
         if (stealData) {
             playStealAnimation(stealData);
@@ -1088,24 +1115,39 @@ function showAttackConfirmModal(weapon, target) {
     const targetId = target?.id;
     const multiplier = weapon?.dmg_mult?.[targetId] || 1;
     const effectiveDmg = weaponDmg * multiplier;
-    const resultingHp = Math.max(0, targetHp - effectiveDmg);
-    const willDie = resultingHp <= 0;
-
     const hasDoubleDamage = multiplier > 1;
+
+    const isProtected = target?.protected_by && target.protected_by.id;
+    const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
 
     let cardsHtml = renderCardForModal(weapon, { showDoubleDamage: hasDoubleDamage });
     cardsHtml += renderArrow();
-    cardsHtml += renderCardForModal(target);
+    cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp });
 
     let description;
-    const hpPreview = willDie
-        ? `<span class="hp-preview hp-fatal">💀 FATAL</span>`
-        : `<span class="hp-preview">${targetHp} → ${resultingHp} HP</span>`;
-
+    let dmgLabel;
     if (hasDoubleDamage) {
-        description = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG) → ${targetName} ${hpPreview}`;
+        dmgLabel = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
     } else {
-        description = `${weaponName} (${weaponDmg} DMG) → ${targetName} ${hpPreview}`;
+        dmgLabel = `${weaponName} (${weaponDmg} DMG)`;
+    }
+
+    if (isProtected) {
+        const shieldAfter = Math.max(0, shieldHp - effectiveDmg);
+        const shieldDestroyed = shieldAfter <= 0;
+        const shieldPreview = shieldDestroyed
+            ? `<span class="hp-preview hp-fatal">💥 DESTROYED</span>`
+            : `<span class="hp-preview shield-hp">🛡️ ${shieldHp} → ${shieldAfter}</span>`;
+        description = `${dmgLabel} → ${targetName}<br>` +
+            `<span class="shield-info">🛡️ Shield absorbs damage — Warrior takes 0 DMG</span><br>` +
+            `Shield: ${shieldPreview}`;
+    } else {
+        const resultingHp = Math.max(0, targetHp - effectiveDmg);
+        const willDie = resultingHp <= 0;
+        const hpPreview = willDie
+            ? `<span class="hp-preview hp-fatal">💀 FATAL</span>`
+            : `<span class="hp-preview">${targetHp} → ${resultingHp} HP</span>`;
+        description = `${dmgLabel} → ${targetName} ${hpPreview}`;
     }
 
     showActionConfirmModal({
@@ -1132,10 +1174,18 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
     let title = 'Special Power';
     let description = '';
 
+    const isProtected = target?.protected_by && target.protected_by.id;
+    const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
+
     switch (userType) {
         case 'archer':
             title = 'Instant Kill';
-            description = `${userName} will instantly kill ${targetName}`;
+            if (isProtected) {
+                description = `${userName} targets ${targetName}<br>` +
+                    `<span class="shield-info">🛡️ Shield blocks the kill — Shield destroyed, warrior survives</span>`;
+            } else {
+                description = `${userName} will instantly kill ${targetName}`;
+            }
             break;
         case 'knight':
             title = 'Protect';
@@ -1151,7 +1201,7 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
 
     let cardsHtml = renderCardForModal(user);
     cardsHtml += renderArrow();
-    cardsHtml += renderCardForModal(target);
+    cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp });
 
     showActionConfirmModal({
         title: title,
@@ -1850,6 +1900,58 @@ function showProtectionAnimations(cardIds) {
     });
 }
 
+// Detect warriors that lost their shield (was protected, now not, warrior still alive)
+function detectBrokenShields(previousState, newState) {
+    const prevProt = extractProtectionState(previousState);
+    const newProt = extractProtectionState(newState);
+    const newFieldIds = new Set();
+    (newState.current_player_field || []).forEach(c => newFieldIds.add(c.id));
+    (newState.opponents || []).forEach(opp => {
+        (opp.field || []).forEach(c => newFieldIds.add(c.id));
+    });
+
+    const broken = [];
+    for (const cardId in prevProt) {
+        // Had a shield before, doesn't have one now, but warrior still on field
+        if (!newProt[cardId] && newFieldIds.has(cardId)) {
+            broken.push(cardId);
+        }
+    }
+    return broken;
+}
+
+// Show shield break animation on cards that lost protection
+function showShieldBreakAnimations(cardIds) {
+    cardIds.forEach(cardId => {
+        const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+        if (!cardElement) return;
+
+        cardElement.classList.add('shield-breaking');
+        setTimeout(() => cardElement.classList.remove('shield-breaking'), 2200);
+
+        // Screen flash for shield break
+        const flash = document.createElement('div');
+        flash.className = 'screen-flash-overlay';
+        flash.style.background = 'radial-gradient(ellipse at center, rgba(78, 205, 196, 0.3) 0%, rgba(78, 205, 196, 0.05) 70%, transparent 100%)';
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 600);
+
+        // Shattering shield fragments
+        for (let i = 0; i < 10; i++) {
+            const angle = (i * 36 + Math.random() * 20) * Math.PI / 180;
+            const dist = 50 + Math.random() * 50;
+            const frag = document.createElement('div');
+            frag.className = 'shield-fragment';
+            frag.textContent = '🛡️';
+            frag.style.setProperty('--tx', (Math.cos(angle) * dist) + 'px');
+            frag.style.setProperty('--ty', (Math.sin(angle) * dist) + 'px');
+            frag.style.animationDelay = (Math.random() * 0.15) + 's';
+            cardElement.appendChild(frag);
+            setTimeout(() => frag.remove(), 1600);
+        }
+    });
+}
+
 // Detect hand cards that will vanish on re-render (used/consumed cards)
 function prepareHandCardVanish(previousState, newState) {
     if (!previousState || !previousState.current_player_hand) return [];
@@ -2091,6 +2193,87 @@ function playWarriorMoveAnimation(data, status) {
 
     document.body.appendChild(ghost);
     setTimeout(() => ghost.remove(), 1200);
+}
+
+// Prepare attack animation: capture weapon card position before re-render
+function prepareAttackAnimation(previousState, newState) {
+    if (newState.last_action !== 'attack') return null;
+    const weaponID = newState.last_attack_weapon_id;
+    const targetID = newState.last_attack_target_id;
+    const targetPlayer = newState.last_attack_target_player;
+    if (!weaponID || !targetID || !targetPlayer) return null;
+
+    const turnPlayer = newState.turn_player;
+    const isMyAttack = turnPlayer === newState.current_player;
+
+    if (isMyAttack) {
+        // Attacker view: clone weapon card from hand (it was just used)
+        const handCard = document.querySelector(`#player-hand .card[data-card-id="${weaponID}"]`);
+        if (!handCard) return null;
+        const rect = handCard.getBoundingClientRect();
+        const clone = handCard.cloneNode(true);
+        return { type: 'self', clone, rect, targetID, targetPlayer };
+    } else {
+        // Opponent view: capture opponent hand area for card-back
+        const oppBoard = document.querySelector(`[data-opponent-name="${turnPlayer}"]`);
+        if (!oppBoard) return null;
+        const cardBacks = oppBoard.querySelectorAll('.opponent-hand-card');
+        if (cardBacks.length === 0) return null;
+        const lastCard = cardBacks[cardBacks.length - 1];
+        const rect = lastCard.getBoundingClientRect();
+        const clone = lastCard.cloneNode(true);
+        return { type: 'opponent', clone, rect, targetID, targetPlayer, turnPlayer };
+    }
+}
+
+// Play attack animation: animate weapon card flying from hand to target warrior
+function playAttackAnimation(data, status) {
+    if (!data) return;
+
+    let targetEl;
+    const targetPlayer = data.targetPlayer;
+    const isTargetMe = targetPlayer === status.current_player;
+
+    if (isTargetMe) {
+        // Target is on my field
+        targetEl = document.querySelector(`#player-field .card[data-card-id="${data.targetID}"]`);
+    } else {
+        // Target is on an opponent's field
+        const oppBoard = document.querySelector(`[data-opponent-name="${targetPlayer}"]`);
+        if (oppBoard) {
+            targetEl = oppBoard.querySelector(`.card[data-card-id="${data.targetID}"]`);
+        }
+    }
+
+    if (!targetEl) return;
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (data.rect.left + data.rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (data.rect.top + data.rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'attack-fly-ghost';
+    ghost.style.left = data.rect.left + 'px';
+    ghost.style.top = data.rect.top + 'px';
+    ghost.style.width = data.rect.width + 'px';
+    ghost.style.height = data.rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    data.clone.style.width = '100%';
+    data.clone.style.height = '100%';
+    data.clone.style.margin = '0';
+    ghost.appendChild(data.clone);
+
+    document.body.appendChild(ghost);
+
+    // On impact, trigger a flash on the target card
+    setTimeout(() => {
+        targetEl.classList.add('attack-impact');
+        setTimeout(() => targetEl.classList.remove('attack-impact'), 600);
+    }, 900);
+
+    setTimeout(() => ghost.remove(), 1300);
 }
 
 function prepareStealAnimation(previousState, newState) {
@@ -3328,6 +3511,9 @@ function renderCardForModal(card, options = {}) {
 
     if (options.showDoubleDamage) {
         badgeHtml = '<div class="double-damage-badge">x2 DMG</div>';
+    }
+    if (options.showShield) {
+        badgeHtml += `<div class="shield-badge">🛡️ ${options.shieldHp} HP</div>`;
     }
 
     let cardHtml;

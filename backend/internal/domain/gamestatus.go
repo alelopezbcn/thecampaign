@@ -27,7 +27,10 @@ type GameStatus struct {
 	DiscardPile         gamestatus.DiscardPile   `json:"discard_pile"`
 	CardsInDeck         int                      `json:"deck"`
 	ModalCards          []gamestatus.Card        `json:"modal_cards"`
-	LastMovedWarriorID  string                   `json:"last_moved_warrior_id,omitempty"`
+	LastMovedWarriorID    string                   `json:"last_moved_warrior_id,omitempty"`
+	LastAttackWeaponID    string                   `json:"last_attack_weapon_id,omitempty"`
+	LastAttackTargetID    string                   `json:"last_attack_target_id,omitempty"`
+	LastAttackTargetPlayer string                  `json:"last_attack_target_player,omitempty"`
 	StolenFromYouCard   []gamestatus.Card        `json:"stolen_from_you_card,omitempty"`
 	SpyNotification     string                   `json:"spy_notification,omitempty"`
 	History             []gamestatus.HistoryLine `json:"history"`
@@ -104,6 +107,13 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 	// Include last moved warrior ID for animation (only on the move action itself)
 	if game.lastAction == "move_warrior" && game.lastMovedWarriorID != "" {
 		gs.LastMovedWarriorID = game.lastMovedWarriorID
+	}
+
+	// Include attack animation info (only on the attack action itself)
+	if game.lastAction == "attack" && game.lastAttackWeaponID != "" {
+		gs.LastAttackWeaponID = game.lastAttackWeaponID
+		gs.LastAttackTargetID = game.lastAttackTargetID
+		gs.LastAttackTargetPlayer = game.lastAttackTargetPlayer
 	}
 
 	// Include stolen card info for the victim (only on the steal action itself)
