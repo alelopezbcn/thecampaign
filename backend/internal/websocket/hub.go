@@ -72,6 +72,7 @@ func (h *Hub) Run() {
 		case client := <-h.unregister:
 			var disconnectedGameID string
 			var disconnectedPlayerName string
+			var gameInProgress bool
 
 			h.mutex.Lock()
 			if _, ok := h.clients[client]; ok {
@@ -85,7 +86,7 @@ func (h *Hub) Run() {
 					if room, exists := h.gameRooms[client.GameID]; exists {
 						room.mutex.Lock()
 						if room.Game != nil {
-							// Game in progress: keep player slot for reconnection
+							gameInProgress = true
 							room.Players[client.PlayerName] = nil
 						} else {
 							// Waiting room: remove normally
@@ -103,9 +104,13 @@ func (h *Hub) Run() {
 			h.mutex.Unlock()
 
 			if disconnectedGameID != "" {
-				h.broadcastToGame(disconnectedGameID, MsgError, ErrorPayload{
-					Message: disconnectedPlayerName + " disconnected",
-				})
+				if gameInProgress {
+					h.handlePlayerDisconnection(disconnectedGameID, disconnectedPlayerName)
+				} else {
+					h.broadcastToGame(disconnectedGameID, MsgError, ErrorPayload{
+						Message: disconnectedPlayerName + " disconnected",
+					})
+				}
 			}
 
 		case clientMsg := <-h.handleMessage:
@@ -254,11 +259,14 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		log.Printf("Player %s reconnected to game %s", playerName, gameID)
 
 		if gameInProgress {
+			room.Game.ReconnectPlayer(playerName)
 			room.mutex.Unlock()
 			h.broadcastToGame(gameID, MsgError, ErrorPayload{
 				Message: playerName + " reconnected",
 			})
 			h.sendReconnectState(gameID, playerName)
+			// Broadcast updated state to all so opponents see player is back
+			h.broadcastGameStateToAll(gameID)
 		} else {
 			// Send full waiting room state including teams
 			allNames := make([]string, 0, len(room.Players))
@@ -638,6 +646,73 @@ func (h *Hub) broadcastToGame(gameID string, msgType MessageType, payload interf
 			client.SendMessage(msgType, payload)
 		}
 	}
+}
+
+// handlePlayerDisconnection handles a player disconnecting from an active game.
+// Marks them as disconnected, advances turn if needed, and broadcasts state.
+func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists || room.Game == nil {
+		return
+	}
+
+	room.mutex.Lock()
+	if over, _ := room.Game.IsGameOver(); over {
+		room.mutex.Unlock()
+		return
+	}
+
+	wasTheirTurn := room.Game.CurrentPlayer().Name() == playerName
+
+	err := room.Game.DisconnectPlayer(playerName)
+	gameOver, _ := room.Game.IsGameOver()
+	room.mutex.Unlock()
+
+	if err != nil {
+		log.Printf("Error disconnecting player %s: %v", playerName, err)
+		h.broadcastToGame(gameID, MsgError, ErrorPayload{
+			Message: playerName + " disconnected",
+		})
+		return
+	}
+
+	h.broadcastToGame(gameID, MsgError, ErrorPayload{
+		Message: playerName + " disconnected",
+	})
+
+	if gameOver {
+		h.broadcastGameStateToAll(gameID)
+		h.stopTurnTimer(gameID)
+		return
+	}
+
+	if wasTheirTurn {
+		h.autoDrawAndBroadcast(gameID)
+		h.startTurnTimer(gameID)
+	} else {
+		h.broadcastGameStateToAll(gameID)
+	}
+}
+
+// broadcastGameStateToAll gets the current player's status and sends state to all players.
+func (h *Hub) broadcastGameStateToAll(gameID string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists || room.Game == nil {
+		return
+	}
+
+	room.mutex.RLock()
+	currentPlayer := room.Game.CurrentPlayer()
+	status := room.Game.GameStatusProvider.Get(currentPlayer, room.Game)
+	room.mutex.RUnlock()
+
+	h.sendGameStateToAll(gameID, status)
 }
 
 // getGameRoom gets the game room for a client
