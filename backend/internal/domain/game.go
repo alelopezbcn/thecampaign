@@ -18,38 +18,38 @@ const (
 type Games []Game
 
 type Game struct {
-	id                 string
-	createdAt          time.Time
-	Mode               types.GameMode
-	Players            []ports.Player
-	Teams              map[int][]int // teamID -> player indices (2v2 only)
-	EliminatedPlayers  map[int]bool  // player index -> eliminated (FFA only)
-	CurrentTurn        int
-	currentAction      types.ActionType
-	CanMoveWarrior     bool
-	hasMovedWarrior    bool
-	CanTrade           bool
-	hasTraded          bool
-	deck               ports.Deck
-	discardPile        ports.DiscardPile
-	cemetery           ports.Cemetery
-	dealer             ports.Dealer
-	GameStatusProvider GameStatusProvider
-	history            []historyLine
-	historyTracker     int
-	lastAction         string
-	lastMovedWarriorID string
-	lastStolenFrom     string
-	lastStolenCard     ports.Card
-	lastSpyInfo          string // "deck" or target player name
-	lastAttackWeaponID   string
-	lastAttackTargetID   string
+	id                     string
+	createdAt              time.Time
+	Mode                   types.GameMode
+	Players                []ports.Player
+	Teams                  map[int][]int // teamID -> player indices (2v2 only)
+	EliminatedPlayers      map[int]bool  // player index -> eliminated (FFA only)
+	CurrentTurn            int
+	currentAction          types.ActionType
+	CanMoveWarrior         bool
+	hasMovedWarrior        bool
+	CanTrade               bool
+	hasTraded              bool
+	deck                   ports.Deck
+	discardPile            ports.DiscardPile
+	cemetery               ports.Cemetery
+	dealer                 ports.Dealer
+	GameStatusProvider     GameStatusProvider
+	history                []historyLine
+	historyTracker         int
+	lastAction             string
+	lastMovedWarriorID     string
+	lastStolenFrom         string
+	lastStolenCard         ports.Card
+	lastSpyInfo            string // "deck" or target player name
+	lastAttackWeaponID     string
+	lastAttackTargetID     string
 	lastAttackTargetPlayer string
-	gameOver             bool
-	winner             string
-	winnerIdx          int
-	GameStartedAt      time.Time
-	TurnStartedAt      time.Time
+	gameOver               bool
+	winner                 string
+	winnerIdx              int
+	GameStartedAt          time.Time
+	TurnStartedAt          time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
@@ -365,7 +365,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 	}
 
 	if expectedAction == types.ActionTypeBuy {
-		if p.CanBuy() {
+		if p.CanBuy() || g.CanTrade {
 			g.currentAction = types.ActionTypeBuy
 
 			return gameStatusFn()
