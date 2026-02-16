@@ -3769,21 +3769,22 @@ body {
 }
 
 .pile-new-card {
-    animation: pileCardAppear 1s ease-out !important;
+    animation: pileCardAppear 1.2s ease-out !important;
+    transition: none !important;
 }
 
 @keyframes pileCardAppear {
     0% {
-        transform: scale(0.4) rotate(-10deg);
-        opacity: 0;
+        filter: brightness(1);
+        box-shadow: 0 0 0 transparent;
     }
-    50% {
-        transform: scale(1.1) rotate(2deg);
-        opacity: 1;
+    20% {
+        filter: brightness(1.6);
+        box-shadow: 0 0 18px rgba(255, 165, 0, 0.8), 0 0 35px rgba(255, 165, 0, 0.4);
     }
     100% {
-        transform: scale(1) rotate(0deg);
-        opacity: 1;
+        filter: brightness(1);
+        box-shadow: none;
     }
 }
 
@@ -3807,22 +3808,350 @@ body {
 
 .cemetery-new-corp {
     animation: cemeteryCorpAppear 1.2s ease-out !important;
+    transition: none !important;
 }
 
 @keyframes cemeteryCorpAppear {
     0% {
-        transform: scale(0.3) translateY(20px);
-        opacity: 0;
-        filter: brightness(0.3);
+        filter: brightness(1);
+        box-shadow: 0 0 0 transparent;
     }
-    50% {
-        transform: scale(1.05) translateY(-5px);
-        opacity: 0.8;
-        filter: brightness(0.6);
+    20% {
+        filter: brightness(1.5);
+        box-shadow: 0 0 18px rgba(128, 0, 128, 0.8), 0 0 35px rgba(128, 0, 128, 0.4);
     }
     100% {
-        transform: scale(1) translateY(0);
-        opacity: 1;
         filter: brightness(1);
+        box-shadow: none;
     }
+}
+
+/* ============================================================
+   FEATURE: Active Player Board Glow
+   ============================================================ */
+
+.opponent-board.active-turn {
+    border-color: rgba(76, 217, 100, 0.5);
+    box-shadow: 0 0 12px rgba(76, 217, 100, 0.3), 0 0 24px rgba(76, 217, 100, 0.15), inset 0 0 8px rgba(76, 217, 100, 0.05);
+    animation: activeTurnPulse 2s ease-in-out infinite;
+}
+
+.player-board.active-turn {
+    border-color: rgba(76, 217, 100, 0.5);
+    box-shadow: 0 0 12px rgba(76, 217, 100, 0.3), 0 0 24px rgba(76, 217, 100, 0.15), inset 0 0 8px rgba(76, 217, 100, 0.05);
+    animation: activeTurnPulse 2s ease-in-out infinite;
+}
+
+@keyframes activeTurnPulse {
+    0%, 100% {
+        box-shadow: 0 0 12px rgba(76, 217, 100, 0.3), 0 0 24px rgba(76, 217, 100, 0.15);
+    }
+    50% {
+        box-shadow: 0 0 18px rgba(76, 217, 100, 0.5), 0 0 36px rgba(76, 217, 100, 0.25);
+    }
+}
+
+/* ============================================================
+   FEATURE: Warrior Move Animation
+   ============================================================ */
+
+.warrior-move-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    animation: warriorMoveFly 1.1s ease-in-out forwards;
+}
+
+@keyframes warriorMoveFly {
+    0% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+        opacity: 1;
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+    20% {
+        transform: translate(calc(var(--dx) * 0.15), calc(var(--dy) * 0.15 - 30px)) scale(1.1) rotate(-5deg);
+        opacity: 1;
+        filter: brightness(1.3) drop-shadow(0 0 12px rgba(76, 217, 100, 0.6));
+    }
+    70% {
+        transform: translate(calc(var(--dx) * 0.75), calc(var(--dy) * 0.75 - 10px)) scale(0.95) rotate(2deg);
+        opacity: 0.9;
+        filter: brightness(1.1) drop-shadow(0 0 8px rgba(76, 217, 100, 0.4));
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(1) rotate(0deg);
+        opacity: 0;
+        filter: brightness(1) drop-shadow(0 0 0 transparent);
+    }
+}
+
+/* ============================================================
+   FEATURE: Turn Transition Modal
+   ============================================================ */
+
+.turn-transition-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.turn-transition-modal.hidden {
+    display: none;
+}
+
+.turn-transition-content {
+    background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
+    border: 1px solid rgba(76, 217, 100, 0.3);
+    border-radius: 16px;
+    padding: 30px 50px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(76, 217, 100, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: modalPopIn 0.4s ease-out;
+    min-width: 280px;
+}
+
+.turn-transition-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.turn-transition-title {
+    font-size: 1rem;
+    color: #8892b0;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.turn-transition-player {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #4cd964;
+    margin-bottom: 18px;
+    text-shadow: 0 0 10px rgba(76, 217, 100, 0.3);
+}
+
+.turn-transition-bar-container {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+
+.turn-transition-bar {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, #4cd964, #2ecc71);
+    border-radius: 2px;
+    transform-origin: left;
+}
+
+@keyframes countdown {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+@keyframes modalPopIn {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+/* ============================================================
+   FEATURE: Stolen Card Notification Modal
+   ============================================================ */
+
+.stolen-card-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.65);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.stolen-card-modal.hidden {
+    display: none;
+}
+
+.stolen-card-content {
+    background: linear-gradient(145deg, #2a1a1a 0%, #3e1616 100%);
+    border: 1px solid rgba(255, 80, 80, 0.4);
+    border-radius: 16px;
+    padding: 30px 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(255, 80, 80, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: modalPopIn 0.4s ease-out;
+    min-width: 280px;
+}
+
+.stolen-card-icon {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+}
+
+.stolen-card-title {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #ff6b6b;
+    margin-bottom: 16px;
+    text-shadow: 0 0 10px rgba(255, 80, 80, 0.3);
+}
+
+.stolen-card-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 12px;
+}
+
+.stolen-card-container .card {
+    cursor: default;
+    pointer-events: none;
+}
+
+.stolen-card-text {
+    font-size: 0.95rem;
+    color: #ccd6f6;
+    margin-bottom: 16px;
+}
+
+/* ============================================================
+   FEATURE: Start Game Button
+   ============================================================ */
+
+.start-game-btn {
+    margin-top: 20px;
+    padding: 12px 40px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+.start-game-btn:not(:disabled) {
+    animation: startBtnPulse 2s ease-in-out infinite;
+}
+
+@keyframes startBtnPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(76, 217, 100, 0.4); }
+    50% { box-shadow: 0 0 20px 4px rgba(76, 217, 100, 0.3); }
+}
+
+/* ============================================================
+   FEATURE: Castle Attack Animation (Catapult)
+   ============================================================ */
+
+.castle-attacked {
+    animation: castleShake 0.6s ease-in-out;
+}
+
+@keyframes castleShake {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-6px) rotate(-1deg); }
+    20% { transform: translateX(6px) rotate(1deg); }
+    30% { transform: translateX(-5px) rotate(-0.5deg); }
+    40% { transform: translateX(5px) rotate(0.5deg); }
+    50% { transform: translateX(-3px); }
+    60% { transform: translateX(3px); }
+    70% { transform: translateX(-1px); }
+}
+
+.castle-attack-floating {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #ff4444;
+    text-shadow: 0 0 10px rgba(255, 68, 68, 0.8), 0 0 20px rgba(255, 68, 68, 0.4);
+    animation: castleAttackFloat 2.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 10;
+}
+
+@keyframes castleAttackFloat {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.5); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(-5px) scale(1.3); }
+    40% { opacity: 1; transform: translateX(-50%) translateY(-15px) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.8); }
+}
+
+.castle-attack-flash {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(255, 68, 68, 0.3);
+    animation: castleFlashFade 0.8s ease-out forwards;
+    pointer-events: none;
+    z-index: 5;
+}
+
+@keyframes castleFlashFade {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* ============================================================
+   FEATURE: Spy Notification Modal
+   ============================================================ */
+
+.spy-notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.spy-notification-modal.hidden {
+    display: none;
+}
+
+.spy-notification-content {
+    background: linear-gradient(145deg, #1a1a2e 0%, #2d1b4e 100%);
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    border-radius: 16px;
+    padding: 25px 40px;
+    text-align: center;
+    box-shadow: 0 0 30px rgba(167, 139, 250, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
+    animation: modalPopIn 0.4s ease-out;
+    min-width: 260px;
+}
+
+.spy-notification-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+}
+
+.spy-notification-text {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #ccd6f6;
+    margin-bottom: 14px;
 }

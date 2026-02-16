@@ -1,13 +1,9 @@
 destruccion de escudo
 trade, thief, una vez confirmada la accion, qe desaprece el moday, que haga las anmaciones, y luego mueste el modal de nueva carta obtenida
-animacion al mover warrior, que se arrastre al field?
-animacion al castillo cuando es atacado
+animacion al castillo cuando es atacado - test
 fix modal cuando se ataca a un guerrero con escudo, que ponga la vida que se le quitara al escudo. Mismo para el instant kill.
-
-
-🎨 UI/UX
 Animaciones de combate - Cuando un arma ataca, mostrar una animación visual (la carta "vuela" hacia el objetivo)
+Buy / Trade phase, same as Attack / Move Warrior
 
 🎮 Gameplay
-Modo vs IA - Un oponente controlado por computadora para jugar solo
 Efectos especiales visuales - Cuando el Dragon entra al campo, cuando el castillo se completa, etc.

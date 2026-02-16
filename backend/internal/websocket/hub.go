@@ -147,6 +147,8 @@ func (h *Hub) processMessage(client *Client, msg *Message) {
 		h.handleSkipPhase(client)
 	case MsgSwapTeam:
 		h.handleSwapTeam(client)
+	case MsgStartGame:
+		h.handleStartGame(client)
 	default:
 		client.SendError("Unknown message type")
 	}
@@ -315,31 +317,52 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	log.Printf("Player %s joined game %s (%d/%d players)",
 		playerName, gameID, len(room.Players), room.MaxPlayers)
 
-	// Not enough players yet
-	if len(room.Players) < room.MaxPlayers {
-		allNames := make([]string, 0, len(room.Players))
-		for name := range room.Players {
-			allNames = append(allNames, name)
+	// Broadcast updated player list to all players in the room
+	allNames := make([]string, 0, len(room.Players))
+	for name := range room.Players {
+		allNames = append(allNames, name)
+	}
+	teams := copyTeams(room.TeamAssignments)
+	for _, c := range room.Players {
+		if c == nil {
+			continue
 		}
-		teams := copyTeams(room.TeamAssignments)
-		for _, c := range room.Players {
-			if c == nil {
-				continue
-			}
-			c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
-				GameID:     room.ID,
-				GameMode:   string(room.GameMode),
-				MaxPlayers: room.MaxPlayers,
-				PlayerName: playerName,
-				Players:    allNames,
-				Teams:      teams,
-			})
-		}
-		room.mutex.Unlock()
+		c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
+			GameID:     room.ID,
+			GameMode:   string(room.GameMode),
+			MaxPlayers: room.MaxPlayers,
+			PlayerName: playerName,
+			Players:    allNames,
+			Teams:      teams,
+		})
+	}
+	room.mutex.Unlock()
+}
+
+// handleStartGame handles a player requesting to start the game
+func (h *Hub) handleStartGame(client *Client) {
+	room, exists := h.getGameRoom(client)
+	if !exists {
+		client.SendError("Game not found")
 		return
 	}
 
-	// All players are in - start the game
+	room.mutex.Lock()
+
+	if room.Game != nil {
+		room.mutex.Unlock()
+		client.SendError("Game already started")
+		return
+	}
+
+	if len(room.Players) < room.MaxPlayers {
+		room.mutex.Unlock()
+		client.SendError("Not all players have joined yet")
+		return
+	}
+
+	gameID := room.ID
+
 	// For 2v2, interleave teams: T1, T2, T1, T2
 	var playerNames []string
 	if room.GameMode == types.GameMode2v2 {

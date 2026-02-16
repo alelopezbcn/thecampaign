@@ -27,6 +27,9 @@ type GameStatus struct {
 	DiscardPile         gamestatus.DiscardPile   `json:"discard_pile"`
 	CardsInDeck         int                      `json:"deck"`
 	ModalCards          []gamestatus.Card        `json:"modal_cards"`
+	LastMovedWarriorID  string                   `json:"last_moved_warrior_id,omitempty"`
+	StolenFromYouCard   []gamestatus.Card        `json:"stolen_from_you_card,omitempty"`
+	SpyNotification     string                   `json:"spy_notification,omitempty"`
 	History             []gamestatus.HistoryLine `json:"history"`
 	PlayersOrder        []string                 `json:"players_order"`
 	GameOverMgs         string                   `json:"game_over_msg"`
@@ -83,7 +86,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		PlayersOrder:        playersOrder,
 		GameStartedAt:       game.GameStartedAt,
 		TurnStartedAt:       game.TurnStartedAt,
-		TurnTimeLimitSecs:   60,
+		TurnTimeLimitSecs:   120,
 	}
 
 	for _, line := range game.GetHistory() {
@@ -95,6 +98,28 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 	if len(newCards) > 0 {
 		for _, c := range newCards {
 			gs.NewCards = append(gs.NewCards, c.GetID())
+		}
+	}
+
+	// Include last moved warrior ID for animation (only on the move action itself)
+	if game.lastAction == "move_warrior" && game.lastMovedWarriorID != "" {
+		gs.LastMovedWarriorID = game.lastMovedWarriorID
+	}
+
+	// Include stolen card info for the victim (only on the steal action itself)
+	if game.lastAction == "steal" && game.lastStolenFrom != "" &&
+		game.lastStolenCard != nil && viewer.Name() == game.lastStolenFrom {
+		gs.StolenFromYouCard = gamestatus.FromDomainCards([]ports.Card{game.lastStolenCard})
+	}
+
+	// Include spy notification for all players except the spy
+	if game.lastSpyInfo != "" && game.lastAction == "spy" &&
+		viewer.Name() != game.CurrentPlayer().Name() {
+		spyPlayer := game.CurrentPlayer().Name()
+		if game.lastSpyInfo == "deck" {
+			gs.SpyNotification = spyPlayer + " spied on the deck"
+		} else {
+			gs.SpyNotification = spyPlayer + " spied on " + game.lastSpyInfo + "'s hand"
 		}
 	}
 

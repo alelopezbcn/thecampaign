@@ -68,6 +68,8 @@ func (g *Game) MoveWarriorToField(playerName, warriorID string, targetPlayerName
 	}
 
 	g.hasMovedWarrior = true
+	g.CanMoveWarrior = false
+	g.lastMovedWarriorID = warriorID
 	g.lastAction = "move_warrior"
 	status = g.GameStatusProvider.Get(p, g)
 
@@ -377,6 +379,7 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()),
 			types.CategoryAction)
 
+		g.lastSpyInfo = "deck"
 		spiedCards = g.deck.Reveal(5)
 	case 2:
 		// Reveal target's cards
@@ -388,6 +391,7 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
 			p.Name(), targetPlayer.Name()), types.CategoryAction)
 
+		g.lastSpyInfo = targetPlayer.Name()
 		spiedCards = targetPlayer.Hand().ShowCards()
 	default:
 		return status, errors.New("invalid Spy option")
@@ -443,6 +447,9 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 
 	g.OnCardMovedToPile(t)
 	p.TakeCards(stolenCard)
+
+	g.lastStolenFrom = targetPlayer.Name()
+	g.lastStolenCard = stolenCard
 
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), targetPlayer.Name()), types.CategoryAction)
