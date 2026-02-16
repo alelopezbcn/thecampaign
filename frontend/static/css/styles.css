@@ -1619,7 +1619,7 @@ body {
     min-height: 130px;
     flex: 1;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     justify-content: center;
     align-content: center;
     gap: 10px;
@@ -1651,6 +1651,10 @@ body {
     flex-wrap: wrap;
     gap: 8px;
     align-items: flex-start;
+}
+
+.field.card-container {
+    flex-wrap: nowrap;
 }
 
 /* Card Styles */

@@ -436,10 +436,12 @@ function handleGameState(payload) {
     // Determine if a result modal will be shown (check before resetActionState)
     const _newCards = payload.game_status.new_cards || [];
     const _modalCards = payload.game_status.modal_cards || [];
-    const willShowResultModal = (
-        (_newCards.length > 0 && payload.is_your_turn && gameState.pendingAction &&
-         ['buy', 'trade'].includes(gameState.pendingAction)) ||
-        (_modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction)
+    const willShowBuyTradeModal = (
+        _newCards.length > 0 && payload.is_your_turn && gameState.pendingAction &&
+        ['buy', 'trade'].includes(gameState.pendingAction)
+    );
+    const willShowSpyStealModal = (
+        _modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction
     );
 
     // Clear any stale deferred animations from a previous state update
@@ -507,8 +509,9 @@ function handleGameState(payload) {
         }
     };
 
-    // Defer animations until modal close, or play immediately
-    if (willShowResultModal) {
+    // For buy/trade: defer animations until modal close (show modal first)
+    // For spy/steal: play animations first, then show result modal after animations finish
+    if (willShowBuyTradeModal) {
         pendingAnimationsCallback = playAllAnimations;
     } else {
         playAllAnimations();
@@ -554,22 +557,21 @@ function handleGameState(payload) {
     }
 
     // Check if we have modal cards from spy/steal action
+    // Show after animations finish so player sees the steal/spy animation first
     const modalCards = _modalCards;
-    console.log('Modal cards check:', {
-        modalCards: modalCards,
-        modalCardsLength: modalCards.length,
-        isYourTurn: payload.is_your_turn,
-        pendingModalAction: gameState.pendingModalAction
-    });
     if (modalCards.length > 0 && payload.is_your_turn && gameState.pendingModalAction) {
-        if (gameState.pendingModalAction === 'spy_deck') {
-            showCardsModal(modalCards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
-        } else if (gameState.pendingModalAction === 'spy_hand') {
-            showCardsModal(modalCards, 'Enemy Hand', "These are the cards in your opponent's hand");
-        } else if (gameState.pendingModalAction === 'steal') {
-            showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
-        }
-        gameState.pendingModalAction = null; // Clear after handling
+        const action = gameState.pendingModalAction;
+        gameState.pendingModalAction = null;
+        const animDelay = 1400; // Wait for animations to finish
+        setTimeout(() => {
+            if (action === 'spy_deck') {
+                showCardsModal(modalCards, 'Top Cards from Deck', 'First card (left) is on top of the deck', true);
+            } else if (action === 'spy_hand') {
+                showCardsModal(modalCards, 'Enemy Hand', "These are the cards in your opponent's hand");
+            } else if (action === 'steal') {
+                showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
+            }
+        }, animDelay);
     }
 
     // Check for game over message
@@ -591,12 +593,9 @@ function checkIsWinner(gameOverMsg, status) {
 }
 
 function handleGameEnded() {
-    showScreen('gameover');
-    const gameOverMsg = gameState.currentState?.game_over_msg || '';
+    const gameOverMsg = gameState.currentState?.game_over_msg || 'Game Over!';
     const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
-    document.getElementById('gameover-title').textContent =
-        isWinner ? 'Victory!' : 'Defeat';
-    document.getElementById('gameover-message').textContent = gameOverMsg;
+    showGameOverModal(isWinner, gameOverMsg);
 }
 
 // Screen management
