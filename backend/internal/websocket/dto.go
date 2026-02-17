@@ -42,8 +42,9 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 			Field:        convertFieldCards(opp.Field),
 			Castle:       convertCastle(opp.Castle),
 			CardsInHand:  opp.CardsInHand,
-			IsAlly:       opp.IsAlly,
-			IsEliminated: opp.IsEliminated,
+			IsAlly:         opp.IsAlly,
+			IsEliminated:   opp.IsEliminated,
+			IsDisconnected: opp.IsDisconnected,
 		}
 	}
 
@@ -60,6 +61,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
 		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
 		IsEliminated:        status.IsEliminated,
+		IsDisconnected:      status.IsDisconnected,
 		Opponents:           opponents,
 		GameMode:            status.GameMode,
 		Cemetery:            convertCemetery(status.Cemetery),

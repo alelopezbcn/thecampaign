@@ -2475,8 +2475,8 @@ function renderGameBoard(status) {
     // Render history
     renderHistory(status.history);
 
-    // Show/hide player eliminated overlay
-    updatePlayerEliminatedState(status.is_eliminated);
+    // Show/hide player eliminated/disconnected overlay
+    updatePlayerEliminatedState(status.is_eliminated || status.is_disconnected);
 }
 
 function updatePlayerEliminatedState(isEliminated) {
@@ -2532,7 +2532,7 @@ function renderOpponents(opponents) {
         board.className = 'opponent-board';
         board.dataset.opponentName = opponent.player_name;
         if (opponent.is_ally) board.classList.add('ally');
-        if (opponent.is_eliminated) board.classList.add('eliminated');
+        if (opponent.is_eliminated || opponent.is_disconnected) board.classList.add('eliminated');
         if (gameState.currentState && opponent.player_name === gameState.currentState.turn_player) {
             board.classList.add('active-turn');
         }
@@ -2540,10 +2540,15 @@ function renderOpponents(opponents) {
         // Header
         const header = document.createElement('div');
         header.className = 'opponent-header';
+        const badgeHtml = opponent.is_eliminated
+            ? '<span class="opponent-badge eliminated-badge">Eliminated</span>'
+            : opponent.is_disconnected
+                ? '<span class="opponent-badge eliminated-badge">Disconnected</span>'
+                : '';
         header.innerHTML = `
             <span class="opponent-name">${opponent.player_name}</span>
             ${opponent.is_ally ? '<span class="opponent-badge ally-badge">Ally</span>' : ''}
-            ${opponent.is_eliminated ? '<span class="opponent-badge eliminated-badge">Eliminated</span>' : ''}
+            ${badgeHtml}
         `;
         board.appendChild(header);
 

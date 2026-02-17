@@ -21,6 +21,7 @@ type GameStatus struct {
 	CurrentPlayerField  []gamestatus.FieldCard   `json:"current_player_field"`
 	CurrentPlayerCastle gamestatus.Castle        `json:"current_player_castle"`
 	IsEliminated        bool                     `json:"is_eliminated"`
+	IsDisconnected      bool                     `json:"is_disconnected"`
 	Opponents           []OpponentStatus         `json:"opponents"`
 	GameMode            string                   `json:"game_mode"`
 	Cemetery            gamestatus.Cemetery      `json:"cemetery"`
@@ -47,8 +48,9 @@ type OpponentStatus struct {
 	Field        []gamestatus.FieldCard
 	Castle       gamestatus.Castle
 	CardsInHand  int
-	IsAlly       bool
-	IsEliminated bool
+	IsAlly         bool
+	IsEliminated   bool
+	IsDisconnected bool
 }
 
 func newGameStatusWithModalCards(viewer ports.Player, game *Game,
@@ -81,6 +83,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		CurrentPlayerField:  []gamestatus.FieldCard{},
 		CurrentPlayerCastle: gamestatus.NewCastle(viewer.Castle()),
 		IsEliminated:        game.EliminatedPlayers[viewerIdx],
+		IsDisconnected:      game.DisconnectedPlayers[viewerIdx],
 		CanTrade:            game.CanTrade,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
@@ -228,8 +231,9 @@ func processOpponents(viewer ports.Player, game *Game, gs *GameStatus) {
 			PlayerName:   p.Name(),
 			CardsInHand:  p.CardsInHand(),
 			Castle:       gamestatus.NewCastle(p.Castle()),
-			IsAlly:       game.SameTeam(viewerIdx, i),
-			IsEliminated: game.EliminatedPlayers[i],
+			IsAlly:         game.SameTeam(viewerIdx, i),
+			IsEliminated:   game.EliminatedPlayers[i],
+			IsDisconnected: game.DisconnectedPlayers[i],
 		}
 		for _, warrior := range p.Field().Warriors() {
 			opp.Field = append(opp.Field, gamestatus.NewFieldCard(warrior))

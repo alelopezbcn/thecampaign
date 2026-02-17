@@ -18,38 +18,39 @@ const (
 type Games []Game
 
 type Game struct {
-	id                 string
-	createdAt          time.Time
-	Mode               types.GameMode
-	Players            []ports.Player
-	Teams              map[int][]int // teamID -> player indices (2v2 only)
-	EliminatedPlayers  map[int]bool  // player index -> eliminated (FFA only)
-	CurrentTurn        int
-	currentAction      types.ActionType
-	CanMoveWarrior     bool
-	hasMovedWarrior    bool
-	CanTrade           bool
-	hasTraded          bool
-	deck               ports.Deck
-	discardPile        ports.DiscardPile
-	cemetery           ports.Cemetery
-	dealer             ports.Dealer
-	GameStatusProvider GameStatusProvider
-	history            []historyLine
-	historyTracker     int
-	lastAction         string
-	lastMovedWarriorID string
-	lastStolenFrom     string
-	lastStolenCard     ports.Card
-	lastSpyInfo          string // "deck" or target player name
-	lastAttackWeaponID   string
-	lastAttackTargetID   string
+	id                     string
+	createdAt              time.Time
+	Mode                   types.GameMode
+	Players                []ports.Player
+	Teams                  map[int][]int // teamID -> player indices (2v2 only)
+	EliminatedPlayers      map[int]bool  // player index -> eliminated (FFA only)
+	DisconnectedPlayers    map[int]bool  // player index -> disconnected
+	CurrentTurn            int
+	currentAction          types.ActionType
+	CanMoveWarrior         bool
+	hasMovedWarrior        bool
+	CanTrade               bool
+	hasTraded              bool
+	deck                   ports.Deck
+	discardPile            ports.DiscardPile
+	cemetery               ports.Cemetery
+	dealer                 ports.Dealer
+	GameStatusProvider     GameStatusProvider
+	history                []historyLine
+	historyTracker         int
+	lastAction             string
+	lastMovedWarriorID     string
+	lastStolenFrom         string
+	lastStolenCard         ports.Card
+	lastSpyInfo            string // "deck" or target player name
+	lastAttackWeaponID     string
+	lastAttackTargetID     string
 	lastAttackTargetPlayer string
-	gameOver             bool
-	winner             string
-	winnerIdx          int
-	GameStartedAt      time.Time
-	TurnStartedAt      time.Time
+	gameOver               bool
+	winner                 string
+	winnerIdx              int
+	GameStartedAt          time.Time
+	TurnStartedAt          time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
@@ -70,7 +71,8 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		GameStatusProvider: gameStatusProvider,
 		Players:            make([]ports.Player, len(playerNames)),
 		Mode:               mode,
-		EliminatedPlayers:  make(map[int]bool),
+		EliminatedPlayers:   make(map[int]bool),
+		DisconnectedPlayers: make(map[int]bool),
 		GameStartedAt:      now,
 		TurnStartedAt:      now,
 	}
@@ -320,10 +322,101 @@ func (g *Game) switchTurn() {
 
 	for {
 		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
-		if !g.EliminatedPlayers[g.CurrentTurn] {
+		if !g.EliminatedPlayers[g.CurrentTurn] && !g.DisconnectedPlayers[g.CurrentTurn] {
 			break
 		}
 	}
+}
+
+// DisconnectPlayer marks a player as disconnected, removing them from turn rotation.
+// If it's their turn, switches to the next player. State is preserved for reconnection.
+func (g *Game) DisconnectPlayer(playerName string) error {
+	playerIdx := g.PlayerIndex(playerName)
+	if playerIdx == -1 {
+		return errors.New("player not found")
+	}
+
+	if g.gameOver || g.EliminatedPlayers[playerIdx] || g.DisconnectedPlayers[playerIdx] {
+		return nil
+	}
+
+	wasTheirTurn := g.CurrentTurn == playerIdx
+	g.DisconnectedPlayers[playerIdx] = true
+	g.addToHistory(playerName+" disconnected", types.CategoryElimination)
+
+	// Check win conditions
+	isOut := func(i int) bool {
+		return g.EliminatedPlayers[i] || g.DisconnectedPlayers[i]
+	}
+
+	switch g.Mode {
+	case types.GameMode2v2:
+		// Check if all members of any team are out
+		for _, members := range g.Teams {
+			allOut := true
+			for _, idx := range members {
+				if !isOut(idx) {
+					allOut = false
+					break
+				}
+			}
+			if allOut {
+				// Opposing team wins
+				for _, idx := range members {
+					for j, p := range g.Players {
+						if j != idx && !isOut(j) && !g.SameTeam(idx, j) {
+							g.gameOver = true
+							g.winner = p.Name() + "'s team"
+							g.winnerIdx = j
+							break
+						}
+					}
+					if g.gameOver {
+						break
+					}
+				}
+			}
+		}
+	default:
+		active := 0
+		var lastActive string
+		for i, p := range g.Players {
+			if !isOut(i) {
+				active++
+				lastActive = p.Name()
+			}
+		}
+		if active == 1 {
+			g.gameOver = true
+			g.winner = lastActive
+			g.winnerIdx = g.PlayerIndex(lastActive)
+		} else if active == 0 {
+			g.gameOver = true
+			g.winner = "nobody"
+			g.winnerIdx = -1
+		}
+	}
+
+	if wasTheirTurn && !g.gameOver {
+		g.switchTurn()
+	}
+
+	return nil
+}
+
+// ReconnectPlayer restores a disconnected player back into turn rotation.
+func (g *Game) ReconnectPlayer(playerName string) {
+	playerIdx := g.PlayerIndex(playerName)
+	if playerIdx == -1 {
+		return
+	}
+
+	if !g.DisconnectedPlayers[playerIdx] {
+		return
+	}
+
+	g.DisconnectedPlayers[playerIdx] = false
+	g.addToHistory(playerName+" reconnected", types.CategoryElimination)
 }
 
 func (g *Game) nextAction(expectedAction types.ActionType,
@@ -365,7 +458,7 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 	}
 
 	if expectedAction == types.ActionTypeBuy {
-		if p.CanBuy() {
+		if p.CanBuy() || g.CanTrade {
 			g.currentAction = types.ActionTypeBuy
 
 			return gameStatusFn()

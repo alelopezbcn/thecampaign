@@ -1,1 +1,38 @@
-Buy / Trade phase, same as Attack / Move Warrior
+Nueva carta ballesta
+
+Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)
+Arpón - Tu idea. Mata al Dragón de un tiro. Le da un counter real al Dragón que hoy es muy fuerte por poder usar cualquier arma y ser inmune al instant kill del Archer. Podría descartarse si no hay Dragón en campo enemigo.
+
+Muralla - Protege tu castillo del Catapult por un turno (o hasta que sea destruida). Hoy el Catapult no tiene counter, esto le daría uno.
+
+Plaga / Lluvia de flechas - Hace 3-5 de daño a TODOS los guerreros enemigos en campo. Fuerza al oponente a curar o perder múltiples unidades. Buen equalizer cuando alguien tiene el campo lleno.
+
+Resurreción - Recupera un guerrero aleatorio del cementerio y lo pone en tu campo. Da valor a los guerreros caídos y abre jugadas de recuperación.
+
+Sabotaje - Destruye una carta aleatoria de la mano del oponente (no la robas, se descarta). Más agresivo que el Thief porque elimina recursos.
+
+Mecánicas nuevas
+Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
+
+Mercenario - Un guerrero "neutro" que se compra con oro (costo 5-6) en vez de robarse del mazo. No tiene afinidad de arma (usa cualquiera como el Dragón) pero sin poder especial. Crea un puente entre economía y ejército.
+
+Emboscada / Trampa - Una carta que colocas boca abajo en tu campo. Cuando el oponente ataca a uno de tus guerreros, se activa: refleja parte del daño, o anula el ataque, o mata al atacante. Agrega bluffing y tensión.
+
+Deserción - Roba un guerrero enemigo y lo pones en tu campo (solo si tiene poca vida, ej: < 5 HP). Le da uso al daño parcial en vez de siempre querer matar.
+
+Ideas de sistema / reglas
+Clima / Eventos - Al inicio de cada ronda, se revela una carta de evento global: "Tormenta" (las flechas hacen -2 daño), "Sequía" (construir cuesta el doble), "Luna llena" (los Magos hacen daño x3). Agrega variabilidad entre partidas.
+
+Terreno - Cada jugador tiene un tipo de terreno aleatorio que da un bonus pasivo. Montaña: +2 HP a guerreros. Bosque: los Archers tienen 2x contra todos. Pantano: venenos cuestan 1 menos para construir.
+
+Misiones secretas - Al inicio cada jugador recibe un objetivo secundario oculto ("mata 3 guerreros con veneno", "construye un castillo sin usar oro de valor > 3"). Completarlo da un bonus (robar 2 cartas, +5 al castillo, etc). Agrega una capa estratégica oculta.
+
+Modo draft - En vez de repartir cartas aleatorias, cada jugador elige cartas de un pool compartido al inicio. Más skill, menos suerte.
+
+De todas estas, las que creo que tienen mejor relación esfuerzo/impacto para implementar son:
+
+Arpón - Es simple, una carta single-use como Catapult, y balancea al Dragón
+Muralla - Mismo patrón, counter al Catapult
+Plaga - Daño AOE agrega una dimensión nueva al combate
+Forja - Mecánica elegante que usa cartas existentes de forma nueva
+Cuáles te gustan más? Puedo diseñar la implementación de cualquiera de estas.

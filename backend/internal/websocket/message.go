@@ -117,6 +117,7 @@ type GameStatusDTO struct {
 	CurrentPlayerField  []FieldCardDTO      `json:"current_player_field"`
 	CurrentPlayerCastle CastleDTO           `json:"current_player_castle"`
 	IsEliminated        bool                `json:"is_eliminated"`
+	IsDisconnected      bool                `json:"is_disconnected"`
 	Opponents           []OpponentStatusDTO `json:"opponents"`
 	GameMode            string              `json:"game_mode"`
 	Cemetery            CemeteryDTO         `json:"cemetery"`
@@ -143,8 +144,9 @@ type OpponentStatusDTO struct {
 	Field        []FieldCardDTO `json:"field"`
 	Castle       CastleDTO      `json:"castle"`
 	CardsInHand  int            `json:"cards_in_hand"`
-	IsAlly       bool           `json:"is_ally"`
-	IsEliminated bool           `json:"is_eliminated"`
+	IsAlly         bool           `json:"is_ally"`
+	IsEliminated   bool           `json:"is_eliminated"`
+	IsDisconnected bool           `json:"is_disconnected"`
 }
 
 // HandCardDTO represents a card in the player's hand
