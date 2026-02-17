@@ -1,3 +1,100 @@
+Refacor Game
+
+1. Extract the "last action" state into a dedicated struct
+You have ~8 fields just for tracking the last action for animations/notifications:
+
+
+lastAction, lastMovedWarriorID, lastStolenFrom, lastStolenCard,
+lastSpyInfo, lastAttackWeaponID, lastAttackTargetID, lastAttackTargetPlayer
+These will only grow with new card types. Extract them into an ActionResult or TurnEvent struct:
+
+
+type ActionResult struct {
+    Action            string
+    MovedWarriorID    string
+    StolenFrom        string
+    StolenCard        ports.Card
+    SpyInfo           string
+    AttackWeaponID    string
+    AttackTargetID    string
+    AttackTargetPlayer string
+    // future card types just add fields here
+}
+Game gets a single lastResult ActionResult field, and you reset it at the start of each action. This also makes it easier for GameStatusProvider to consume.
+
+2. Command Pattern for game actions
+This is the big one. Each action method in gameactions.go follows the same structure: validate turn/phase, get player/cards, execute, record result, call nextAction. As you add card types, this file will keep growing.
+
+Instead, define actions as standalone types:
+
+
+type GameAction interface {
+    Validate(g *Game) error
+    Execute(g *Game) (*ActionResult, error)
+    Phase() types.ActionType  // which phase this belongs to
+}
+
+// Example
+type AttackAction struct {
+    PlayerName       string
+    TargetPlayerName string
+    TargetID         string
+    WeaponID         string
+}
+
+func (a *AttackAction) Phase() types.ActionType { return types.Attack }
+
+func (a *AttackAction) Validate(g *Game) error {
+    // turn validation, player lookup, card type checks
+}
+
+func (a *AttackAction) Execute(g *Game) (*ActionResult, error) {
+    // the actual attack logic
+}
+Then Game gets one generic method:
+
+
+func (g *Game) ExecuteAction(action GameAction) (GameStatus, error) {
+    if err := action.Validate(g); err != nil {
+        return GameStatus{}, err
+    }
+    result, err := action.Execute(g)
+    if err != nil {
+        return GameStatus{}, err
+    }
+    g.lastResult = *result
+    g.nextAction(action.Phase(), nil)
+    return g.GameStatusProvider.Get(g.CurrentPlayer(), g), nil
+}
+Benefits:
+
+New card types = new files with their action struct, not more methods on Game
+Each action is independently testable
+Game stays as the orchestrator, not the implementor
+The handler layer (handlers.go) maps message types to action structs instead of calling different Game methods
+3. Group remaining fields by concern
+The win-condition fields (gameOver, winner, winnerIdx) and turn-tracking fields (hasMovedWarrior, hasTraded, CanMoveWarrior, CanTrade) could each be small structs:
+
+
+type TurnState struct {
+    CanMoveWarrior  bool
+    HasMovedWarrior bool
+    CanTrade        bool
+    HasTraded       bool
+    StartedAt       time.Time
+}
+This is lower priority but keeps the Game struct readable as it grows.
+
+What I'd prioritize
+ActionResult struct - Quick win, minimal refactor, immediate clarity
+Command pattern - Higher effort but directly solves the "more card types = bigger Game" problem
+Field grouping - Nice-to-have, do it as you touch those areas
+The command pattern is the most impactful. It turns Game from "the thing that does everything" into "the thing that validates turns and dispatches actions" — which is what it's conceptually already doing, just not structurally.
+
+Want me to plan the implementation for any of these?
+
+*****************************************************
+
 Nueva carta ballesta
 
 Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)
