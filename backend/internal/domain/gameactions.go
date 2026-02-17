@@ -580,41 +580,6 @@ func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) 
 	return status, nil
 }
 
-func (g *Game) SkipPhase(playerName string) (status GameStatus, err error) {
-	var nextAction types.ActionType
-
-	p := g.CurrentPlayer()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	skippedPhase := g.currentAction
-
-	switch g.currentAction {
-	case types.ActionTypeAttack:
-		nextAction = types.ActionTypeSpySteal
-	case types.ActionTypeSpySteal:
-		nextAction = types.ActionTypeBuy
-	case types.ActionTypeBuy:
-		nextAction = types.ActionTypeConstruct
-	case types.ActionTypeConstruct:
-		nextAction = types.ActionTypeEndTurn
-	default:
-		return status, errors.New("cannot skip this phase")
-	}
-
-	g.addToHistory(fmt.Sprintf("%s skipped phase %s", p.Name(), skippedPhase),
-		types.CategorySkip)
-
-	g.lastResult.Action = types.LastActionSkip
-	status = g.nextAction(nextAction,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, g)
-		})
-
-	return status, nil
-}
-
 func (g *Game) EndTurn(player string, expired bool) (status GameStatus, err error) {
 	p := g.CurrentPlayer()
 	if p.Name() != player {

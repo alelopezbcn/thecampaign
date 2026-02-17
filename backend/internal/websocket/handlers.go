@@ -206,6 +206,6 @@ func (h *Hub) handleSkipPhase(client *Client) {
 	log.Printf("handleSkipPhase called by %s", client.PlayerName)
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.SkipPhase(client.PlayerName)
+		return g.ExecuteAction(domain.NewSkipPhaseAction(client.PlayerName))
 	})
 }

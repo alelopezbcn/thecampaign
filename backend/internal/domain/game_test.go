@@ -1801,7 +1801,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction: types.ActionTypeAttack,
 		}
 
-		status, err := g.SkipPhase("Player2")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player2"))
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -1823,7 +1823,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction: types.ActionTypeDrawCard,
 		}
 
-		status, err := g.SkipPhase("Player1")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot skip this phase")
@@ -1845,7 +1845,7 @@ func TestGame_SkipPhase(t *testing.T) {
 			currentAction: types.ActionTypeEndTurn,
 		}
 
-		status, err := g.SkipPhase("Player1")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot skip this phase")
@@ -1880,7 +1880,7 @@ func TestGame_SkipPhase(t *testing.T) {
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.SkipPhase("Player1")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -1915,7 +1915,7 @@ func TestGame_SkipPhase(t *testing.T) {
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.SkipPhase("Player1")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -1950,7 +1950,7 @@ func TestGame_SkipPhase(t *testing.T) {
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.SkipPhase("Player1")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -1984,51 +1984,11 @@ func TestGame_SkipPhase(t *testing.T) {
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.SkipPhase("Player1")
+		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
 		assert.Equal(t, types.ActionTypeEndTurn, g.currentAction)
-	})
-
-	t.Run("History is updated when phase is skipped", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasSpy().Return(false)
-		mockPlayer1.EXPECT().HasThief().Return(false)
-		mockPlayer1.EXPECT().CanBuy().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeAttack,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
-
-		_, err := g.SkipPhase("Player1")
-
-		assert.NoError(t, err)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "skipped") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain skip phase action")
 	})
 }
 

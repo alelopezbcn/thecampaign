@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
@@ -16,17 +17,6 @@ const (
 )
 
 type Games []Game
-
-type ActionResult struct {
-	Action             types.LastActionType
-	MovedWarriorID     string
-	StolenFrom         string
-	StolenCard         ports.Card
-	Spy                types.SpyInfo
-	AttackWeaponID     string
-	AttackTargetID     string
-	AttackTargetPlayer string
-}
 
 type Game struct {
 	id                  string
@@ -66,19 +56,19 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 
 	now := time.Now()
 	g := &Game{
-		id:                 uuid.NewString(),
-		CurrentTurn:        0,
-		discardPile:        newDiscardPile(),
-		cemetery:           newCemetery(),
-		history:            []historyLine{},
-		dealer:             dealer,
-		GameStatusProvider: gameStatusProvider,
-		Players:            make([]ports.Player, len(playerNames)),
-		Mode:               mode,
+		id:                  uuid.NewString(),
+		CurrentTurn:         0,
+		discardPile:         newDiscardPile(),
+		cemetery:            newCemetery(),
+		history:             []historyLine{},
+		dealer:              dealer,
+		GameStatusProvider:  gameStatusProvider,
+		Players:             make([]ports.Player, len(playerNames)),
+		Mode:                mode,
 		EliminatedPlayers:   make(map[int]bool),
 		DisconnectedPlayers: make(map[int]bool),
-		GameStartedAt:      now,
-		TurnStartedAt:      now,
+		GameStartedAt:       now,
+		TurnStartedAt:       now,
 	}
 
 	castleResourcesToWin := maxCastleResourcesFFA
@@ -499,4 +489,24 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 	g.currentAction = types.ActionTypeDrawCard
 
 	return gameStatusFn()
+}
+
+func (g *Game) ExecuteAction(action GameAction) (status GameStatus, err error) {
+	if g.CurrentPlayer().Name() != action.PlayerName() {
+		return status, fmt.Errorf("%s not your turn", action.PlayerName())
+	}
+	if err := action.Validate(g); err != nil {
+		return status, err
+	}
+
+	result, gameStatusFn, err := action.Execute(g)
+	if err != nil {
+		return status, err
+	}
+
+	g.lastResult = *result
+
+	nextPhase := action.NextPhase()
+
+	return g.nextAction(nextPhase, gameStatusFn), nil
 }
