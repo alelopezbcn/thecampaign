@@ -452,7 +452,7 @@ func (h *Hub) autoDrawAndBroadcast(gameID string) {
 
 	room.mutex.Lock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status, err := room.Game.DrawCard(currentPlayer.Name())
+	status, err := room.Game.ExecuteAction(domain.NewDrawCardAction(currentPlayer.Name()))
 	room.mutex.Unlock()
 
 	if err != nil {

@@ -11,7 +11,7 @@ func (h *Hub) handleDrawCard(client *Client) {
 	log.Printf("handleDrawCard called by %s", client.PlayerName)
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.DrawCard(client.PlayerName)
+		return g.ExecuteAction(domain.NewDrawCardAction(client.PlayerName))
 	})
 }
 

@@ -118,45 +118,6 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 	return status, nil
 }
 
-func (g *Game) DrawCard(playerName string) (status GameStatus, err error) {
-	var cards []ports.Card
-
-	p := g.CurrentPlayer()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	cards, err = g.drawCards(p, 1)
-	if err != nil {
-		if errors.Is(err, ErrHandLimitExceeded) {
-			// Player has max cards, skip drawing but continue to attack phase
-			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()),
-				types.CategoryError)
-
-			status = g.nextAction(types.ActionTypeAttack,
-				func() GameStatus {
-					return g.GameStatusProvider.Get(p, g)
-				})
-
-			return status, nil
-		}
-
-		return status, fmt.Errorf("drawing card failed: %w", err)
-	}
-
-	p.TakeCards(cards...)
-
-	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
-
-	g.lastResult.Action = types.LastActionDraw
-	status = g.nextAction(types.ActionTypeAttack,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, g, cards...)
-		})
-
-	return status, nil
-}
-
 func (g *Game) Attack(playerName, targetPlayerName, targetID, weaponID string) (
 	status GameStatus, err error) {
 
