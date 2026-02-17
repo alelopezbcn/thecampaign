@@ -187,7 +187,7 @@ func (h *Hub) handleEndTurn(client *Client) {
 	}
 
 	room.mutex.Lock()
-	status, err := room.Game.EndTurn(client.PlayerName, false)
+	status, err := room.Game.ExecuteAction(domain.NewEndTurnPhaseAction(client.PlayerName, false))
 	room.mutex.Unlock()
 
 	if err != nil {

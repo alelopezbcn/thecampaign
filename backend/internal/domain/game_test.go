@@ -519,7 +519,7 @@ func TestGame_DrawCard(t *testing.T) {
 			CurrentTurn: 0,
 		}
 
-		status, err := g.DrawCard("Player2")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player2"))
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -552,7 +552,7 @@ func TestGame_DrawCard(t *testing.T) {
 			discardPile: mockDiscardPile,
 		}
 
-		status, err := g.DrawCard("Player1")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "no cards left to draw")
@@ -599,7 +599,7 @@ func TestGame_DrawCard(t *testing.T) {
 			mockDrawnCard,
 		).Return(expectedStatus)
 
-		status, err := g.DrawCard("Player1")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -643,7 +643,7 @@ func TestGame_DrawCard(t *testing.T) {
 			g,
 		).Return(expectedStatus)
 
-		status, err := g.DrawCard("Player1")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.NoError(t, err) // No error returned - game continues
 		assert.Equal(t, expectedStatus, status)
@@ -697,7 +697,7 @@ func TestGame_DrawCard(t *testing.T) {
 			mockDrawnCard,
 		).Return(expectedStatus)
 
-		status, err := g.DrawCard("Player1")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -736,7 +736,7 @@ func TestGame_DrawCard(t *testing.T) {
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.DrawCard("Player1")
+		_, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.NoError(t, err)
 		found := false
@@ -779,7 +779,7 @@ func TestGame_DrawCard(t *testing.T) {
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.DrawCard("Player1")
+		_, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.NoError(t, err)
 		found := false
@@ -834,7 +834,7 @@ func TestGame_DrawCard(t *testing.T) {
 			mockDrawnCard,
 		).Return(expectedStatus)
 
-		status, err := g.DrawCard("Player1")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -882,7 +882,7 @@ func TestGame_DrawCard(t *testing.T) {
 			mockDrawnCard,
 		).Return(expectedStatus)
 
-		status, err := g.DrawCard("Player2")
+		status, err := g.ExecuteAction(NewDrawCardAction("Player2"))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -1412,7 +1412,7 @@ func TestGame_EndTurn(t *testing.T) {
 			CurrentTurn: 0, // Player1's turn
 		}
 
-		status, err := g.EndTurn("Player2", false) // Player2 tries to end turn
+		status, err := g.ExecuteAction(NewEndTurnPhaseAction("Player2", false)) // Player2 tries to end turn
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Player2 not your turn")
@@ -1451,7 +1451,7 @@ func TestGame_EndTurn(t *testing.T) {
 
 		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
 
-		status, err := g.EndTurn("Player1", false)
+		status, err := g.ExecuteAction(NewEndTurnPhaseAction("Player1", false))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -1491,7 +1491,7 @@ func TestGame_EndTurn(t *testing.T) {
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
 
-		status, err := g.EndTurn("Player2", false)
+		status, err := g.ExecuteAction(NewEndTurnPhaseAction("Player2", false))
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
@@ -1522,7 +1522,7 @@ func TestGame_EndTurn(t *testing.T) {
 
 		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
 
-		_, err := g.EndTurn("Player1", false)
+		_, err := g.ExecuteAction(NewEndTurnPhaseAction("Player1", false))
 
 		assert.NoError(t, err)
 		found := false

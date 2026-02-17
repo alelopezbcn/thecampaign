@@ -540,27 +540,3 @@ func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) 
 
 	return status, nil
 }
-
-func (g *Game) EndTurn(player string, expired bool) (status GameStatus, err error) {
-	p := g.CurrentPlayer()
-	if p.Name() != player {
-		return status, fmt.Errorf("%s not your turn", player)
-	}
-
-	if expired {
-		g.addToHistory(fmt.Sprintf("%s's turn expired", p.Name()),
-			types.CategoryTurnExpired)
-	} else {
-		g.addToHistory(fmt.Sprintf("%s ended their turn", p.Name()),
-			types.CategoryEndTurn)
-	}
-
-	g.lastResult.Action = types.LastActionEndTurn
-	g.switchTurn()
-	status = g.nextAction(types.ActionTypeDrawCard,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(g.CurrentPlayer(), g)
-		})
-
-	return status, nil
-}
