@@ -65,7 +65,7 @@ func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.MoveWarriorToField(client.PlayerName, p.WarriorID, p.TargetPlayer)
+		return g.ExecuteAction(domain.NewMoveWarriorAction(client.PlayerName, p.WarriorID, p.TargetPlayer))
 	})
 }
 
@@ -83,7 +83,7 @@ func (h *Hub) handleTrade(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Trade(client.PlayerName, p.CardIDs)
+		return g.ExecuteAction(domain.NewTradeAction(client.PlayerName, p.CardIDs))
 	})
 }
 
