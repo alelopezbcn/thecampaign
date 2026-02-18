@@ -452,7 +452,7 @@ func (h *Hub) autoDrawAndBroadcast(gameID string) {
 
 	room.mutex.Lock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status, err := room.Game.DrawCard(currentPlayer.Name())
+	status, err := room.Game.ExecuteAction(domain.NewDrawCardAction(currentPlayer.Name()))
 	room.mutex.Unlock()
 
 	if err != nil {
@@ -503,7 +503,7 @@ func (h *Hub) startTurnTimer(gameID string) {
 			currentPlayer := room.Game.CurrentPlayer().Name()
 			log.Printf("Turn timer expired for %s in game %s", currentPlayer, gameID)
 
-			status, err := room.Game.EndTurn(currentPlayer, true) // Auto-end turn due to timer expiration
+			status, err := room.Game.ExecuteAction(domain.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
 			room.mutex.Unlock()
 
 			if err != nil {

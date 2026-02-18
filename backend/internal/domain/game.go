@@ -2,6 +2,7 @@ package domain
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
@@ -18,39 +19,27 @@ const (
 type Games []Game
 
 type Game struct {
-	id                     string
-	createdAt              time.Time
-	Mode                   types.GameMode
-	Players                []ports.Player
-	Teams                  map[int][]int // teamID -> player indices (2v2 only)
-	EliminatedPlayers      map[int]bool  // player index -> eliminated (FFA only)
-	DisconnectedPlayers    map[int]bool  // player index -> disconnected
-	CurrentTurn            int
-	currentAction          types.ActionType
-	CanMoveWarrior         bool
-	hasMovedWarrior        bool
-	CanTrade               bool
-	hasTraded              bool
-	deck                   ports.Deck
-	discardPile            ports.DiscardPile
-	cemetery               ports.Cemetery
-	dealer                 ports.Dealer
-	GameStatusProvider     GameStatusProvider
-	history                []historyLine
-	historyTracker         int
-	lastAction             string
-	lastMovedWarriorID     string
-	lastStolenFrom         string
-	lastStolenCard         ports.Card
-	lastSpyInfo            string // "deck" or target player name
-	lastAttackWeaponID     string
-	lastAttackTargetID     string
-	lastAttackTargetPlayer string
-	gameOver               bool
-	winner                 string
-	winnerIdx              int
-	GameStartedAt          time.Time
-	TurnStartedAt          time.Time
+	id                  string
+	createdAt           time.Time
+	Mode                types.GameMode
+	Players             []ports.Player
+	Teams               map[int][]int // teamID -> player indices (2v2 only)
+	EliminatedPlayers   map[int]bool  // player index -> eliminated (FFA only)
+	DisconnectedPlayers map[int]bool  // player index -> disconnected
+	CurrentTurn   int
+	currentAction types.PhaseType
+	turnState     TurnState
+
+	deck                ports.Deck
+	discardPile         ports.DiscardPile
+	cemetery            ports.Cemetery
+	dealer              ports.Dealer
+	GameStatusProvider  GameStatusProvider
+	history             []historyLine
+	historyTracker      int
+	lastResult          GameActionResult
+	winState      WinState
+	GameStartedAt time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
@@ -62,19 +51,19 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 
 	now := time.Now()
 	g := &Game{
-		id:                 uuid.NewString(),
-		CurrentTurn:        0,
-		discardPile:        newDiscardPile(),
-		cemetery:           newCemetery(),
-		history:            []historyLine{},
-		dealer:             dealer,
-		GameStatusProvider: gameStatusProvider,
-		Players:            make([]ports.Player, len(playerNames)),
-		Mode:               mode,
+		id:                  uuid.NewString(),
+		CurrentTurn:         0,
+		discardPile:         newDiscardPile(),
+		cemetery:            newCemetery(),
+		history:             []historyLine{},
+		dealer:              dealer,
+		GameStatusProvider:  gameStatusProvider,
+		Players:             make([]ports.Player, len(playerNames)),
+		Mode:                mode,
 		EliminatedPlayers:   make(map[int]bool),
 		DisconnectedPlayers: make(map[int]bool),
-		GameStartedAt:      now,
-		TurnStartedAt:      now,
+		GameStartedAt: now,
+		turnState:     TurnState{StartedAt: now},
 	}
 
 	castleResourcesToWin := maxCastleResourcesFFA
@@ -165,17 +154,17 @@ func (g *Game) deal() {
 }
 
 func (g *Game) IsGameOver() (bool, string) {
-	return g.gameOver, g.winner
+	return g.winState.GameOver, g.winState.Winner
 }
 
 func (g *Game) isPlayerWinner(playerIdx int) bool {
-	if !g.gameOver {
+	if !g.winState.GameOver {
 		return false
 	}
-	if playerIdx == g.winnerIdx {
+	if playerIdx == g.winState.WinnerIdx {
 		return true
 	}
-	return g.SameTeam(playerIdx, g.winnerIdx)
+	return g.SameTeam(playerIdx, g.winState.WinnerIdx)
 }
 
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
@@ -239,12 +228,12 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
-	g.gameOver = true
-	g.winnerIdx = g.PlayerIndex(p.Name())
+	g.winState.GameOver = true
+	g.winState.WinnerIdx = g.PlayerIndex(p.Name())
 	if g.Mode == types.GameMode2v2 {
-		g.winner = p.Name() + "'s team"
+		g.winState.Winner = p.Name() + "'s team"
 	} else {
-		g.winner = p.Name()
+		g.winState.Winner = p.Name()
 	}
 }
 
@@ -253,9 +242,9 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 
 	switch g.Mode {
 	case types.GameMode1v1:
-		g.gameOver = true
-		g.winner = g.CurrentPlayer().Name()
-		g.winnerIdx = g.CurrentTurn
+		g.winState.GameOver = true
+		g.winState.Winner = g.CurrentPlayer().Name()
+		g.winState.WinnerIdx = g.CurrentTurn
 		return
 
 	case types.GameModeFFA3, types.GameModeFFA5:
@@ -269,9 +258,9 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 			}
 		}
 		if active == 1 {
-			g.gameOver = true
-			g.winner = lastActive
-			g.winnerIdx = g.PlayerIndex(lastActive)
+			g.winState.GameOver = true
+			g.winState.Winner = lastActive
+			g.winState.WinnerIdx = g.PlayerIndex(lastActive)
 		}
 
 	case types.GameMode2v2:
@@ -288,9 +277,9 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 			}
 		}
 		if allEnemiesEliminated {
-			g.gameOver = true
-			g.winner = g.CurrentPlayer().Name() + "'s team"
-			g.winnerIdx = g.CurrentTurn
+			g.winState.GameOver = true
+			g.winState.Winner = g.CurrentPlayer().Name() + "'s team"
+			g.winState.WinnerIdx = g.CurrentTurn
 		}
 	}
 
@@ -308,17 +297,9 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 }
 
 func (g *Game) switchTurn() {
-	g.hasMovedWarrior = false
-	g.hasTraded = false
-	g.lastMovedWarriorID = ""
-	g.lastStolenFrom = ""
-	g.lastStolenCard = nil
-	g.lastSpyInfo = ""
-	g.lastAttackWeaponID = ""
-	g.lastAttackTargetID = ""
-	g.lastAttackTargetPlayer = ""
-	g.currentAction = types.ActionTypeDrawCard
-	g.TurnStartedAt = time.Now()
+	g.turnState = TurnState{StartedAt: time.Now()}
+	g.lastResult = GameActionResult{}
+	g.currentAction = types.PhaseTypeDrawCard
 
 	for {
 		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
@@ -336,7 +317,7 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 		return errors.New("player not found")
 	}
 
-	if g.gameOver || g.EliminatedPlayers[playerIdx] || g.DisconnectedPlayers[playerIdx] {
+	if g.winState.GameOver || g.EliminatedPlayers[playerIdx] || g.DisconnectedPlayers[playerIdx] {
 		return nil
 	}
 
@@ -365,13 +346,13 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 				for _, idx := range members {
 					for j, p := range g.Players {
 						if j != idx && !isOut(j) && !g.SameTeam(idx, j) {
-							g.gameOver = true
-							g.winner = p.Name() + "'s team"
-							g.winnerIdx = j
+							g.winState.GameOver = true
+							g.winState.Winner = p.Name() + "'s team"
+							g.winState.WinnerIdx = j
 							break
 						}
 					}
-					if g.gameOver {
+					if g.winState.GameOver {
 						break
 					}
 				}
@@ -387,17 +368,17 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 			}
 		}
 		if active == 1 {
-			g.gameOver = true
-			g.winner = lastActive
-			g.winnerIdx = g.PlayerIndex(lastActive)
+			g.winState.GameOver = true
+			g.winState.Winner = lastActive
+			g.winState.WinnerIdx = g.PlayerIndex(lastActive)
 		} else if active == 0 {
-			g.gameOver = true
-			g.winner = "nobody"
-			g.winnerIdx = -1
+			g.winState.GameOver = true
+			g.winState.Winner = "nobody"
+			g.winState.WinnerIdx = -1
 		}
 	}
 
-	if wasTheirTurn && !g.gameOver {
+	if wasTheirTurn && !g.winState.GameOver {
 		g.switchTurn()
 	}
 
@@ -419,14 +400,14 @@ func (g *Game) ReconnectPlayer(playerName string) {
 	g.addToHistory(playerName+" reconnected", types.CategoryElimination)
 }
 
-func (g *Game) nextAction(expectedAction types.ActionType,
+func (g *Game) nextAction(expectedAction types.PhaseType,
 	gameStatusFn func() GameStatus) GameStatus {
 
 	p := g.CurrentPlayer()
-	g.CanMoveWarrior = !g.hasMovedWarrior && p.HasWarriorsInHand()
-	g.CanTrade = !g.hasTraded && p.CanTradeCards()
+	g.turnState.CanMoveWarrior = !g.turnState.HasMovedWarrior && p.HasWarriorsInHand()
+	g.turnState.CanTrade = !g.turnState.HasTraded && p.CanTradeCards()
 
-	if expectedAction == types.ActionTypeAttack {
+	if expectedAction == types.PhaseTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := false
 		if p.HasCatapult() {
@@ -438,36 +419,36 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			}
 		}
 
-		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
-			g.currentAction = types.ActionTypeAttack
+		if p.CanAttack() || canAttackWithCatapult || g.turnState.CanMoveWarrior {
+			g.currentAction = types.PhaseTypeAttack
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeSpySteal
+		expectedAction = types.PhaseTypeSpySteal
 	}
 
-	if expectedAction == types.ActionTypeSpySteal {
+	if expectedAction == types.PhaseTypeSpySteal {
 		if p.HasSpy() || p.HasThief() {
-			g.currentAction = types.ActionTypeSpySteal
+			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeBuy
+		expectedAction = types.PhaseTypeBuy
 	}
 
-	if expectedAction == types.ActionTypeBuy {
-		if p.CanBuy() || g.CanTrade {
-			g.currentAction = types.ActionTypeBuy
+	if expectedAction == types.PhaseTypeBuy {
+		if p.CanBuy() || g.turnState.CanTrade {
+			g.currentAction = types.PhaseTypeBuy
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeConstruct
+		expectedAction = types.PhaseTypeConstruct
 	}
 
-	if expectedAction == types.ActionTypeConstruct {
+	if expectedAction == types.PhaseTypeConstruct {
 		canConstruct := p.CanConstruct()
 		if !canConstruct {
 			// In 2v2, check if player has resources and any ally has a constructed castle
@@ -484,21 +465,50 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			}
 		}
 		if canConstruct {
-			g.currentAction = types.ActionTypeConstruct
+			g.currentAction = types.PhaseTypeConstruct
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeEndTurn
+		expectedAction = types.PhaseTypeEndTurn
 	}
 
-	if expectedAction == types.ActionTypeEndTurn {
-		g.currentAction = types.ActionTypeEndTurn
+	if expectedAction == types.PhaseTypeEndTurn {
+		g.currentAction = types.PhaseTypeEndTurn
 
 		return gameStatusFn()
 	}
 
-	g.currentAction = types.ActionTypeDrawCard
+	g.currentAction = types.PhaseTypeDrawCard
 
 	return gameStatusFn()
+}
+
+func (g *Game) ExecuteAction(action GameAction) (status GameStatus, err error) {
+	if g.CurrentPlayer().Name() != action.PlayerName() {
+		return status, fmt.Errorf("%s not your turn", action.PlayerName())
+	}
+	if err := action.Validate(g); err != nil {
+		return status, err
+	}
+
+	result, gameStatusFn, err := action.Execute(g)
+	if err != nil {
+		return status, err
+	}
+
+	g.lastResult = *result
+
+	nextPhase := action.NextPhase()
+
+	return g.nextAction(nextPhase, gameStatusFn), nil
+}
+
+// AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
+func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
+	p := g.GetPlayer(playerName)
+	if p == nil {
+		return fmt.Errorf("player %s not found", playerName)
+	}
+	return p.MoveCardToField(warriorID)
 }

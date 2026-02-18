@@ -12,7 +12,7 @@ type GameStatus struct {
 	CurrentPlayer  string   `json:"current_player"`
 	TurnPlayer     string   `json:"turn_player"`
 	CurrentAction  string   `json:"current_action"`
-	LastAction     string   `json:"last_action,omitempty"`
+	LastAction     types.LastActionType `json:"last_action,omitempty"`
 	NewCards       []string `json:"new_cards"`
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
@@ -76,7 +76,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		CurrentPlayer:       viewer.Name(),
 		TurnPlayer:          game.CurrentPlayer().Name(),
 		CurrentAction:       string(game.currentAction),
-		LastAction:          game.lastAction,
+		LastAction:          game.lastResult.Action,
 		GameMode:            string(game.Mode),
 		NewCards:            []string{},
 		CurrentPlayerHand:   []gamestatus.HandCard{},
@@ -84,14 +84,14 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		CurrentPlayerCastle: gamestatus.NewCastle(viewer.Castle()),
 		IsEliminated:        game.EliminatedPlayers[viewerIdx],
 		IsDisconnected:      game.DisconnectedPlayers[viewerIdx],
-		CanTrade:            game.CanTrade,
+		CanTrade:            game.turnState.CanTrade,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
 		History:             []gamestatus.HistoryLine{},
 		PlayersOrder:        playersOrder,
 		GameStartedAt:       game.GameStartedAt,
-		TurnStartedAt:       game.TurnStartedAt,
+		TurnStartedAt:       game.turnState.StartedAt,
 		TurnTimeLimitSecs:   120,
 	}
 
@@ -108,31 +108,31 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 	}
 
 	// Include last moved warrior ID for animation (only on the move action itself)
-	if game.lastAction == "move_warrior" && game.lastMovedWarriorID != "" {
-		gs.LastMovedWarriorID = game.lastMovedWarriorID
+	if game.lastResult.Action == types.LastActionMoveWarrior && game.lastResult.MovedWarriorID != "" {
+		gs.LastMovedWarriorID = game.lastResult.MovedWarriorID
 	}
 
 	// Include attack animation info (only on the attack action itself)
-	if game.lastAction == "attack" && game.lastAttackWeaponID != "" {
-		gs.LastAttackWeaponID = game.lastAttackWeaponID
-		gs.LastAttackTargetID = game.lastAttackTargetID
-		gs.LastAttackTargetPlayer = game.lastAttackTargetPlayer
+	if game.lastResult.Action == types.LastActionAttack && game.lastResult.AttackWeaponID != "" {
+		gs.LastAttackWeaponID = game.lastResult.AttackWeaponID
+		gs.LastAttackTargetID = game.lastResult.AttackTargetID
+		gs.LastAttackTargetPlayer = game.lastResult.AttackTargetPlayer
 	}
 
 	// Include stolen card info for the victim (only on the steal action itself)
-	if game.lastAction == "steal" && game.lastStolenFrom != "" &&
-		game.lastStolenCard != nil && viewer.Name() == game.lastStolenFrom {
-		gs.StolenFromYouCard = gamestatus.FromDomainCards([]ports.Card{game.lastStolenCard})
+	if game.lastResult.Action == types.LastActionSteal && game.lastResult.StolenFrom != "" &&
+		game.lastResult.StolenCard != nil && viewer.Name() == game.lastResult.StolenFrom {
+		gs.StolenFromYouCard = gamestatus.FromDomainCards([]ports.Card{game.lastResult.StolenCard})
 	}
 
 	// Include spy notification for all players except the spy
-	if game.lastSpyInfo != "" && game.lastAction == "spy" &&
+	if game.lastResult.Spy.Target != "" && game.lastResult.Action == types.LastActionSpy &&
 		viewer.Name() != game.CurrentPlayer().Name() {
 		spyPlayer := game.CurrentPlayer().Name()
-		if game.lastSpyInfo == "deck" {
+		if game.lastResult.Spy.Target == types.SpyTargetDeck {
 			gs.SpyNotification = spyPlayer + " spied on the deck"
 		} else {
-			gs.SpyNotification = spyPlayer + " spied on " + game.lastSpyInfo + "'s hand"
+			gs.SpyNotification = spyPlayer + " spied on " + game.lastResult.Spy.TargetPlayer + "'s hand"
 		}
 	}
 
@@ -154,7 +154,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 
 func processHandCards(viewer ports.Player, game *Game, gs *GameStatus) {
 	action := game.currentAction
-	canMove := game.CanMoveWarrior
+	canMove := game.turnState.CanMoveWarrior
 
 	for _, card := range viewer.Hand().ShowCards() {
 		switch ct := card.(type) {

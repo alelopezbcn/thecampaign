@@ -1,0 +1,89 @@
+package domain
+
+import (
+	reflect "reflect"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
+	gomock "go.uber.org/mock/gomock"
+)
+
+// MockGameAction is a mock of GameAction interface.
+type MockGameAction struct {
+	ctrl     *gomock.Controller
+	recorder *MockGameActionMockRecorder
+}
+
+// MockGameActionMockRecorder is the mock recorder for MockGameAction.
+type MockGameActionMockRecorder struct {
+	mock *MockGameAction
+}
+
+// NewMockGameAction creates a new mock instance.
+func NewMockGameAction(ctrl *gomock.Controller) *MockGameAction {
+	mock := &MockGameAction{ctrl: ctrl}
+	mock.recorder = &MockGameActionMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockGameAction) EXPECT() *MockGameActionMockRecorder {
+	return m.recorder
+}
+
+// PlayerName mocks base method.
+func (m *MockGameAction) PlayerName() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PlayerName")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// PlayerName indicates an expected call of PlayerName.
+func (mr *MockGameActionMockRecorder) PlayerName() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlayerName", reflect.TypeOf((*MockGameAction)(nil).PlayerName))
+}
+
+// Validate mocks base method.
+func (m *MockGameAction) Validate(g *Game) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Validate", g)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Validate indicates an expected call of Validate.
+func (mr *MockGameActionMockRecorder) Validate(g any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Validate", reflect.TypeOf((*MockGameAction)(nil).Validate), g)
+}
+
+// Execute mocks base method.
+func (m *MockGameAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Execute", g)
+	ret0, _ := ret[0].(*GameActionResult)
+	ret1, _ := ret[1].(func() GameStatus)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Execute indicates an expected call of Execute.
+func (mr *MockGameActionMockRecorder) Execute(g any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Execute", reflect.TypeOf((*MockGameAction)(nil).Execute), g)
+}
+
+// NextPhase mocks base method.
+func (m *MockGameAction) NextPhase() types.PhaseType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "NextPhase")
+	ret0, _ := ret[0].(types.PhaseType)
+	return ret0
+}
+
+// NextPhase indicates an expected call of NextPhase.
+func (mr *MockGameActionMockRecorder) NextPhase() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "NextPhase", reflect.TypeOf((*MockGameAction)(nil).NextPhase))
+}
