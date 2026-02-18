@@ -2796,6 +2796,13 @@ function createCardElement(card, context) {
         div.classList.add('protected');
     }
 
+    // Add tooltip for new players
+    const cardKey = (card.sub_type || card.type || '').toLowerCase();
+    const description = CARD_DESCRIPTIONS[cardKey];
+    if (description) {
+        div.dataset.tooltip = description;
+    }
+
     // Add click handler
     if (context === 'player-hand' || context.startsWith('opponent-field:') || context === 'player-field') {
         div.addEventListener('click', () => {
@@ -3079,6 +3086,22 @@ function getCardStats(card, cardType) {
     stats += '</div>';
     return stats;
 }
+
+// Card description lookup (keyed by lowercase sub_type or type)
+const CARD_DESCRIPTIONS = {
+    'knight':       'A heavily armored warrior. Can attack with Swords. Special Power: Shield. Takes double damage from Poison.',
+    'archer':       'A swift ranged fighter. Can attack with Arrows. Special Power: Instant Kill. Takes double damage from Swords.',
+    'mage':         'A mystical spellcaster. Can attack with Poison. Special Power: Heal. Takes double damage from Arrows.',
+    'dragon':       'A mighty beast. Can attack with any weapon. Takes equal damage from all weapons. Instant kill takes 10 DMG. Cannot use Special Powers.',
+    'sword':        'Deals double damage to Archers. Used by Knights and Dragons. A value-1 Sword can also construct your castle. Can be traded.',
+    'arrow':        'Deals double damage to Mages. Used by Archers and Dragons. A value-1 Arrow can also construct your castle. Can be traded.',
+    'poison':       'Deals double damage to Knights. Used by Mages and Dragons. A value-1 Poison can also construct your castle. Can be traded.',
+    'resource':     'Spend gold to buy cards (2 coins = 1 card). A value-1 Gold can also construct your castle.',
+    'specialpower': 'Knight: shields an ally warrior. Archer: instantly kills an enemy. Mage: fully heals an ally. Cannot be used by Dragons.',
+    'spy':          "Peek at an opponent's full hand or the top 5 cards of the deck.",
+    'thief':        "Steal a random card from an opponent's hand.",
+    'catapult':     'Destroy one gold resource from a constructed enemy castle, reducing their castle value.',
+};
 
 // Card image mapping: card key -> image filename
 // Key is derived from sub_type (e.g. "Knight") or type (e.g. "Resource") lowercased

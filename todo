@@ -1,3 +1,5 @@
+auto end turn, y que ponga un mensaje de que acabo el turno
+
 
 
 Nueva carta ballesta
@@ -39,4 +41,8 @@ Plaga - Daño AOE agrega una dimensión nueva al combate
 Forja - Mecánica elegante que usa cartas existentes de forma nueva
 Cuáles te gustan más? Puedo diseñar la implementación de cualquiera de estas.
 
-Add tooltip to each card
+
+adapt to small resolutions
+
+persist game status
+
