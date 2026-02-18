@@ -137,7 +137,7 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Spy(client.PlayerName, p.TargetPlayer, p.Option)
+		return g.ExecuteAction(domain.NewSpyAction(client.PlayerName, p.TargetPlayer, p.Option))
 	})
 }
 
@@ -155,7 +155,7 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Steal(client.PlayerName, p.TargetPlayer, p.CardPosition)
+		return g.ExecuteAction(domain.NewStealAction(client.PlayerName, p.TargetPlayer, p.CardPosition))
 	})
 }
 
