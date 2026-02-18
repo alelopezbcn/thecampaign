@@ -101,7 +101,7 @@ func (h *Hub) handleBuy(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Buy(client.PlayerName, p.CardID)
+		return g.ExecuteAction(domain.NewBuyAction(client.PlayerName, p.CardID))
 	})
 }
 
@@ -119,7 +119,7 @@ func (h *Hub) handleConstruct(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Construct(client.PlayerName, p.CardID, p.TargetPlayer)
+		return g.ExecuteAction(domain.NewConstructAction(client.PlayerName, p.CardID, p.TargetPlayer))
 	})
 }
 
