@@ -24,7 +24,7 @@ func NewTradeAction(playerName string, cardIDs []string) *TradeAction {
 func (a *TradeAction) PlayerName() string { return a.playerName }
 
 func (a *TradeAction) Validate(g *Game) error {
-	if g.hasTraded {
+	if g.turnState.HasTraded {
 		return errors.New("already traded this turn")
 	}
 
@@ -56,8 +56,8 @@ func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() GameStatus, er
 
 	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()), types.CategoryAction)
 
-	g.hasTraded = true
-	g.CanTrade = false
+	g.turnState.HasTraded = true
+	g.turnState.CanTrade = false
 	result.Action = types.LastActionTrade
 	a.currentPhase = g.currentAction
 

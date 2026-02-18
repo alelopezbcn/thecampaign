@@ -48,8 +48,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			hasMovedWarrior:    true,
-			hasTraded:          true,
+			turnState: TurnState{HasMovedWarrior: true, HasTraded: true},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
@@ -61,8 +60,8 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionEndTurn, result.Action)
 		assert.Equal(t, 1, g.CurrentTurn)
-		assert.False(t, g.hasMovedWarrior)
-		assert.False(t, g.hasTraded)
+		assert.False(t, g.turnState.HasMovedWarrior)
+		assert.False(t, g.turnState.HasTraded)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

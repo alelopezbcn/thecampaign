@@ -1,26 +1,4 @@
 
-3. Group remaining fields by concern
-The win-condition fields (gameOver, winner, winnerIdx) and turn-tracking fields (hasMovedWarrior, hasTraded, CanMoveWarrior, CanTrade) could each be small structs:
-
-
-type TurnState struct {
-    CanMoveWarrior  bool
-    HasMovedWarrior bool
-    CanTrade        bool
-    HasTraded       bool
-    StartedAt       time.Time
-}
-This is lower priority but keeps the Game struct readable as it grows.
-
-What I'd prioritize
-ActionResult struct - Quick win, minimal refactor, immediate clarity
-Command pattern - Higher effort but directly solves the "more card types = bigger Game" problem
-Field grouping - Nice-to-have, do it as you touch those areas
-The command pattern is the most impactful. It turns Game from "the thing that does everything" into "the thing that validates turns and dispatches actions" — which is what it's conceptually already doing, just not structurally.
-
-Want me to plan the implementation for any of these?
-
-*****************************************************
 
 Nueva carta ballesta
 

@@ -29,7 +29,7 @@ func NewMoveWarriorAction(playerName, warriorID string, targetPlayerName string)
 func (a *MoveWarriorAction) PlayerName() string { return a.playerName }
 
 func (a *MoveWarriorAction) Validate(g *Game) error {
-	if g.hasMovedWarrior {
+	if g.turnState.HasMovedWarrior {
 		return errors.New("already moved a warrior this turn")
 	}
 
@@ -86,8 +86,8 @@ func (a *MoveWarriorAction) Execute(g *Game) (*GameActionResult, func() GameStat
 			types.CategoryAction)
 	}
 
-	g.hasMovedWarrior = true
-	g.CanMoveWarrior = false
+	g.turnState.HasMovedWarrior = true
+	g.turnState.CanMoveWarrior = false
 	result.MovedWarriorID = a.warriorID
 	result.Action = types.LastActionMoveWarrior
 	a.currentPhase = g.currentAction

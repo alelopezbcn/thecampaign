@@ -30,7 +30,7 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:         []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:     0,
-			hasMovedWarrior: true,
+			turnState: TurnState{HasMovedWarrior: true},
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "")
@@ -246,8 +246,8 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionMoveWarrior, result.Action)
 		assert.Equal(t, "K1", result.MovedWarriorID)
-		assert.True(t, g.hasMovedWarrior)
-		assert.False(t, g.CanMoveWarrior)
+		assert.True(t, g.turnState.HasMovedWarrior)
+		assert.False(t, g.turnState.CanMoveWarrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -295,7 +295,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionMoveWarrior, result.Action)
 		assert.Equal(t, "K1", result.MovedWarriorID)
-		assert.True(t, g.hasMovedWarrior)
+		assert.True(t, g.turnState.HasMovedWarrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

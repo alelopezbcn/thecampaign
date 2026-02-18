@@ -84,14 +84,14 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 		CurrentPlayerCastle: gamestatus.NewCastle(viewer.Castle()),
 		IsEliminated:        game.EliminatedPlayers[viewerIdx],
 		IsDisconnected:      game.DisconnectedPlayers[viewerIdx],
-		CanTrade:            game.CanTrade,
+		CanTrade:            game.turnState.CanTrade,
 		Cemetery:            gamestatus.NewCemetery(game.cemetery),
 		DiscardPile:         gamestatus.NewDiscardPile(game.discardPile),
 		CardsInDeck:         game.deck.Count(),
 		History:             []gamestatus.HistoryLine{},
 		PlayersOrder:        playersOrder,
 		GameStartedAt:       game.GameStartedAt,
-		TurnStartedAt:       game.TurnStartedAt,
+		TurnStartedAt:       game.turnState.StartedAt,
 		TurnTimeLimitSecs:   120,
 	}
 
@@ -154,7 +154,7 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 
 func processHandCards(viewer ports.Player, game *Game, gs *GameStatus) {
 	action := game.currentAction
-	canMove := game.CanMoveWarrior
+	canMove := game.turnState.CanMoveWarrior
 
 	for _, card := range viewer.Hand().ShowCards() {
 		switch ct := card.(type) {

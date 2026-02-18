@@ -182,8 +182,8 @@ func TestGame_OnCastleCompletion(t *testing.T) {
 
 		g.OnCastleCompletion(mockPlayer1)
 
-		assert.True(t, g.gameOver)
-		assert.Equal(t, "Player1", g.winner)
+		assert.True(t, g.winState.GameOver)
+		assert.Equal(t, "Player1", g.winState.Winner)
 	})
 
 	t.Run("2v2 sets team winner", func(t *testing.T) {
@@ -199,8 +199,8 @@ func TestGame_OnCastleCompletion(t *testing.T) {
 
 		g.OnCastleCompletion(mockPlayer1)
 
-		assert.True(t, g.gameOver)
-		assert.Equal(t, "Player1's team", g.winner)
+		assert.True(t, g.winState.GameOver)
+		assert.Equal(t, "Player1's team", g.winState.Winner)
 	})
 
 	t.Run("FFA3 sets individual winner", func(t *testing.T) {
@@ -216,8 +216,8 @@ func TestGame_OnCastleCompletion(t *testing.T) {
 
 		g.OnCastleCompletion(mockPlayer1)
 
-		assert.True(t, g.gameOver)
-		assert.Equal(t, "Player1", g.winner)
+		assert.True(t, g.winState.GameOver)
+		assert.Equal(t, "Player1", g.winState.Winner)
 	})
 }
 
@@ -241,8 +241,8 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 
 		g.OnFieldWithoutWarriors("Player2")
 
-		assert.True(t, g.gameOver)
-		assert.Equal(t, "Player1", g.winner)
+		assert.True(t, g.winState.GameOver)
+		assert.Equal(t, "Player1", g.winState.Winner)
 	})
 
 	t.Run("FFA3 eliminates player, game continues with 2 remaining", func(t *testing.T) {
@@ -273,7 +273,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 
 		g.OnFieldWithoutWarriors("Player2")
 
-		assert.False(t, g.gameOver)
+		assert.False(t, g.winState.GameOver)
 		assert.True(t, g.EliminatedPlayers[1])
 		assert.Contains(t, g.history, historyLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
 	})
@@ -306,8 +306,8 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 
 		g.OnFieldWithoutWarriors("Player3")
 
-		assert.True(t, g.gameOver)
-		assert.Equal(t, "Player1", g.winner)
+		assert.True(t, g.winState.GameOver)
+		assert.Equal(t, "Player1", g.winState.Winner)
 		assert.True(t, g.EliminatedPlayers[2])
 	})
 
@@ -343,7 +343,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 
 		g.OnFieldWithoutWarriors("Player2")
 
-		assert.False(t, g.gameOver)
+		assert.False(t, g.winState.GameOver)
 		assert.True(t, g.EliminatedPlayers[1])
 	})
 
@@ -379,7 +379,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		// Player2 (Team 2) loses warriors, but Player4 (Team 2) is still alive
 		g.OnFieldWithoutWarriors("Player2")
 
-		assert.False(t, g.gameOver)
+		assert.False(t, g.winState.GameOver)
 		assert.True(t, g.EliminatedPlayers[1])
 		assert.Contains(t, g.history, historyLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
 	})
@@ -416,8 +416,8 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		// Player4 (last of Team 2) loses warriors
 		g.OnFieldWithoutWarriors("Player4")
 
-		assert.True(t, g.gameOver)
-		assert.Equal(t, "Player1's team", g.winner)
+		assert.True(t, g.winState.GameOver)
+		assert.Equal(t, "Player1's team", g.winState.Winner)
 		assert.True(t, g.EliminatedPlayers[3])
 	})
 }
@@ -434,8 +434,7 @@ func TestGame_IsGameOver(t *testing.T) {
 
 	t.Run("Returns true after game ends", func(t *testing.T) {
 		g := &Game{
-			gameOver: true,
-			winner:   "Player1",
+			winState: WinState{GameOver: true, Winner: "Player1"},
 		}
 
 		gameOver, winner := g.IsGameOver()
@@ -837,8 +836,7 @@ func TestGame_switchTurn(t *testing.T) {
 		g := &Game{
 			Players:           []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:       0,
-			hasMovedWarrior:   true,
-			hasTraded:         true,
+			turnState: TurnState{HasMovedWarrior: true, HasTraded: true},
 			currentAction:     types.PhaseTypeEndTurn,
 			EliminatedPlayers: make(map[int]bool),
 		}
@@ -846,8 +844,8 @@ func TestGame_switchTurn(t *testing.T) {
 		g.switchTurn()
 
 		assert.Equal(t, 1, g.CurrentTurn)
-		assert.False(t, g.hasMovedWarrior)
-		assert.False(t, g.hasTraded)
+		assert.False(t, g.turnState.HasMovedWarrior)
+		assert.False(t, g.turnState.HasTraded)
 		assert.Equal(t, types.PhaseTypeDrawCard, g.currentAction)
 	})
 

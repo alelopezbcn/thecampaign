@@ -30,7 +30,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
-			hasTraded:   true,
+			turnState: TurnState{HasTraded: true},
 		}
 
 		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
@@ -154,8 +154,8 @@ func TestTradeAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionTrade, result.Action)
-		assert.True(t, g.hasTraded)
-		assert.False(t, g.CanTrade)
+		assert.True(t, g.turnState.HasTraded)
+		assert.False(t, g.turnState.CanTrade)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
