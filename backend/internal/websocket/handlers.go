@@ -173,7 +173,7 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Catapult(client.PlayerName, p.TargetPlayer, p.CardPosition)
+		return g.ExecuteAction(domain.NewCatapultAction(client.PlayerName, p.TargetPlayer, p.CardPosition))
 	})
 }
 
