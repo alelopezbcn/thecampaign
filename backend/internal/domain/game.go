@@ -39,7 +39,7 @@ type Game struct {
 	GameStatusProvider  GameStatusProvider
 	history             []historyLine
 	historyTracker      int
-	lastResult          ActionResult
+	lastResult          GameActionResult
 	gameOver            bool
 	winner              string
 	winnerIdx           int
@@ -304,7 +304,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 func (g *Game) switchTurn() {
 	g.hasMovedWarrior = false
 	g.hasTraded = false
-	g.lastResult = ActionResult{}
+	g.lastResult = GameActionResult{}
 	g.currentAction = types.ActionTypeDrawCard
 	g.TurnStartedAt = time.Now()
 

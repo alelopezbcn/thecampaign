@@ -34,10 +34,10 @@ func (a *SkipPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SkipPhaseAction) Execute(g *Game) (*ActionResult, func() GameStatus, error) {
+func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
 	p := g.CurrentPlayer()
 
-	result := &ActionResult{Action: types.LastActionSkip}
+	result := &GameActionResult{Action: types.LastActionSkip}
 
 	statusFn := func() GameStatus {
 		return g.GameStatusProvider.Get(p, g)

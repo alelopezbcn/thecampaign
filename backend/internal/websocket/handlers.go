@@ -29,7 +29,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.Attack(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID)
+		return g.ExecuteAction(domain.NewAttackAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
 	})
 }
 

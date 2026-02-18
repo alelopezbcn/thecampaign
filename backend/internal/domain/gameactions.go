@@ -118,64 +118,6 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 	return status, nil
 }
 
-func (g *Game) Attack(playerName, targetPlayerName, targetID, weaponID string) (
-	status GameStatus, err error) {
-
-	p := g.CurrentPlayer()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeAttack {
-		return status, fmt.Errorf("cannot attack in the %s phase",
-			g.currentAction)
-	}
-
-	targetPlayer, err := g.getTargetPlayer(playerName, targetPlayerName)
-	if err != nil {
-		return status, err
-	}
-
-	targetCard, ok := targetPlayer.GetCardFromField(targetID)
-	if !ok {
-		return status, errors.New("target card not in enemy field: " + targetID)
-	}
-
-	weaponCard, ok := p.GetCardFromHand(weaponID)
-	if !ok {
-		return status, errors.New("weapon card not in hand: " + weaponID)
-	}
-
-	t, ok := targetCard.(ports.Attackable)
-	if !ok {
-		return status, fmt.Errorf("the target cardBase cannot be attacked")
-	}
-
-	w, ok := weaponCard.(ports.Weapon)
-	if !ok {
-		return status, fmt.Errorf("the card is not a weapon")
-	}
-
-	if err = p.Attack(t, w); err != nil {
-		return status, fmt.Errorf("attack action failed: %w", err)
-	}
-
-	g.addToHistory(fmt.Sprintf("%s attacked %s with %s",
-		playerName, t.String(), w.String()),
-		types.CategoryAction)
-
-	g.lastResult.Action = types.LastActionAttack
-	g.lastResult.AttackWeaponID = weaponID
-	g.lastResult.AttackTargetID = targetID
-	g.lastResult.AttackTargetPlayer = targetPlayerName
-	status = g.nextAction(types.ActionTypeSpySteal,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, g)
-		})
-
-	return status, nil
-}
-
 func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
 	status GameStatus, err error) {
 

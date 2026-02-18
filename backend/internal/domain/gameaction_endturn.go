@@ -21,7 +21,7 @@ func (a *EndTurnPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *EndTurnPhaseAction) Execute(g *Game) (*ActionResult, func() GameStatus, error) {
+func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if a.expired {
@@ -32,7 +32,7 @@ func (a *EndTurnPhaseAction) Execute(g *Game) (*ActionResult, func() GameStatus,
 			types.CategoryEndTurn)
 	}
 
-	result := &ActionResult{Action: types.LastActionEndTurn}
+	result := &GameActionResult{Action: types.LastActionEndTurn}
 	g.switchTurn()
 
 	statusFn := func() GameStatus {

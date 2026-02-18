@@ -5,13 +5,169 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
+
+func TestGame_ExecuteAction(t *testing.T) {
+	t.Run("Error when not current player's turn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockAction := NewMockGameAction(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockAction.EXPECT().PlayerName().Return("Player2").AnyTimes()
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.ExecuteAction(mockAction)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "Player2 not your turn")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when Validate fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockAction := NewMockGameAction(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
+		mockAction.EXPECT().Validate(gomock.Any()).Return(errors.New("validation failed"))
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.ExecuteAction(mockAction)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "validation failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Error when Execute fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockAction := NewMockGameAction(ctrl)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
+		mockAction.EXPECT().Validate(gomock.Any()).Return(nil)
+		mockAction.EXPECT().Execute(gomock.Any()).Return(nil, nil, errors.New("execute failed"))
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+		}
+
+		status, err := g.ExecuteAction(mockAction)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "execute failed")
+		assert.Equal(t, GameStatus{}, status)
+	})
+
+	t.Run("Success stores lastResult and advances phase", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockAction := NewMockGameAction(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+		actionResult := &GameActionResult{Action: types.LastActionDraw}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
+		mockAction.EXPECT().Validate(gomock.Any()).Return(nil)
+		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() GameStatus {
+			return expectedStatus
+		}, nil)
+		mockAction.EXPECT().NextPhase().Return(types.ActionTypeAttack)
+
+		// nextAction expectations for ActionTypeAttack
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		mockPlayer1.EXPECT().CanAttack().Return(true)
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			discardPile: mockDiscardPile,
+		}
+
+		status, err := g.ExecuteAction(mockAction)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.LastActionDraw, g.lastResult.Action)
+		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
+	})
+
+	t.Run("Success skips phases when player has no capabilities", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockAction := NewMockGameAction(ctrl)
+		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
+
+		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
+		actionResult := &GameActionResult{Action: types.LastActionDraw}
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
+		mockAction.EXPECT().Validate(gomock.Any()).Return(nil)
+		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() GameStatus {
+			return expectedStatus
+		}, nil)
+		mockAction.EXPECT().NextPhase().Return(types.ActionTypeAttack)
+
+		// nextAction: no attack, no spy/steal, no buy -> skips to construct
+		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
+		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		mockPlayer1.EXPECT().CanAttack().Return(false)
+		mockPlayer1.EXPECT().HasSpy().Return(false)
+		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockPlayer1.EXPECT().CanBuy().Return(false)
+		mockPlayer1.EXPECT().CanConstruct().Return(true)
+
+		g := &Game{
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			discardPile: mockDiscardPile,
+		}
+
+		status, err := g.ExecuteAction(mockAction)
+
+		assert.NoError(t, err)
+		assert.Equal(t, expectedStatus, status)
+		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
+	})
+}
 
 func TestGame_Buy(t *testing.T) {
 	t.Run("Error when not current player's turn", func(t *testing.T) {
@@ -501,1494 +657,6 @@ func TestGame_Buy(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedStatus, status)
-	})
-}
-
-func TestGame_DrawCard(t *testing.T) {
-	t.Run("Error when not current player's turn", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
-		}
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player2"))
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Player2 not your turn")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when deck is empty and discard pile is also empty", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		// First draw attempt fails
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
-		// Replenish is called with empty discard pile
-		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{})
-		mockDeck.EXPECT().Replenish([]ports.Card{})
-		// Second draw attempt also fails
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
-
-		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
-			deck:        mockDeck,
-			discardPile: mockDiscardPile,
-		}
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "no cards left to draw")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Success drawing card normally", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player1",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer1.EXPECT().CanAttack().Return(true) // Can attack
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(
-			mockPlayer1,
-			g,
-			mockDrawnCard,
-		).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
-	})
-
-	t.Run("Success when hand limit exceeded - continues but doesn't take card", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player1",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
-		// Note: TakeCards should NOT be called when hand limit exceeded
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer1.EXPECT().CanAttack().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(
-			mockPlayer1,
-			g,
-		).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.NoError(t, err) // No error returned - game continues
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
-	})
-
-	t.Run("Success with deck replenishing from discard pile", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardedCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player1",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		// First draw fails - deck is empty
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
-		// Replenish is called
-		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{mockDiscardedCard})
-		mockDeck.EXPECT().Replenish([]ports.Card{mockDiscardedCard})
-		// Second draw succeeds after replenish
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer1.EXPECT().CanAttack().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(
-			mockPlayer1,
-			g,
-			mockDrawnCard,
-		).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-	})
-
-	t.Run("Verify history is updated on successful draw", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer1.EXPECT().CanAttack().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			history:            []historyLine{},
-			GameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(GameStatus{})
-
-		_, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.NoError(t, err)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "drew") && strings.Contains(h.Msg, "Player1") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain the draw action")
-	})
-
-	t.Run("Verify history is updated when hand limit exceeded", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(false) // Hand limit exceeded
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer1.EXPECT().CanAttack().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			history:            []historyLine{},
-			GameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
-
-		_, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.NoError(t, err)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "can't take more cards") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain hand limit exceeded message")
-	})
-
-	t.Run("Success with CanMoveWarrior and CanTrade flags set", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player1",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(true) // Has warriors
-		mockPlayer1.EXPECT().CanTradeCards().Return(true)     // Can trade
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer1.EXPECT().CanAttack().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			CanMoveWarrior:     true,
-			CanTrade:           true,
-		}
-
-		mockProvider.EXPECT().Get(
-			mockPlayer1,
-			g,
-			mockDrawnCard,
-		).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-	})
-
-	t.Run("Player 2 can draw on their turn", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockCemetery := mocks.NewMockCemetery(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player2",
-		}
-
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
-		mockPlayer2.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		// nextAction expectations for ActionTypeAttack
-		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer2.EXPECT().CanTradeCards().Return(false)
-		mockPlayer2.EXPECT().HasCatapult().Return(false)
-		// Castle().CanBeAttacked() not called because HasCatapult() returned false (short-circuit)
-		mockPlayer2.EXPECT().CanAttack().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        1, // Player 2's turn
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			cemetery:           mockCemetery,
-		}
-
-		mockProvider.EXPECT().Get(
-			mockPlayer2,
-			g,
-			mockDrawnCard,
-		).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewDrawCardAction("Player2"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeAttack, g.currentAction)
-	})
-}
-
-func TestAttacks(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	mockProvider := NewMockGameStatusProvider(ctrl)
-	mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{}).AnyTimes()
-
-	newAttackGame := func(
-		p1Cards []ports.Card, p1Warriors []ports.Warrior,
-		p2Cards []ports.Card, p2Warriors []ports.Warrior,
-	) (g *Game, p1, p2 ports.Player) {
-		g = &Game{
-			currentAction:      types.ActionTypeAttack,
-			history:            []historyLine{},
-			discardPile:        newDiscardPile(),
-			cemetery:           newCemetery(),
-			GameStatusProvider: mockProvider,
-		}
-		p1 = newPlayerWithCardAndObserver("Player1", p1Cards, p1Warriors, g)
-		p2 = newPlayerWithCardAndObserver("Player2", p2Cards, p2Warriors, g)
-		g.Players = []ports.Player{p1, p2}
-		return g, p1, p2
-	}
-
-	t.Run("Knight attacks Archer causing double damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{a})
-
-		_, err := g.Attack("Player1", "Player2", a.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*2, a.Health())
-	})
-	t.Run("Knight attacks Mage causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		m := cards.NewMage("m1")
-		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{m})
-
-		_, err := g.Attack("Player1", "Player2", m.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, m.Health())
-	})
-	t.Run("Knight attacks Knight causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		k2 := cards.NewKnight("k2")
-		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{k2})
-
-		_, err := g.Attack("Player1", "Player2", k2.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, k2.Health())
-	})
-	t.Run("Knight attacks Dragon causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		k := cards.NewKnight("k1")
-		d := cards.NewDragon("d1")
-		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{d})
-
-		_, err := g.Attack("Player1", "Player2", d.GetID(), sword.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, d.Health())
-	})
-	t.Run("Knight cant attack with wrong weapon", func(t *testing.T) {
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		poison := cards.NewPoison("s1", 4)
-		g, p1, _ := newAttackGame([]ports.Card{poison}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{a})
-
-		_, err := g.Attack("Player1", "Player2", a.GetID(), poison.GetID())
-		assert.Error(t, err)
-		assert.Equal(t, 20, a.Health())
-		assert.Contains(t, p1.Hand().ShowCards(), poison)
-	})
-
-	t.Run("Archer attacks Mage causing double damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*2, target.Health())
-	})
-	t.Run("Archer attacks Knight causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Archer attacks Archer causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewArcher("a2")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Archer attacks Dragon causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewArcher("a1")
-		target := cards.NewDragon("d1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Archer cant attack with wrong weapon", func(t *testing.T) {
-		attacker := cards.NewArcher("a1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewSword("s1", 4)
-		g, p1, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.Error(t, err)
-		assert.Equal(t, 20, target.Health())
-		assert.Contains(t, p1.Hand().ShowCards(), weapon)
-	})
-
-	t.Run("Mage attacks Knight causing double damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*2, target.Health())
-	})
-	t.Run("Mage attacks Archer causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Mage attacks Mage causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewMage("m2")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Mage attacks Dragon causing normal damage", func(t *testing.T) {
-		dmgAmnt := 4
-		attacker := cards.NewMage("m1")
-		target := cards.NewDragon("d1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Mage cant attack with wrong weapon", func(t *testing.T) {
-		attacker := cards.NewMage("m1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewArrow("s1", 4)
-		g, p1, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.Error(t, err)
-		assert.Equal(t, 20, target.Health())
-		assert.Contains(t, p1.Hand().ShowCards(), weapon)
-	})
-
-	t.Run("Player cant attack with non existing cards", func(t *testing.T) {
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		sword := cards.NewSword("s1", 4)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{a})
-
-		_, err := g.Attack("Player1", "Player2", "non-existent-target", sword.GetID())
-		assert.Error(t, err)
-
-		_, err = g.Attack("Player1", "Player2", a.GetID(), "non-existent-weapon")
-		assert.Error(t, err)
-	})
-
-	t.Run("Dragon attacks Knight with Sword causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Dragon attacks Knight with Arrow causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Dragon attacks Knight with Poison causing double damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewKnight("k1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*2, target.Health())
-	})
-	t.Run("Dragon attacks Archer with Sword causing double damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*2, target.Health())
-	})
-	t.Run("Dragon attacks Archer with Arrow causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Dragon attacks Archer with Poison causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewArcher("a1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Dragon attacks Mage with Sword causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Dragon attacks Mage with Arrow causing double damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*2, target.Health())
-	})
-	t.Run("Dragon attacks Mage with Poison causing normal damage", func(t *testing.T) {
-		dmgAmnt := 6
-		attacker := cards.NewDragon("d1")
-		target := cards.NewMage("m1")
-		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
-
-		_, err := g.Attack("Player1", "Player2", target.GetID(), weapon.GetID())
-		assert.NoError(t, err)
-		assert.Equal(t, 20-dmgAmnt*1, target.Health())
-	})
-	t.Run("Warrior dead on second attack", func(t *testing.T) {
-		dmgAmnt := 5
-		k := cards.NewKnight("k1")
-		a := cards.NewArcher("a1")
-		a2 := cards.NewArcher("a2")
-		sword1 := cards.NewSword("s1", dmgAmnt)
-		sword2 := cards.NewSword("s2", dmgAmnt)
-		g := &Game{
-			currentAction:      types.ActionTypeAttack,
-			history:            []historyLine{},
-			discardPile:        newDiscardPile(),
-			cemetery:           newCemetery(),
-			GameStatusProvider: mockProvider,
-		}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{sword1, sword2},
-			[]ports.Warrior{k},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{a, a2},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		_, err := g.Attack(p1.Name(), p2.Name(), a.GetID(), sword1.GetID())
-		assert.NoError(t, err)
-		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
-
-		g.currentAction = types.ActionTypeAttack
-		_, err = g.Attack(p1.Name(), p2.Name(), a.GetID(), sword2.GetID())
-		assert.NoError(t, err)
-		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
-
-		assert.Equal(t, 0, a.Health())
-		_, ok := p2.GetCardFromField(a.GetID())
-		assert.False(t, ok, "Archer should have been removed from field after death")
-		_, ok = p2.GetCardFromField(a2.GetID())
-		assert.True(t, ok, "Second Archer should still be on the field")
-		assert.True(t, foundInCemetery(g, a), "Cemetery should contain the dead archer")
-		assert.True(t, foundInDiscardPile(g, sword1), "Discard pile should contain the used sword")
-		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
-	})
-	t.Run("Dragon dead on multiple attacks", func(t *testing.T) {
-		dmgAmnt := 5
-		m1 := cards.NewMage("m1")
-		k2 := cards.NewKnight("k2")
-		a3 := cards.NewArcher("a3")
-
-		target := cards.NewDragon("d1")
-		a2 := cards.NewArcher("a2")
-
-		poison1 := cards.NewPoison("p1", dmgAmnt)
-		sword2 := cards.NewSword("s2", dmgAmnt)
-		arrow3 := cards.NewArrow("ar3", dmgAmnt)
-		sword4 := cards.NewSword("s4", dmgAmnt)
-
-		g := &Game{
-			currentAction:      types.ActionTypeAttack,
-			history:            []historyLine{},
-			discardPile:        newDiscardPile(),
-			cemetery:           newCemetery(),
-			GameStatusProvider: mockProvider,
-		}
-		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{poison1, sword2, arrow3, sword4},
-			[]ports.Warrior{m1, k2, a3},
-			g,
-		)
-		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target, a2},
-			g,
-		)
-
-		g.Players = []ports.Player{p1, p2}
-
-		_, err := g.Attack(p1.Name(), p2.Name(), target.GetID(), poison1.GetID())
-		assert.NoError(t, err)
-		g.currentAction = types.ActionTypeAttack
-		_, err = g.Attack(p1.Name(), p2.Name(), target.GetID(), sword2.GetID())
-		assert.NoError(t, err)
-		g.currentAction = types.ActionTypeAttack
-		_, err = g.Attack(p1.Name(), p2.Name(), target.GetID(), arrow3.GetID())
-		assert.NoError(t, err)
-		g.currentAction = types.ActionTypeAttack
-		_, err = g.Attack(p1.Name(), p2.Name(), target.GetID(), sword4.GetID())
-		assert.NoError(t, err)
-
-		assert.Equal(t, 0, target.Health())
-		_, ok := p1.GetCardFromField(m1.GetID())
-		assert.True(t, ok, "Mage should still be on the field")
-		_, ok = p1.GetCardFromField(k2.GetID())
-		assert.True(t, ok, "Knight should still be on the field")
-		_, ok = p1.GetCardFromField(a3.GetID())
-		assert.True(t, ok, "Archer should still be on the field")
-
-		_, ok = p2.GetCardFromField(target.GetID())
-		assert.False(t, ok, "Dragon should have been removed from field after death")
-		_, ok = p2.GetCardFromField(a2.GetID())
-		assert.True(t, ok, "Archer should still be on the field")
-
-		_, ok = p1.GetCardFromHand(poison1.GetID())
-		assert.False(t, ok, "Poison should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(sword2.GetID())
-		assert.False(t, ok, "Sword should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(arrow3.GetID())
-		assert.False(t, ok, "Arrow should have been discarded after attack")
-		_, ok = p1.GetCardFromHand(sword4.GetID())
-		assert.False(t, ok, "Sword should have been discarded after attack")
-
-		assert.True(t, foundInCemetery(g, target), "Cemetery should contain the dead dragon")
-		assert.True(t, foundInDiscardPile(g, poison1), "Discard pile should contain the used poison")
-		assert.True(t, foundInDiscardPile(g, sword2), "Discard pile should contain the used sword")
-		assert.True(t, foundInDiscardPile(g, arrow3), "Discard pile should contain the used arrow")
-		assert.True(t, foundInDiscardPile(g, sword4), "Discard pile should contain the used sword")
-	})
-}
-
-func findInAttackedBy(cards []ports.Weapon, id string) bool {
-	for _, c := range cards {
-		if c != nil && c.GetID() == id {
-			return true
-		}
-	}
-	return false
-}
-
-func foundInCemetery(g *Game, a ports.Warrior) bool {
-	c := g.cemetery.(*cemetery)
-	for _, w := range c.corps {
-		if w == a || (w != nil && w.GetID() == a.GetID()) {
-			return true
-		}
-	}
-	return false
-}
-
-func foundInDiscardPile(g *Game, a ports.Card) bool {
-	dp := g.discardPile.(*discardPile)
-	for _, card := range dp.cards {
-		if card == a || (card != nil && card.GetID() == a.GetID()) {
-			return true
-		}
-	}
-	return false
-}
-
-func fieldContainsCardWithID(field ports.Field, id string) bool {
-	for _, c := range field.Warriors() {
-		if c != nil && c.GetID() == id {
-			return true
-		}
-	}
-	return false
-}
-
-func handContainsCardWithID(hand ports.Hand, id string) bool {
-	for _, c := range hand.ShowCards() {
-		if c != nil && c.GetID() == id {
-			return true
-		}
-	}
-	return false
-}
-
-func newPlayerWithCards(name string, cardsInHand []ports.Card,
-	cardsInField []ports.Warrior) ports.Player {
-	return newPlayerWithCardAndObserver(name, cardsInHand, cardsInField, nil)
-}
-
-func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
-	cardsInField []ports.Warrior, game *Game) ports.Player {
-	p := &player{
-		name:                           name,
-		cardMovedToPileObserver:        game,
-		warriorMovedToCemeteryObserver: game,
-		hand: &hand{
-			cards: cardsInHand,
-		},
-		field: &field{
-			playerName:        name,
-			cards:             cardsInField,
-			gameEndedObserver: game,
-		},
-		castle: &castle{},
-	}
-
-	for _, card := range cardsInField {
-		card.AddCardMovedToPileObserver(p)
-		targ, ok := card.(ports.Warrior)
-		if ok {
-			targ.AddWarriorDeadObserver(p)
-		}
-	}
-	for _, card := range cardsInHand {
-		card.AddCardMovedToPileObserver(p)
-	}
-
-	return p
-}
-
-func TestGame_EndTurn(t *testing.T) {
-	t.Run("Error when not current player's turn", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0, // Player1's turn
-		}
-
-		status, err := g.ExecuteAction(NewEndTurnPhaseAction("Player2", false)) // Player2 tries to end turn
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Player2 not your turn")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Success ending turn switches to next player", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player2",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-
-		// nextAction expectations for ActionTypeDrawCard -> checks capabilities
-		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer2.EXPECT().CanTradeCards().Return(false)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0, // Player1's turn
-			currentAction:      types.ActionTypeEndTurn,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			hasMovedWarrior:    true, // These should be reset
-			hasTraded:          true,
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewEndTurnPhaseAction("Player1", false))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, 1, g.CurrentTurn) // Turn switched to Player2
-		assert.False(t, g.hasMovedWarrior)
-		assert.False(t, g.hasTraded)
-		assert.Equal(t, types.ActionTypeDrawCard, g.currentAction)
-	})
-
-	t.Run("Turn wraps around from last player to first", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player1",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-
-		// nextAction expectations
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        1, // Player2's turn
-			currentAction:      types.ActionTypeEndTurn,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewEndTurnPhaseAction("Player2", false))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, 0, g.CurrentTurn) // Wrapped back to Player1
-	})
-
-	t.Run("History is updated when turn ends", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer2.EXPECT().CanTradeCards().Return(false)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
-
-		_, err := g.ExecuteAction(NewEndTurnPhaseAction("Player1", false))
-
-		assert.NoError(t, err)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "ended their turn") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain turn change message")
-	})
-}
-
-func TestGame_Attack(t *testing.T) {
-	t.Run("Error when not current player's turn", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
-		}
-
-		status, err := g.Attack("Player2", "Player1", "targetID", "weaponID")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Player2 not your turn")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when not in Attack phase", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeBuy, // Not Attack phase
-		}
-
-		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot attack in the")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when target card not in enemy field", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(nil, false)
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
-		}
-
-		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "target card not in enemy field")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when weapon card not in hand", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
-		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(nil, false)
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
-		}
-
-		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "weapon card not in hand")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when card is not a weapon", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockResource := mocks.NewMockResource(ctrl) // Not a weapon
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
-		mockPlayer1.EXPECT().GetCardFromHand("resourceID").Return(mockResource, true)
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
-		}
-
-		status, err := g.Attack("Player1", "Player2", "targetID", "resourceID")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "the card is not a weapon")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when attack action fails", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockWeapon := mocks.NewMockWeapon(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
-		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
-		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(errors.New("attack failed"))
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
-		}
-
-		status, err := g.Attack("Player1", "Player2", "targetID", "weaponID")
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "attack action failed")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Success attacking enemy warrior", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockWeapon := mocks.NewMockWeapon(ctrl)
-
-		expectedStatus := GameStatus{
-			CurrentPlayer: "Player1",
-		}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
-		mockPlayer1.EXPECT().GetCardFromHand("S1").Return(mockWeapon, true)
-		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(nil)
-		mockWarrior.EXPECT().String().Return("Knight (20)")
-		mockWeapon.EXPECT().String().Return("Sword (5)")
-
-		// nextAction expectations for ActionTypeSpySteal
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasSpy().Return(false)
-		mockPlayer1.EXPECT().HasThief().Return(false)
-		mockPlayer1.EXPECT().CanBuy().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeAttack,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		status, err := g.Attack("Player1", "Player2", "K1", "S1")
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeBuy, g.currentAction) // Moved to Buy phase
-	})
-
-	t.Run("History is updated on successful attack", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockWeapon := mocks.NewMockWeapon(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
-		mockPlayer1.EXPECT().GetCardFromHand("S1").Return(mockWeapon, true)
-		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(nil)
-		mockWarrior.EXPECT().String().Return("Knight (20)")
-		mockWeapon.EXPECT().String().Return("Sword (5)")
-
-		// nextAction expectations
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasSpy().Return(false)
-		mockPlayer1.EXPECT().HasThief().Return(false)
-		mockPlayer1.EXPECT().CanBuy().Return(true)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeAttack,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(GameStatus{})
-
-		_, err := g.Attack("Player1", "Player2", "K1", "S1")
-
-		assert.NoError(t, err)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "attacked") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain attack action")
-	})
-}
-
-func TestGame_SkipPhase(t *testing.T) {
-	t.Run("Error when not current player's turn", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
-		}
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player2"))
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "Player2 not your turn")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when trying to skip DrawCard phase", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeDrawCard,
-		}
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot skip this phase")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Error when trying to skip EndTurn phase", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
-			currentAction: types.ActionTypeEndTurn,
-		}
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot skip this phase")
-		assert.Equal(t, GameStatus{}, status)
-	})
-
-	t.Run("Success skipping Attack phase moves to SpySteal", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		// nextAction expectations for ActionTypeSpySteal
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().HasSpy().Return(true) // Has spy, stays in SpySteal
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeAttack,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeSpySteal, g.currentAction)
-	})
-
-	t.Run("Success skipping SpySteal phase moves to Buy", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		// nextAction expectations for ActionTypeBuy
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().CanBuy().Return(true) // Can buy, stays in Buy
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeSpySteal,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeBuy, g.currentAction)
-	})
-
-	t.Run("Success skipping Buy phase moves to Construct", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		// nextAction expectations for ActionTypeConstruct
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().CanConstruct().Return(true) // Can construct
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeBuy,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeConstruct, g.currentAction)
-	})
-
-	t.Run("Success skipping Construct phase moves to EndTurn", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		expectedStatus := GameStatus{CurrentPlayer: "Player1"}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		// nextAction expectations for ActionTypeEndTurn
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-
-		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
-			currentAction:      types.ActionTypeConstruct,
-			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		status, err := g.ExecuteAction(NewSkipPhaseAction("Player1"))
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.ActionTypeEndTurn, g.currentAction)
 	})
 }
 

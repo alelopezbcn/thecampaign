@@ -21,7 +21,7 @@ func (a *DrawCardAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *DrawCardAction) Execute(g *Game) (*ActionResult, func() GameStatus, error) {
+func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	cards, err := g.drawCards(p, 1)
@@ -30,7 +30,7 @@ func (a *DrawCardAction) Execute(g *Game) (*ActionResult, func() GameStatus, err
 			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()),
 				types.CategoryError)
 
-			result := &ActionResult{}
+			result := &GameActionResult{}
 			statusFn := func() GameStatus {
 				return g.GameStatusProvider.Get(p, g)
 			}
@@ -44,7 +44,7 @@ func (a *DrawCardAction) Execute(g *Game) (*ActionResult, func() GameStatus, err
 
 	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
 
-	result := &ActionResult{Action: types.LastActionDraw}
+	result := &GameActionResult{Action: types.LastActionDraw}
 	statusFn := func() GameStatus {
 		return g.GameStatusProvider.Get(p, g, cards...)
 	}

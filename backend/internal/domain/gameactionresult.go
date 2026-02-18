@@ -5,7 +5,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type ActionResult struct {
+type GameActionResult struct {
 	Action             types.LastActionType
 	MovedWarriorID     string
 	StolenFrom         string
