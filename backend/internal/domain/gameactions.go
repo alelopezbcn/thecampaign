@@ -118,101 +118,6 @@ func (g *Game) Trade(playerName string, cardIDs []string) (
 	return status, nil
 }
 
-func (g *Game) SpecialPower(playerName, userID, targetID, weaponID string) (
-	status GameStatus, err error) {
-
-	p := g.CurrentPlayer()
-	if p.Name() != playerName {
-		return status, fmt.Errorf("%s not your turn", playerName)
-	}
-
-	if g.currentAction != types.ActionTypeAttack {
-		return status, fmt.Errorf("cannot use special power in the %s phase",
-			g.currentAction)
-	}
-
-	userCard, ok := p.GetCardFromField(userID)
-	if !ok {
-		return status, errors.New("warrior card not in field: " + userID)
-	}
-
-	// Determine user warrior type for validation
-	userWarrior, ok := userCard.(ports.Warrior)
-	if !ok {
-		return status, fmt.Errorf("the attacking card is not a warrior")
-	}
-	userType := userWarrior.Type()
-
-	var targetCard ports.Card
-	targetIsAllyOrSelf := false
-
-	// Search own field
-	targetCard, ok = p.GetCardFromField(targetID)
-	if ok {
-		targetIsAllyOrSelf = true
-	}
-	if !ok {
-		// Search ally fields (2v2)
-		for _, ally := range g.Allies(g.PlayerIndex(playerName)) {
-			targetCard, ok = ally.GetCardFromField(targetID)
-			if ok {
-				targetIsAllyOrSelf = true
-				break
-			}
-		}
-	}
-	if !ok {
-		// Search enemy fields
-		for _, enemy := range g.Enemies(g.PlayerIndex(playerName)) {
-			targetCard, ok = enemy.GetCardFromField(targetID)
-			if ok {
-				break
-			}
-		}
-	}
-	if !ok {
-		return status, errors.New("target card not valid: " + targetID)
-	}
-
-	// Validate target side based on warrior type
-	if userType == types.ArcherWarriorType && targetIsAllyOrSelf {
-		return status, errors.New("archer instant kill can only target enemies")
-	}
-	if (userType == types.KnightWarriorType || userType == types.MageWarriorType) && !targetIsAllyOrSelf {
-		return status, errors.New("knight/mage special power can only target allies")
-	}
-
-	weaponCard, ok := p.GetCardFromHand(weaponID)
-	if !ok {
-		return status, errors.New("weapon card not in hand: " + weaponID)
-	}
-
-	s, ok := weaponCard.(ports.SpecialPower)
-	if !ok {
-		return status, fmt.Errorf("the card is not a special power")
-	}
-
-	t, ok := targetCard.(ports.Warrior)
-	if !ok {
-		return status, fmt.Errorf("the target card is not a warrior")
-	}
-
-	if err = p.UseSpecialPower(userWarrior, t, s); err != nil {
-		return status, fmt.Errorf("special power action failed: %w", err)
-	}
-
-	g.addToHistory(fmt.Sprintf("%s used special power on %s",
-		playerName, t.String()), types.CategoryAction)
-
-	g.lastResult.Action = types.LastActionSpecialPower
-	status = g.nextAction(types.ActionTypeSpySteal,
-		func() GameStatus {
-			return g.GameStatusProvider.Get(p, g)
-		})
-
-	return status, nil
-}
-
 func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 	status GameStatus, err error) {
 
@@ -221,7 +126,7 @@ func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	if g.currentAction != types.ActionTypeAttack {
+	if g.currentAction != types.PhaseTypeAttack {
 		return status, fmt.Errorf("cannot use catapult in the %s phase",
 			g.currentAction)
 	}
@@ -252,7 +157,7 @@ func (g *Game) Catapult(playerName, targetPlayerName string, cardPosition int) (
 		types.CategoryAction)
 
 	g.lastResult.Action = types.LastActionCatapult
-	status = g.nextAction(types.ActionTypeSpySteal,
+	status = g.nextAction(types.PhaseTypeSpySteal,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
 		})
@@ -268,7 +173,7 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	if g.currentAction != types.ActionTypeSpySteal {
+	if g.currentAction != types.PhaseTypeSpySteal {
 		return status, fmt.Errorf("cannot use Spy in the %s phase",
 			g.currentAction)
 	}
@@ -311,7 +216,7 @@ func (g *Game) Spy(playerName, targetPlayerName string, option int) (
 	g.OnCardMovedToPile(s)
 
 	g.lastResult.Action = types.LastActionSpy
-	status = g.nextAction(types.ActionTypeBuy,
+	status = g.nextAction(types.PhaseTypeBuy,
 		func() GameStatus {
 			return g.GameStatusProvider.GetWithModal(p, g, spiedCards)
 		})
@@ -327,7 +232,7 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	if g.currentAction != types.ActionTypeSpySteal {
+	if g.currentAction != types.PhaseTypeSpySteal {
 		return status, fmt.Errorf("cannot use Steal in the %s phase",
 			g.currentAction)
 	}
@@ -361,7 +266,7 @@ func (g *Game) Steal(playerName, targetPlayerName string, cardPosition int) (
 		p.Name(), targetPlayer.Name()), types.CategoryAction)
 
 	g.lastResult.Action = types.LastActionSteal
-	status = g.nextAction(types.ActionTypeBuy,
+	status = g.nextAction(types.PhaseTypeBuy,
 		func() GameStatus {
 			return g.GameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
 		})
@@ -376,7 +281,7 @@ func (g *Game) Buy(playerName, cardID string) (
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	if g.currentAction != types.ActionTypeBuy {
+	if g.currentAction != types.PhaseTypeBuy {
 		return status, fmt.Errorf("cannot buy in the %s phase",
 			g.currentAction)
 	}
@@ -414,7 +319,7 @@ func (g *Game) Buy(playerName, cardID string) (
 		types.CategoryAction)
 
 	g.lastResult.Action = types.LastActionBuy
-	status = g.nextAction(types.ActionTypeConstruct,
+	status = g.nextAction(types.PhaseTypeConstruct,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g, cards...)
 		})
@@ -430,7 +335,7 @@ func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) 
 		return status, fmt.Errorf("%s not your turn", playerName)
 	}
 
-	if g.currentAction != types.ActionTypeConstruct {
+	if g.currentAction != types.PhaseTypeConstruct {
 		return status, fmt.Errorf("cannot construct in the %s phase",
 			g.currentAction)
 	}
@@ -475,7 +380,7 @@ func (g *Game) Construct(playerName, cardID string, targetPlayerName ...string) 
 	}
 
 	g.lastResult.Action = types.LastActionConstruct
-	status = g.nextAction(types.ActionTypeEndTurn,
+	status = g.nextAction(types.PhaseTypeEndTurn,
 		func() GameStatus {
 			return g.GameStatusProvider.Get(p, g)
 		})

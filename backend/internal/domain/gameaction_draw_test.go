@@ -24,7 +24,7 @@ func TestDrawCardAction_Validate(t *testing.T) {
 
 func TestDrawCardAction_NextPhase(t *testing.T) {
 	action := NewDrawCardAction("Player1")
-	assert.Equal(t, types.ActionTypeAttack, action.NextPhase())
+	assert.Equal(t, types.PhaseTypeAttack, action.NextPhase())
 }
 
 func TestDrawCardAction_Execute(t *testing.T) {

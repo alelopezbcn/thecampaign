@@ -24,7 +24,7 @@ func TestEndTurnPhaseAction_Validate(t *testing.T) {
 
 func TestEndTurnPhaseAction_NextPhase(t *testing.T) {
 	action := NewEndTurnPhaseAction("Player1", false)
-	assert.Equal(t, types.ActionTypeDrawCard, action.NextPhase())
+	assert.Equal(t, types.PhaseTypeDrawCard, action.NextPhase())
 }
 
 func TestEndTurnPhaseAction_Execute(t *testing.T) {
@@ -45,7 +45,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
-			currentAction:      types.ActionTypeEndTurn,
+			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 			hasMovedWarrior:    true,
@@ -83,7 +83,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        1,
-			currentAction:      types.ActionTypeEndTurn,
+			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}

@@ -75,10 +75,10 @@ func (mr *MockGameActionMockRecorder) Execute(g any) *gomock.Call {
 }
 
 // NextPhase mocks base method.
-func (m *MockGameAction) NextPhase() types.ActionType {
+func (m *MockGameAction) NextPhase() types.PhaseType {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "NextPhase")
-	ret0, _ := ret[0].(types.ActionType)
+	ret0, _ := ret[0].(types.PhaseType)
 	return ret0
 }
 

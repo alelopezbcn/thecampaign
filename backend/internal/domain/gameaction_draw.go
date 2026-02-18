@@ -52,6 +52,6 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() GameStatus,
 	return result, statusFn, nil
 }
 
-func (a *DrawCardAction) NextPhase() types.ActionType {
-	return types.ActionTypeAttack
+func (a *DrawCardAction) NextPhase() types.PhaseType {
+	return types.PhaseTypeAttack
 }

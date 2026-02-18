@@ -8,5 +8,5 @@ type GameAction interface {
 	PlayerName() string
 	Validate(g *Game) error
 	Execute(g *Game) (*GameActionResult, func() GameStatus, error)
-	NextPhase() types.ActionType
+	NextPhase() types.PhaseType
 }

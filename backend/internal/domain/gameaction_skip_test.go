@@ -17,7 +17,7 @@ func TestSkipPhaseAction_PlayerName(t *testing.T) {
 
 func TestSkipPhaseAction_Validate(t *testing.T) {
 	t.Run("Error when trying to skip DrawCard phase", func(t *testing.T) {
-		g := &Game{currentAction: types.ActionTypeDrawCard}
+		g := &Game{currentAction: types.PhaseTypeDrawCard}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -27,7 +27,7 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("Error when trying to skip EndTurn phase", func(t *testing.T) {
-		g := &Game{currentAction: types.ActionTypeEndTurn}
+		g := &Game{currentAction: types.PhaseTypeEndTurn}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -37,43 +37,43 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("Attack phase sets next phase to SpySteal", func(t *testing.T) {
-		g := &Game{currentAction: types.ActionTypeAttack}
+		g := &Game{currentAction: types.PhaseTypeAttack}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
 
 		assert.NoError(t, err)
-		assert.Equal(t, types.ActionTypeSpySteal, action.NextPhase())
+		assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
 	})
 
 	t.Run("SpySteal phase sets next phase to Buy", func(t *testing.T) {
-		g := &Game{currentAction: types.ActionTypeSpySteal}
+		g := &Game{currentAction: types.PhaseTypeSpySteal}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
 
 		assert.NoError(t, err)
-		assert.Equal(t, types.ActionTypeBuy, action.NextPhase())
+		assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 	})
 
 	t.Run("Buy phase sets next phase to Construct", func(t *testing.T) {
-		g := &Game{currentAction: types.ActionTypeBuy}
+		g := &Game{currentAction: types.PhaseTypeBuy}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
 
 		assert.NoError(t, err)
-		assert.Equal(t, types.ActionTypeConstruct, action.NextPhase())
+		assert.Equal(t, types.PhaseTypeConstruct, action.NextPhase())
 	})
 
 	t.Run("Construct phase sets next phase to EndTurn", func(t *testing.T) {
-		g := &Game{currentAction: types.ActionTypeConstruct}
+		g := &Game{currentAction: types.PhaseTypeConstruct}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
 
 		assert.NoError(t, err)
-		assert.Equal(t, types.ActionTypeEndTurn, action.NextPhase())
+		assert.Equal(t, types.PhaseTypeEndTurn, action.NextPhase())
 	})
 }
 
@@ -94,7 +94,7 @@ func TestSkipPhaseAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
-			currentAction:      types.ActionTypeAttack,
+			currentAction:      types.PhaseTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
 		}

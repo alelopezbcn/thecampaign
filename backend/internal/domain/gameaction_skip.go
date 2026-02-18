@@ -8,7 +8,7 @@ import (
 
 type SkipPhaseAction struct {
 	playerName string
-	nextPhase  types.ActionType
+	nextPhase  types.PhaseType
 }
 
 func NewSkipPhaseAction(playerName string) *SkipPhaseAction {
@@ -19,14 +19,14 @@ func (a *SkipPhaseAction) PlayerName() string { return a.playerName }
 
 func (a *SkipPhaseAction) Validate(g *Game) error {
 	switch g.currentAction {
-	case types.ActionTypeAttack:
-		a.nextPhase = types.ActionTypeSpySteal
-	case types.ActionTypeSpySteal:
-		a.nextPhase = types.ActionTypeBuy
-	case types.ActionTypeBuy:
-		a.nextPhase = types.ActionTypeConstruct
-	case types.ActionTypeConstruct:
-		a.nextPhase = types.ActionTypeEndTurn
+	case types.PhaseTypeAttack:
+		a.nextPhase = types.PhaseTypeSpySteal
+	case types.PhaseTypeSpySteal:
+		a.nextPhase = types.PhaseTypeBuy
+	case types.PhaseTypeBuy:
+		a.nextPhase = types.PhaseTypeConstruct
+	case types.PhaseTypeConstruct:
+		a.nextPhase = types.PhaseTypeEndTurn
 	default:
 		return errors.New("cannot skip this phase")
 	}
@@ -46,6 +46,6 @@ func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() GameStatus
 	return result, statusFn, nil
 }
 
-func (a *SkipPhaseAction) NextPhase() types.ActionType {
+func (a *SkipPhaseAction) NextPhase() types.PhaseType {
 	return a.nextPhase
 }

@@ -27,7 +27,7 @@ type Game struct {
 	EliminatedPlayers   map[int]bool  // player index -> eliminated (FFA only)
 	DisconnectedPlayers map[int]bool  // player index -> disconnected
 	CurrentTurn         int
-	currentAction       types.ActionType
+	currentAction       types.PhaseType
 	CanMoveWarrior      bool
 	hasMovedWarrior     bool
 	CanTrade            bool
@@ -305,7 +305,7 @@ func (g *Game) switchTurn() {
 	g.hasMovedWarrior = false
 	g.hasTraded = false
 	g.lastResult = GameActionResult{}
-	g.currentAction = types.ActionTypeDrawCard
+	g.currentAction = types.PhaseTypeDrawCard
 	g.TurnStartedAt = time.Now()
 
 	for {
@@ -407,14 +407,14 @@ func (g *Game) ReconnectPlayer(playerName string) {
 	g.addToHistory(playerName+" reconnected", types.CategoryElimination)
 }
 
-func (g *Game) nextAction(expectedAction types.ActionType,
+func (g *Game) nextAction(expectedAction types.PhaseType,
 	gameStatusFn func() GameStatus) GameStatus {
 
 	p := g.CurrentPlayer()
 	g.CanMoveWarrior = !g.hasMovedWarrior && p.HasWarriorsInHand()
 	g.CanTrade = !g.hasTraded && p.CanTradeCards()
 
-	if expectedAction == types.ActionTypeAttack {
+	if expectedAction == types.PhaseTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := false
 		if p.HasCatapult() {
@@ -427,35 +427,35 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 		}
 
 		if p.CanAttack() || canAttackWithCatapult || g.CanMoveWarrior {
-			g.currentAction = types.ActionTypeAttack
+			g.currentAction = types.PhaseTypeAttack
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeSpySteal
+		expectedAction = types.PhaseTypeSpySteal
 	}
 
-	if expectedAction == types.ActionTypeSpySteal {
+	if expectedAction == types.PhaseTypeSpySteal {
 		if p.HasSpy() || p.HasThief() {
-			g.currentAction = types.ActionTypeSpySteal
+			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeBuy
+		expectedAction = types.PhaseTypeBuy
 	}
 
-	if expectedAction == types.ActionTypeBuy {
+	if expectedAction == types.PhaseTypeBuy {
 		if p.CanBuy() || g.CanTrade {
-			g.currentAction = types.ActionTypeBuy
+			g.currentAction = types.PhaseTypeBuy
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeConstruct
+		expectedAction = types.PhaseTypeConstruct
 	}
 
-	if expectedAction == types.ActionTypeConstruct {
+	if expectedAction == types.PhaseTypeConstruct {
 		canConstruct := p.CanConstruct()
 		if !canConstruct {
 			// In 2v2, check if player has resources and any ally has a constructed castle
@@ -472,21 +472,21 @@ func (g *Game) nextAction(expectedAction types.ActionType,
 			}
 		}
 		if canConstruct {
-			g.currentAction = types.ActionTypeConstruct
+			g.currentAction = types.PhaseTypeConstruct
 
 			return gameStatusFn()
 		}
 
-		expectedAction = types.ActionTypeEndTurn
+		expectedAction = types.PhaseTypeEndTurn
 	}
 
-	if expectedAction == types.ActionTypeEndTurn {
-		g.currentAction = types.ActionTypeEndTurn
+	if expectedAction == types.PhaseTypeEndTurn {
+		g.currentAction = types.PhaseTypeEndTurn
 
 		return gameStatusFn()
 	}
 
-	g.currentAction = types.ActionTypeDrawCard
+	g.currentAction = types.PhaseTypeDrawCard
 
 	return gameStatusFn()
 }

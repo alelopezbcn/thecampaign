@@ -42,6 +42,6 @@ func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() GameSta
 	return result, statusFn, nil
 }
 
-func (a *EndTurnPhaseAction) NextPhase() types.ActionType {
-	return types.ActionTypeDrawCard
+func (a *EndTurnPhaseAction) NextPhase() types.PhaseType {
+	return types.PhaseTypeDrawCard
 }

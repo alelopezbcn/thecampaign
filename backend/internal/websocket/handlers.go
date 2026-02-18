@@ -47,7 +47,7 @@ func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g *domain.Game) (domain.GameStatus, error) {
-		return g.SpecialPower(client.PlayerName, p.UserID, p.TargetID, p.WeaponID)
+		return g.ExecuteAction(domain.NewSpecialPowerAction(client.PlayerName, p.UserID, p.TargetID, p.WeaponID))
 	})
 }
 

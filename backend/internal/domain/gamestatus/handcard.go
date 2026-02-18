@@ -46,7 +46,7 @@ func NewWarriorHandCard(warrior ports.Warrior) HandCard {
 
 func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 	enemyFields []ports.Field, castleConstructed bool,
-	action types.ActionType) HandCard {
+	action types.PhaseType) HandCard {
 
 	canBeUsed := false
 	var aCardType CardType
@@ -63,15 +63,15 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 		canBeUsed = myField.HasMage() || myField.HasDragon()
 	}
 
-	if action != types.ActionTypeConstruct &&
-		action != types.ActionTypeAttack {
+	if action != types.PhaseTypeConstruct &&
+		action != types.PhaseTypeAttack {
 		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, false)
 		hc.CanBeTraded = true
 		return hc
 	}
 
-	if action == types.ActionTypeConstruct {
+	if action == types.PhaseTypeConstruct {
 		canBeUsed = !castleConstructed && weapon.CanConstruct()
 		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, canBeUsed)
@@ -99,9 +99,9 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 
 func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 	myField ports.Field, allyFields []ports.Field, enemyFields []ports.Field,
-	action types.ActionType) HandCard {
+	action types.PhaseType) HandCard {
 
-	if action != types.ActionTypeAttack {
+	if action != types.PhaseTypeAttack {
 		return newHandCard(specialPower.GetID(), CardTypeSpecialPower,
 			0, []string{}, false)
 	}
@@ -157,9 +157,9 @@ func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
 }
 
 func NewCatapultHandCard(cardID string, canBeUsed bool,
-	action types.ActionType) HandCard {
+	action types.PhaseType) HandCard {
 
-	if action != types.ActionTypeAttack {
+	if action != types.PhaseTypeAttack {
 		return newHandCard(cardID, CardTypeCatapult, 0, []string{}, false)
 	}
 
@@ -167,25 +167,25 @@ func NewCatapultHandCard(cardID string, canBeUsed bool,
 		canBeUsed)
 }
 
-func NewSpyHandCard(cardID string, action types.ActionType) HandCard {
+func NewSpyHandCard(cardID string, action types.PhaseType) HandCard {
 	return newHandCard(cardID, CardTypeSpy, 0, []string{},
-		action == types.ActionTypeSpySteal)
+		action == types.PhaseTypeSpySteal)
 }
 
-func NewThiefHandCard(cardID string, action types.ActionType) HandCard {
+func NewThiefHandCard(cardID string, action types.PhaseType) HandCard {
 	return newHandCard(cardID, CardTypeThief, 0, []string{},
-		action == types.ActionTypeSpySteal)
+		action == types.PhaseTypeSpySteal)
 }
 
 func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
-	allyCastleConstructed bool, canBuy bool, action types.ActionType) HandCard {
+	allyCastleConstructed bool, canBuy bool, action types.PhaseType) HandCard {
 
-	if action != types.ActionTypeBuy && action != types.ActionTypeConstruct {
+	if action != types.PhaseTypeBuy && action != types.PhaseTypeConstruct {
 		return newHandCard(resource.GetID(), CardTypeResource,
 			resource.Value(), []string{}, false)
 	}
 
-	if action == types.ActionTypeConstruct {
+	if action == types.PhaseTypeConstruct {
 		// If player's or ally's castle is already constructed, any resource can be added
 		if playerCastleConstructed || allyCastleConstructed {
 			return newHandCard(resource.GetID(), CardTypeResource,

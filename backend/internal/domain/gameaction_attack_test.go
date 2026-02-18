@@ -20,7 +20,7 @@ func TestAttackAction_PlayerName(t *testing.T) {
 
 func TestAttackAction_NextPhase(t *testing.T) {
 	action := NewAttackAction("Player1", "Player2", "t1", "w1")
-	assert.Equal(t, types.ActionTypeAttack, action.NextPhase())
+	assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
 }
 
 func TestAttackAction_Validate(t *testing.T) {
@@ -36,7 +36,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeBuy,
+			currentAction: types.PhaseTypeBuy,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -60,7 +60,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -86,7 +86,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -113,7 +113,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -140,7 +140,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -167,7 +167,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -195,7 +195,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 		}
 
 		action := NewAttackAction("Player1", "Player2", "targetID", "weaponID")
@@ -229,7 +229,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
-			currentAction:      types.ActionTypeAttack,
+			currentAction:      types.PhaseTypeAttack,
 			GameStatusProvider: mockProvider,
 			history:            []historyLine{},
 		}
@@ -268,7 +268,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
-			currentAction: types.ActionTypeAttack,
+			currentAction: types.PhaseTypeAttack,
 			history:       []historyLine{},
 		}
 
@@ -303,7 +303,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		p2Cards []ports.Card, p2Warriors []ports.Warrior,
 	) (g *Game, p1, p2 ports.Player) {
 		g = &Game{
-			currentAction:      types.ActionTypeAttack,
+			currentAction:      types.PhaseTypeAttack,
 			history:            []historyLine{},
 			discardPile:        newDiscardPile(),
 			cemetery:           newCemetery(),
@@ -634,7 +634,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		sword1 := cards.NewSword("s1", dmgAmnt)
 		sword2 := cards.NewSword("s2", dmgAmnt)
 		g := &Game{
-			currentAction:      types.ActionTypeAttack,
+			currentAction:      types.PhaseTypeAttack,
 			history:            []historyLine{},
 			discardPile:        newDiscardPile(),
 			cemetery:           newCemetery(),
@@ -657,6 +657,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
 
+		g.currentAction = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), a.GetID(), sword2.GetID())
 		assert.NoError(t, err)
 		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
@@ -686,7 +687,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		sword4 := cards.NewSword("s4", dmgAmnt)
 
 		g := &Game{
-			currentAction:      types.ActionTypeAttack,
+			currentAction:      types.PhaseTypeAttack,
 			history:            []historyLine{},
 			discardPile:        newDiscardPile(),
 			cemetery:           newCemetery(),
@@ -707,10 +708,13 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 
 		err := executeAttack(g, p1.Name(), p2.Name(), target.GetID(), poison1.GetID())
 		assert.NoError(t, err)
+		g.currentAction = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), target.GetID(), sword2.GetID())
 		assert.NoError(t, err)
+		g.currentAction = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), target.GetID(), arrow3.GetID())
 		assert.NoError(t, err)
+		g.currentAction = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), target.GetID(), sword4.GetID())
 		assert.NoError(t, err)
 
