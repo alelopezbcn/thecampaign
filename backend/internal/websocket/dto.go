@@ -76,6 +76,7 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		SpyNotification:     status.SpyNotification,
 		History:             convertHistory(status.History),
 		PlayersOrder:        status.PlayersOrder,
+		NextTurnPlayer:      status.NextTurnPlayer,
 		GameOverMsg:         status.GameOverMgs,
 		IsWinner:            status.IsWinner,
 		GameStartedAt:       status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),

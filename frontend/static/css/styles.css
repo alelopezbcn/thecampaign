@@ -54,11 +54,17 @@ body {
 
 .join-container h1 {
     font-size: 3em;
-    margin-bottom: 30px;
+    margin-bottom: 5px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.game-version {
+    font-size: 0.75em;
+    color: rgba(255, 255, 255, 0.35);
+    margin-bottom: 25px;
 }
 
 .form-group {
@@ -3008,6 +3014,34 @@ body {
     margin: 0;
 }
 
+.endturn-next-player {
+    margin-top: 6px;
+    font-size: 0.85em;
+    color: #ccc;
+}
+
+.endturn-countdown-wrap {
+    width: 140px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+    overflow: hidden;
+    margin: 0 8px;
+}
+
+.endturn-countdown-bar {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #e74c3c, #c0392b);
+    border-radius: 3px;
+    transform-origin: left;
+}
+
+@keyframes endturnCountdown {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
 .endturn-popup .btn {
     padding: 12px 30px;
     font-size: 1em;
@@ -4032,21 +4066,22 @@ body {
 }
 
 /* ============================================================
-   FEATURE: Turn Transition Modal
+   FEATURE: Turn Transition Notification
    ============================================================ */
 
 .turn-transition-modal {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 10000;
+    right: 0;
+    bottom: 0;
+    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.6);
-    animation: fadeIn 0.3s ease-out;
+    background: rgba(30, 30, 50, 0.98);
+    border-radius: 10px;
+    animation: endturnFadeIn 0.3s ease-out;
 }
 
 .turn-transition-modal.hidden {
@@ -4054,52 +4089,49 @@ body {
 }
 
 .turn-transition-content {
-    background: linear-gradient(145deg, #1a1a2e 0%, #16213e 100%);
-    border: 1px solid rgba(76, 217, 100, 0.3);
-    border-radius: 16px;
-    padding: 30px 50px;
-    text-align: center;
-    box-shadow: 0 0 30px rgba(76, 217, 100, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4);
-    animation: modalPopIn 0.4s ease-out;
-    min-width: 280px;
+    display: flex;
+    align-items: center;
+    gap: 25px;
 }
 
 .turn-transition-icon {
-    font-size: 2.5rem;
-    margin-bottom: 10px;
+    font-size: 2.5em;
 }
 
 .turn-transition-title {
-    font-size: 1rem;
-    color: #8892b0;
+    font-size: 1.2em;
+    color: #4cd964;
+    margin-bottom: 4px;
     text-transform: uppercase;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
+    letter-spacing: 1px;
 }
 
 .turn-transition-player {
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #4cd964;
-    margin-bottom: 18px;
-    text-shadow: 0 0 10px rgba(76, 217, 100, 0.3);
+    color: #aaa;
+    font-size: 0.85em;
+    margin: 0;
+    font-weight: normal;
 }
 
-.turn-transition-bar-container {
-    width: 100%;
-    height: 4px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 2px;
+.turn-transition-countdown-wrap {
+    width: 140px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
     overflow: hidden;
-    margin-bottom: 16px;
 }
 
 .turn-transition-bar {
-    width: 100%;
     height: 100%;
+    width: 100%;
     background: linear-gradient(90deg, #4cd964, #2ecc71);
-    border-radius: 2px;
+    border-radius: 3px;
     transform-origin: left;
+}
+
+.turn-transition-modal .btn {
+    padding: 12px 20px;
+    font-size: 0.9em;
 }
 
 @keyframes countdown {

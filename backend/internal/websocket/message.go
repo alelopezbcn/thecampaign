@@ -132,6 +132,7 @@ type GameStatusDTO struct {
 	SpyNotification     string              `json:"spy_notification,omitempty"`
 	History             []HistoryLineDTO    `json:"history"`
 	PlayersOrder        []string            `json:"players_order"`
+	NextTurnPlayer      string              `json:"next_turn_player,omitempty"`
 	GameOverMsg         string              `json:"game_over_msg,omitempty"`
 	IsWinner            bool                `json:"is_winner"`
 	GameStartedAt       string              `json:"game_started_at"`

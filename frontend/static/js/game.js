@@ -4,6 +4,8 @@ let reconnectAttempts = 0;
 let reconnectTimer = null;
 let timerInterval = null;
 let pendingAnimationsCallback = null; // Deferred animations waiting for modal close
+let endTurnCountdownTimer = null;
+const END_TURN_COUNTDOWN_SECS = 3;
 const MAX_RECONNECT_ATTEMPTS = 20;
 let gameState = {
     playerName: '',
@@ -44,6 +46,13 @@ const screens = {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     checkUrlParams();
+    fetch('/api/version')
+        .then(r => r.json())
+        .then(data => {
+            const el = document.getElementById('game-version');
+            if (el) el.textContent = data.version;
+        })
+        .catch(() => {});
 });
 
 function checkUrlParams() {
@@ -114,7 +123,10 @@ function setupEventListeners() {
     document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
-    document.getElementById('endturn-popup-btn').addEventListener('click', () => sendAction('end_turn'));
+    document.getElementById('endturn-popup-btn').addEventListener('click', () => {
+        clearEndTurnCountdown();
+        sendAction('end_turn');
+    });
 
     // Cancel action button
     document.getElementById('cancel-action-btn').addEventListener('click', cancelAction);
@@ -155,7 +167,6 @@ function setupEventListeners() {
     const modalOverlays = [
         { id: 'game-modal', hide: hideGameModal },
         { id: 'action-confirm-modal', hide: onActionConfirmNo },
-        { id: 'turn-transition-modal', hide: hideTurnTransitionModal },
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
         { id: 'gameover-modal', hide: () => location.reload() },
@@ -208,6 +219,7 @@ function handleGlobalKeyboard(e) {
         } else if (isGameModalOpen) {
             hideGameModal();
         } else if (isEndturnPopupOpen) {
+            clearEndTurnCountdown();
             sendAction('end_turn');
         }
     }
@@ -217,6 +229,7 @@ function handleSkipPhase() {
     const status = gameState.currentState;
     // If we're in the last phase (endturn), end the turn instead
     if (status && status.current_action === 'endturn') {
+        clearEndTurnCountdown();
         sendAction('end_turn');
     } else {
         sendAction('skip_phase');
@@ -522,9 +535,16 @@ function handleGameState(payload) {
     updatePlayerListPanel();
     startTimers(payload.game_status);
 
-    // Detect turn change and show transition modal
-    if (previousState && previousState.turn_player !== payload.game_status.turn_player) {
-        showTurnTransitionModal(payload.game_status.turn_player);
+    // Spectator: show who's next when the active player enters the endturn phase
+    const prevAction = previousState?.current_action;
+    const nowAction = payload.game_status.current_action;
+    if (!isNowYourTurn && nowAction === 'endturn' && prevAction !== 'endturn') {
+        const nextPlayer = payload.game_status.next_turn_player;
+        if (nextPlayer) {
+            const isNextYou = nextPlayer === gameState.playerName;
+            const label = isNextYou ? 'Your Turn Next!' : `Next: ${nextPlayer}`;
+            showTurnTransitionModal(nextPlayer, END_TURN_COUNTDOWN_SECS * 1000, label);
+        }
     }
 
     // Detect if a card was stolen from us
@@ -3162,14 +3182,23 @@ function updateActionButtons() {
     const endturnPopup = document.getElementById('endturn-popup');
     endturnPopup.classList.add('hidden');
 
-    if (!isYourTurn || !status) return;
+    if (!isYourTurn || !status) {
+        clearEndTurnCountdown();
+        return;
+    }
 
-    // In endturn phase, show the popup and enable only End Turn button
+    // In endturn phase, show the popup and start auto-countdown
     if (status.current_action === 'endturn') {
         document.getElementById('end-turn-btn').disabled = false;
         endturnPopup.classList.remove('hidden');
+        if (!endTurnCountdownTimer) {
+            startEndTurnCountdown(status.next_turn_player);
+        }
         return;
     }
+
+    // Left endturn phase while still our turn (shouldn't normally happen)
+    clearEndTurnCountdown();
 
     // Move Warrior - enabled if can_move_warrior is true
     document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
@@ -3387,10 +3416,38 @@ function hideGameModal() {
     }
 }
 
+// End Turn Countdown
+function startEndTurnCountdown(nextPlayer) {
+    const nameEl = document.getElementById('endturn-next-player-name');
+    const bar = document.getElementById('endturn-countdown-bar');
+
+    if (nameEl) nameEl.textContent = nextPlayer || '—';
+
+    if (bar) {
+        bar.style.animation = 'none';
+        bar.offsetHeight; // force reflow
+        bar.style.animation = `endturnCountdown ${END_TURN_COUNTDOWN_SECS}s linear forwards`;
+    }
+
+    endTurnCountdownTimer = setTimeout(() => {
+        endTurnCountdownTimer = null;
+        sendAction('end_turn');
+    }, END_TURN_COUNTDOWN_SECS * 1000);
+}
+
+function clearEndTurnCountdown() {
+    if (endTurnCountdownTimer) {
+        clearTimeout(endTurnCountdownTimer);
+        endTurnCountdownTimer = null;
+    }
+    const bar = document.getElementById('endturn-countdown-bar');
+    if (bar) bar.style.animation = 'none';
+}
+
 // Turn Transition Modal
 let turnTransitionTimer = null;
 
-function showTurnTransitionModal(playerName) {
+function showTurnTransitionModal(playerName, duration = 3000, overrideText = null) {
     // Don't show on the very first state (game just started)
     if (!gameState.currentState) return;
 
@@ -3400,13 +3457,17 @@ function showTurnTransitionModal(playerName) {
 
     if (!modal || !playerEl || !bar) return;
 
-    const isYou = playerName === gameState.playerName;
-    playerEl.textContent = isYou ? 'Your Turn!' : `${playerName}'s Turn`;
+    if (overrideText) {
+        playerEl.textContent = overrideText;
+    } else {
+        const isYou = playerName === gameState.playerName;
+        playerEl.textContent = isYou ? 'Your Turn!' : `${playerName}'s Turn`;
+    }
 
     // Reset and start countdown bar animation
     bar.style.animation = 'none';
     bar.offsetHeight; // force reflow
-    bar.style.animation = 'countdown 3s linear forwards';
+    bar.style.animation = `countdown ${duration / 1000}s linear forwards`;
 
     modal.classList.remove('hidden');
 
@@ -3414,7 +3475,7 @@ function showTurnTransitionModal(playerName) {
     if (turnTransitionTimer) clearTimeout(turnTransitionTimer);
     turnTransitionTimer = setTimeout(() => {
         hideTurnTransitionModal();
-    }, 3000);
+    }, duration);
 }
 
 function hideTurnTransitionModal() {

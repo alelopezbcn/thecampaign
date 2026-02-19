@@ -56,3 +56,5 @@ jobs:
           tags: |
             alelopezcop/thecampaign:${{ steps.bump.outputs.new_tag }}
             alelopezcop/thecampaign:latest
+          build-args: |
+            VERSION=${{ steps.bump.outputs.new_tag }}
