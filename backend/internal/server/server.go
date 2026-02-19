@@ -1,12 +1,16 @@
 package server
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
 	ws "github.com/alelopezbcn/thecampaign/internal/websocket"
 	"github.com/gorilla/websocket"
 )
+
+// Version is set at build time via -ldflags
+var Version = "dev"
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
@@ -53,6 +57,12 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, "frontend/index.html")
 }
 
+// handleVersion returns the current server version as JSON
+func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"version": Version})
+}
+
 // Start starts the HTTP server
 func (s *Server) Start(addr string) error {
 	// WebSocket endpoint
@@ -60,6 +70,9 @@ func (s *Server) Start(addr string) error {
 
 	// Serve static files
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("frontend/static"))))
+
+	// Version endpoint
+	http.HandleFunc("/api/version", s.handleVersion)
 
 	// Main page
 	http.HandleFunc("/", s.handleIndex)

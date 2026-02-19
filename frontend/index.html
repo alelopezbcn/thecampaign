@@ -12,6 +12,7 @@
         <div id="join-screen" class="screen">
             <div class="join-container">
                 <h1>The Campaign</h1>
+                <p id="game-version" class="game-version"></p>
 
                 <!-- CREATE GAME (default when no ?game= param) -->
                 <div id="create-game-section">
@@ -255,8 +256,27 @@
                         <div class="endturn-popup-text">
                             <h2>End of Turn</h2>
                             <p>All phases completed</p>
+                            <p class="endturn-next-player">Next: <strong id="endturn-next-player-name"></strong></p>
                         </div>
-                        <button id="endturn-popup-btn" class="btn btn-danger">End Turn</button>
+                        <div class="endturn-countdown-wrap">
+                            <div id="endturn-countdown-bar" class="endturn-countdown-bar"></div>
+                        </div>
+                        <button id="endturn-popup-btn" class="btn btn-danger">End Now</button>
+                    </div>
+                </div>
+
+                <!-- Turn Transition Notification (overlays action panel) -->
+                <div id="turn-transition-modal" class="turn-transition-modal hidden">
+                    <div class="turn-transition-content">
+                        <div class="turn-transition-icon">&#9876;</div>
+                        <div class="turn-transition-text">
+                            <h2 class="turn-transition-title">Next Turn</h2>
+                            <p id="turn-transition-player" class="turn-transition-player"></p>
+                        </div>
+                        <div class="turn-transition-countdown-wrap">
+                            <div id="turn-transition-bar" class="turn-transition-bar"></div>
+                        </div>
+                        <button id="turn-transition-close" class="btn btn-secondary btn-small">Got it</button>
                     </div>
                 </div>
             </div>
@@ -310,19 +330,6 @@
                     <span class="decoration-sword">⚔</span>
                 </div>
                 <button id="gameover-modal-btn" class="btn btn-primary btn-large">Play Again</button>
-            </div>
-        </div>
-
-        <!-- Turn Transition Modal -->
-        <div id="turn-transition-modal" class="turn-transition-modal hidden">
-            <div class="turn-transition-content">
-                <div class="turn-transition-icon">&#9876;</div>
-                <h2 class="turn-transition-title">Next Turn</h2>
-                <p id="turn-transition-player" class="turn-transition-player"></p>
-                <div class="turn-transition-bar-container">
-                    <div id="turn-transition-bar" class="turn-transition-bar"></div>
-                </div>
-                <button id="turn-transition-close" class="btn btn-secondary btn-small">Got it</button>
             </div>
         </div>
 

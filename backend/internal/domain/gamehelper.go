@@ -13,6 +13,21 @@ func (g *Game) CurrentPlayer() ports.Player {
 	return g.Players[g.CurrentTurn]
 }
 
+// nextActiveTurnPlayer returns the name of the player who will go next,
+// without mutating any state.
+func (g *Game) nextActiveTurnPlayer() string {
+	next := g.CurrentTurn
+	for {
+		next = (next + 1) % len(g.Players)
+		if !g.EliminatedPlayers[next] && !g.DisconnectedPlayers[next] {
+			return g.Players[next].Name()
+		}
+		if next == g.CurrentTurn {
+			return ""
+		}
+	}
+}
+
 // GetPlayer returns a player by name, or nil if not found
 func (g *Game) GetPlayer(name string) ports.Player {
 	for _, p := range g.Players {
