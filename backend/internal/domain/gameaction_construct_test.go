@@ -164,7 +164,7 @@ func TestConstructAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewConstructAction("Player1", "G1", "")
@@ -193,7 +193,7 @@ func TestConstructAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeConstruct,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -238,7 +238,7 @@ func TestConstructAction_Execute(t *testing.T) {
 			Mode:               types.GameMode2v2,
 			Teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -278,7 +278,7 @@ func TestConstructAction_Execute(t *testing.T) {
 			currentAction: types.PhaseTypeConstruct,
 			Mode:          types.GameMode2v2,
 			Teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewConstructAction("Player1", "G1", "Player2")
@@ -305,7 +305,7 @@ func TestConstructAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewConstructAction("Player1", "G1", "")
@@ -350,7 +350,7 @@ func TestConstructAction_Execute(t *testing.T) {
 			currentAction: types.PhaseTypeConstruct,
 			Mode:          types.GameMode2v2,
 			Teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewConstructAction("Player1", "G1", "Player2")

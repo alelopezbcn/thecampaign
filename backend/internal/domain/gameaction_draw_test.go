@@ -192,7 +192,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 			CurrentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
-			history:     []historyLine{},
+			history:     []types.HistoryLine{},
 		}
 
 		action := NewDrawCardAction("Player1")
@@ -227,7 +227,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 			CurrentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
-			history:     []historyLine{},
+			history:     []types.HistoryLine{},
 		}
 
 		action := NewDrawCardAction("Player1")

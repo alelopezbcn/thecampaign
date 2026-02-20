@@ -236,7 +236,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameMode1v1,
 			EliminatedPlayers: make(map[int]bool),
-			history:           []historyLine{},
+			history:           []types.HistoryLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player2")
@@ -268,14 +268,14 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameModeFFA3,
 			EliminatedPlayers: make(map[int]bool),
-			history:           []historyLine{},
+			history:           []types.HistoryLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player2")
 
 		assert.False(t, g.winState.GameOver)
 		assert.True(t, g.EliminatedPlayers[1])
-		assert.Contains(t, g.history, historyLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
+		assert.Contains(t, g.history, HistoryLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
 	})
 
 	t.Run("FFA3 last player standing wins", func(t *testing.T) {
@@ -301,7 +301,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameModeFFA3,
 			EliminatedPlayers: map[int]bool{1: true}, // Player2 already eliminated
-			history:           []historyLine{},
+			history:           []types.HistoryLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player3")
@@ -338,7 +338,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			CurrentTurn:       0,
 			Mode:              types.GameModeFFA5,
 			EliminatedPlayers: make(map[int]bool),
-			history:           []historyLine{},
+			history:           []types.HistoryLine{},
 		}
 
 		g.OnFieldWithoutWarriors("Player2")
@@ -373,7 +373,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			Mode:              types.GameMode2v2,
 			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
 			EliminatedPlayers: make(map[int]bool),
-			history:           []historyLine{},
+			history:           []types.HistoryLine{},
 		}
 
 		// Player2 (Team 2) loses warriors, but Player4 (Team 2) is still alive
@@ -381,7 +381,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 
 		assert.False(t, g.winState.GameOver)
 		assert.True(t, g.EliminatedPlayers[1])
-		assert.Contains(t, g.history, historyLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
+		assert.Contains(t, g.history, HistoryLine{Msg: "Player2 has been eliminated!", Category: types.CategoryElimination})
 	})
 
 	t.Run("2v2 both enemies eliminated, team wins", func(t *testing.T) {
@@ -410,7 +410,7 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			Mode:              types.GameMode2v2,
 			Teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
 			EliminatedPlayers: map[int]bool{1: true}, // Player2 already eliminated
-			history:           []historyLine{},
+			history:           []types.HistoryLine{},
 		}
 
 		// Player4 (last of Team 2) loses warriors
@@ -447,7 +447,7 @@ func TestGame_IsGameOver(t *testing.T) {
 func TestGame_GetHistory(t *testing.T) {
 	t.Run("Returns all history on first call", func(t *testing.T) {
 		g := &Game{
-			history: []historyLine{
+			history: []HistoryLine{
 				{Msg: "msg1", Category: types.CategoryInfo},
 				{Msg: "msg2", Category: types.CategoryInfo},
 				{Msg: "msg3", Category: types.CategoryInfo},
@@ -463,7 +463,7 @@ func TestGame_GetHistory(t *testing.T) {
 
 	t.Run("Returns only new messages on subsequent calls", func(t *testing.T) {
 		g := &Game{
-			history: []historyLine{
+			history: []HistoryLine{
 				{Msg: "msg1", Category: types.CategoryInfo},
 				{Msg: "msg2", Category: types.CategoryInfo},
 			},
@@ -472,8 +472,8 @@ func TestGame_GetHistory(t *testing.T) {
 		_ = g.GetHistory() // First call reads all
 
 		g.history = append(g.history,
-			historyLine{Msg: "msg3", Category: types.CategoryInfo},
-			historyLine{Msg: "msg4", Category: types.CategoryInfo},
+			HistoryLine{Msg: "msg3", Category: types.CategoryInfo},
+			HistoryLine{Msg: "msg4", Category: types.CategoryInfo},
 		)
 		result := g.GetHistory()
 
@@ -484,7 +484,7 @@ func TestGame_GetHistory(t *testing.T) {
 
 	t.Run("Returns empty slice when no new messages", func(t *testing.T) {
 		g := &Game{
-			history: []historyLine{
+			history: []HistoryLine{
 				{Msg: "msg1", Category: types.CategoryInfo},
 			},
 		}
@@ -507,12 +507,12 @@ func TestGame_OnWarriorMovedToCemetery(t *testing.T) {
 
 		g := &Game{
 			cemetery: mockCemetery,
-			history:  []historyLine{},
+			history:  []types.HistoryLine{},
 		}
 
 		g.OnWarriorMovedToCemetery(mockWarrior)
 
-		assert.Contains(t, g.history, historyLine{Msg: "warrior buried in cemetery", Category: types.CategoryInfo})
+		assert.Contains(t, g.history, HistoryLine{Msg: "warrior buried in cemetery", Category: types.CategoryInfo})
 	})
 }
 
@@ -836,7 +836,7 @@ func TestGame_switchTurn(t *testing.T) {
 		g := &Game{
 			Players:           []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:       0,
-			turnState: TurnState{HasMovedWarrior: true, HasTraded: true},
+			turnState:         TurnState{HasMovedWarrior: true, HasTraded: true},
 			currentAction:     types.PhaseTypeEndTurn,
 			EliminatedPlayers: make(map[int]bool),
 		}
@@ -992,7 +992,7 @@ func TestGame_OnCardMovedToPile(t *testing.T) {
 
 func TestGame_addToHistory(t *testing.T) {
 	t.Run("Adds message to history", func(t *testing.T) {
-		g := &Game{history: []historyLine{}}
+		g := &Game{history: []types.HistoryLine{}}
 		g.addToHistory("test message", types.CategoryInfo)
 		assert.Len(t, g.history, 1)
 		assert.Equal(t, "test message", g.history[0].Msg)
@@ -1000,7 +1000,7 @@ func TestGame_addToHistory(t *testing.T) {
 	})
 
 	t.Run("Does not add empty message", func(t *testing.T) {
-		g := &Game{history: []historyLine{}}
+		g := &Game{history: []types.HistoryLine{}}
 		g.addToHistory("", types.CategoryInfo)
 		assert.Empty(t, g.history)
 	})

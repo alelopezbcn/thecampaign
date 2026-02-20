@@ -174,7 +174,7 @@ func TestStealAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(
@@ -216,7 +216,7 @@ func TestStealAction_Execute(t *testing.T) {
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewStealAction("Player1", "Player2", 1)

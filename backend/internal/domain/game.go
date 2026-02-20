@@ -26,25 +26,25 @@ type Game struct {
 	Teams               map[int][]int // teamID -> player indices (2v2 only)
 	EliminatedPlayers   map[int]bool  // player index -> eliminated (FFA only)
 	DisconnectedPlayers map[int]bool  // player index -> disconnected
-	CurrentTurn   int
-	currentAction types.PhaseType
-	turnState     TurnState
+	CurrentTurn         int
+	currentAction       types.PhaseType
+	turnState           TurnState
 
-	deck                ports.Deck
-	discardPile         ports.DiscardPile
-	cemetery            ports.Cemetery
-	dealer              ports.Dealer
-	GameStatusProvider  GameStatusProvider
-	history             []historyLine
-	historyTracker      int
-	lastResult          GameActionResult
-	winState      WinState
-	GameStartedAt time.Time
+	deck               ports.Deck
+	discardPile        ports.DiscardPile
+	cemetery           ports.Cemetery
+	dealer             ports.Dealer
+	GameStatusProvider GameStatusProvider
+	history            []types.HistoryLine
+	historyTracker     int
+	lastResult         GameActionResult
+	winState           WinState
+	GameStartedAt      time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
-	gameStatusProvider GameStatusProvider) (*Game, error) {
-
+	gameStatusProvider GameStatusProvider,
+) (*Game, error) {
 	if err := validatePlayers(playerNames, mode); err != nil {
 		return nil, err
 	}
@@ -55,15 +55,15 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		CurrentTurn:         0,
 		discardPile:         newDiscardPile(),
 		cemetery:            newCemetery(),
-		history:             []historyLine{},
+		history:             []types.HistoryLine{},
 		dealer:              dealer,
 		GameStatusProvider:  gameStatusProvider,
 		Players:             make([]ports.Player, len(playerNames)),
 		Mode:                mode,
 		EliminatedPlayers:   make(map[int]bool),
 		DisconnectedPlayers: make(map[int]bool),
-		GameStartedAt: now,
-		turnState:     TurnState{StartedAt: now},
+		GameStartedAt:       now,
+		turnState:           TurnState{StartedAt: now},
 	}
 
 	castleResourcesToWin := maxCastleResourcesFFA
@@ -168,7 +168,6 @@ func (g *Game) isPlayerWinner(playerIdx int) bool {
 }
 
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
-
 	if !p.CanTakeCards(count) {
 		return nil, ErrHandLimitExceeded
 	}
@@ -200,14 +199,14 @@ func (g *Game) addToHistory(msg string, cat types.Category) {
 		return
 	}
 
-	hl := historyLine{
+	hl := types.HistoryLine{
 		Msg:      msg,
 		Category: cat,
 	}
 	g.history = append(g.history, hl)
 }
 
-func (g *Game) GetHistory() []historyLine {
+func (g *Game) GetHistory() []types.HistoryLine {
 	if g.historyTracker == 0 {
 		g.historyTracker = len(g.history)
 		return g.history
@@ -401,8 +400,8 @@ func (g *Game) ReconnectPlayer(playerName string) {
 }
 
 func (g *Game) nextAction(expectedAction types.PhaseType,
-	gameStatusFn func() GameStatus) GameStatus {
-
+	gameStatusFn func() GameStatus,
+) GameStatus {
 	p := g.CurrentPlayer()
 	g.turnState.CanMoveWarrior = !g.turnState.HasMovedWarrior && p.HasWarriorsInHand()
 	g.turnState.CanTrade = !g.turnState.HasTraded && p.CanTradeCards()

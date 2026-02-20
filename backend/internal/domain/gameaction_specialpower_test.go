@@ -385,7 +385,7 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -421,7 +421,7 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")

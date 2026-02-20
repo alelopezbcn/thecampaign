@@ -178,7 +178,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
@@ -226,7 +226,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard1, mockDrawnCard2).Return(expectedStatus)
@@ -274,7 +274,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard1, mockDrawnCard2).Return(expectedStatus)
@@ -327,7 +327,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
@@ -369,7 +369,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewBuyAction("Player1", "gold-123")

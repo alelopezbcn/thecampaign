@@ -28,9 +28,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			Players:         []ports.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:     0,
-			turnState: TurnState{HasMovedWarrior: true},
+			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			CurrentTurn: 0,
+			turnState:   TurnState{HasMovedWarrior: true},
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "")
@@ -205,7 +205,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		g := &Game{
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
-			history:     []historyLine{},
+			history:     []types.HistoryLine{},
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "")
@@ -234,7 +234,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -280,7 +280,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			Mode:               types.GameMode2v2,
 			Teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -313,7 +313,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "")
@@ -338,7 +338,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "")
@@ -379,7 +379,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "Player2")

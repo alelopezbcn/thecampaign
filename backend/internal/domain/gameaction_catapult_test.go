@@ -180,7 +180,7 @@ func TestCatapultAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeAttack,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -220,7 +220,7 @@ func TestCatapultAction_Execute(t *testing.T) {
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewCatapultAction("Player1", "Player2", 1)

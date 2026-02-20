@@ -48,7 +48,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			turnState: TurnState{HasMovedWarrior: true, HasTraded: true},
+			turnState:          TurnState{HasMovedWarrior: true, HasTraded: true},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer2, g).Return(expectedStatus)
@@ -114,7 +114,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			discardPile: mockDiscardPile,
-			history:     []historyLine{},
+			history:     []types.HistoryLine{},
 		}
 
 		action := NewEndTurnPhaseAction("Player1", false)
@@ -147,7 +147,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			discardPile: mockDiscardPile,
-			history:     []historyLine{},
+			history:     []types.HistoryLine{},
 		}
 
 		action := NewEndTurnPhaseAction("Player1", true)

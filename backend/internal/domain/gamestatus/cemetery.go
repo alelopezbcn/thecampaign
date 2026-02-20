@@ -9,12 +9,12 @@ type Cemetery struct {
 	LastCorp Card `json:"last_corp"`
 }
 
-func NewCemetery(cementery ports.Cemetery) Cemetery {
+func NewCemetery(corps int, lastCorp ports.Warrior) Cemetery {
 	c := Cemetery{
-		Corps: cementery.Count(),
+		Corps: corps,
 	}
-	if w := cementery.GetLast(); w != nil {
-		c.LastCorp = FromDomainCard(w)
+	if lastCorp != nil {
+		c.LastCorp = FromDomainCard(lastCorp)
 	}
 
 	return c

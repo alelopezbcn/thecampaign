@@ -55,7 +55,8 @@ type OpponentStatus struct {
 }
 
 func newGameStatusWithModalCards(viewer ports.Player, game *Game,
-	modalCards []ports.Card) GameStatus {
+	modalCards []ports.Card,
+) GameStatus {
 	gs := newGameStatus(viewer, game)
 
 	gs.ModalCards = gamestatus.FromDomainCards(modalCards)
@@ -63,9 +64,55 @@ func newGameStatusWithModalCards(viewer ports.Player, game *Game,
 	return gs
 }
 
+type GameStatusDTO struct {
+	Viewer                 ports.Player
+	NewCards               []ports.Card
+	ModalCards             []ports.Card
+	PlayerIndex            int
+	PlayersNames           []string
+	Players                []ports.Player
+	ViewerName             string
+	NextTurnPlayer         string
+	TurnPlayer             string
+	CurrentAction          string
+	LastAction             types.LastActionType
+	GameMode               string
+	CastleIsConstructed    bool
+	CastleResourceCards    int
+	CastleValue            int
+	IsEliminated           bool
+	IsDisconnected         bool
+	CanTrade               bool
+	CemeteryCount          int
+	CemeteryGetLast        ports.Warrior
+	DiscardPileCount       int
+	DiscardPileLastCard    ports.Card
+	DeckCount              int
+	GameStartedAt          time.Time
+	TurnStartedAt          time.Time
+	History                types.HistoryLine
+	LastMovedWarriorID     string
+	LastAttackWeaponID     string
+	LastAttackTargetID     string
+	LastAttackTargetPlayer string
+	StolenFrom             string
+	StolenCard             ports.Card
+	SpyTarget              string
+	SpyTargetPlayer        string
+	CurrentPlayerName      string
+	IsGameOver             bool
+	Winner                 string
+	IsPlayerWinner         bool
+	SameTeamFn             func(i, j int) bool
+	EliminatedPlayers      map[int]bool
+	DisconnectedPlayers    map[int]bool
+	CanMoveWarrior         bool
+	EnemiesFn              func(playerIdx int) []ports.Player
+	AlliesFn               func(playerIdx int) []ports.Player
+}
+
 func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 ) GameStatus {
-
 	viewerIdx := game.PlayerIndex(viewer.Name())
 
 	playersOrder := make([]string, len(game.Players))
@@ -100,7 +147,6 @@ func newGameStatus(viewer ports.Player, game *Game, newCards ...ports.Card,
 	for _, line := range game.GetHistory() {
 		gs.History = append(gs.History, gamestatus.NewHistoryLine(
 			line.Msg, line.Category))
-
 	}
 
 	if len(newCards) > 0 {

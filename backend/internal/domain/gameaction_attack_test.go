@@ -231,7 +231,7 @@ func TestAttackAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -269,7 +269,7 @@ func TestAttackAction_Execute(t *testing.T) {
 			Players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewAttackAction("Player1", "Player2", "K1", "S1")
@@ -304,7 +304,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 	) (g *Game, p1, p2 ports.Player) {
 		g = &Game{
 			currentAction:      types.PhaseTypeAttack,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 			discardPile:        newDiscardPile(),
 			cemetery:           newCemetery(),
 			GameStatusProvider: mockProvider,
@@ -635,7 +635,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		sword2 := cards.NewSword("s2", dmgAmnt)
 		g := &Game{
 			currentAction:      types.PhaseTypeAttack,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 			discardPile:        newDiscardPile(),
 			cemetery:           newCemetery(),
 			GameStatusProvider: mockProvider,
@@ -688,7 +688,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 
 		g := &Game{
 			currentAction:      types.PhaseTypeAttack,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 			discardPile:        newDiscardPile(),
 			cemetery:           newCemetery(),
 			GameStatusProvider: mockProvider,
@@ -769,7 +769,8 @@ func foundInDiscardPile(g *Game, a ports.Card) bool {
 }
 
 func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
-	cardsInField []ports.Warrior, game *Game) ports.Player {
+	cardsInField []ports.Warrior, game *Game,
+) ports.Player {
 	p := &player{
 		name:                           name,
 		cardMovedToPileObserver:        game,

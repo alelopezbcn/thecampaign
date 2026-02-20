@@ -131,7 +131,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			deck:          mockDeck,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewSpyAction("Player1", "Player2", 1)
@@ -169,7 +169,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(mockPlayer1, g, revealedCards).Return(expectedStatus)
@@ -212,7 +212,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().GetWithModal(mockPlayer1, g, enemyCards).Return(expectedStatus)
@@ -249,7 +249,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			currentAction: types.PhaseTypeSpySteal,
 			deck:          mockDeck,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewSpyAction("Player1", "Player2", 1)
@@ -289,7 +289,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewSpyAction("Player1", "Player2", 2)

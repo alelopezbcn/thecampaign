@@ -30,7 +30,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		g := &Game{
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
-			turnState: TurnState{HasTraded: true},
+			turnState:   TurnState{HasTraded: true},
 		}
 
 		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
@@ -143,7 +143,7 @@ func TestTradeAction_Execute(t *testing.T) {
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			GameStatusProvider: mockProvider,
-			history:            []historyLine{},
+			history:            []types.HistoryLine{},
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
@@ -188,7 +188,7 @@ func TestTradeAction_Execute(t *testing.T) {
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
@@ -228,7 +228,7 @@ func TestTradeAction_Execute(t *testing.T) {
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,
 			discardPile:   mockDiscardPile,
-			history:       []historyLine{},
+			history:       []types.HistoryLine{},
 		}
 
 		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
