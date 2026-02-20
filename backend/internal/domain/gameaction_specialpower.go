@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -83,7 +84,6 @@ func (a *SpecialPowerAction) Validate(g *Game) error {
 	// Validate target side based on warrior type
 	if userType == types.ArcherWarriorType && targetIsAllyOrSelf {
 		return fmt.Errorf("archer instant kill can only target enemies")
-
 	}
 	if (userType == types.KnightWarriorType || userType == types.MageWarriorType) && !targetIsAllyOrSelf {
 		return fmt.Errorf("knight/mage special power can only target allies")
@@ -107,7 +107,7 @@ func (a *SpecialPowerAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SpecialPowerAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *SpecialPowerAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := p.UseSpecialPower(a.usedBy, a.usedOn, a.specialPower); err != nil {
@@ -121,7 +121,7 @@ func (a *SpecialPowerAction) Execute(g *Game) (*GameActionResult, func() GameSta
 	result := &GameActionResult{
 		Action: types.LastActionSpecialPower,
 	}
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g)
 	}
 

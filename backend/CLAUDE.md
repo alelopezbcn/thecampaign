@@ -40,7 +40,7 @@ func (g *Game) Xxx(playerName string, ...) (status GameStatus, err error) {
     }
     // ... action logic ...
     g.addToHistory("...", types.CategoryXxx)
-    status = g.nextAction(types.ActionTypeNextPhase, func() GameStatus {
+    status = g.nextAction(types.ActionTypeNextPhase, func() gamestatus.GameStatus {
         return g.GameStatusProvider.Get(p, g)
     })
     return status, nil

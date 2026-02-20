@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -53,7 +54,7 @@ func (a *CatapultAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	stolenGold, err := a.catapult.Attack(a.targetPlayer.Castle(), a.cardPosition)
@@ -71,7 +72,7 @@ func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() GameStatus,
 	result := &GameActionResult{
 		Action: types.LastActionCatapult,
 	}
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g)
 	}
 

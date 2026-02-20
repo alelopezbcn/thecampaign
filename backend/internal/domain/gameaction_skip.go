@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -34,12 +35,12 @@ func (a *SkipPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{Action: types.LastActionSkip}
 
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g)
 	}
 

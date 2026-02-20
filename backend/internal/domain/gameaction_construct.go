@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -56,7 +57,7 @@ func (a *ConstructAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -82,7 +83,7 @@ func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() GameStatus
 	}
 
 	result.Action = types.LastActionConstruct
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g)
 	}
 

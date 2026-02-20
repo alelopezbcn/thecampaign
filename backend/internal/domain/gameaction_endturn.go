@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -21,7 +22,7 @@ func (a *EndTurnPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if a.expired {
@@ -35,7 +36,7 @@ func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() GameSta
 	result := &GameActionResult{Action: types.LastActionEndTurn}
 	g.switchTurn()
 
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(g.CurrentPlayer(), g)
 	}
 

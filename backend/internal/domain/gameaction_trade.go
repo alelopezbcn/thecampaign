@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -35,7 +36,7 @@ func (a *TradeAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -61,7 +62,7 @@ func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() GameStatus, er
 	result.Action = types.LastActionTrade
 	a.currentPhase = g.currentAction
 
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g, cards...)
 	}
 

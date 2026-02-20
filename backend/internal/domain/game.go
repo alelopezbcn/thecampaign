@@ -400,8 +400,8 @@ func (g *Game) ReconnectPlayer(playerName string) {
 }
 
 func (g *Game) nextAction(expectedAction types.PhaseType,
-	gameStatusFn func() GameStatus,
-) GameStatus {
+	gameStatusFn func() gamestatus.GameStatus,
+) gamestatus.GameStatus {
 	p := g.CurrentPlayer()
 	g.turnState.CanMoveWarrior = !g.turnState.HasMovedWarrior && p.HasWarriorsInHand()
 	g.turnState.CanTrade = !g.turnState.HasTraded && p.CanTradeCards()
@@ -483,7 +483,7 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 	return gameStatusFn()
 }
 
-func (g *Game) ExecuteAction(action GameAction) (status GameStatus, err error) {
+func (g *Game) ExecuteAction(action GameAction) (status gamestatus.GameStatus, err error) {
 	if g.CurrentPlayer().Name() != action.PlayerName() {
 		return status, fmt.Errorf("%s not your turn", action.PlayerName())
 	}

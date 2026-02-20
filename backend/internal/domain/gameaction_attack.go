@@ -3,6 +3,7 @@ package domain
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -61,7 +62,7 @@ func (a *AttackAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := p.Attack(a.target, a.weapon); err != nil {
@@ -79,7 +80,7 @@ func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() GameStatus, e
 		AttackTargetID:     a.targetID,
 		AttackTargetPlayer: a.targetPlayerName,
 	}
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g)
 	}
 

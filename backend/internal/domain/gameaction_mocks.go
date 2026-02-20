@@ -3,6 +3,7 @@ package domain
 import (
 	reflect "reflect"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -59,11 +60,11 @@ func (mr *MockGameActionMockRecorder) Validate(g any) *gomock.Call {
 }
 
 // Execute mocks base method.
-func (m *MockGameAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (m *MockGameAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Execute", g)
 	ret0, _ := ret[0].(*GameActionResult)
-	ret1, _ := ret[1].(func() GameStatus)
+	ret1, _ := ret[1].(func() gamestatus.GameStatus)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }

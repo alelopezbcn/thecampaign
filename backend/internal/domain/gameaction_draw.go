@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -21,7 +22,7 @@ func (a *DrawCardAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	cards, err := g.drawCards(p, 1)
@@ -31,7 +32,7 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() GameStatus,
 				types.CategoryError)
 
 			result := &GameActionResult{}
-			statusFn := func() GameStatus {
+			statusFn := func() gamestatus.GameStatus {
 				return g.GameStatusProvider.Get(p, g)
 			}
 			return result, statusFn, nil
@@ -45,7 +46,7 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() GameStatus,
 	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
 
 	result := &GameActionResult{Action: types.LastActionDraw}
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.Get(p, g, cards...)
 	}
 

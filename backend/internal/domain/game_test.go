@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -99,7 +100,7 @@ func TestGame_ExecuteAction(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
 		mockAction.EXPECT().Validate(gomock.Any()).Return(nil)
-		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() GameStatus {
+		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() gamestatus.GameStatus {
 			return expectedStatus
 		}, nil)
 		mockAction.EXPECT().NextPhase().Return(types.PhaseTypeAttack)
@@ -139,7 +140,7 @@ func TestGame_ExecuteAction(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
 		mockAction.EXPECT().Validate(gomock.Any()).Return(nil)
-		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() GameStatus {
+		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() gamestatus.GameStatus {
 			return expectedStatus
 		}, nil)
 		mockAction.EXPECT().NextPhase().Return(types.PhaseTypeAttack)

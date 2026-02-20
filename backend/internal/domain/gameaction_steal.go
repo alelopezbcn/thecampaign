@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -45,7 +46,7 @@ func (a *StealAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *StealAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *StealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}
@@ -70,7 +71,7 @@ func (a *StealAction) Execute(g *Game) (*GameActionResult, func() GameStatus, er
 	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
 	}
 

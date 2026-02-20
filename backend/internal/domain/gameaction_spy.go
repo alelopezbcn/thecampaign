@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -37,7 +38,7 @@ func (a *SpyAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() GameStatus, error) {
+func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	var spiedCards []ports.Card
@@ -75,7 +76,7 @@ func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() GameStatus, erro
 	g.OnCardMovedToPile(s)
 
 	result.Action = types.LastActionSpy
-	statusFn := func() GameStatus {
+	statusFn := func() gamestatus.GameStatus {
 		return g.GameStatusProvider.GetWithModal(p, g, spiedCards)
 	}
 

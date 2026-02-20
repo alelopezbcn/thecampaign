@@ -35,7 +35,7 @@ Refactor the 13 action methods on `Game` (640 lines in `gameactions.go`) into st
 
 type GameAction interface {
     Validate(g *Game) error
-    Execute(g *Game) (*ActionResult, func() GameStatus, error)
+    Execute(g *Game) (*ActionResult, func() gamestatus.GameStatus, error)
     NextPhase() types.ActionType
 }
 ```
@@ -73,17 +73,17 @@ No conditionals, no special cases. Every action flows through `nextAction`. The 
 
 ```go
 // Attack — simple Get:
-statusFn := func() GameStatus {
+statusFn := func() gamestatus.GameStatus {
     return g.GameStatusProvider.Get(p, g)
 }
 
 // Buy — passes newCards for animation:
-statusFn := func() GameStatus {
+statusFn := func() gamestatus.GameStatus {
     return g.GameStatusProvider.Get(p, g, cards...)
 }
 
 // Spy — uses GetWithModal:
-statusFn := func() GameStatus {
+statusFn := func() gamestatus.GameStatus {
     return g.GameStatusProvider.GetWithModal(p, g, spiedCards)
 }
 ```
