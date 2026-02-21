@@ -9,6 +9,7 @@ import (
 
 	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -589,7 +590,7 @@ func (h *Hub) sendReconnectState(gameID, playerName string) {
 }
 
 // sendGameStateToAll sends personalized game state to every player in the room
-func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus domain.GameStatus) {
+func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus gamestatus.GameStatus) {
 	h.mutex.RLock()
 	room, exists := h.gameRooms[gameID]
 	h.mutex.RUnlock()
@@ -609,7 +610,7 @@ func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus domain.GameS
 		}
 		isCurrentPlayer := playerName == currentPlayerName
 
-		var status domain.GameStatus
+		var status gamestatus.GameStatus
 		if isCurrentPlayer {
 			status = currentPlayerStatus
 		} else {
@@ -796,7 +797,7 @@ func (h *Hub) handleSwapTeam(client *Client) {
 }
 
 // executeGameAction executes a game action and sends state to all players
-func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (domain.GameStatus, error)) {
+func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (gamestatus.GameStatus, error)) {
 	room, exists := h.getGameRoom(client)
 	if !exists || room.Game == nil {
 		client.SendError("Game not found")
