@@ -1,4 +1,5 @@
-package domain
+// Package board contains the implementation of the game board, including the Castle, Field, Deck, and DiscardPile.
+package board
 
 import (
 	"fmt"
@@ -17,7 +18,7 @@ type castle struct {
 	resourcesToWin           int
 }
 
-func newCastle(resourcesToWin int, p ports.Player, o ports.CastleCompletionObserver) ports.Castle {
+func NewCastle(resourcesToWin int, p ports.Player, o ports.CastleCompletionObserver) *castle {
 	return &castle{
 		id:                       "castle_" + p.Name(),
 		resources:                []ports.Resource{},

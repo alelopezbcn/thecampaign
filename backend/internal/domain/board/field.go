@@ -1,4 +1,4 @@
-package domain
+package board
 
 import (
 	"strings"
@@ -13,7 +13,7 @@ type field struct {
 	gameEndedObserver ports.FieldWithoutWarriorsObserver
 }
 
-func NewField(playerName string, o ports.FieldWithoutWarriorsObserver) ports.Field {
+func NewField(playerName string, o ports.FieldWithoutWarriorsObserver) *field {
 	return &field{
 		playerName:        playerName,
 		cards:             []ports.Warrior{},

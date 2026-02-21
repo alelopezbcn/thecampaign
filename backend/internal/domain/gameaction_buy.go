@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -57,7 +58,7 @@ func (a *BuyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 	cards, err := g.drawCards(p, cardsToBuy)
 	if err != nil {
 		p.TakeCards(a.resource) // Return the resource card to player's hand if drawing fails
-		if errors.Is(err, ErrHandLimitExceeded) {
+		if errors.Is(err, board.ErrHandLimitExceeded) {
 			return result, nil, fmt.Errorf("cards in hand limit exceeded")
 		}
 		return result, nil, fmt.Errorf("drawing card for buying failed: %w", err)

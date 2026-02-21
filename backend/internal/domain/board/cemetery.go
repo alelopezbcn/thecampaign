@@ -1,4 +1,4 @@
-package domain
+package board
 
 import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
 
@@ -6,7 +6,7 @@ type cemetery struct {
 	corps []ports.Warrior
 }
 
-func newCemetery() ports.Cemetery {
+func NewCemetery() *cemetery {
 	return &cemetery{
 		corps: []ports.Warrior{},
 	}

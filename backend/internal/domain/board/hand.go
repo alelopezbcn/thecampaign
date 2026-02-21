@@ -1,4 +1,4 @@
-package domain
+package board
 
 import (
 	"errors"
@@ -7,7 +7,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
-const maxCardsInHand = 7
+const MaxCardsInHand = 7
 
 var ErrHandLimitExceeded = errors.New("hand limit exceeded")
 
@@ -15,14 +15,14 @@ type hand struct {
 	cards []ports.Card
 }
 
-func NewHand() ports.Hand {
+func NewHand() *hand {
 	return &hand{
 		cards: []ports.Card{},
 	}
 }
 
 func (h *hand) AddCards(cards ...ports.Card) error {
-	if len(h.cards)+len(cards) > maxCardsInHand {
+	if len(h.cards)+len(cards) > MaxCardsInHand {
 		return ErrHandLimitExceeded
 	}
 
@@ -57,7 +57,7 @@ func (h *hand) RemoveCard(card ports.Card) bool {
 }
 
 func (h *hand) CanAddCards(count int) bool {
-	return len(h.cards)+count <= maxCardsInHand
+	return len(h.cards)+count <= MaxCardsInHand
 }
 
 func (h *hand) Count() int {

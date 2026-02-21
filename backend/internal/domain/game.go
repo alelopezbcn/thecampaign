@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -53,8 +54,8 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	g := &Game{
 		id:                  uuid.NewString(),
 		CurrentTurn:         0,
-		discardPile:         newDiscardPile(),
-		cemetery:            newCemetery(),
+		discardPile:         board.NewDiscardPile(),
+		cemetery:            board.NewCemetery(),
 		history:             []types.HistoryLine{},
 		dealer:              dealer,
 		GameStatusProvider:  gameStatusProvider,
@@ -76,7 +77,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	}
 
 	for i, name := range playerNames {
-		p := NewPlayer(name, i, g, g, g, g, castleResourcesToWin)
+		p := board.NewPlayer(name, i, g, g, g, g, castleResourcesToWin)
 		g.Players[i] = p
 	}
 
@@ -130,7 +131,7 @@ func validatePlayers(playerNames []string, mode types.GameMode) error {
 }
 
 func (g *Game) deal() {
-	warriorCards := shuffle(g.dealer.WarriorsCards(len(g.Players)))
+	warriorCards := board.Shuffle(g.dealer.WarriorsCards(len(g.Players)))
 
 	// Each player gets 3 Warrior cards
 	warriorsIdx := 0
@@ -142,7 +143,7 @@ func (g *Game) deal() {
 	deckCards := append(warriorCards[warriorsIdx:],
 		g.dealer.OtherCards(len(g.Players))...)
 
-	deckCards = shuffle(deckCards)
+	deckCards = board.Shuffle(deckCards)
 	otherIdx := 0
 	for _, p := range g.Players {
 		p.TakeCards(deckCards[otherIdx : otherIdx+4]...)
@@ -150,7 +151,7 @@ func (g *Game) deal() {
 	}
 
 	deckCards = deckCards[otherIdx:]
-	g.deck = NewDeck(deckCards)
+	g.deck = board.NewDeck(deckCards)
 }
 
 func (g *Game) IsGameOver() (bool, string) {
@@ -169,7 +170,7 @@ func (g *Game) isPlayerWinner(playerIdx int) bool {
 
 func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
 	if !p.CanTakeCards(count) {
-		return nil, ErrHandLimitExceeded
+		return nil, board.ErrHandLimitExceeded
 	}
 
 	cards = make([]ports.Card, 0, count)
@@ -510,4 +511,128 @@ func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
 		return fmt.Errorf("player %s not found", playerName)
 	}
 	return p.MoveCardToField(warriorID)
+}
+
+// CurrentPlayer returns the player whose turn it is
+func (g *Game) CurrentPlayer() ports.Player {
+	return g.Players[g.CurrentTurn]
+}
+
+// nextActiveTurnPlayer returns the name of the player who will go next,
+// without mutating any state.
+func (g *Game) nextActiveTurnPlayer() string {
+	next := g.CurrentTurn
+	for {
+		next = (next + 1) % len(g.Players)
+		if !g.EliminatedPlayers[next] && !g.DisconnectedPlayers[next] {
+			return g.Players[next].Name()
+		}
+		if next == g.CurrentTurn {
+			return ""
+		}
+	}
+}
+
+// GetPlayer returns a player by name, or nil if not found
+func (g *Game) GetPlayer(name string) ports.Player {
+	for _, p := range g.Players {
+		if p.Name() == name {
+			return p
+		}
+	}
+	return nil
+}
+
+// PlayerIndex returns the index of a player by name, or -1
+func (g *Game) PlayerIndex(name string) int {
+	for i, p := range g.Players {
+		if p.Name() == name {
+			return i
+		}
+	}
+	return -1
+}
+
+// Enemies returns all opponents (non-eliminated, non-ally) of a given player
+func (g *Game) Enemies(playerIdx int) []ports.Player {
+	var enemies []ports.Player
+	for i, p := range g.Players {
+		if i == playerIdx {
+			continue
+		}
+		if g.EliminatedPlayers[i] {
+			continue
+		}
+		if g.Mode == types.GameMode2v2 && g.SameTeam(playerIdx, i) {
+			continue
+		}
+		enemies = append(enemies, p)
+	}
+	return enemies
+}
+
+// Allies returns teammates (for 2v2 only, excluding self)
+func (g *Game) Allies(playerIdx int) []ports.Player {
+	if g.Mode != types.GameMode2v2 {
+		return nil
+	}
+	var allies []ports.Player
+	for i, p := range g.Players {
+		if i == playerIdx {
+			continue
+		}
+		if g.SameTeam(playerIdx, i) {
+			allies = append(allies, p)
+		}
+	}
+	return allies
+}
+
+// SameTeam checks if two player indices are on the same team
+func (g *Game) SameTeam(i, j int) bool {
+	if g.Mode != types.GameMode2v2 {
+		return false
+	}
+	for _, team := range g.Teams {
+		hasI, hasJ := false, false
+		for _, idx := range team {
+			if idx == i {
+				hasI = true
+			}
+			if idx == j {
+				hasJ = true
+			}
+		}
+		if hasI && hasJ {
+			return true
+		}
+	}
+	return false
+}
+
+func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
+	ports.Player, error,
+) {
+	// Validate target player is an enemy
+	targetPlayer := g.GetPlayer(targetPlayerName)
+	if targetPlayer == nil {
+		return nil, fmt.Errorf("target player %s not found", targetPlayerName)
+	}
+
+	pIdx := g.PlayerIndex(playerName)
+	tIdx := g.PlayerIndex(targetPlayerName)
+
+	if pIdx == tIdx {
+		return nil, errors.New("cannot attack yourself")
+	}
+
+	if g.SameTeam(pIdx, tIdx) {
+		return nil, errors.New("cannot attack your ally")
+	}
+
+	if g.EliminatedPlayers[tIdx] {
+		return nil, errors.New("cannot attack eliminated player")
+	}
+
+	return targetPlayer, nil
 }

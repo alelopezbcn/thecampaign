@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -27,7 +28,7 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 
 	cards, err := g.drawCards(p, 1)
 	if err != nil {
-		if errors.Is(err, ErrHandLimitExceeded) {
+		if errors.Is(err, board.ErrHandLimitExceeded) {
 			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()),
 				types.CategoryError)
 

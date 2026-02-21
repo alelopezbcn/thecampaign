@@ -1,4 +1,4 @@
-package domain
+package board
 
 import (
 	"testing"
@@ -17,7 +17,7 @@ func newTestCastle(ctrl *gomock.Controller) (
 	mockPlayer := mocks.NewMockPlayer(ctrl)
 	mockPlayer.EXPECT().Name().Return("TestPlayer").AnyTimes()
 	castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
-	c := newCastle(25, mockPlayer, castleObs)
+	c := NewCastle(25, mockPlayer, castleObs)
 	return c, mockPlayer, castleObs
 }
 

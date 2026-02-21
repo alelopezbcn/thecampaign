@@ -305,8 +305,8 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		g = &Game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
-			discardPile:        newDiscardPile(),
-			cemetery:           newCemetery(),
+			discardPile:        NewDiscardPile(),
+			cemetery:           NewCemetery(),
 			GameStatusProvider: mockProvider,
 		}
 		p1 = newPlayerWithCardAndObserver("Player1", p1Cards, p1Warriors, g)
@@ -636,8 +636,8 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		g := &Game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
-			discardPile:        newDiscardPile(),
-			cemetery:           newCemetery(),
+			discardPile:        NewDiscardPile(),
+			cemetery:           NewCemetery(),
 			GameStatusProvider: mockProvider,
 		}
 		p1 := newPlayerWithCardAndObserver("Player1",
@@ -689,8 +689,8 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		g := &Game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
-			discardPile:        newDiscardPile(),
-			cemetery:           newCemetery(),
+			discardPile:        NewDiscardPile(),
+			cemetery:           NewCemetery(),
 			GameStatusProvider: mockProvider,
 		}
 		p1 := newPlayerWithCardAndObserver("Player1",

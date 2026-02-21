@@ -1,4 +1,4 @@
-package domain
+package board
 
 import (
 	"math/rand"
@@ -24,7 +24,7 @@ func (d *deck) DrawCard() (ports.Card, bool) {
 }
 
 func (d *deck) Replenish(discardPile []ports.Card) {
-	d.cards = shuffle(discardPile)
+	d.cards = Shuffle(discardPile)
 }
 
 func (d *deck) Reveal(n int) []ports.Card {
@@ -38,7 +38,7 @@ func (d *deck) Count() int {
 	return len(d.cards)
 }
 
-func shuffle(cards []ports.Card) []ports.Card {
+func Shuffle(cards []ports.Card) []ports.Card {
 	if len(cards) == 0 {
 		return cards
 	}

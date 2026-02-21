@@ -1,4 +1,4 @@
-package domain
+package board
 
 import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
 
@@ -6,7 +6,7 @@ type discardPile struct {
 	cards []ports.Card
 }
 
-func newDiscardPile() ports.DiscardPile {
+func NewDiscardPile() *discardPile {
 	return &discardPile{
 		cards: []ports.Card{},
 	}

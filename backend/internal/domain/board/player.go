@@ -1,4 +1,4 @@
-package domain
+package board
 
 import (
 	"errors"
@@ -26,7 +26,7 @@ func NewPlayer(name string,
 	castleCompletionObserver ports.CastleCompletionObserver,
 	fieldWithoutWarriorsObserver ports.FieldWithoutWarriorsObserver,
 	castleResourcesToWin int,
-) ports.Player {
+) *player {
 	p := &player{
 		name:                           name,
 		idx:                            idx,
@@ -35,7 +35,7 @@ func NewPlayer(name string,
 		cardMovedToPileObserver:        cardMovedToPileObserver,
 		warriorMovedToCemeteryObserver: warriorMovedToCemeteryObserver,
 	}
-	p.castle = newCastle(castleResourcesToWin, p, castleCompletionObserver)
+	p.castle = NewCastle(castleResourcesToWin, p, castleCompletionObserver)
 
 	return p
 }
@@ -146,8 +146,8 @@ func (p *player) MoveCardToField(cardID string) error {
 }
 
 func (p *player) Attack(target ports.Attackable,
-	weapon ports.Weapon) error {
-
+	weapon ports.Weapon,
+) error {
 	switch weapon.Type() {
 	case types.SwordWeaponType:
 		if !p.Field().HasKnight() && !p.Field().HasDragon() {
@@ -174,8 +174,8 @@ func (p *player) Attack(target ports.Attackable,
 }
 
 func (p *player) UseSpecialPower(usedBy ports.Warrior, usedOn ports.Warrior,
-	specialPowerCard ports.SpecialPower) error {
-
+	specialPowerCard ports.SpecialPower,
+) error {
 	err := specialPowerCard.Use(usedBy, usedOn)
 	if err != nil {
 		return fmt.Errorf("special power failed: %w", err)
@@ -236,7 +236,7 @@ func (p *player) CanBuyWith(resource ports.Resource) bool {
 	}
 
 	cardsToBuy := resource.Value() / 2
-	if p.Hand().Count()+cardsToBuy-1 > maxCardsInHand {
+	if p.Hand().Count()+cardsToBuy-1 > MaxCardsInHand {
 		return false
 	}
 

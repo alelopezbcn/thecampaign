@@ -1,4 +1,4 @@
-package domain
+package board
 
 import (
 	"testing"
