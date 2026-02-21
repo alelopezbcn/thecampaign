@@ -41,7 +41,7 @@ func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus
 	result := &GameActionResult{Action: types.LastActionSkip}
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider.Get(p, g)
+		return g.gameStatusProvider.Get(p, g)
 	}
 
 	return result, statusFn, nil

@@ -11,7 +11,7 @@ import (
 func (h *Hub) handleDrawCard(client *Client) {
 	log.Printf("handleDrawCard called by %s", client.PlayerName)
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewDrawCardAction(client.PlayerName))
 	})
 }
@@ -29,7 +29,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewAttackAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
 	})
 }
@@ -47,7 +47,7 @@ func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewSpecialPowerAction(client.PlayerName, p.UserID, p.TargetID, p.WeaponID))
 	})
 }
@@ -65,7 +65,7 @@ func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewMoveWarriorAction(client.PlayerName, p.WarriorID, p.TargetPlayer))
 	})
 }
@@ -83,7 +83,7 @@ func (h *Hub) handleTrade(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewTradeAction(client.PlayerName, p.CardIDs))
 	})
 }
@@ -101,7 +101,7 @@ func (h *Hub) handleBuy(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewBuyAction(client.PlayerName, p.CardID))
 	})
 }
@@ -119,7 +119,7 @@ func (h *Hub) handleConstruct(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewConstructAction(client.PlayerName, p.CardID, p.TargetPlayer))
 	})
 }
@@ -137,7 +137,7 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewSpyAction(client.PlayerName, p.TargetPlayer, p.Option))
 	})
 }
@@ -155,7 +155,7 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewStealAction(client.PlayerName, p.TargetPlayer, p.CardPosition))
 	})
 }
@@ -173,7 +173,7 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 		return
 	}
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewCatapultAction(client.PlayerName, p.TargetPlayer, p.CardPosition))
 	})
 }
@@ -206,7 +206,7 @@ func (h *Hub) handleEndTurn(client *Client) {
 func (h *Hub) handleSkipPhase(client *Client) {
 	log.Printf("handleSkipPhase called by %s", client.PlayerName)
 
-	h.executeGameAction(client, func(g *game.Game) (gamestatus.GameStatus, error) {
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(game.NewSkipPhaseAction(client.PlayerName))
 	})
 }

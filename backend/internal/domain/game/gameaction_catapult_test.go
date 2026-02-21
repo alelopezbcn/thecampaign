@@ -180,7 +180,7 @@ func TestCatapultAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 

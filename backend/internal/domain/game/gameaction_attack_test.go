@@ -232,7 +232,7 @@ func TestAttackAction_Execute(t *testing.T) {
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 
@@ -309,7 +309,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			history:            []types.HistoryLine{},
 			discardPile:        board.NewDiscardPile(),
 			cemetery:           board.NewCemetery(),
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 		p1 = newPlayerWithCardAndObserver("Player1", p1Cards, p1Warriors, g)
 		p2 = newPlayerWithCardAndObserver("Player2", p2Cards, p2Warriors, g)
@@ -640,7 +640,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			history:            []types.HistoryLine{},
 			discardPile:        board.NewDiscardPile(),
 			cemetery:           board.NewCemetery(),
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{sword1, sword2},
@@ -693,7 +693,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			history:            []types.HistoryLine{},
 			discardPile:        board.NewDiscardPile(),
 			cemetery:           board.NewCemetery(),
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 		p1 := newPlayerWithCardAndObserver("Player1",
 			[]ports.Card{poison1, sword2, arrow3, sword4},

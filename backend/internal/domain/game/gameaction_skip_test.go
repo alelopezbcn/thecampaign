@@ -97,7 +97,7 @@ func TestSkipPhaseAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)

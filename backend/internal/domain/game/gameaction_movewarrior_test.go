@@ -234,7 +234,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 
@@ -280,7 +280,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeAttack,
 			Mode:               types.GameMode2v2,
 			Teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 

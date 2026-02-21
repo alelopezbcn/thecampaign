@@ -77,7 +77,7 @@ func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 
 	result.Action = types.LastActionSpy
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider.GetWithModal(p, g, spiedCards)
+		return g.gameStatusProvider.GetWithModal(p, g, spiedCards)
 	}
 
 	return result, statusFn, nil

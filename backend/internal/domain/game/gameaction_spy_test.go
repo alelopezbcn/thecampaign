@@ -169,7 +169,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeSpySteal,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 
@@ -212,7 +212,7 @@ func TestSpyAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeSpySteal,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 

@@ -178,7 +178,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 
@@ -226,7 +226,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 
@@ -274,7 +274,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 
@@ -327,7 +327,7 @@ func TestBuyAction_Execute(t *testing.T) {
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 

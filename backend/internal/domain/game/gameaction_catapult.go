@@ -73,7 +73,7 @@ func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 		Action: types.LastActionCatapult,
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider.Get(p, g)
+		return g.gameStatusProvider.Get(p, g)
 	}
 
 	return result, statusFn, nil

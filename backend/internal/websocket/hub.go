@@ -1,3 +1,4 @@
+// Package websocket implements the WebSocket hub and message handling for "The Campaign" game.
 package websocket
 
 import (
@@ -10,10 +11,21 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/game"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 const turnTimeLimit = 120 * time.Second
+
+type HubGame interface {
+	ExecuteAction(action game.GameAction) (gamestatus.GameStatus, error)
+	CurrentPlayer() ports.Player
+	GetPlayer(name string) ports.Player
+	ReconnectPlayer(name string)
+	DisconnectPlayer(playerName string) error
+	IsGameOver() (bool, string)
+	Status(viewer ports.Player) gamestatus.GameStatus
+}
 
 // ClientMessage represents a message from a client
 type ClientMessage struct {
@@ -26,7 +38,7 @@ type GameRoom struct {
 	ID              string
 	GameMode        types.GameMode
 	MaxPlayers      int
-	Game            *game.Game
+	Game            HubGame
 	Players         map[string]*Client // playerName -> client
 	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
 	mutex           sync.RWMutex
@@ -567,7 +579,7 @@ func (h *Hub) sendReconnectState(gameID, playerName string) {
 	currentPlayerName := room.Game.CurrentPlayer().Name()
 	isCurrentPlayer := playerName == currentPlayerName
 
-	status := room.Game.GameStatusProvider.Get(player, room.Game)
+	status := room.Game.Status(player)
 
 	// Send game_started so frontend transitions to the game screen
 	playerNames := make([]string, 0, len(room.Players))
@@ -618,7 +630,7 @@ func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus gamestatus.G
 			if player == nil {
 				continue
 			}
-			status = room.Game.GameStatusProvider.Get(player, room.Game)
+			status = room.Game.Status(player)
 			status.History = currentPlayerStatus.History
 		}
 
@@ -710,7 +722,7 @@ func (h *Hub) broadcastGameStateToAll(gameID string) {
 
 	room.mutex.RLock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status := room.Game.GameStatusProvider.Get(currentPlayer, room.Game)
+	status := room.Game.Status(currentPlayer)
 	room.mutex.RUnlock()
 
 	h.sendGameStateToAll(gameID, status)
@@ -797,7 +809,7 @@ func (h *Hub) handleSwapTeam(client *Client) {
 }
 
 // executeGameAction executes a game action and sends state to all players
-func (h *Hub) executeGameAction(client *Client, action func(*game.Game) (gamestatus.GameStatus, error)) {
+func (h *Hub) executeGameAction(client *Client, action func(HubGame) (gamestatus.GameStatus, error)) {
 	room, exists := h.getGameRoom(client)
 	if !exists || room.Game == nil {
 		client.SendError("Game not found")

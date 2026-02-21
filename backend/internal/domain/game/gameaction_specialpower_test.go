@@ -385,7 +385,7 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 			Players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
 		}
 

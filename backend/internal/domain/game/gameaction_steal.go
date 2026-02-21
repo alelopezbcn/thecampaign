@@ -72,7 +72,7 @@ func (a *StealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
+		return g.gameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
 	}
 
 	return result, statusFn, nil

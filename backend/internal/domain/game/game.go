@@ -36,7 +36,7 @@ type Game struct {
 	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
 	dealer             ports.Dealer
-	GameStatusProvider GameStatusProvider
+	gameStatusProvider GameStatusProvider
 	history            []types.HistoryLine
 	historyTracker     int
 	lastResult         GameActionResult
@@ -59,7 +59,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		cemetery:            board.NewCemetery(),
 		history:             []types.HistoryLine{},
 		dealer:              dealer,
-		GameStatusProvider:  gameStatusProvider,
+		gameStatusProvider:  gameStatusProvider,
 		Players:             make([]ports.Player, len(playerNames)),
 		Mode:                mode,
 		EliminatedPlayers:   make(map[int]bool),
@@ -636,4 +636,8 @@ func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
 	}
 
 	return targetPlayer, nil
+}
+
+func (g *Game) Status(viewer ports.Player) gamestatus.GameStatus {
+	return g.gameStatusProvider.Get(viewer, g)
 }

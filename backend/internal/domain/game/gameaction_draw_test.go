@@ -84,7 +84,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
@@ -118,7 +118,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
@@ -159,7 +159,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)

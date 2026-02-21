@@ -48,7 +48,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 			turnState:          TurnState{HasMovedWarrior: true, HasTraded: true},
 		}
 
@@ -85,7 +85,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 			CurrentTurn:        1,
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
-			GameStatusProvider: mockProvider,
+			gameStatusProvider: mockProvider,
 		}
 
 		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
