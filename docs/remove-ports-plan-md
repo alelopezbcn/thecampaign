@@ -1,0 +1,144 @@
+# Plan: Remove `ports` Package
+
+## Overview
+
+The `ports` package currently centralises all domain interfaces. The goal is to delete it entirely and move each interface to the package where its consumers live, following the Go idiom of "accept interfaces, define them close to consumers."
+
+---
+
+## The Core Challenge: Circular Dependency
+
+Two cross-package dependencies in `ports` must be resolved before anything else:
+
+1. **`cards/catapult.go`** uses `ports.Castle` (a board-level type). Since `board` uses `cards` types, introducing a direct `cards → board` import would create a cycle.
+   - **Resolution:** Define a minimal `CastleTarget` interface inside `cards` containing only the methods `catapult.go` actually calls (`RemoveGold(position int) (Resource, error)`). `board.castle` satisfies it implicitly.
+
+2. **`cards/cardbase.go`** has a `player ports.Player` struct field that is **never accessed** (dead code).
+   - **Resolution:** Simply delete the field.
+
+---
+
+## Where Each Interface Moves
+
+### → `cards` package (`cards/interfaces.go`)
+
+From `ports/card.go`:
+- `Card`, `Attackable`, `Warrior`, `Weapon`, `Resource`, `SpecialPower`
+- `Spy`, `Thief`, `Catapult`
+- `Dragon`, `Knight`, `Archer`, `Mage` (warrior subtypes)
+- `Sword`, `Arrow`, `Poison` (weapon subtypes)
+
+From `ports/dealer.go`:
+- `Dealer`
+
+From `ports/observers.go` (card-level observers):
+- `CardMovedToPileObserver`
+- `WarriorDeadObserver`
+
+New interface (cycle-breaker):
+- `CastleTarget` — minimal interface used only by `catapult.go`
+
+---
+
+### → `board` package (`board/interfaces.go`)
+
+From `ports/castle.go`:    `Castle`
+From `ports/cemetery.go`:  `Cemetery`
+From `ports/deck.go`:      `Deck`
+From `ports/discardpile.go`: `DiscardPile`
+From `ports/field.go`:     `Field`
+From `ports/hand.go`:      `Hand`
+From `ports/player.go`:    `Player`
+From `ports/errors.go`:    `ErrHandLimitExceeded`
+
+From `ports/observers.go` (board-level observers):
+- `WarriorMovedToCemeteryObserver`
+- `CastleCompletionObserver`
+- `FieldWithoutWarriorsObserver`
+
+---
+
+### → `domain` package (`domain/interfaces.go`)
+
+From `ports/gameaction.go`:
+- `GameAction`
+
+From `ports/gamestatuscontext.go`:
+- `GameStatusContext`
+- `GameActionResult`
+
+---
+
+## Resulting Dependency Graph
+
+```
+types                (no internal imports)
+gamestatus           → types
+cards                → types
+board                → cards, types
+gameactions          → domain, board, cards, gamestatus, types
+domain               → board, cards, gamestatus, types
+websocket            → domain, gameactions, cards, gamestatus, types
+```
+
+No cycles. `ports` is gone.
+
+---
+
+## Implementation Steps
+
+### Step 1 — Break the cycle in `cards`
+- [ ] Delete the unused `player ports.Player` field from `cardBase` in `cards/cardbase.go`
+- [ ] Add `CastleTarget` interface to `cards` (only needs `RemoveGold(position int) (Resource, error)`)
+- [ ] Update `cards/catapult.go` to use `CastleTarget` instead of `ports.Castle`
+
+### Step 2 — Add interfaces to `cards` package
+- [ ] Create `cards/interfaces.go` with all card-level interfaces and observers listed above
+- [ ] Update every file in `cards/` to remove the `ports` import and use unqualified interface names (same package)
+
+### Step 3 — Add interfaces to `board` package
+- [ ] Create `board/interfaces.go` with all board-level interfaces, observers, and `ErrHandLimitExceeded`
+- [ ] Update every file in `board/` to remove the `ports` import, use unqualified names for board types, and use `cards.Xxx` for card types
+
+### Step 4 — Add interfaces to `domain` package
+- [ ] Create `domain/interfaces.go` with `GameAction`, `GameStatusContext`, `GameActionResult`
+- [ ] Update `domain/game.go`, `domain/gamestatusbuilder.go`, `domain/gamestatusprovider.go` to use unqualified types for `GameAction`/`GameStatusContext`/`GameActionResult`, and `board.Xxx` / `cards.Xxx` for the rest
+- [ ] Update all `gameactions/*.go` files: replace `ports.GameStatusContext` → `domain.GameStatusContext`, `ports.GameActionResult` → `domain.GameActionResult`, and update card/board type references accordingly
+
+### Step 5 — Update `websocket` package
+- [ ] Update `websocket/hub.go` to replace `ports.GameAction` → `domain.GameAction` and `ports.Player` → `board.Player`
+
+### Step 6 — Update mocks and `makefile`
+- [ ] Update `mockgen` source paths in `makefile` to point to the new source files (`cards/interfaces.go`, `board/interfaces.go`, etc.)
+- [ ] Regenerate all mocks with `make mocks`
+- [ ] Update the generated mock imports (they will reference the new packages instead of `ports`)
+
+### Step 7 — Update test files
+- [ ] Update all `_test.go` files that import `ports` to import the new packages instead
+
+### Step 8 — Delete `ports/`
+- [ ] Remove the `backend/internal/domain/ports/` directory
+- [ ] Confirm `go build ./...` and `go test ./...` pass cleanly
+
+---
+
+## Files Affected
+
+| Package | Non-test files | Test files |
+|---|---|---|
+| `cards/` | 10 | 4 |
+| `board/` | 7 | 4 |
+| `gameactions/` | 13 | 13 |
+| `domain/` | 4 | 4 |
+| `websocket/` | 1 | 0 |
+| `test/mocks/` | 10 | — |
+| `makefile` | 1 | — |
+| **Total** | **~46** | **~21** |
+
+---
+
+## Risk Notes
+
+- **Mocks**: all mocks in `test/mocks/` are generated from `ports` source files. After moving the interfaces, all 10 mock files must be regenerated. The `gamestatusprovider_mocks.go` (in-package mock) also needs updating.
+- **Interface identity**: Go uses structural typing, so no existing implementation needs to change — only import paths and qualifiers.
+- **`ErrHandLimitExceeded`**: currently a sentinel error in `ports/errors.go`. Moving it to `board` means `gameactions/` will reference it as `board.ErrHandLimitExceeded`. Alternatively it could live in a shared `types` or `domain` errors file if preferred.
