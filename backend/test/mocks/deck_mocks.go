@@ -53,6 +53,18 @@ func (mr *MockDeckMockRecorder) Count() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Count", reflect.TypeOf((*MockDeck)(nil).Count))
 }
 
+// Deal mocks base method.
+func (m *MockDeck) Deal(players []ports.Player) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Deal", players)
+}
+
+// Deal indicates an expected call of Deal.
+func (mr *MockDeckMockRecorder) Deal(players any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deal", reflect.TypeOf((*MockDeck)(nil).Deal), players)
+}
+
 // DrawCard mocks base method.
 func (m *MockDeck) DrawCard() (ports.Card, bool) {
 	m.ctrl.T.Helper()

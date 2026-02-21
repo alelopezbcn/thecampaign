@@ -35,7 +35,6 @@ type Game struct {
 	deck               ports.Deck
 	discardPile        ports.DiscardPile
 	cemetery           ports.Cemetery
-	dealer             ports.Dealer
 	gameStatusProvider GameStatusProvider
 	history            []types.HistoryLine
 	historyTracker     int
@@ -55,10 +54,10 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	g := &Game{
 		id:                  uuid.NewString(),
 		CurrentTurn:         0,
+		deck:                board.NewDeck(dealer),
 		discardPile:         board.NewDiscardPile(),
 		cemetery:            board.NewCemetery(),
 		history:             []types.HistoryLine{},
-		dealer:              dealer,
 		gameStatusProvider:  gameStatusProvider,
 		Players:             make([]ports.Player, len(playerNames)),
 		Mode:                mode,
@@ -82,7 +81,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 		g.Players[i] = p
 	}
 
-	g.deal()
+	g.deck.Deal(g.Players)
 
 	return g, nil
 }
@@ -104,55 +103,6 @@ func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Car
 	}
 
 	return warriors
-}
-
-func validatePlayers(playerNames []string, mode types.GameMode) error {
-	switch mode {
-	case types.GameMode1v1:
-		if len(playerNames) != 2 {
-			return errors.New("1v1 mode requires 2 players")
-		}
-	case types.GameMode2v2:
-		if len(playerNames) != 4 {
-			return errors.New("2v2 mode requires 4 players")
-		}
-	case types.GameModeFFA3:
-		if len(playerNames) != 3 {
-			return errors.New("FFA3 mode requires 3 players")
-		}
-	case types.GameModeFFA5:
-		if len(playerNames) != 5 {
-			return errors.New("FFA mode requires 5 players")
-		}
-	default:
-		return errors.New("invalid game mode")
-	}
-
-	return nil
-}
-
-func (g *Game) deal() {
-	warriorCards := board.Shuffle(g.dealer.WarriorsCards(len(g.Players)))
-
-	// Each player gets 3 Warrior cards
-	warriorsIdx := 0
-	for _, p := range g.Players {
-		p.TakeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
-		warriorsIdx += 3
-	}
-
-	deckCards := append(warriorCards[warriorsIdx:],
-		g.dealer.OtherCards(len(g.Players))...)
-
-	deckCards = board.Shuffle(deckCards)
-	otherIdx := 0
-	for _, p := range g.Players {
-		p.TakeCards(deckCards[otherIdx : otherIdx+4]...)
-		otherIdx += 4
-	}
-
-	deckCards = deckCards[otherIdx:]
-	g.deck = board.NewDeck(deckCards)
 }
 
 func (g *Game) IsGameOver() (bool, string) {
@@ -640,4 +590,29 @@ func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
 
 func (g *Game) Status(viewer ports.Player) gamestatus.GameStatus {
 	return g.gameStatusProvider.Get(viewer, g)
+}
+
+func validatePlayers(playerNames []string, mode types.GameMode) error {
+	switch mode {
+	case types.GameMode1v1:
+		if len(playerNames) != 2 {
+			return errors.New("1v1 mode requires 2 players")
+		}
+	case types.GameMode2v2:
+		if len(playerNames) != 4 {
+			return errors.New("2v2 mode requires 4 players")
+		}
+	case types.GameModeFFA3:
+		if len(playerNames) != 3 {
+			return errors.New("FFA3 mode requires 3 players")
+		}
+	case types.GameModeFFA5:
+		if len(playerNames) != 5 {
+			return errors.New("FFA mode requires 5 players")
+		}
+	default:
+		return errors.New("invalid game mode")
+	}
+
+	return nil
 }

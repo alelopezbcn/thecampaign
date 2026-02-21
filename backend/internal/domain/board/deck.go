@@ -7,11 +7,12 @@ import (
 )
 
 type deck struct {
-	cards []ports.Card
+	cards  []ports.Card
+	dealer ports.Dealer
 }
 
-func NewDeck(cards []ports.Card) ports.Deck {
-	return &deck{cards: cards}
+func NewDeck(d ports.Dealer) *deck {
+	return &deck{dealer: d}
 }
 
 func (d *deck) DrawCard() (ports.Card, bool) {
@@ -24,7 +25,7 @@ func (d *deck) DrawCard() (ports.Card, bool) {
 }
 
 func (d *deck) Replenish(discardPile []ports.Card) {
-	d.cards = Shuffle(discardPile)
+	d.cards = shuffle(discardPile)
 }
 
 func (d *deck) Reveal(n int) []ports.Card {
@@ -38,7 +39,31 @@ func (d *deck) Count() int {
 	return len(d.cards)
 }
 
-func Shuffle(cards []ports.Card) []ports.Card {
+func (d *deck) Deal(players []ports.Player) {
+	warriorCards := shuffle(d.dealer.WarriorsCards(len(players)))
+
+	// Each player gets 3 Warrior cards
+	warriorsIdx := 0
+	for _, p := range players {
+		p.TakeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
+		warriorsIdx += 3
+	}
+
+	deckCards := append(warriorCards[warriorsIdx:],
+		d.dealer.OtherCards(len(players))...)
+
+	deckCards = shuffle(deckCards)
+	otherIdx := 0
+	for _, p := range players {
+		p.TakeCards(deckCards[otherIdx : otherIdx+4]...)
+		otherIdx += 4
+	}
+
+	deckCards = deckCards[otherIdx:]
+	d.cards = deckCards
+}
+
+func shuffle(cards []ports.Card) []ports.Card {
 	if len(cards) == 0 {
 		return cards
 	}
