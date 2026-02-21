@@ -40,7 +40,7 @@ func (a *tradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
-	tradedCards, err := p.GiveCards(a.cardIDs...)
+	tradedCards, err := p.RemoveFromHand(a.cardIDs...)
 	if err != nil {
 		return result, nil, fmt.Errorf("giving cards for trading failed: %w", err)
 	}

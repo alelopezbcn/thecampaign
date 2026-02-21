@@ -122,7 +122,7 @@ func TestPlayer_GiveCards(t *testing.T) {
 		card := mockCardWithObserver(ctrl, "c1")
 		p.TakeCards(card)
 
-		given, err := p.GiveCards("c1")
+		given, err := p.RemoveFromHand("c1")
 		assert.NoError(t, err)
 		assert.Len(t, given, 1)
 		assert.Equal(t, 0, p.CardsInHand())
@@ -133,7 +133,7 @@ func TestPlayer_GiveCards(t *testing.T) {
 		defer ctrl.Finish()
 		p, _, _, _, _ := newTestPlayer(t, ctrl)
 
-		_, err := p.GiveCards("nonexistent")
+		_, err := p.RemoveFromHand("nonexistent")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "card with ID nonexistent not found in hand")
 	})
@@ -148,7 +148,7 @@ func TestPlayer_GiveCards(t *testing.T) {
 		c3 := mockCardWithObserver(ctrl, "c3")
 		p.TakeCards(c1, c2, c3)
 
-		given, err := p.GiveCards("c1", "c3")
+		given, err := p.RemoveFromHand("c1", "c3")
 		assert.NoError(t, err)
 		assert.Len(t, given, 2)
 		assert.Equal(t, 1, p.CardsInHand())

@@ -33,9 +33,6 @@ func NewSpecialPower(id string) *specialPower {
 	}
 }
 
-func (s *specialPower) MultiplierFactor(_ Warrior) int {
-	return 1
-}
 func (s *specialPower) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
@@ -47,13 +44,13 @@ func (s *specialPower) BeAttacked(w Weapon) error {
 	return nil
 }
 func (s *specialPower) Use(usedBy Warrior, target Warrior) error {
-	if _, ok := usedBy.(*dragon); ok {
+	if usedBy.Type() == types.DragonWarriorType {
 		return errors.New("special power action not allowed to be used by Dragon")
 	}
 
 	switch usedBy.(type) {
 	case *knight:
-		if _, ok := target.(*dragon); ok {
+		if target.Type() == types.DragonWarriorType {
 			return errors.New("dragon cannot be protected")
 		}
 		if err := target.Protect(s); err != nil {
@@ -62,7 +59,7 @@ func (s *specialPower) Use(usedBy Warrior, target Warrior) error {
 	case *archer:
 		target.InstantKill(s)
 	case *mage:
-		if _, ok := target.(*dragon); ok {
+		if target.Type() == types.DragonWarriorType {
 			return errors.New("dragon cannot be healed")
 		}
 		target.Heal(s)

@@ -14,7 +14,7 @@ type Player interface {
 	Idx() int
 	TakeCards(cards ...cards.Card) bool
 	MoveCardToField(cardID string) error
-	GiveCards(cardIDs ...string) ([]cards.Card, error)
+	RemoveFromHand(cardIDs ...string) ([]cards.Card, error)
 	Hand() Hand
 	Field() Field
 	CanTakeCards(count int) bool
@@ -33,11 +33,13 @@ type Player interface {
 	HasThief() bool
 	HasSpy() bool
 	HasCatapult() bool
+	HasHarpoon() bool
 	HasWarriorsInHand() bool
 	CanTradeCards() bool
 	Thief() cards.Thief
 	Spy() cards.Spy
 	Catapult() cards.Catapult
+	Harpoon() cards.Harpoon
 	Castle() Castle
 }
 
@@ -100,7 +102,7 @@ func (p *player) TakeCards(cardsTaken ...cards.Card) bool {
 	return true
 }
 
-func (p *player) GiveCards(cardIDs ...string) ([]cards.Card, error) {
+func (p *player) RemoveFromHand(cardIDs ...string) ([]cards.Card, error) {
 	cards := make([]cards.Card, 0, len(cardIDs))
 
 	for _, cardID := range cardIDs {
@@ -311,6 +313,15 @@ func (p *player) HasCatapult() bool {
 	return false
 }
 
+func (p *player) HasHarpoon() bool {
+	for _, c := range p.hand.ShowCards() {
+		if _, ok := c.(cards.Harpoon); ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (p *player) HasWarriorsInHand() bool {
 	for _, c := range p.hand.ShowCards() {
 		if _, ok := c.(cards.Warrior); ok {
@@ -367,6 +378,16 @@ func (p *player) Catapult() cards.Catapult {
 		if t, ok := c.(cards.Catapult); ok {
 			p.hand.RemoveCard(t)
 			return t
+		}
+	}
+	return nil
+}
+
+func (p *player) Harpoon() cards.Harpoon {
+	for _, c := range p.hand.ShowCards() {
+		if h, ok := c.(cards.Harpoon); ok {
+			p.hand.RemoveCard(h)
+			return h
 		}
 	}
 	return nil

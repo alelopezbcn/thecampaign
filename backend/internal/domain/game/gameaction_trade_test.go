@@ -85,7 +85,7 @@ func TestTradeAction_Validate(t *testing.T) {
 }
 
 func TestTradeAction_Execute(t *testing.T) {
-	t.Run("Error when GiveCards fails", func(t *testing.T) {
+	t.Run("Error when RemoveFromHand fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -93,7 +93,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(nil, errors.New("card not found"))
+		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(nil, errors.New("card not found"))
 
 		g := &Game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
@@ -125,7 +125,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
+		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
 
 		// Traded cards go to discard pile
@@ -175,7 +175,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
+		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
 		mockDiscardPile.EXPECT().Discard(mockCard1)
 		mockDiscardPile.EXPECT().Discard(mockCard2)
@@ -215,7 +215,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
+		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
 		mockDiscardPile.EXPECT().Discard(mockCard1)
 		mockDiscardPile.EXPECT().Discard(mockCard2)

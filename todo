@@ -1,6 +1,10 @@
 cuando se presiona end turn no se ve el modal que indica que ha cambiado el turno
 Fix gen-mocks
 fix unit tests
+replace player HasXXXX by generic method
+same with Spy, thief, harpon...
+queremos que p.Harpoon y el resto quiten la carta? O hacemos el HasXXX, y luego un remove de esa carta?
+remove p.UseSpecialPower, replace by removeCard
 
 Nueva carta ballesta
 

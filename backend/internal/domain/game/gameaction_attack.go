@@ -51,7 +51,7 @@ func (a *attackAction) Validate(g *Game) error {
 
 	a.target, ok = targetCard.(cards.Attackable)
 	if !ok {
-		return fmt.Errorf("the target cardBase cannot be attacked")
+		return fmt.Errorf("the target card cannot be attacked")
 	}
 
 	a.weapon, ok = weaponCard.(cards.Weapon)

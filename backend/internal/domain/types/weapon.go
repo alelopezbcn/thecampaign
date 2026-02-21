@@ -7,6 +7,7 @@ const (
 	ArrowWeaponType        WeaponType = "Arrow"
 	PoisonWeaponType       WeaponType = "Poison"
 	SpecialPowerWeaponType WeaponType = "Special Power"
+	HarpoonWeaponType      WeaponType = "Harpoon"
 )
 
 func (wt WeaponType) String() string {

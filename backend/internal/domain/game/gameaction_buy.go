@@ -50,7 +50,7 @@ func (a *buyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 
 	result := &GameActionResult{}
 
-	if _, err := p.GiveCards(a.resource.GetID()); err != nil {
+	if _, err := p.RemoveFromHand(a.resource.GetID()); err != nil {
 		return result, nil, fmt.Errorf("giving card for buying failed: %w", err)
 	}
 

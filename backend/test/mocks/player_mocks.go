@@ -252,23 +252,23 @@ func (mr *MockPlayerMockRecorder) GetCardFromHand(cardID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardFromHand", reflect.TypeOf((*MockPlayer)(nil).GetCardFromHand), cardID)
 }
 
-// GiveCards mocks base method.
-func (m *MockPlayer) GiveCards(cardIDs ...string) ([]ports.Card, error) {
+// RemoveFromHand mocks base method.
+func (m *MockPlayer) RemoveFromHand(cardIDs ...string) ([]ports.Card, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{}
 	for _, a := range cardIDs {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GiveCards", varargs...)
+	ret := m.ctrl.Call(m, "RemoveFromHand", varargs...)
 	ret0, _ := ret[0].([]ports.Card)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GiveCards indicates an expected call of GiveCards.
-func (mr *MockPlayerMockRecorder) GiveCards(cardIDs ...any) *gomock.Call {
+// RemoveFromHand indicates an expected call of RemoveFromHand.
+func (mr *MockPlayerMockRecorder) RemoveFromHand(cardIDs ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GiveCards", reflect.TypeOf((*MockPlayer)(nil).GiveCards), cardIDs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFromHand", reflect.TypeOf((*MockPlayer)(nil).RemoveFromHand), cardIDs...)
 }
 
 // Hand mocks base method.

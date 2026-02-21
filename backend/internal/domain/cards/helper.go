@@ -54,6 +54,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewCatapultCard("c1"),
+		NewHarpoon("ha1"),
 	}
 
 	if playerCount > 3 {
@@ -63,6 +64,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewSpy("spy2"))
 		other = append(other, NewThief("t2"))
 		other = append(other, NewCatapultCard("c2"))
+		other = append(other, NewHarpoon("ha2"))
 	}
 
 	for i := 1; i < 10; i++ {
