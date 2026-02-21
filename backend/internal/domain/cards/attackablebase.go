@@ -1,16 +1,22 @@
 package cards
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
-
 type attackableBase struct {
 	health     int
-	attackedBy []ports.Weapon
+	attackedBy []Weapon
+}
+
+type Attackable interface {
+	Health() int
+	ReceiveDamage(weapon Weapon, multiplier int) (isDefeated bool)
+	BeAttacked(weapon Weapon) error
+	AttackedBy() []Weapon
+	String() string
 }
 
 func newAttackableBase(health int) *attackableBase {
 	return &attackableBase{
 		health:     health,
-		attackedBy: []ports.Weapon{},
+		attackedBy: []Weapon{},
 	}
 }
 
@@ -22,6 +28,6 @@ func (a *attackableBase) Health() int {
 	return a.health
 }
 
-func (a *attackableBase) AttackedBy() []ports.Weapon {
+func (a *attackableBase) AttackedBy() []Weapon {
 	return a.attackedBy
 }

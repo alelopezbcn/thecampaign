@@ -3,7 +3,7 @@ package gamestatus
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -31,7 +31,7 @@ func TestNewFieldCard_BasicWarriorTypes(t *testing.T) {
 			warrior.EXPECT().Type().Return(tt.warriorType)
 			warrior.EXPECT().GetID().Return("W1")
 			warrior.EXPECT().Health().Return(18)
-			warrior.EXPECT().AttackedBy().Return([]ports.Weapon{})
+			warrior.EXPECT().AttackedBy().Return([]cards.Weapon{})
 			warrior.EXPECT().IsProtected().Return(false, nil)
 
 			fc := NewFieldCard(warrior)
@@ -64,7 +64,7 @@ func TestNewFieldCard_WithAttackers(t *testing.T) {
 	warrior.EXPECT().Type().Return(types.KnightWarriorType)
 	warrior.EXPECT().GetID().Return("K1")
 	warrior.EXPECT().Health().Return(8)
-	warrior.EXPECT().AttackedBy().Return([]ports.Weapon{sword, arrow})
+	warrior.EXPECT().AttackedBy().Return([]cards.Weapon{sword, arrow})
 	warrior.EXPECT().IsProtected().Return(false, nil)
 
 	fc := NewFieldCard(warrior)
@@ -94,7 +94,7 @@ func TestNewFieldCard_WithPoisonAttacker(t *testing.T) {
 	warrior.EXPECT().Type().Return(types.MageWarriorType)
 	warrior.EXPECT().GetID().Return("M1")
 	warrior.EXPECT().Health().Return(16)
-	warrior.EXPECT().AttackedBy().Return([]ports.Weapon{poison})
+	warrior.EXPECT().AttackedBy().Return([]cards.Weapon{poison})
 	warrior.EXPECT().IsProtected().Return(false, nil)
 
 	fc := NewFieldCard(warrior)
@@ -115,7 +115,7 @@ func TestNewFieldCard_WithProtection(t *testing.T) {
 	warrior.EXPECT().Type().Return(types.ArcherWarriorType)
 	warrior.EXPECT().GetID().Return("A1")
 	warrior.EXPECT().Health().Return(20)
-	warrior.EXPECT().AttackedBy().Return([]ports.Weapon{})
+	warrior.EXPECT().AttackedBy().Return([]cards.Weapon{})
 	warrior.EXPECT().IsProtected().Return(true, sp)
 
 	fc := NewFieldCard(warrior)

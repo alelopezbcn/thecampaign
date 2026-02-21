@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/google/uuid"
 )
@@ -19,10 +19,10 @@ const (
 )
 
 type Board interface {
-	Deck() ports.Deck
-	DiscardPile() ports.DiscardPile
-	Cemetery() ports.Cemetery
-	Players() []ports.Player
+	Deck() board.Deck
+	DiscardPile() board.DiscardPile
+	Cemetery() board.Cemetery
+	Players() []board.Player
 }
 
 type Games []Game
@@ -46,7 +46,7 @@ type Game struct {
 	gameStartedAt       time.Time
 }
 
-func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
+func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 	gameStatusProvider GameStatusProvider,
 ) (*Game, error) {
 	if err := validatePlayers(len(playerNames), mode); err != nil {
@@ -54,7 +54,7 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	}
 
 	now := time.Now()
-	players := make([]ports.Player, len(playerNames))
+	players := make([]board.Player, len(playerNames))
 	g := &Game{
 		id:                  uuid.NewString(),
 		CurrentTurn:         0,
@@ -93,7 +93,7 @@ func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Car
 	for _, p := range g.board.Players() {
 		if p.Name() == playerName {
 			for _, c := range p.Hand().ShowCards() {
-				if w, ok := c.(ports.Warrior); ok {
+				if w, ok := c.(cards.Warrior); ok {
 					warriors[i] = gamestatus.FromDomainCard(w)
 					i++
 					if i == 3 {
@@ -142,17 +142,17 @@ func (g *Game) GetHistory() []types.HistoryLine {
 	return newMessages
 }
 
-func (g *Game) OnCardMovedToPile(card ports.Card) {
+func (g *Game) OnCardMovedToPile(card cards.Card) {
 	g.board.DiscardPile().Discard(card)
 }
 
-func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
+func (g *Game) OnWarriorMovedToCemetery(warrior cards.Warrior) {
 	g.board.Cemetery().AddCorp(warrior)
 
 	g.AddHistory("warrior buried in cemetery", types.CategoryInfo)
 }
 
-func (g *Game) OnCastleCompletion(p ports.Player) {
+func (g *Game) OnCastleCompletion(p board.Player) {
 	g.winState.GameOver = true
 	g.winState.WinnerIdx = g.PlayerIndex(p.Name())
 	if g.mode == types.GameMode2v2 {
@@ -333,12 +333,12 @@ func (g *Game) ExecuteAction(action GameAction) (status gamestatus.GameStatus, e
 }
 
 // CurrentPlayer returns the player whose turn it is
-func (g *Game) CurrentPlayer() ports.Player {
+func (g *Game) CurrentPlayer() board.Player {
 	return g.board.Players()[g.CurrentTurn]
 }
 
 // GetPlayer returns a player by name, or nil if not found
-func (g *Game) GetPlayer(name string) ports.Player {
+func (g *Game) GetPlayer(name string) board.Player {
 	for _, p := range g.board.Players() {
 		if p.Name() == name {
 			return p
@@ -358,8 +358,8 @@ func (g *Game) PlayerIndex(name string) int {
 }
 
 // Enemies returns all opponents (non-eliminated, non-ally) of a given player
-func (g *Game) Enemies(playerIdx int) []ports.Player {
-	var enemies []ports.Player
+func (g *Game) Enemies(playerIdx int) []board.Player {
+	var enemies []board.Player
 	for i, p := range g.board.Players() {
 		if i == playerIdx {
 			continue
@@ -376,11 +376,11 @@ func (g *Game) Enemies(playerIdx int) []ports.Player {
 }
 
 // Allies returns teammates (for 2v2 only, excluding self)
-func (g *Game) Allies(playerIdx int) []ports.Player {
+func (g *Game) Allies(playerIdx int) []board.Player {
 	if g.mode != types.GameMode2v2 {
 		return nil
 	}
-	var allies []ports.Player
+	var allies []board.Player
 	for i, p := range g.board.Players() {
 		if i == playerIdx {
 			continue
@@ -415,7 +415,7 @@ func (g *Game) SameTeam(i, j int) bool {
 }
 
 func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
-	ports.Player, error,
+	board.Player, error,
 ) {
 	// Validate target player is an enemy
 	targetPlayer := g.GetPlayer(targetPlayerName)
@@ -441,7 +441,7 @@ func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
 	return targetPlayer, nil
 }
 
-func (g *Game) Status(viewer ports.Player) gamestatus.GameStatus {
+func (g *Game) Status(viewer board.Player) gamestatus.GameStatus {
 	return g.gameStatusProvider.Get(viewer, g)
 }
 
@@ -455,7 +455,7 @@ func (g *Game) isPlayerWinner(playerIdx int) bool {
 	return g.SameTeam(playerIdx, g.winState.WinnerIdx)
 }
 
-func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err error) {
+func (g *Game) drawCards(p board.Player, count int) (cards []cards.Card, err error) {
 	if !p.CanTakeCards(count) {
 		return nil, board.ErrHandLimitExceeded
 	}
@@ -532,7 +532,7 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 			for _, ally := range g.Allies(g.PlayerIndex(p.Name())) {
 				if ally.Castle().IsConstructed() {
 					for _, c := range p.Hand().ShowCards() {
-						if _, ok := c.(ports.Resource); ok {
+						if _, ok := c.(cards.Resource); ok {
 							canConstruct = true
 							break
 						}

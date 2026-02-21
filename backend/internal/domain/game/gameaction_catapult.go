@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -14,9 +15,9 @@ type CatapultAction struct {
 	targetPlayerName string
 	cardPosition     int
 
-	catapult     ports.Catapult
-	targetPlayer ports.Player
-	weapon       ports.Weapon
+	catapult     cards.Catapult
+	targetPlayer board.Player
+	weapon       cards.Weapon
 }
 
 func NewCatapultAction(playerName, targetPlayerName string, cardPosition int) *CatapultAction {

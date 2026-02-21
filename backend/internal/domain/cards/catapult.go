@@ -1,19 +1,24 @@
 package cards
 
-import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
-)
+type CastleTarget interface {
+	RemoveGold(position int) (Resource, error)
+}
+
+type Catapult interface {
+	Card
+	Attack(castle CastleTarget, position int) (Resource, error)
+}
 
 type catapult struct {
 	*cardBase
 }
 
-func NewCatapultCard(id string) ports.Catapult {
+func NewCatapultCard(id string) *catapult {
 	return &catapult{
 		cardBase: newCardBase(id, "Catapult"),
 	}
 }
-func (c *catapult) Attack(castle ports.Castle, position int) (ports.Resource, error) {
+func (c *catapult) Attack(castle CastleTarget, position int) (Resource, error) {
 	g, err := castle.RemoveGold(position)
 	if err != nil {
 		return nil, err

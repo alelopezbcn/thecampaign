@@ -3,15 +3,42 @@ package cards
 import (
 	"errors"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
+
+type Warrior interface {
+	Card
+	Attackable
+	Protect(powerCard SpecialPower) error
+	IsProtected() (bool, SpecialPower)
+	Heal(powerCard SpecialPower)
+	InstantKill(sp SpecialPower)
+	AddWarriorDeadObserver(o WarriorDeadObserver)
+	Type() types.WarriorType
+	IsDamaged() bool
+}
+
+type Dragon interface {
+	Warrior
+}
+
+type Knight interface {
+	Warrior
+}
+
+type Archer interface {
+	Warrior
+}
+
+type Mage interface {
+	Warrior
+}
 
 type knight struct {
 	*warriorBase
 }
 
-func NewKnight(id string) ports.Knight {
+func NewKnight(id string) *knight {
 	return &knight{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
@@ -20,7 +47,7 @@ func NewKnight(id string) ports.Knight {
 		),
 	}
 }
-func (k *knight) BeAttacked(w ports.Weapon) error {
+func (k *knight) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
@@ -34,7 +61,7 @@ type archer struct {
 	*warriorBase
 }
 
-func NewArcher(id string) ports.Archer {
+func NewArcher(id string) *archer {
 	return &archer{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
@@ -43,7 +70,7 @@ func NewArcher(id string) ports.Archer {
 		),
 	}
 }
-func (a *archer) BeAttacked(w ports.Weapon) error {
+func (a *archer) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
@@ -57,7 +84,7 @@ type mage struct {
 	*warriorBase
 }
 
-func NewMage(id string) ports.Mage {
+func NewMage(id string) *mage {
 	return &mage{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
@@ -66,7 +93,7 @@ func NewMage(id string) ports.Mage {
 		),
 	}
 }
-func (m *mage) BeAttacked(w ports.Weapon) error {
+func (m *mage) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
@@ -80,7 +107,7 @@ type dragon struct {
 	*warriorBase
 }
 
-func NewDragon(id string) ports.Dragon {
+func NewDragon(id string) *dragon {
 	return &dragon{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
@@ -89,7 +116,7 @@ func NewDragon(id string) ports.Dragon {
 		),
 	}
 }
-func (d *dragon) BeAttacked(w ports.Weapon) error {
+func (d *dragon) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
@@ -99,7 +126,7 @@ func (d *dragon) BeAttacked(w ports.Weapon) error {
 
 	return nil
 }
-func (d *dragon) InstantKill(sp ports.SpecialPower) {
+func (d *dragon) InstantKill(sp SpecialPower) {
 	// Dragon cannot be instant killed
 	d.health -= sp.DamageAmount()
 	d.attackedBy = append(d.attackedBy, sp)

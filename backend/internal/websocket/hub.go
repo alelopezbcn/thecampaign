@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/game"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -19,12 +19,12 @@ const turnTimeLimit = 120 * time.Second
 
 type HubGame interface {
 	ExecuteAction(action game.GameAction) (gamestatus.GameStatus, error)
-	CurrentPlayer() ports.Player
-	GetPlayer(name string) ports.Player
+	CurrentPlayer() board.Player
+	GetPlayer(name string) board.Player
 	ReconnectPlayer(name string)
 	DisconnectPlayer(playerName string) error
 	IsGameOver() (bool, string)
-	Status(viewer ports.Player) gamestatus.GameStatus
+	Status(viewer board.Player) gamestatus.GameStatus
 }
 
 // ClientMessage represents a message from a client

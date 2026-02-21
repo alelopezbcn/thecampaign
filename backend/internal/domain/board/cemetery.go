@@ -1,14 +1,25 @@
 package board
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
+
+type Cemetery interface {
+	Count() int
+	AddCorp(cards.Warrior)
+	GetLast() cards.Warrior
+	Corps() []cards.Warrior
+}
+
+type WarriorMovedToCemeteryObserver interface {
+	OnWarriorMovedToCemetery(card cards.Warrior)
+}
 
 type cemetery struct {
-	corps []ports.Warrior
+	corps []cards.Warrior
 }
 
 func newCemetery() *cemetery {
 	return &cemetery{
-		corps: []ports.Warrior{},
+		corps: []cards.Warrior{},
 	}
 }
 
@@ -16,11 +27,11 @@ func (c *cemetery) Count() int {
 	return len(c.corps)
 }
 
-func (c *cemetery) AddCorp(w ports.Warrior) {
+func (c *cemetery) AddCorp(w cards.Warrior) {
 	c.corps = append(c.corps, w)
 }
 
-func (c *cemetery) GetLast() ports.Warrior {
+func (c *cemetery) GetLast() cards.Warrior {
 	if c.Count() == 0 {
 		return nil
 	}
@@ -28,6 +39,6 @@ func (c *cemetery) GetLast() ports.Warrior {
 	return c.corps[len(c.corps)-1]
 }
 
-func (c *cemetery) Corps() []ports.Warrior {
+func (c *cemetery) Corps() []cards.Warrior {
 	return c.corps
 }

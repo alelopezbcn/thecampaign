@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -14,7 +15,7 @@ type StealAction struct {
 	targetPlayerName string
 	cardPosition     int
 
-	targetPlayer ports.Player
+	targetPlayer board.Player
 }
 
 func NewStealAction(playerName, targetPlayerName string, cardPosition int) *StealAction {
@@ -72,7 +73,7 @@ func (a *StealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
+		return g.gameStatusProvider.GetWithModal(p, g, []cards.Card{stolenCard})
 	}
 
 	return result, statusFn, nil

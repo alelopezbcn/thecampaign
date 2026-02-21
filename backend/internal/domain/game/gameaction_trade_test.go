@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			turnState:   TurnState{HasTraded: true},
 		}
@@ -51,7 +52,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 		}
 
@@ -72,7 +73,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 		}
 
@@ -95,7 +96,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(nil, errors.New("card not found"))
 
 		g := &Game{
-			players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 		}
 
@@ -125,7 +126,7 @@ func TestTradeAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
-			[]ports.Card{mockCard1, mockCard2, mockCard3}, nil)
+			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
 
 		// Traded cards go to discard pile
 		mockDiscardPile.EXPECT().Discard(mockCard1)
@@ -138,7 +139,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 
 		g := &Game{
-			players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
@@ -175,7 +176,7 @@ func TestTradeAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
-			[]ports.Card{mockCard1, mockCard2, mockCard3}, nil)
+			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
 		mockDiscardPile.EXPECT().Discard(mockCard1)
 		mockDiscardPile.EXPECT().Discard(mockCard2)
 		mockDiscardPile.EXPECT().Discard(mockCard3)
@@ -184,7 +185,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,
@@ -215,7 +216,7 @@ func TestTradeAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(
-			[]ports.Card{mockCard1, mockCard2, mockCard3}, nil)
+			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
 		mockDiscardPile.EXPECT().Discard(mockCard1)
 		mockDiscardPile.EXPECT().Discard(mockCard2)
 		mockDiscardPile.EXPECT().Discard(mockCard3)
@@ -224,7 +225,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,

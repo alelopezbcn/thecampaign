@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -41,7 +41,7 @@ func (a *SpyAction) Validate(g *Game) error {
 func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
-	var spiedCards []ports.Card
+	var spiedCards []cards.Card
 	result := &GameActionResult{}
 
 	switch a.option {

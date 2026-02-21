@@ -3,14 +3,13 @@ package board
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
 func newTestCastle(ctrl *gomock.Controller) (
-	ports.Castle,
+	Castle,
 	*mocks.MockPlayer,
 	*mocks.MockCastleCompletionObserver,
 ) {
@@ -21,7 +20,7 @@ func newTestCastle(ctrl *gomock.Controller) (
 	return c, mockPlayer, castleObs
 }
 
-func constructCastle(t *testing.T, c ports.Castle, ctrl *gomock.Controller) {
+func constructCastle(t *testing.T, c Castle, ctrl *gomock.Controller) {
 	t.Helper()
 	r := mocks.NewMockResource(ctrl)
 	r.EXPECT().Value().Return(1).AnyTimes()

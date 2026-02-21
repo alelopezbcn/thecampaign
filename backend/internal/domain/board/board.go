@@ -1,15 +1,15 @@
 package board
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 
 type board struct {
-	deck        ports.Deck
-	discardPile ports.DiscardPile
-	cemetery    ports.Cemetery
-	players     []ports.Player
+	deck        Deck
+	discardPile DiscardPile
+	cemetery    Cemetery
+	players     []Player
 }
 
-func New(dealer ports.Dealer, players []ports.Player) *board {
+func New(dealer cards.Dealer, players []Player) *board {
 	return &board{
 		deck:        newDeck(dealer),
 		discardPile: newDiscardPile(),
@@ -18,18 +18,18 @@ func New(dealer ports.Dealer, players []ports.Player) *board {
 	}
 }
 
-func (b *board) Deck() ports.Deck {
+func (b *board) Deck() Deck {
 	return b.deck
 }
 
-func (b *board) DiscardPile() ports.DiscardPile {
+func (b *board) DiscardPile() DiscardPile {
 	return b.discardPile
 }
 
-func (b *board) Cemetery() ports.Cemetery {
+func (b *board) Cemetery() Cemetery {
 	return b.cemetery
 }
 
-func (b *board) Players() []ports.Player {
+func (b *board) Players() []Player {
 	return b.players
 }

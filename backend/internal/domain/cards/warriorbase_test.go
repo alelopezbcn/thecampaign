@@ -3,7 +3,6 @@ package cards
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -134,7 +133,7 @@ func TestWarriorBase_Heal_RestoresHealthAndDiscardsWeapons(t *testing.T) {
 	w := &warriorBase{
 		attackableBase: &attackableBase{
 			health:     2,
-			attackedBy: []ports.Weapon{weapon1, weapon2},
+			attackedBy: []Weapon{weapon1, weapon2},
 		},
 	}
 	sp := mocks.NewMockSpecialPower(ctrl)
@@ -154,7 +153,7 @@ func TestWarriorBase_Heal_NoWeapons(t *testing.T) {
 	w := &warriorBase{
 		attackableBase: &attackableBase{
 			health:     1,
-			attackedBy: []ports.Weapon{},
+			attackedBy: []Weapon{},
 		},
 	}
 	sp := mocks.NewMockSpecialPower(ctrl)
@@ -193,7 +192,7 @@ func TestWarriorBase_InstantKill_WithoutProtection(t *testing.T) {
 	obs := mocks.NewMockWarriorDeadObserver(ctrl)
 	w := &warriorBase{
 		attackableBase: &attackableBase{
-			attackedBy: []ports.Weapon{},
+			attackedBy: []Weapon{},
 		},
 		WarriorDeadObserver: obs,
 	}

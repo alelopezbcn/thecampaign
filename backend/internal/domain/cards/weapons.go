@@ -1,22 +1,42 @@
 package cards
 
 import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
+
+type Weapon interface {
+	Card
+	DamageAmount() int
+	Type() types.WeaponType
+	CanConstruct() bool
+	MultiplierFactor(target Warrior) int
+	String() string
+}
+
+type Sword interface {
+	Weapon
+}
+
+type Arrow interface {
+	Weapon
+}
+
+type Poison interface {
+	Weapon
+}
 
 type sword struct {
 	*cardBase
 	*weaponBase
 }
 
-func NewSword(id string, damageAmount int) ports.Sword {
+func NewSword(id string, damageAmount int) *sword {
 	return &sword{
 		cardBase:   newCardBase(id, "Sword"),
 		weaponBase: newWeaponBase(damageAmount, types.SwordWeaponType),
 	}
 }
-func (s *sword) MultiplierFactor(target ports.Warrior) int {
+func (s *sword) MultiplierFactor(target Warrior) int {
 	if target.Type() == types.ArcherWarriorType {
 		return 2
 	}
@@ -29,13 +49,13 @@ type arrow struct {
 	*weaponBase
 }
 
-func NewArrow(id string, damageAmount int) ports.Arrow {
+func NewArrow(id string, damageAmount int) *arrow {
 	return &arrow{
 		cardBase:   newCardBase(id, "Arrow"),
 		weaponBase: newWeaponBase(damageAmount, types.ArrowWeaponType),
 	}
 }
-func (s *arrow) MultiplierFactor(target ports.Warrior) int {
+func (s *arrow) MultiplierFactor(target Warrior) int {
 	if target.Type() == types.MageWarriorType {
 		return 2
 	}
@@ -48,7 +68,7 @@ type poison struct {
 	*weaponBase
 }
 
-func NewPoison(id string, damageAmount int) ports.Poison {
+func NewPoison(id string, damageAmount int) *poison {
 	{
 		return &poison{
 			cardBase:   newCardBase(id, "Poison"),
@@ -56,7 +76,7 @@ func NewPoison(id string, damageAmount int) ports.Poison {
 		}
 	}
 }
-func (s *poison) MultiplierFactor(target ports.Warrior) int {
+func (s *poison) MultiplierFactor(target Warrior) int {
 	if target.Type() == types.KnightWarriorType {
 		return 2
 	}

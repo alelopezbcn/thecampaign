@@ -5,8 +5,8 @@ import (
 	"fmt"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -14,7 +14,7 @@ type BuyAction struct {
 	playerName string
 	cardID     string
 
-	resource ports.Resource
+	resource cards.Resource
 }
 
 func NewBuyAction(playerName, cardID string) *BuyAction {
@@ -37,7 +37,7 @@ func (a *BuyAction) Validate(g *Game) error {
 		return fmt.Errorf("Resource card not in hand: %s", a.cardID)
 	}
 
-	a.resource, ok = resourceCard.(ports.Resource)
+	a.resource, ok = resourceCard.(cards.Resource)
 	if !ok {
 		return errors.New("only gold cards can be used to buy")
 	}

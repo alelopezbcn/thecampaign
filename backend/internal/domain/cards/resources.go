@@ -2,16 +2,20 @@ package cards
 
 import (
 	"fmt"
-
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
+
+type Resource interface {
+	Card
+	Value() int
+	CanConstruct() bool
+}
 
 type gold struct {
 	*cardBase
 	value int
 }
 
-func NewGold(id string, value int) ports.Resource {
+func NewGold(id string, value int) *gold {
 	return &gold{
 		cardBase: newCardBase(id, "Gold Coin"),
 		value:    value,

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -14,7 +14,7 @@ type ConstructAction struct {
 	cardID           string
 	targetPlayerName string
 
-	targetPlayer ports.Player
+	targetPlayer board.Player
 }
 
 func NewConstructAction(playerName, cardID string, targetPlayerName string) *ConstructAction {

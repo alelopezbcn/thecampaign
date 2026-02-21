@@ -12,8 +12,9 @@ package game
 import (
 	reflect "reflect"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	ports "github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -41,7 +42,7 @@ func (m *MockGameStatusProvider) EXPECT() *MockGameStatusProviderMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGameStatusProvider) Get(viewer ports.Player, game *Game, newCards ...ports.Card) gamestatus.GameStatus {
+func (m *MockGameStatusProvider) Get(viewer board.Player, game *Game, newCards ...cards.Card) gamestatus.GameStatus {
 	m.ctrl.T.Helper()
 	varargs := []any{viewer, game}
 	for _, a := range newCards {
@@ -60,7 +61,7 @@ func (mr *MockGameStatusProviderMockRecorder) Get(viewer, game any, newCards ...
 }
 
 // GetWithModal mocks base method.
-func (m *MockGameStatusProvider) GetWithModal(viewer ports.Player, game *Game, modalCards []ports.Card) gamestatus.GameStatus {
+func (m *MockGameStatusProvider) GetWithModal(viewer board.Player, game *Game, modalCards []cards.Card) gamestatus.GameStatus {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWithModal", viewer, game, modalCards)
 	ret0, _ := ret[0].(gamestatus.GameStatus)

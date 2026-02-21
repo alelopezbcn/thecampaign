@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ func TestStealAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
@@ -57,7 +58,7 @@ func TestStealAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().HasThief().Return(false)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
@@ -81,7 +82,7 @@ func TestStealAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().HasThief().Return(true)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
@@ -106,7 +107,7 @@ func TestStealAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(nil, errors.New("invalid position"))
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
@@ -134,7 +135,7 @@ func TestStealAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Thief().Return(nil)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
@@ -170,7 +171,7 @@ func TestStealAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
 
 		g := &Game{
-			players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeSpySteal,
 			discardPile:        mockDiscardPile,
@@ -179,7 +180,7 @@ func TestStealAction_Execute(t *testing.T) {
 		}
 
 		mockProvider.EXPECT().GetWithModal(
-			mockPlayer1, g, []ports.Card{mockStolenCard},
+			mockPlayer1, g, []cards.Card{mockStolenCard},
 		).Return(expectedStatus)
 
 		action := NewStealAction("Player1", "Player2", 2)
@@ -213,7 +214,7 @@ func TestStealAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			discardPile:   mockDiscardPile,

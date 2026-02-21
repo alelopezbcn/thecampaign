@@ -3,7 +3,6 @@ package board
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -11,7 +10,7 @@ import (
 )
 
 func newTestPlayer(t *testing.T, ctrl *gomock.Controller) (
-	ports.Player,
+	Player,
 	*mocks.MockCardMovedToPileObserver,
 	*mocks.MockWarriorMovedToCemeteryObserver,
 	*mocks.MockCastleCompletionObserver,

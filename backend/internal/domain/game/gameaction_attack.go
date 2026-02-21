@@ -3,8 +3,8 @@ package game
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -13,8 +13,8 @@ type AttackAction struct {
 	targetPlayerName string
 	targetID         string
 	weaponID         string
-	target           ports.Attackable
-	weapon           ports.Weapon
+	target           cards.Attackable
+	weapon           cards.Weapon
 }
 
 func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *AttackAction {
@@ -49,12 +49,12 @@ func (a *AttackAction) Validate(g *Game) error {
 		return fmt.Errorf("weapon card not in hand: %s", a.weaponID)
 	}
 
-	a.target, ok = targetCard.(ports.Attackable)
+	a.target, ok = targetCard.(cards.Attackable)
 	if !ok {
 		return fmt.Errorf("the target cardBase cannot be attacked")
 	}
 
-	a.weapon, ok = weaponCard.(ports.Weapon)
+	a.weapon, ok = weaponCard.(cards.Weapon)
 	if !ok {
 		return fmt.Errorf("the card is not a weapon")
 	}

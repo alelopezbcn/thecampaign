@@ -3,8 +3,8 @@ package game
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -14,9 +14,9 @@ type SpecialPowerAction struct {
 	targetID   string
 	weaponID   string
 
-	usedBy       ports.Warrior
-	usedOn       ports.Warrior
-	specialPower ports.SpecialPower
+	usedBy       cards.Warrior
+	usedOn       cards.Warrior
+	specialPower cards.SpecialPower
 }
 
 func NewSpecialPowerAction(playerName, userID, targetID, weaponID string) *SpecialPowerAction {
@@ -44,13 +44,13 @@ func (a *SpecialPowerAction) Validate(g *Game) error {
 	}
 
 	// Determine user warrior type for validation
-	a.usedBy, ok = userCard.(ports.Warrior)
+	a.usedBy, ok = userCard.(cards.Warrior)
 	if !ok {
 		return fmt.Errorf("the attacking card is not a warrior")
 	}
 	userType := a.usedBy.Type()
 
-	var targetCard ports.Card
+	var targetCard cards.Card
 	targetIsAllyOrSelf := false
 
 	// Search own field
@@ -94,12 +94,12 @@ func (a *SpecialPowerAction) Validate(g *Game) error {
 		return fmt.Errorf("weapon card not in hand: %s", a.weaponID)
 	}
 
-	a.specialPower, ok = weaponCard.(ports.SpecialPower)
+	a.specialPower, ok = weaponCard.(cards.SpecialPower)
 	if !ok {
 		return fmt.Errorf("the card is not a special power")
 	}
 
-	a.usedOn, ok = targetCard.(ports.Warrior)
+	a.usedOn, ok = targetCard.(cards.Warrior)
 	if !ok {
 		return fmt.Errorf("the target card is not a warrior")
 	}

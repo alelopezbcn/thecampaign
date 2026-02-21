@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -14,8 +15,8 @@ type MoveWarriorAction struct {
 	warriorID        string
 	targetPlayerName string
 
-	targetPlayer ports.Player
-	warrior      ports.Warrior
+	targetPlayer board.Player
+	warrior      cards.Warrior
 	currentPhase types.PhaseType
 }
 
@@ -54,7 +55,7 @@ func (a *MoveWarriorAction) Validate(g *Game) error {
 			return fmt.Errorf("card with ID %s not found in hand", a.warriorID)
 		}
 
-		w, ok := c.(ports.Warrior)
+		w, ok := c.(cards.Warrior)
 		if !ok {
 			return fmt.Errorf("only warrior cards can be moved to field")
 		}
