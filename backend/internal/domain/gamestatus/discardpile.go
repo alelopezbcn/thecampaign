@@ -9,12 +9,12 @@ type DiscardPile struct {
 	LastCard Card `json:"last_card"`
 }
 
-func NewDiscardPile(discardPile ports.DiscardPile) DiscardPile {
+func NewDiscardPile(cards int, lastCard ports.Card) DiscardPile {
 	d := DiscardPile{
-		Cards: discardPile.Count(),
+		Cards: cards,
 	}
-	if c := discardPile.GetLast(); c != nil {
-		d.LastCard = FromDomainCard(c)
+	if lastCard != nil {
+		d.LastCard = FromDomainCard(lastCard)
 	}
 
 	return d

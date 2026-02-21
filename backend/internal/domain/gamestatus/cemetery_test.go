@@ -13,11 +13,7 @@ func TestNewCemetery_Empty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	cemetery := mocks.NewMockCemetery(ctrl)
-	cemetery.EXPECT().Count().Return(0)
-	cemetery.EXPECT().GetLast().Return(nil)
-
-	c := NewCemetery(cemetery)
+	c := NewCemetery(0, nil)
 
 	assert.Equal(t, 0, c.Corps)
 	assert.Equal(t, Card{}, c.LastCorp)
@@ -32,11 +28,7 @@ func TestNewCemetery_WithCorps(t *testing.T) {
 	lastWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 	lastWarrior.EXPECT().Health().Return(0)
 
-	cemetery := mocks.NewMockCemetery(ctrl)
-	cemetery.EXPECT().Count().Return(3)
-	cemetery.EXPECT().GetLast().Return(lastWarrior)
-
-	c := NewCemetery(cemetery)
+	c := NewCemetery(3, lastWarrior)
 
 	assert.Equal(t, 3, c.Corps)
 	assert.Equal(t, "K1", c.LastCorp.CardID)

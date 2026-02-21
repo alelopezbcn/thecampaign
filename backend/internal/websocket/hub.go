@@ -1,3 +1,4 @@
+// Package websocket implements the WebSocket hub and message handling for "The Campaign" game.
 package websocket
 
 import (
@@ -7,12 +8,24 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/game"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
+	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 const turnTimeLimit = 120 * time.Second
+
+type HubGame interface {
+	ExecuteAction(action game.GameAction) (gamestatus.GameStatus, error)
+	CurrentPlayer() ports.Player
+	GetPlayer(name string) ports.Player
+	ReconnectPlayer(name string)
+	DisconnectPlayer(playerName string) error
+	IsGameOver() (bool, string)
+	Status(viewer ports.Player) gamestatus.GameStatus
+}
 
 // ClientMessage represents a message from a client
 type ClientMessage struct {
@@ -25,7 +38,7 @@ type GameRoom struct {
 	ID              string
 	GameMode        types.GameMode
 	MaxPlayers      int
-	Game            *domain.Game
+	Game            HubGame
 	Players         map[string]*Client // playerName -> client
 	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
 	mutex           sync.RWMutex
@@ -390,8 +403,8 @@ func (h *Hub) handleStartGame(client *Client) {
 		}
 	}
 
-	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(),
-		domain.NewGameStatusProvider())
+	game, err := game.NewGame(playerNames, room.GameMode, cards.NewDealer(),
+		game.NewGameStatusProvider())
 	if err != nil {
 		room.mutex.Unlock()
 		log.Printf("Error creating game: %v", err)
@@ -452,7 +465,7 @@ func (h *Hub) autoDrawAndBroadcast(gameID string) {
 
 	room.mutex.Lock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status, err := room.Game.ExecuteAction(domain.NewDrawCardAction(currentPlayer.Name()))
+	status, err := room.Game.ExecuteAction(game.NewDrawCardAction(currentPlayer.Name()))
 	room.mutex.Unlock()
 
 	if err != nil {
@@ -503,7 +516,7 @@ func (h *Hub) startTurnTimer(gameID string) {
 			currentPlayer := room.Game.CurrentPlayer().Name()
 			log.Printf("Turn timer expired for %s in game %s", currentPlayer, gameID)
 
-			status, err := room.Game.ExecuteAction(domain.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
+			status, err := room.Game.ExecuteAction(game.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
 			room.mutex.Unlock()
 
 			if err != nil {
@@ -566,7 +579,7 @@ func (h *Hub) sendReconnectState(gameID, playerName string) {
 	currentPlayerName := room.Game.CurrentPlayer().Name()
 	isCurrentPlayer := playerName == currentPlayerName
 
-	status := room.Game.GameStatusProvider.Get(player, room.Game)
+	status := room.Game.Status(player)
 
 	// Send game_started so frontend transitions to the game screen
 	playerNames := make([]string, 0, len(room.Players))
@@ -589,7 +602,7 @@ func (h *Hub) sendReconnectState(gameID, playerName string) {
 }
 
 // sendGameStateToAll sends personalized game state to every player in the room
-func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus domain.GameStatus) {
+func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus gamestatus.GameStatus) {
 	h.mutex.RLock()
 	room, exists := h.gameRooms[gameID]
 	h.mutex.RUnlock()
@@ -609,7 +622,7 @@ func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus domain.GameS
 		}
 		isCurrentPlayer := playerName == currentPlayerName
 
-		var status domain.GameStatus
+		var status gamestatus.GameStatus
 		if isCurrentPlayer {
 			status = currentPlayerStatus
 		} else {
@@ -617,7 +630,7 @@ func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus domain.GameS
 			if player == nil {
 				continue
 			}
-			status = room.Game.GameStatusProvider.Get(player, room.Game)
+			status = room.Game.Status(player)
 			status.History = currentPlayerStatus.History
 		}
 
@@ -709,7 +722,7 @@ func (h *Hub) broadcastGameStateToAll(gameID string) {
 
 	room.mutex.RLock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status := room.Game.GameStatusProvider.Get(currentPlayer, room.Game)
+	status := room.Game.Status(currentPlayer)
 	room.mutex.RUnlock()
 
 	h.sendGameStateToAll(gameID, status)
@@ -796,7 +809,7 @@ func (h *Hub) handleSwapTeam(client *Client) {
 }
 
 // executeGameAction executes a game action and sends state to all players
-func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (domain.GameStatus, error)) {
+func (h *Hub) executeGameAction(client *Client, action func(HubGame) (gamestatus.GameStatus, error)) {
 	room, exists := h.getGameRoom(client)
 	if !exists || room.Game == nil {
 		client.SendError("Game not found")

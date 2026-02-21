@@ -13,11 +13,7 @@ func TestNewDiscardPile_Empty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dp := mocks.NewMockDiscardPile(ctrl)
-	dp.EXPECT().Count().Return(0)
-	dp.EXPECT().GetLast().Return(nil)
-
-	d := NewDiscardPile(dp)
+	d := NewDiscardPile(0, nil)
 
 	assert.Equal(t, 0, d.Cards)
 	assert.Equal(t, Card{}, d.LastCard)
@@ -32,11 +28,7 @@ func TestNewDiscardPile_WithWeaponCard(t *testing.T) {
 	lastCard.EXPECT().Type().Return(types.SwordWeaponType)
 	lastCard.EXPECT().DamageAmount().Return(7)
 
-	dp := mocks.NewMockDiscardPile(ctrl)
-	dp.EXPECT().Count().Return(5)
-	dp.EXPECT().GetLast().Return(lastCard)
-
-	d := NewDiscardPile(dp)
+	d := NewDiscardPile(5, lastCard)
 
 	assert.Equal(t, 5, d.Cards)
 	assert.Equal(t, "S1", d.LastCard.CardID)
@@ -52,11 +44,7 @@ func TestNewDiscardPile_WithResourceCard(t *testing.T) {
 	lastCard.EXPECT().GetID().Return("G1")
 	lastCard.EXPECT().Value().Return(3)
 
-	dp := mocks.NewMockDiscardPile(ctrl)
-	dp.EXPECT().Count().Return(2)
-	dp.EXPECT().GetLast().Return(lastCard)
-
-	d := NewDiscardPile(dp)
+	d := NewDiscardPile(2, lastCard)
 
 	assert.Equal(t, 2, d.Cards)
 	assert.Equal(t, "G1", d.LastCard.CardID)

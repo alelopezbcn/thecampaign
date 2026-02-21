@@ -1,7 +1,6 @@
 package websocket
 
 import (
-	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
@@ -34,14 +33,14 @@ type DiscardPileDTO struct {
 }
 
 // ConvertGameStatus converts domain.GameStatus to GameStatusDTO
-func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
+func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 	opponents := make([]OpponentStatusDTO, len(status.Opponents))
 	for i, opp := range status.Opponents {
 		opponents[i] = OpponentStatusDTO{
-			PlayerName:   opp.PlayerName,
-			Field:        convertFieldCards(opp.Field),
-			Castle:       convertCastle(opp.Castle),
-			CardsInHand:  opp.CardsInHand,
+			PlayerName:     opp.PlayerName,
+			Field:          convertFieldCards(opp.Field),
+			Castle:         convertCastle(opp.Castle),
+			CardsInHand:    opp.CardsInHand,
 			IsAlly:         opp.IsAlly,
 			IsEliminated:   opp.IsEliminated,
 			IsDisconnected: opp.IsDisconnected,
@@ -57,31 +56,31 @@ func ConvertGameStatus(status domain.GameStatus) GameStatusDTO {
 		CanMoveWarrior: status.CanMoveWarrior,
 		CanTrade:       status.CanTrade,
 
-		CurrentPlayerHand:   convertHandCards(status.CurrentPlayerHand),
-		CurrentPlayerField:  convertFieldCards(status.CurrentPlayerField),
-		CurrentPlayerCastle: convertCastle(status.CurrentPlayerCastle),
-		IsEliminated:        status.IsEliminated,
-		IsDisconnected:      status.IsDisconnected,
-		Opponents:           opponents,
-		GameMode:            status.GameMode,
-		Cemetery:            convertCemetery(status.Cemetery),
-		DiscardPile:         convertDiscardPile(status.DiscardPile),
-		CardsInDeck:         status.CardsInDeck,
-		ModalCards:          convertModalCards(status.ModalCards),
-		LastMovedWarriorID:    status.LastMovedWarriorID,
-		LastAttackWeaponID:    status.LastAttackWeaponID,
-		LastAttackTargetID:    status.LastAttackTargetID,
+		CurrentPlayerHand:      convertHandCards(status.CurrentPlayerHand),
+		CurrentPlayerField:     convertFieldCards(status.CurrentPlayerField),
+		CurrentPlayerCastle:    convertCastle(status.CurrentPlayerCastle),
+		IsEliminated:           status.IsEliminated,
+		IsDisconnected:         status.IsDisconnected,
+		Opponents:              opponents,
+		GameMode:               status.GameMode,
+		Cemetery:               convertCemetery(status.Cemetery),
+		DiscardPile:            convertDiscardPile(status.DiscardPile),
+		CardsInDeck:            status.CardsInDeck,
+		ModalCards:             convertModalCards(status.ModalCards),
+		LastMovedWarriorID:     status.LastMovedWarriorID,
+		LastAttackWeaponID:     status.LastAttackWeaponID,
+		LastAttackTargetID:     status.LastAttackTargetID,
 		LastAttackTargetPlayer: status.LastAttackTargetPlayer,
-		StolenFromYouCard:   convertModalCards(status.StolenFromYouCard),
-		SpyNotification:     status.SpyNotification,
-		History:             convertHistory(status.History),
-		PlayersOrder:        status.PlayersOrder,
-		NextTurnPlayer:      status.NextTurnPlayer,
-		GameOverMsg:         status.GameOverMgs,
-		IsWinner:            status.IsWinner,
-		GameStartedAt:       status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
-		TurnStartedAt:       status.TurnStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
-		TurnTimeLimitSecs:   status.TurnTimeLimitSecs,
+		StolenFromYouCard:      convertModalCards(status.StolenFromYouCard),
+		SpyNotification:        status.SpyNotification,
+		History:                convertHistory(status.History),
+		PlayersOrder:           status.PlayersOrder,
+		NextTurnPlayer:         status.NextTurnPlayer,
+		GameOverMsg:            status.GameOverMgs,
+		IsWinner:               status.IsWinner,
+		GameStartedAt:          status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		TurnStartedAt:          status.TurnStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		TurnTimeLimitSecs:      status.TurnTimeLimitSecs,
 	}
 }
 

@@ -5,4 +5,5 @@ type DiscardPile interface {
 	Empty() []Card
 	Discard(Card)
 	GetLast() Card
+	Cards() []Card
 }

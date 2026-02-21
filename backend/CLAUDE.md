@@ -39,8 +39,8 @@ func (g *Game) Xxx(playerName string, ...) (status GameStatus, err error) {
         return status, fmt.Errorf("cannot xxx in the %s phase", g.currentAction)
     }
     // ... action logic ...
-    g.addToHistory("...", types.CategoryXxx)
-    status = g.nextAction(types.ActionTypeNextPhase, func() GameStatus {
+    g.AddHistory("...", types.CategoryXxx)
+    status = g.nextAction(types.ActionTypeNextPhase, func() gamestatus.GameStatus {
         return g.GameStatusProvider.Get(p, g)
     })
     return status, nil
