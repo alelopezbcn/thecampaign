@@ -18,22 +18,6 @@ type Warrior interface {
 	IsDamaged() bool
 }
 
-type Dragon interface {
-	Warrior
-}
-
-type Knight interface {
-	Warrior
-}
-
-type Archer interface {
-	Warrior
-}
-
-type Mage interface {
-	Warrior
-}
-
 type knight struct {
 	*warriorBase
 }

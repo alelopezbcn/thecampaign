@@ -10,7 +10,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type MoveWarriorAction struct {
+type moveWarriorAction struct {
 	playerName       string
 	warriorID        string
 	targetPlayerName string
@@ -20,17 +20,17 @@ type MoveWarriorAction struct {
 	currentPhase types.PhaseType
 }
 
-func NewMoveWarriorAction(playerName, warriorID string, targetPlayerName string) *MoveWarriorAction {
-	return &MoveWarriorAction{
+func NewMoveWarriorAction(playerName, warriorID string, targetPlayerName string) *moveWarriorAction {
+	return &moveWarriorAction{
 		playerName:       playerName,
 		warriorID:        warriorID,
 		targetPlayerName: targetPlayerName,
 	}
 }
 
-func (a *MoveWarriorAction) PlayerName() string { return a.playerName }
+func (a *moveWarriorAction) PlayerName() string { return a.playerName }
 
-func (a *MoveWarriorAction) Validate(g *Game) error {
+func (a *moveWarriorAction) Validate(g *Game) error {
 	if g.turnState.HasMovedWarrior {
 		return errors.New("already moved a warrior this turn")
 	}
@@ -67,7 +67,7 @@ func (a *MoveWarriorAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *MoveWarriorAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *moveWarriorAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -101,6 +101,6 @@ func (a *MoveWarriorAction) Execute(g *Game) (*GameActionResult, func() gamestat
 	return result, statusFn, nil
 }
 
-func (a *MoveWarriorAction) NextPhase() types.PhaseType {
+func (a *moveWarriorAction) NextPhase() types.PhaseType {
 	return a.currentPhase
 }

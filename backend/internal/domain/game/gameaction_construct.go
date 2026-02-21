@@ -9,7 +9,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type ConstructAction struct {
+type constructAction struct {
 	playerName       string
 	cardID           string
 	targetPlayerName string
@@ -17,17 +17,17 @@ type ConstructAction struct {
 	targetPlayer board.Player
 }
 
-func NewConstructAction(playerName, cardID string, targetPlayerName string) *ConstructAction {
-	return &ConstructAction{
+func NewConstructAction(playerName, cardID string, targetPlayerName string) *constructAction {
+	return &constructAction{
 		playerName:       playerName,
 		cardID:           cardID,
 		targetPlayerName: targetPlayerName,
 	}
 }
 
-func (a *ConstructAction) PlayerName() string { return a.playerName }
+func (a *constructAction) PlayerName() string { return a.playerName }
 
-func (a *ConstructAction) Validate(g *Game) error {
+func (a *constructAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeConstruct {
 		return fmt.Errorf("cannot construct in the %s phase", g.currentAction)
 	}
@@ -57,7 +57,7 @@ func (a *ConstructAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *constructAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -90,6 +90,6 @@ func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() gamestatus
 	return result, statusFn, nil
 }
 
-func (a *ConstructAction) NextPhase() types.PhaseType {
+func (a *constructAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeEndTurn
 }

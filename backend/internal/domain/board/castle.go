@@ -9,14 +9,12 @@ import (
 )
 
 type Castle interface {
-	GetID() string
 	Construct(card cards.Card) error
 	IsConstructed() bool
 	Value() int
 	ResourceCardsCount() int
 	ResourceCards() []cards.Resource
 	RemoveGold(position int) (cards.Resource, error)
-	String() string
 	CanBeAttacked() bool
 }
 

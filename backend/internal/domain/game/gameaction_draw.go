@@ -9,21 +9,21 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type DrawCardAction struct {
+type drawCardAction struct {
 	playerName string
 }
 
-func NewDrawCardAction(playerName string) *DrawCardAction {
-	return &DrawCardAction{playerName: playerName}
+func NewDrawCardAction(playerName string) *drawCardAction {
+	return &drawCardAction{playerName: playerName}
 }
 
-func (a *DrawCardAction) PlayerName() string { return a.playerName }
+func (a *drawCardAction) PlayerName() string { return a.playerName }
 
-func (a *DrawCardAction) Validate(g *Game) error {
+func (a *drawCardAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *drawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	cards, err := g.drawCards(p, 1)
@@ -54,6 +54,6 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 	return result, statusFn, nil
 }
 
-func (a *DrawCardAction) NextPhase() types.PhaseType {
+func (a *drawCardAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeAttack
 }

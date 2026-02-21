@@ -7,22 +7,22 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type EndTurnPhaseAction struct {
+type endTurnPhaseAction struct {
 	playerName string
 	expired    bool
 }
 
-func NewEndTurnPhaseAction(playerName string, expired bool) *EndTurnPhaseAction {
-	return &EndTurnPhaseAction{playerName: playerName, expired: expired}
+func NewEndTurnPhaseAction(playerName string, expired bool) *endTurnPhaseAction {
+	return &endTurnPhaseAction{playerName: playerName, expired: expired}
 }
 
-func (a *EndTurnPhaseAction) PlayerName() string { return a.playerName }
+func (a *endTurnPhaseAction) PlayerName() string { return a.playerName }
 
-func (a *EndTurnPhaseAction) Validate(g *Game) error {
+func (a *endTurnPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *endTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if a.expired {
@@ -43,6 +43,6 @@ func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() gamesta
 	return result, statusFn, nil
 }
 
-func (a *EndTurnPhaseAction) NextPhase() types.PhaseType {
+func (a *endTurnPhaseAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeDrawCard
 }

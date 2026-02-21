@@ -35,7 +35,6 @@ func TestCastle_NewCastle(t *testing.T) {
 
 	c, _, _ := newTestCastle(ctrl)
 
-	assert.Equal(t, "castle_TestPlayer", c.GetID())
 	assert.False(t, c.IsConstructed())
 	assert.Equal(t, 0, c.Value())
 	assert.Equal(t, 0, c.ResourceCardsCount())
@@ -275,17 +274,4 @@ func TestCastle_CanBeAttacked(t *testing.T) {
 
 		assert.True(t, c.CanBeAttacked())
 	})
-}
-
-func TestCastle_String(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	c, _, _ := newTestCastle(ctrl)
-	constructCastle(t, c, ctrl)
-
-	gold := mocks.NewMockResource(ctrl)
-	gold.EXPECT().Value().Return(5).AnyTimes()
-	c.Construct(gold)
-
-	assert.Equal(t, "Castle: 5 Gold coins (1 cards)", c.String())
 }

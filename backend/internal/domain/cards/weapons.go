@@ -13,18 +13,6 @@ type Weapon interface {
 	String() string
 }
 
-type Sword interface {
-	Weapon
-}
-
-type Arrow interface {
-	Weapon
-}
-
-type Poison interface {
-	Weapon
-}
-
 type sword struct {
 	*cardBase
 	*weaponBase

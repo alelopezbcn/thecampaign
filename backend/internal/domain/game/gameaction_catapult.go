@@ -10,7 +10,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type CatapultAction struct {
+type catapultAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
@@ -20,17 +20,17 @@ type CatapultAction struct {
 	weapon       cards.Weapon
 }
 
-func NewCatapultAction(playerName, targetPlayerName string, cardPosition int) *CatapultAction {
-	return &CatapultAction{
+func NewCatapultAction(playerName, targetPlayerName string, cardPosition int) *catapultAction {
+	return &catapultAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		cardPosition:     cardPosition,
 	}
 }
 
-func (a *CatapultAction) PlayerName() string { return a.playerName }
+func (a *catapultAction) PlayerName() string { return a.playerName }
 
-func (a *CatapultAction) Validate(g *Game) error {
+func (a *catapultAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use catapult in the %s phase",
 			g.currentAction)
@@ -55,7 +55,7 @@ func (a *CatapultAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *catapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	stolenGold, err := a.catapult.Attack(a.targetPlayer.Castle(), a.cardPosition)
@@ -80,6 +80,6 @@ func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 	return result, statusFn, nil
 }
 
-func (a *CatapultAction) NextPhase() types.PhaseType {
+func (a *catapultAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
 }

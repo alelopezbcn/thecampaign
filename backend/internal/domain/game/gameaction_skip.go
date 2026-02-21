@@ -7,18 +7,18 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type SkipPhaseAction struct {
+type skipPhaseAction struct {
 	playerName string
 	nextPhase  types.PhaseType
 }
 
-func NewSkipPhaseAction(playerName string) *SkipPhaseAction {
-	return &SkipPhaseAction{playerName: playerName}
+func NewSkipPhaseAction(playerName string) *skipPhaseAction {
+	return &skipPhaseAction{playerName: playerName}
 }
 
-func (a *SkipPhaseAction) PlayerName() string { return a.playerName }
+func (a *skipPhaseAction) PlayerName() string { return a.playerName }
 
-func (a *SkipPhaseAction) Validate(g *Game) error {
+func (a *skipPhaseAction) Validate(g *Game) error {
 	switch g.currentAction {
 	case types.PhaseTypeAttack:
 		a.nextPhase = types.PhaseTypeSpySteal
@@ -35,7 +35,7 @@ func (a *SkipPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *skipPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{Action: types.LastActionSkip}
@@ -47,6 +47,6 @@ func (a *SkipPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus
 	return result, statusFn, nil
 }
 
-func (a *SkipPhaseAction) NextPhase() types.PhaseType {
+func (a *skipPhaseAction) NextPhase() types.PhaseType {
 	return a.nextPhase
 }

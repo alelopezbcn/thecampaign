@@ -8,7 +8,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type SpecialPowerAction struct {
+type specialPowerAction struct {
 	playerName string
 	userID     string
 	targetID   string
@@ -19,8 +19,8 @@ type SpecialPowerAction struct {
 	specialPower cards.SpecialPower
 }
 
-func NewSpecialPowerAction(playerName, userID, targetID, weaponID string) *SpecialPowerAction {
-	return &SpecialPowerAction{
+func NewSpecialPowerAction(playerName, userID, targetID, weaponID string) *specialPowerAction {
+	return &specialPowerAction{
 		playerName: playerName,
 		userID:     userID,
 		targetID:   targetID,
@@ -28,9 +28,9 @@ func NewSpecialPowerAction(playerName, userID, targetID, weaponID string) *Speci
 	}
 }
 
-func (a *SpecialPowerAction) PlayerName() string { return a.playerName }
+func (a *specialPowerAction) PlayerName() string { return a.playerName }
 
-func (a *SpecialPowerAction) Validate(g *Game) error {
+func (a *specialPowerAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use special power in the %s phase",
 			g.currentAction)
@@ -107,7 +107,7 @@ func (a *SpecialPowerAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SpecialPowerAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *specialPowerAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := p.UseSpecialPower(a.usedBy, a.usedOn, a.specialPower); err != nil {
@@ -128,6 +128,6 @@ func (a *SpecialPowerAction) Execute(g *Game) (*GameActionResult, func() gamesta
 	return result, statusFn, nil
 }
 
-func (a *SpecialPowerAction) NextPhase() types.PhaseType {
+func (a *specialPowerAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
 }

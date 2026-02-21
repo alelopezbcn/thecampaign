@@ -10,23 +10,23 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type BuyAction struct {
+type buyAction struct {
 	playerName string
 	cardID     string
 
 	resource cards.Resource
 }
 
-func NewBuyAction(playerName, cardID string) *BuyAction {
-	return &BuyAction{
+func NewBuyAction(playerName, cardID string) *buyAction {
+	return &buyAction{
 		playerName: playerName,
 		cardID:     cardID,
 	}
 }
 
-func (a *BuyAction) PlayerName() string { return a.playerName }
+func (a *buyAction) PlayerName() string { return a.playerName }
 
-func (a *BuyAction) Validate(g *Game) error {
+func (a *buyAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeBuy {
 		return fmt.Errorf("cannot buy in the %s phase", g.currentAction)
 	}
@@ -45,7 +45,7 @@ func (a *BuyAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *BuyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *buyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}
@@ -80,6 +80,6 @@ func (a *BuyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 	return result, statusFn, nil
 }
 
-func (a *BuyAction) NextPhase() types.PhaseType {
+func (a *buyAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeConstruct
 }

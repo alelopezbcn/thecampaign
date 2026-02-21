@@ -8,7 +8,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type AttackAction struct {
+type attackAction struct {
 	playerName       string
 	targetPlayerName string
 	targetID         string
@@ -17,8 +17,8 @@ type AttackAction struct {
 	weapon           cards.Weapon
 }
 
-func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *AttackAction {
-	return &AttackAction{
+func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *attackAction {
+	return &attackAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		targetID:         targetID,
@@ -26,9 +26,9 @@ func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *A
 	}
 }
 
-func (a *AttackAction) PlayerName() string { return a.playerName }
+func (a *attackAction) PlayerName() string { return a.playerName }
 
-func (a *AttackAction) Validate(g *Game) error {
+func (a *attackAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot attack in the %s phase", g.currentAction)
 	}
@@ -62,7 +62,7 @@ func (a *AttackAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *attackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := p.Attack(a.target, a.weapon); err != nil {
@@ -87,6 +87,6 @@ func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Ga
 	return result, statusFn, nil
 }
 
-func (a *AttackAction) NextPhase() types.PhaseType {
+func (a *attackAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
 }
