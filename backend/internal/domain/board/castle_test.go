@@ -3,14 +3,13 @@ package board
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
 func newTestCastle(ctrl *gomock.Controller) (
-	ports.Castle,
+	Castle,
 	*mocks.MockPlayer,
 	*mocks.MockCastleCompletionObserver,
 ) {
@@ -21,7 +20,7 @@ func newTestCastle(ctrl *gomock.Controller) (
 	return c, mockPlayer, castleObs
 }
 
-func constructCastle(t *testing.T, c ports.Castle, ctrl *gomock.Controller) {
+func constructCastle(t *testing.T, c Castle, ctrl *gomock.Controller) {
 	t.Helper()
 	r := mocks.NewMockResource(ctrl)
 	r.EXPECT().Value().Return(1).AnyTimes()
@@ -36,7 +35,6 @@ func TestCastle_NewCastle(t *testing.T) {
 
 	c, _, _ := newTestCastle(ctrl)
 
-	assert.Equal(t, "castle_TestPlayer", c.GetID())
 	assert.False(t, c.IsConstructed())
 	assert.Equal(t, 0, c.Value())
 	assert.Equal(t, 0, c.ResourceCardsCount())
@@ -276,17 +274,4 @@ func TestCastle_CanBeAttacked(t *testing.T) {
 
 		assert.True(t, c.CanBeAttacked())
 	})
-}
-
-func TestCastle_String(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-	c, _, _ := newTestCastle(ctrl)
-	constructCastle(t, c, ctrl)
-
-	gold := mocks.NewMockResource(ctrl)
-	gold.EXPECT().Value().Return(5).AnyTimes()
-	c.Construct(gold)
-
-	assert.Equal(t, "Castle: 5 Gold coins (1 cards)", c.String())
 }

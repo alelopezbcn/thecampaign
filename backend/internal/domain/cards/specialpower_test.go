@@ -3,7 +3,6 @@ package cards
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -128,7 +127,7 @@ func TestSpecialPower_Destroyed(t *testing.T) {
 			cardMovedToPileObserver: discardObs,
 		},
 		attackableBase: &attackableBase{
-			attackedBy: []ports.Weapon{weapon1, weapon2},
+			attackedBy: []Weapon{weapon1, weapon2},
 		},
 	}
 
@@ -144,7 +143,7 @@ func TestSpecialPower_ReceiveDamage_NotDefeated(t *testing.T) {
 
 	sp := &specialPower{
 		attackableBase: &attackableBase{
-			attackedBy: []ports.Weapon{},
+			attackedBy: []Weapon{},
 			health:     10,
 		},
 	}
@@ -174,7 +173,7 @@ func TestSpecialPower_ReceiveDamage_Defeated(t *testing.T) {
 			cardMovedToPileObserver: discardObs,
 		},
 		attackableBase: &attackableBase{
-			attackedBy: []ports.Weapon{},
+			attackedBy: []Weapon{},
 			health:     10,
 		},
 	}

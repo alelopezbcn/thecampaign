@@ -1,15 +1,13 @@
 package gamestatus
 
-import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
-)
+import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 
 type DiscardPile struct {
 	Cards    int  `json:"cards"`
 	LastCard Card `json:"last_card"`
 }
 
-func NewDiscardPile(cards int, lastCard ports.Card) DiscardPile {
+func NewDiscardPile(cards int, lastCard cards.Card) DiscardPile {
 	d := DiscardPile{
 		Cards: cards,
 	}

@@ -1,31 +1,32 @@
 package game
 
 import (
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
 
 type GameStatusProvider interface {
-	Get(viewer ports.Player, game *Game, newCards ...ports.Card) gamestatus.GameStatus
-	GetWithModal(viewer ports.Player, game *Game, modalCards []ports.Card) gamestatus.GameStatus
+	Get(viewer board.Player, game *Game, newCards ...cards.Card) gamestatus.GameStatus
+	GetWithModal(viewer board.Player, game *Game, modalCards []cards.Card) gamestatus.GameStatus
 }
 
 type gameStatusProvider struct{}
 
-func (gsp *gameStatusProvider) Get(viewer ports.Player, game *Game,
-	newCards ...ports.Card,
+func (gsp *gameStatusProvider) Get(viewer board.Player, game *Game,
+	newCards ...cards.Card,
 ) gamestatus.GameStatus {
 	return gsp.getGameStatus(viewer, game, newCards, nil)
 }
 
-func (gsp *gameStatusProvider) GetWithModal(viewer ports.Player, game *Game,
-	modalCards []ports.Card,
+func (gsp *gameStatusProvider) GetWithModal(viewer board.Player, game *Game,
+	modalCards []cards.Card,
 ) gamestatus.GameStatus {
 	return gsp.getGameStatus(viewer, game, nil, modalCards)
 }
 
-func (gsp *gameStatusProvider) getGameStatus(viewer ports.Player,
-	game *Game, newCards []ports.Card, modalCards []ports.Card,
+func (gsp *gameStatusProvider) getGameStatus(viewer board.Player,
+	game *Game, newCards []cards.Card, modalCards []cards.Card,
 ) gamestatus.GameStatus {
 	viewerIdx := game.PlayerIndex(viewer.Name())
 	gameStatusDTO := gamestatus.GameStatusDTO{

@@ -1,7 +1,7 @@
 package gamestatus
 
 import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -11,7 +11,7 @@ type FieldCard struct {
 	ProtectedBy Card   `json:"protected_by"`
 }
 
-func NewFieldCard(warrior ports.Warrior) FieldCard {
+func NewFieldCard(warrior cards.Warrior) FieldCard {
 
 	var aCardType CardType
 	switch warrior.Type() {

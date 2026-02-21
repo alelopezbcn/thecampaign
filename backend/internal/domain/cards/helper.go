@@ -2,18 +2,21 @@ package cards
 
 import (
 	"fmt"
-
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
+
+type Dealer interface {
+	WarriorsCards(playerCount int) (warriors []Card)
+	OtherCards(playerCount int) (other []Card)
+}
 
 type dealer struct {
 }
 
-func NewDealer() ports.Dealer {
+func NewDealer() *dealer {
 	return &dealer{}
 }
 
-func (d *dealer) WarriorsCards(playerCount int) (warriors []ports.Card) {
+func (d *dealer) WarriorsCards(playerCount int) (warriors []Card) {
 	totalWarriors := 15
 	warriorsPerType := 5
 
@@ -25,7 +28,7 @@ func (d *dealer) WarriorsCards(playerCount int) (warriors []ports.Card) {
 		warriorsPerType = 9
 	}
 
-	warriors = make([]ports.Card, 0, totalWarriors)
+	warriors = make([]Card, 0, totalWarriors)
 
 	for i := 1; i <= warriorsPerType; i++ {
 		k := NewKnight(fmt.Sprintf("k%d", i))
@@ -41,8 +44,8 @@ func (d *dealer) WarriorsCards(playerCount int) (warriors []ports.Card) {
 	return warriors
 }
 
-func (d *dealer) OtherCards(playerCount int) (other []ports.Card) {
-	other = []ports.Card{
+func (d *dealer) OtherCards(playerCount int) (other []Card) {
+	other = []Card{
 		NewDragon("dr1"),
 		NewSpecialPower("s1"),
 		NewSpecialPower("s2"),

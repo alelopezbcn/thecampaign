@@ -3,33 +3,48 @@ package board
 import (
 	"strings"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type field struct {
-	playerName        string
-	cards             []ports.Warrior
-	gameEndedObserver ports.FieldWithoutWarriorsObserver
+type Field interface {
+	Warriors() []cards.Warrior
+	GetWarrior(cardID string) (cards.Warrior, bool)
+	AddWarriors(cards ...cards.Warrior)
+	RemoveWarrior(card cards.Warrior) bool
+	HasArcher() bool
+	HasMage() bool
+	HasKnight() bool
+	HasDragon() bool
 }
 
-func NewField(playerName string, o ports.FieldWithoutWarriorsObserver) *field {
+type FieldWithoutWarriorsObserver interface {
+	OnFieldWithoutWarriors(playerName string)
+}
+
+type field struct {
+	playerName        string
+	cards             []cards.Warrior
+	gameEndedObserver FieldWithoutWarriorsObserver
+}
+
+func NewField(playerName string, o FieldWithoutWarriorsObserver) *field {
 	return &field{
 		playerName:        playerName,
-		cards:             []ports.Warrior{},
+		cards:             []cards.Warrior{},
 		gameEndedObserver: o,
 	}
 }
 
-func (h *field) AddWarriors(cards ...ports.Warrior) {
+func (h *field) AddWarriors(cards ...cards.Warrior) {
 	h.cards = append(h.cards, cards...)
 }
 
-func (h *field) Warriors() []ports.Warrior {
+func (h *field) Warriors() []cards.Warrior {
 	return h.cards
 }
 
-func (h *field) GetWarrior(cardID string) (ports.Warrior, bool) {
+func (h *field) GetWarrior(cardID string) (cards.Warrior, bool) {
 	for _, c := range h.cards {
 		if strings.ToLower(c.GetID()) == strings.TrimSpace(strings.ToLower(cardID)) {
 			return c, true
@@ -39,7 +54,7 @@ func (h *field) GetWarrior(cardID string) (ports.Warrior, bool) {
 	return nil, false
 }
 
-func (h *field) RemoveWarrior(card ports.Warrior) bool {
+func (h *field) RemoveWarrior(card cards.Warrior) bool {
 	for i, c := range h.cards {
 		if c.GetID() == card.GetID() {
 			h.cards = append(h.cards[:i], h.cards[i+1:]...)
@@ -53,7 +68,6 @@ func (h *field) RemoveWarrior(card ports.Warrior) bool {
 	return false
 }
 
-// HasArcher implements ports.Field.
 func (h *field) HasArcher() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
@@ -65,7 +79,6 @@ func (h *field) HasArcher() bool {
 	return false
 }
 
-// HasDragon implements ports.Field.
 func (h *field) HasDragon() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
@@ -77,7 +90,6 @@ func (h *field) HasDragon() bool {
 	return false
 }
 
-// HasKnight implements ports.Field.
 func (h *field) HasKnight() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {
@@ -89,7 +101,6 @@ func (h *field) HasKnight() bool {
 	return false
 }
 
-// HasMage implements ports.Field.
 func (h *field) HasMage() bool {
 	for _, warriorInField := range h.cards {
 		switch warriorInField.Type() {

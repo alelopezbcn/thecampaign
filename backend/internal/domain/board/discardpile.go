@@ -1,14 +1,22 @@
 package board
 
-import "github.com/alelopezbcn/thecampaign/internal/domain/ports"
+import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
+
+type DiscardPile interface {
+	Count() int
+	Empty() []cards.Card
+	Discard(cards.Card)
+	GetLast() cards.Card
+	Cards() []cards.Card
+}
 
 type discardPile struct {
-	cards []ports.Card
+	cards []cards.Card
 }
 
 func newDiscardPile() *discardPile {
 	return &discardPile{
-		cards: []ports.Card{},
+		cards: []cards.Card{},
 	}
 }
 
@@ -16,17 +24,17 @@ func (d *discardPile) Count() int {
 	return len(d.cards)
 }
 
-func (d *discardPile) Empty() []ports.Card {
+func (d *discardPile) Empty() []cards.Card {
 	c := d.cards
-	d.cards = []ports.Card{}
+	d.cards = []cards.Card{}
 	return c
 }
 
-func (d *discardPile) Discard(c ports.Card) {
+func (d *discardPile) Discard(c cards.Card) {
 	d.cards = append(d.cards, c)
 }
 
-func (d *discardPile) GetLast() ports.Card {
+func (d *discardPile) GetLast() cards.Card {
 	if d.Count() == 0 {
 		return nil
 	}
@@ -34,6 +42,6 @@ func (d *discardPile) GetLast() ports.Card {
 	return d.cards[len(d.cards)-1]
 }
 
-func (d *discardPile) Cards() []ports.Card {
+func (d *discardPile) Cards() []cards.Card {
 	return d.cards
 }

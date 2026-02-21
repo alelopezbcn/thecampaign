@@ -8,23 +8,23 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type TradeAction struct {
+type tradeAction struct {
 	playerName string
 	cardIDs    []string
 
 	currentPhase types.PhaseType
 }
 
-func NewTradeAction(playerName string, cardIDs []string) *TradeAction {
-	return &TradeAction{
+func NewTradeAction(playerName string, cardIDs []string) *tradeAction {
+	return &tradeAction{
 		playerName: playerName,
 		cardIDs:    cardIDs,
 	}
 }
 
-func (a *TradeAction) PlayerName() string { return a.playerName }
+func (a *tradeAction) PlayerName() string { return a.playerName }
 
-func (a *TradeAction) Validate(g *Game) error {
+func (a *tradeAction) Validate(g *Game) error {
 	if g.turnState.HasTraded {
 		return errors.New("already traded this turn")
 	}
@@ -36,7 +36,7 @@ func (a *TradeAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *tradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -69,6 +69,6 @@ func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 	return result, statusFn, nil
 }
 
-func (a *TradeAction) NextPhase() types.PhaseType {
+func (a *tradeAction) NextPhase() types.PhaseType {
 	return a.currentPhase
 }

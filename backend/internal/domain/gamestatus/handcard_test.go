@@ -3,7 +3,8 @@ package gamestatus
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +59,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		// HasKnight/HasDragon are called before action check
 		myField.EXPECT().HasKnight().Return(true)
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeBuy)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeBuy)
 
 		assert.Equal(t, "S1", hc.CardID)
 		assert.Equal(t, CardTypeSword, hc.CardType)
@@ -82,7 +83,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeSpySteal)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeSpySteal)
 
 		assert.Equal(t, "A1", hc.CardID)
 		assert.Equal(t, CardTypeArrow, hc.CardType)
@@ -105,7 +106,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasMage().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeBuy)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeBuy)
 
 		assert.Equal(t, CardTypePoison, hc.CardType)
 	})
@@ -126,7 +127,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasMage().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeConstruct)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeConstruct)
 
 		assert.Equal(t, "P1", hc.CardID)
 		assert.True(t, hc.CanBeUsed)
@@ -149,7 +150,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, true, types.PhaseTypeConstruct)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, true, types.PhaseTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -169,7 +170,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		// HasKnight/HasDragon called before action check
 		myField.EXPECT().HasKnight().Return(true)
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeConstruct)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -189,9 +190,9 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().MultiplierFactor(enemy1).Return(2)
 		myField.EXPECT().HasKnight().Return(true)
 		enemy1.EXPECT().GetID().Return("EK1").Times(2)
-		enemyField.EXPECT().Warriors().Return([]ports.Warrior{enemy1})
+		enemyField.EXPECT().Warriors().Return([]cards.Warrior{enemy1})
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeAttack)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -211,9 +212,9 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().DamageAmount().Return(7)
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasDragon().Return(false)
-		enemyField.EXPECT().Warriors().Return([]ports.Warrior{})
+		enemyField.EXPECT().Warriors().Return([]cards.Warrior{})
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeAttack)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeAttack)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -231,9 +232,9 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().DamageAmount().Return(5)
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasDragon().Return(true)
-		enemyField.EXPECT().Warriors().Return([]ports.Warrior{})
+		enemyField.EXPECT().Warriors().Return([]cards.Warrior{})
 
-		hc := NewWeaponHandCard(weapon, myField, []ports.Field{enemyField}, false, types.PhaseTypeAttack)
+		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 	})
@@ -349,7 +350,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp.EXPECT().GetID().Return("SP1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeBuy)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeBuy)
 
 		assert.Equal(t, "SP1", hc.CardID)
 		assert.Equal(t, CardTypeSpecialPower, hc.CardType)
@@ -371,9 +372,9 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(false)
 		enemy1.EXPECT().GetID().Return("EK1")
-		enemyField.EXPECT().Warriors().Return([]ports.Warrior{enemy1})
+		enemyField.EXPECT().Warriors().Return([]cards.Warrior{enemy1})
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{enemyField}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{enemyField}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -391,12 +392,12 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(true)
 		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().Warriors().Return([]ports.Warrior{myWarrior})
+		myField.EXPECT().Warriors().Return([]cards.Warrior{myWarrior})
 		myWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		myWarrior.EXPECT().IsProtected().Return(false, nil)
 		myWarrior.EXPECT().GetID().Return("K1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"K1"}, hc.CanBeUsedOnIDs)
@@ -414,12 +415,12 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(true)
 		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().Warriors().Return([]ports.Warrior{dragon})
+		myField.EXPECT().Warriors().Return([]cards.Warrior{dragon})
 		// IsProtected() is called before Type() check
 		dragon.EXPECT().IsProtected().Return(false, nil)
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -438,11 +439,11 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(true)
 		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().Warriors().Return([]ports.Warrior{protectedWarrior})
+		myField.EXPECT().Warriors().Return([]cards.Warrior{protectedWarrior})
 		protectedWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		protectedWarrior.EXPECT().IsProtected().Return(true, existingSP)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -460,12 +461,12 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(true)
-		myField.EXPECT().Warriors().Return([]ports.Warrior{damagedWarrior})
+		myField.EXPECT().Warriors().Return([]cards.Warrior{damagedWarrior})
 		damagedWarrior.EXPECT().Type().Return(types.MageWarriorType)
 		damagedWarrior.EXPECT().IsDamaged().Return(true)
 		damagedWarrior.EXPECT().GetID().Return("M1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"M1"}, hc.CanBeUsedOnIDs)
@@ -483,11 +484,11 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(true)
-		myField.EXPECT().Warriors().Return([]ports.Warrior{healthyWarrior})
+		myField.EXPECT().Warriors().Return([]cards.Warrior{healthyWarrior})
 		healthyWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		healthyWarrior.EXPECT().IsDamaged().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -505,10 +506,10 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasArcher().Return(false)
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(true)
-		myField.EXPECT().Warriors().Return([]ports.Warrior{dragon})
+		myField.EXPECT().Warriors().Return([]cards.Warrior{dragon})
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -526,7 +527,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []ports.Field{}, []ports.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)

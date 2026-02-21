@@ -8,7 +8,6 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -36,7 +35,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
@@ -60,7 +59,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(nil, false)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -86,7 +85,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(nil, false)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -113,7 +112,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -140,7 +139,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockResource, true)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -167,7 +166,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -195,7 +194,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(errors.New("attack failed"))
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -229,7 +228,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 
 		g := &Game{
-			players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			gameStatusProvider: mockProvider,
@@ -268,7 +267,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 
 		g := &Game{
-			players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []board.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			history:       []types.HistoryLine{},
@@ -301,9 +300,9 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 	mockProvider.EXPECT().Get(gomock.Any(), gomock.Any()).Return(gamestatus.GameStatus{}).AnyTimes()
 
 	newAttackGame := func(
-		p1Cards []ports.Card, p1Warriors []ports.Warrior,
-		p2Cards []ports.Card, p2Warriors []ports.Warrior,
-	) (g *Game, p1, p2 ports.Player) {
+		p1Cards []cards.Card, p1Warriors []cards.Warrior,
+		p2Cards []cards.Card, p2Warriors []cards.Warrior,
+	) (g *Game, p1, p2 board.Player) {
 		g = &Game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
@@ -313,7 +312,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		}
 		p1 = newPlayerWithCardAndObserver("Player1", p1Cards, p1Warriors, g)
 		p2 = newPlayerWithCardAndObserver("Player2", p2Cards, p2Warriors, g)
-		g.players = []ports.Player{p1, p2}
+		g.players = []board.Player{p1, p2}
 		return g, p1, p2
 	}
 
@@ -328,7 +327,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		k := cards.NewKnight("k1")
 		a := cards.NewArcher("a1")
 		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{a})
+		g, _, _ := newAttackGame([]cards.Card{sword}, []cards.Warrior{k}, []cards.Card{}, []cards.Warrior{a})
 
 		err := executeAttack(g, "Player1", "Player2", a.GetID(), sword.GetID())
 		assert.NoError(t, err)
@@ -340,7 +339,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		k := cards.NewKnight("k1")
 		m := cards.NewMage("m1")
 		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{m})
+		g, _, _ := newAttackGame([]cards.Card{sword}, []cards.Warrior{k}, []cards.Card{}, []cards.Warrior{m})
 
 		err := executeAttack(g, "Player1", "Player2", m.GetID(), sword.GetID())
 		assert.NoError(t, err)
@@ -352,7 +351,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		k := cards.NewKnight("k1")
 		k2 := cards.NewKnight("k2")
 		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{k2})
+		g, _, _ := newAttackGame([]cards.Card{sword}, []cards.Warrior{k}, []cards.Card{}, []cards.Warrior{k2})
 
 		err := executeAttack(g, "Player1", "Player2", k2.GetID(), sword.GetID())
 		assert.NoError(t, err)
@@ -364,7 +363,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		k := cards.NewKnight("k1")
 		d := cards.NewDragon("d1")
 		sword := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{d})
+		g, _, _ := newAttackGame([]cards.Card{sword}, []cards.Warrior{k}, []cards.Card{}, []cards.Warrior{d})
 
 		err := executeAttack(g, "Player1", "Player2", d.GetID(), sword.GetID())
 		assert.NoError(t, err)
@@ -375,7 +374,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		k := cards.NewKnight("k1")
 		a := cards.NewArcher("a1")
 		poison := cards.NewPoison("s1", 4)
-		g, p1, _ := newAttackGame([]ports.Card{poison}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{a})
+		g, p1, _ := newAttackGame([]cards.Card{poison}, []cards.Warrior{k}, []cards.Card{}, []cards.Warrior{a})
 
 		err := executeAttack(g, "Player1", "Player2", a.GetID(), poison.GetID())
 		assert.Error(t, err)
@@ -389,7 +388,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewArcher("a1")
 		target := cards.NewMage("m1")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -401,7 +400,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewArcher("a1")
 		target := cards.NewKnight("k1")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -413,7 +412,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewArcher("a1")
 		target := cards.NewArcher("a2")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -425,7 +424,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewArcher("a1")
 		target := cards.NewDragon("d1")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -436,7 +435,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewArcher("a1")
 		target := cards.NewMage("m1")
 		weapon := cards.NewSword("s1", 4)
-		g, p1, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, p1, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.Error(t, err)
@@ -450,7 +449,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewMage("m1")
 		target := cards.NewKnight("k1")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -462,7 +461,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewMage("m1")
 		target := cards.NewArcher("a1")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -474,7 +473,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewMage("m1")
 		target := cards.NewMage("m2")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -486,7 +485,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewMage("m1")
 		target := cards.NewDragon("d1")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -497,7 +496,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewMage("m1")
 		target := cards.NewKnight("k1")
 		weapon := cards.NewArrow("s1", 4)
-		g, p1, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, p1, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.Error(t, err)
@@ -509,7 +508,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		k := cards.NewKnight("k1")
 		a := cards.NewArcher("a1")
 		sword := cards.NewSword("s1", 4)
-		g, _, _ := newAttackGame([]ports.Card{sword}, []ports.Warrior{k}, []ports.Card{}, []ports.Warrior{a})
+		g, _, _ := newAttackGame([]cards.Card{sword}, []cards.Warrior{k}, []cards.Card{}, []cards.Warrior{a})
 
 		err := executeAttack(g, "Player1", "Player2", "non-existent-target", sword.GetID())
 		assert.Error(t, err)
@@ -524,7 +523,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewKnight("k1")
 		weapon := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -536,7 +535,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewKnight("k1")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -548,7 +547,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewKnight("k1")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -560,7 +559,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewArcher("a1")
 		weapon := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -572,7 +571,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewArcher("a1")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -584,7 +583,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewArcher("a1")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -596,7 +595,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewMage("m1")
 		weapon := cards.NewSword("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -608,7 +607,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewMage("m1")
 		weapon := cards.NewArrow("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -620,7 +619,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		attacker := cards.NewDragon("d1")
 		target := cards.NewMage("m1")
 		weapon := cards.NewPoison("s1", dmgAmnt)
-		g, _, _ := newAttackGame([]ports.Card{weapon}, []ports.Warrior{attacker}, []ports.Card{}, []ports.Warrior{target})
+		g, _, _ := newAttackGame([]cards.Card{weapon}, []cards.Warrior{attacker}, []cards.Card{}, []cards.Warrior{target})
 
 		err := executeAttack(g, "Player1", "Player2", target.GetID(), weapon.GetID())
 		assert.NoError(t, err)
@@ -643,17 +642,17 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			gameStatusProvider: mockProvider,
 		}
 		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{sword1, sword2},
-			[]ports.Warrior{k},
+			[]cards.Card{sword1, sword2},
+			[]cards.Warrior{k},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{a, a2},
+			[]cards.Card{},
+			[]cards.Warrior{a, a2},
 			g,
 		)
 
-		g.players = []ports.Player{p1, p2}
+		g.players = []board.Player{p1, p2}
 
 		err := executeAttack(g, p1.Name(), p2.Name(), a.GetID(), sword1.GetID())
 		assert.NoError(t, err)
@@ -696,17 +695,17 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			gameStatusProvider: mockProvider,
 		}
 		p1 := newPlayerWithCardAndObserver("Player1",
-			[]ports.Card{poison1, sword2, arrow3, sword4},
-			[]ports.Warrior{m1, k2, a3},
+			[]cards.Card{poison1, sword2, arrow3, sword4},
+			[]cards.Warrior{m1, k2, a3},
 			g,
 		)
 		p2 := newPlayerWithCardAndObserver("Player2",
-			[]ports.Card{},
-			[]ports.Warrior{target, a2},
+			[]cards.Card{},
+			[]cards.Warrior{target, a2},
 			g,
 		)
 
-		g.players = []ports.Player{p1, p2}
+		g.players = []board.Player{p1, p2}
 
 		err := executeAttack(g, p1.Name(), p2.Name(), target.GetID(), poison1.GetID())
 		assert.NoError(t, err)
@@ -750,7 +749,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 	})
 }
 
-func foundInCemetery(g *Game, a ports.Warrior) bool {
+func foundInCemetery(g *Game, a cards.Warrior) bool {
 	for _, w := range g.cemetery.Corps() {
 		if w == a || (w != nil && w.GetID() == a.GetID()) {
 			return true
@@ -759,7 +758,7 @@ func foundInCemetery(g *Game, a ports.Warrior) bool {
 	return false
 }
 
-func foundInDiscardPile(g *Game, a ports.Card) bool {
+func foundInDiscardPile(g *Game, a cards.Card) bool {
 	for _, card := range g.discardPile.Cards() {
 		if card == a || (card != nil && card.GetID() == a.GetID()) {
 			return true
@@ -768,9 +767,9 @@ func foundInDiscardPile(g *Game, a ports.Card) bool {
 	return false
 }
 
-func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
-	cardsInField []ports.Warrior, game *Game,
-) ports.Player {
+func newPlayerWithCardAndObserver(name string, cardsInHand []cards.Card,
+	cardsInField []cards.Warrior, game *Game,
+) board.Player {
 
 	p := board.NewPlayer(name, 0, game, game, game, game, 25)
 	p.Hand().AddCards(cardsInHand...)
@@ -778,7 +777,7 @@ func newPlayerWithCardAndObserver(name string, cardsInHand []ports.Card,
 
 	for _, card := range cardsInField {
 		card.AddCardMovedToPileObserver(p)
-		targ, ok := card.(ports.Warrior)
+		targ, ok := card.(cards.Warrior)
 		if ok {
 			targ.AddWarriorDeadObserver(p)
 		}

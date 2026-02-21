@@ -1,8 +1,6 @@
 package gamestatus
 
-import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
-)
+import "github.com/alelopezbcn/thecampaign/internal/domain/board"
 
 type Castle struct {
 	IsConstructed bool `json:"constructed"`
@@ -10,7 +8,7 @@ type Castle struct {
 	Value         int  `json:"value"`
 }
 
-func NewCastle(c ports.Castle) Castle {
+func NewCastle(c board.Castle) Castle {
 	return Castle{
 		IsConstructed: c.IsConstructed(),
 		ResourceCards: c.ResourceCardsCount(),

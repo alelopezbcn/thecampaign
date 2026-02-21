@@ -3,7 +3,8 @@ package gamestatus
 import (
 	"time"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -53,12 +54,12 @@ type OpponentStatus struct {
 }
 
 type GameStatusDTO struct {
-	Viewer                 ports.Player
-	NewCards               []ports.Card
-	ModalCards             []ports.Card
+	Viewer                 board.Player
+	NewCards               []cards.Card
+	ModalCards             []cards.Card
 	PlayerIndex            int
 	PlayersNames           []string
-	Players                []ports.Player
+	Players                []board.Player
 	NextTurnPlayer         string
 	TurnPlayer             string
 	CurrentAction          types.PhaseType
@@ -68,9 +69,9 @@ type GameStatusDTO struct {
 	IsDisconnected         bool
 	CanTrade               bool
 	CemeteryCount          int
-	CemeteryLastDead       ports.Warrior
+	CemeteryLastDead       cards.Warrior
 	DiscardPileCount       int
-	DiscardPileLastCard    ports.Card
+	DiscardPileLastCard    cards.Card
 	DeckCount              int
 	GameStartedAt          time.Time
 	TurnStartedAt          time.Time
@@ -80,7 +81,7 @@ type GameStatusDTO struct {
 	LastAttackTargetID     string
 	LastAttackTargetPlayer string
 	StolenFrom             string
-	StolenCard             ports.Card
+	StolenCard             cards.Card
 	SpyTarget              types.SpyTarget
 	SpyTargetPlayer        string
 	CurrentPlayerName      string
@@ -91,8 +92,8 @@ type GameStatusDTO struct {
 	EliminatedPlayers      map[int]bool
 	DisconnectedPlayers    map[int]bool
 	CanMoveWarrior         bool
-	EnemiesFn              func(playerIdx int) []ports.Player
-	AlliesFn               func(playerIdx int) []ports.Player
+	EnemiesFn              func(playerIdx int) []board.Player
+	AlliesFn               func(playerIdx int) []board.Player
 }
 
 func NewGameStatus(dto GameStatusDTO) GameStatus {
@@ -156,7 +157,7 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	// Include stolen card info for the victim (only on the steal action itself)
 	if dto.LastAction == types.LastActionSteal && dto.StolenFrom != "" &&
 		dto.StolenCard != nil && dto.Viewer.Name() == dto.StolenFrom {
-		gs.StolenFromYouCard = FromDomainCards([]ports.Card{dto.StolenCard})
+		gs.StolenFromYouCard = FromDomainCards([]cards.Card{dto.StolenCard})
 	}
 
 	// Include spy notification for all players except the spy
@@ -186,30 +187,30 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	return gs
 }
 
-func processHandCards(viewer ports.Player, game GameStatusDTO, gs *GameStatus) {
+func processHandCards(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
 	action := game.CurrentAction
 	canMove := game.CanMoveWarrior
 
 	for _, card := range viewer.Hand().ShowCards() {
 		switch ct := card.(type) {
-		case ports.Warrior:
+		case cards.Warrior:
 			gs.CanMoveWarrior = canMove
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, NewWarriorHandCard(ct))
 
-		case ports.Weapon:
-			var enemyFields []ports.Field
+		case cards.Weapon:
+			var enemyFields []board.Field
 			for _, enemy := range game.EnemiesFn(viewer.Idx()) {
 				enemyFields = append(enemyFields, enemy.Field())
 			}
 
 			if ct.Type() == types.SpecialPowerWeaponType {
-				var allyFields []ports.Field
+				var allyFields []board.Field
 				for _, ally := range game.AlliesFn(viewer.Idx()) {
 					allyFields = append(allyFields, ally.Field())
 				}
 
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewSpecialPowerHandCard(ct.(ports.SpecialPower), viewer.Field(),
+					NewSpecialPowerHandCard(ct.(cards.SpecialPower), viewer.Field(),
 						allyFields, enemyFields, action))
 
 				continue
@@ -219,7 +220,7 @@ func processHandCards(viewer ports.Player, game GameStatusDTO, gs *GameStatus) {
 				NewWeaponHandCard(ct, viewer.Field(),
 					enemyFields, viewer.Castle().IsConstructed(), action))
 
-		case ports.Catapult:
+		case cards.Catapult:
 			canBeAttacked := false
 			for _, enemy := range game.EnemiesFn(viewer.Idx()) {
 				if enemy.Castle().CanBeAttacked() {
@@ -231,15 +232,15 @@ func processHandCards(viewer ports.Player, game GameStatusDTO, gs *GameStatus) {
 				NewCatapultHandCard(ct.GetID(), canBeAttacked,
 					action))
 
-		case ports.Spy:
+		case cards.Spy:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewSpyHandCard(ct.GetID(), action))
 
-		case ports.Thief:
+		case cards.Thief:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewThiefHandCard(ct.GetID(), action))
 
-		case ports.Resource:
+		case cards.Resource:
 			allyCastleConstructed := false
 			for _, ally := range game.AlliesFn(game.PlayerIndex) {
 				if ally.Castle().IsConstructed() {
@@ -254,7 +255,7 @@ func processHandCards(viewer ports.Player, game GameStatusDTO, gs *GameStatus) {
 	}
 }
 
-func processOpponents(viewer ports.Player, game GameStatusDTO, gs *GameStatus) {
+func processOpponents(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
 	viewerIdx := game.PlayerIndex
 
 	for i, p := range game.Players {

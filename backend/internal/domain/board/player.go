@@ -5,26 +5,58 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
+
+type Player interface {
+	Name() string
+	Idx() int
+	TakeCards(cards ...cards.Card) bool
+	MoveCardToField(cardID string) error
+	GiveCards(cardIDs ...string) ([]cards.Card, error)
+	Hand() Hand
+	Field() Field
+	CanTakeCards(count int) bool
+	CardsInHand() int
+	GetCardFromHand(cardID string) (cards.Card, bool)
+	GetCardFromField(cardID string) (cards.Card, bool)
+	Attack(target cards.Attackable, weapon cards.Weapon) error
+	UseSpecialPower(usedBy cards.Warrior, usedOn cards.Warrior,
+		specialPowerCard cards.SpecialPower) error
+	CardStolenFromHand(position int) (cards.Card, error)
+	Construct(cardID string) error
+	CanAttack() bool
+	CanBuy() bool
+	CanBuyWith(resource cards.Resource) bool
+	CanConstruct() bool
+	HasThief() bool
+	HasSpy() bool
+	HasCatapult() bool
+	HasWarriorsInHand() bool
+	CanTradeCards() bool
+	Thief() cards.Thief
+	Spy() cards.Spy
+	Catapult() cards.Catapult
+	Castle() Castle
+}
 
 type player struct {
 	name                           string
 	idx                            int
-	hand                           ports.Hand
-	field                          ports.Field
-	castle                         ports.Castle
-	cardMovedToPileObserver        ports.CardMovedToPileObserver
-	warriorMovedToCemeteryObserver ports.WarriorMovedToCemeteryObserver
+	hand                           Hand
+	field                          Field
+	castle                         Castle
+	cardMovedToPileObserver        cards.CardMovedToPileObserver
+	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver
 }
 
 func NewPlayer(name string,
 	idx int,
-	cardMovedToPileObserver ports.CardMovedToPileObserver,
-	warriorMovedToCemeteryObserver ports.WarriorMovedToCemeteryObserver,
-	castleCompletionObserver ports.CastleCompletionObserver,
-	fieldWithoutWarriorsObserver ports.FieldWithoutWarriorsObserver,
+	cardMovedToPileObserver cards.CardMovedToPileObserver,
+	warriorMovedToCemeteryObserver WarriorMovedToCemeteryObserver,
+	castleCompletionObserver CastleCompletionObserver,
+	fieldWithoutWarriorsObserver FieldWithoutWarriorsObserver,
 	castleResourcesToWin int,
 ) *player {
 	p := &player{
@@ -52,24 +84,24 @@ func (p *player) CanTakeCards(count int) bool {
 	return p.hand.CanAddCards(count)
 }
 
-func (p *player) TakeCards(cards ...ports.Card) bool {
-	if !p.hand.CanAddCards(len(cards)) {
+func (p *player) TakeCards(cardsTaken ...cards.Card) bool {
+	if !p.hand.CanAddCards(len(cardsTaken)) {
 		return false
 	}
 
-	for _, c := range cards {
+	for _, c := range cardsTaken {
 		c.AddCardMovedToPileObserver(p)
-		if w, ok := c.(ports.Warrior); ok {
+		if w, ok := c.(cards.Warrior); ok {
 			w.AddWarriorDeadObserver(p)
 		}
 	}
-	_ = p.hand.AddCards(cards...)
+	_ = p.hand.AddCards(cardsTaken...)
 
 	return true
 }
 
-func (p *player) GiveCards(cardIDs ...string) ([]ports.Card, error) {
-	cards := make([]ports.Card, 0, len(cardIDs))
+func (p *player) GiveCards(cardIDs ...string) ([]cards.Card, error) {
+	cards := make([]cards.Card, 0, len(cardIDs))
 
 	for _, cardID := range cardIDs {
 		c, ok := p.GetCardFromHand(cardID)
@@ -91,23 +123,23 @@ func (p *player) CardsInHand() int {
 	return len(p.hand.ShowCards())
 }
 
-func (p *player) Hand() ports.Hand {
+func (p *player) Hand() Hand {
 	return p.hand
 }
 
-func (p *player) Field() ports.Field {
+func (p *player) Field() Field {
 	return p.field
 }
 
-func (p *player) CardStolenFromHand(position int) (ports.Card, error) {
-	cards := p.hand.ShowCards()
-	if position < 1 || position > len(cards) {
+func (p *player) CardStolenFromHand(position int) (cards.Card, error) {
+	cardsShown := p.hand.ShowCards()
+	if position < 1 || position > len(cardsShown) {
 		return nil, fmt.Errorf("invalid position %d for stealing cardBase", position)
 	}
 
 	// Create a copy of c.resources and shuffle it
-	copied := make([]ports.Card, len(cards))
-	copy(copied, cards)
+	copied := make([]cards.Card, len(cardsShown))
+	copy(copied, cardsShown)
 	// Shuffle copied slice
 	for i := range copied {
 		j := i + rand.Intn(len(copied)-i)
@@ -120,11 +152,11 @@ func (p *player) CardStolenFromHand(position int) (ports.Card, error) {
 	return c, nil
 }
 
-func (p *player) GetCardFromHand(cardID string) (ports.Card, bool) {
+func (p *player) GetCardFromHand(cardID string) (cards.Card, bool) {
 	return p.hand.GetCard(cardID)
 }
 
-func (p *player) GetCardFromField(cardID string) (ports.Card, bool) {
+func (p *player) GetCardFromField(cardID string) (cards.Card, bool) {
 	return p.field.GetWarrior(cardID)
 }
 
@@ -134,7 +166,7 @@ func (p *player) MoveCardToField(cardID string) error {
 		return fmt.Errorf("card with ID %s not found in hand", cardID)
 	}
 
-	w, ok := c.(ports.Warrior)
+	w, ok := c.(cards.Warrior)
 	if !ok {
 		return fmt.Errorf("onlywarrior or dragon cards can be moved to field")
 	}
@@ -145,8 +177,8 @@ func (p *player) MoveCardToField(cardID string) error {
 	return nil
 }
 
-func (p *player) Attack(target ports.Attackable,
-	weapon ports.Weapon,
+func (p *player) Attack(target cards.Attackable,
+	weapon cards.Weapon,
 ) error {
 	switch weapon.Type() {
 	case types.SwordWeaponType:
@@ -173,8 +205,8 @@ func (p *player) Attack(target ports.Attackable,
 	return nil
 }
 
-func (p *player) UseSpecialPower(usedBy ports.Warrior, usedOn ports.Warrior,
-	specialPowerCard ports.SpecialPower,
+func (p *player) UseSpecialPower(usedBy cards.Warrior, usedOn cards.Warrior,
+	specialPowerCard cards.SpecialPower,
 ) error {
 	err := specialPowerCard.Use(usedBy, usedOn)
 	if err != nil {
@@ -188,7 +220,7 @@ func (p *player) UseSpecialPower(usedBy ports.Warrior, usedOn ports.Warrior,
 
 func (p *player) CanAttack() bool {
 	for _, c := range p.hand.ShowCards() {
-		if w, ok := c.(ports.Weapon); ok {
+		if w, ok := c.(cards.Weapon); ok {
 			if p.field.HasDragon() {
 				return true
 			}
@@ -220,7 +252,7 @@ func (p *player) CanAttack() bool {
 
 func (p *player) CanBuy() bool {
 	for _, c := range p.hand.ShowCards() {
-		if r, ok := c.(ports.Resource); ok {
+		if r, ok := c.(cards.Resource); ok {
 			if p.CanBuyWith(r) {
 				return true
 			}
@@ -230,7 +262,7 @@ func (p *player) CanBuy() bool {
 	return false
 }
 
-func (p *player) CanBuyWith(resource ports.Resource) bool {
+func (p *player) CanBuyWith(resource cards.Resource) bool {
 	if resource.CanConstruct() {
 		return false
 	}
@@ -245,13 +277,13 @@ func (p *player) CanBuyWith(resource ports.Resource) bool {
 
 func (p *player) CanConstruct() bool {
 	for _, c := range p.hand.ShowCards() {
-		if r, ok := c.(ports.Resource); ok {
+		if r, ok := c.(cards.Resource); ok {
 			// If castle is already constructed, any resource can be added
 			if p.castle.IsConstructed() || r.CanConstruct() {
 				return true
 			}
 		}
-		if w, ok := c.(ports.Weapon); ok {
+		if w, ok := c.(cards.Weapon); ok {
 			if !p.castle.IsConstructed() && w.CanConstruct() {
 				return true
 			}
@@ -263,7 +295,7 @@ func (p *player) CanConstruct() bool {
 
 func (p *player) HasThief() bool {
 	for _, c := range p.hand.ShowCards() {
-		if _, ok := c.(ports.Thief); ok {
+		if _, ok := c.(cards.Thief); ok {
 			return true
 		}
 	}
@@ -272,7 +304,7 @@ func (p *player) HasThief() bool {
 
 func (p *player) HasCatapult() bool {
 	for _, c := range p.hand.ShowCards() {
-		if _, ok := c.(ports.Catapult); ok {
+		if _, ok := c.(cards.Catapult); ok {
 			return true
 		}
 	}
@@ -281,7 +313,7 @@ func (p *player) HasCatapult() bool {
 
 func (p *player) HasWarriorsInHand() bool {
 	for _, c := range p.hand.ShowCards() {
-		if _, ok := c.(ports.Warrior); ok {
+		if _, ok := c.(cards.Warrior); ok {
 			return true
 		}
 	}
@@ -291,7 +323,7 @@ func (p *player) HasWarriorsInHand() bool {
 func (p *player) CanTradeCards() bool {
 	count := 0
 	for _, c := range p.hand.ShowCards() {
-		if _, ok := c.(ports.Weapon); ok {
+		if _, ok := c.(cards.Weapon); ok {
 			count++
 			if count >= 3 {
 				return true
@@ -301,9 +333,9 @@ func (p *player) CanTradeCards() bool {
 	return false
 }
 
-func (p *player) Thief() ports.Thief {
+func (p *player) Thief() cards.Thief {
 	for _, c := range p.hand.ShowCards() {
-		if t, ok := c.(ports.Thief); ok {
+		if t, ok := c.(cards.Thief); ok {
 			p.hand.RemoveCard(t)
 			return t
 		}
@@ -313,16 +345,16 @@ func (p *player) Thief() ports.Thief {
 
 func (p *player) HasSpy() bool {
 	for _, c := range p.hand.ShowCards() {
-		if _, ok := c.(ports.Spy); ok {
+		if _, ok := c.(cards.Spy); ok {
 			return true
 		}
 	}
 	return false
 }
 
-func (p *player) Spy() ports.Spy {
+func (p *player) Spy() cards.Spy {
 	for _, c := range p.hand.ShowCards() {
-		if s, ok := c.(ports.Spy); ok {
+		if s, ok := c.(cards.Spy); ok {
 			p.hand.RemoveCard(s)
 			return s
 		}
@@ -330,9 +362,9 @@ func (p *player) Spy() ports.Spy {
 	return nil
 }
 
-func (p *player) Catapult() ports.Catapult {
+func (p *player) Catapult() cards.Catapult {
 	for _, c := range p.hand.ShowCards() {
-		if t, ok := c.(ports.Catapult); ok {
+		if t, ok := c.(cards.Catapult); ok {
 			p.hand.RemoveCard(t)
 			return t
 		}
@@ -340,7 +372,7 @@ func (p *player) Catapult() ports.Catapult {
 	return nil
 }
 
-func (p *player) Castle() ports.Castle {
+func (p *player) Castle() Castle {
 	return p.castle
 }
 
@@ -359,11 +391,11 @@ func (p *player) Construct(cardID string) error {
 	return nil
 }
 
-func (p *player) OnCardMovedToPile(card ports.Card) {
+func (p *player) OnCardMovedToPile(card cards.Card) {
 	p.cardMovedToPileObserver.OnCardMovedToPile(card)
 }
 
-func (p *player) OnWarriorDead(warrior ports.Warrior) {
+func (p *player) OnWarriorDead(warrior cards.Warrior) {
 	if !p.field.RemoveWarrior(warrior) {
 		fmt.Println("warrior not found in player field")
 	}

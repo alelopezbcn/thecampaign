@@ -3,7 +3,7 @@ package gamestatus
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -142,7 +142,7 @@ func TestFromDomainCards(t *testing.T) {
 	resource.EXPECT().GetID().Return("G1")
 	resource.EXPECT().Value().Return(3)
 
-	cards := FromDomainCards([]ports.Card{warrior, resource})
+	cards := FromDomainCards([]cards.Card{warrior, resource})
 
 	assert.Len(t, cards, 2)
 	assert.Equal(t, "K1", cards[0].CardID)
@@ -152,7 +152,7 @@ func TestFromDomainCards(t *testing.T) {
 }
 
 func TestFromDomainCards_Empty(t *testing.T) {
-	cards := FromDomainCards([]ports.Card{})
+	cards := FromDomainCards([]cards.Card{})
 
 	assert.Empty(t, cards)
 }

@@ -2,15 +2,27 @@ package cards
 
 import (
 	"strings"
-
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 )
+
+type Card interface {
+	GetID() string
+	AddCardMovedToPileObserver(observer CardMovedToPileObserver)
+	GetCardMovedToPileObserver() CardMovedToPileObserver
+}
+
+type CardMovedToPileObserver interface {
+	OnCardMovedToPile(card Card)
+}
+
+type WarriorDeadObserver interface {
+	OnWarriorDead(card Warrior)
+}
 
 type cardBase struct {
 	id                      string
 	name                    string
-	player                  ports.Player
-	cardMovedToPileObserver ports.CardMovedToPileObserver
+	cardMovedToPileObserver CardMovedToPileObserver
+	warriorDeadObserver     WarriorDeadObserver
 }
 
 func newCardBase(id string, name string) *cardBase {
@@ -23,9 +35,9 @@ func newCardBase(id string, name string) *cardBase {
 func (c *cardBase) GetID() string {
 	return c.id
 }
-func (c *cardBase) AddCardMovedToPileObserver(observer ports.CardMovedToPileObserver) {
+func (c *cardBase) AddCardMovedToPileObserver(observer CardMovedToPileObserver) {
 	c.cardMovedToPileObserver = observer
 }
-func (c *cardBase) GetCardMovedToPileObserver() ports.CardMovedToPileObserver {
+func (c *cardBase) GetCardMovedToPileObserver() CardMovedToPileObserver {
 	return c.cardMovedToPileObserver
 }

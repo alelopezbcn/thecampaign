@@ -4,30 +4,31 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type StealAction struct {
+type stealAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
 
-	targetPlayer ports.Player
+	targetPlayer board.Player
 }
 
-func NewStealAction(playerName, targetPlayerName string, cardPosition int) *StealAction {
-	return &StealAction{
+func NewStealAction(playerName, targetPlayerName string, cardPosition int) *stealAction {
+	return &stealAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		cardPosition:     cardPosition,
 	}
 }
 
-func (a *StealAction) PlayerName() string { return a.playerName }
+func (a *stealAction) PlayerName() string { return a.playerName }
 
-func (a *StealAction) Validate(g *Game) error {
+func (a *stealAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeSpySteal {
 		return fmt.Errorf("cannot steal in the %s phase", g.currentAction)
 	}
@@ -46,7 +47,7 @@ func (a *StealAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *StealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *stealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}
@@ -72,12 +73,12 @@ func (a *StealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.GetWithModal(p, g, []ports.Card{stolenCard})
+		return g.gameStatusProvider.GetWithModal(p, g, []cards.Card{stolenCard})
 	}
 
 	return result, statusFn, nil
 }
 
-func (a *StealAction) NextPhase() types.PhaseType {
+func (a *stealAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeBuy
 }

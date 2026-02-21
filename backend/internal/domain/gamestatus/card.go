@@ -1,7 +1,7 @@
 package gamestatus
 
 import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -19,7 +19,7 @@ func newCard(cardID string, cardType CardType, value int) Card {
 	}
 }
 
-func FromDomainCards(dcs []ports.Card) []Card {
+func FromDomainCards(dcs []cards.Card) []Card {
 	cards := []Card{}
 	for _, v := range dcs {
 		cards = append(cards, FromDomainCard(v))
@@ -28,13 +28,13 @@ func FromDomainCards(dcs []ports.Card) []Card {
 	return cards
 }
 
-func FromDomainCard(dc ports.Card) Card {
+func FromDomainCard(dc cards.Card) Card {
 	cardID := dc.GetID()
 	var aCardType CardType
 	var value int
 
 	switch c := dc.(type) {
-	case ports.Warrior:
+	case cards.Warrior:
 		switch c.Type() {
 		case types.ArcherWarriorType:
 			aCardType = CardTypeArcher
@@ -47,7 +47,7 @@ func FromDomainCard(dc ports.Card) Card {
 		}
 		value = c.Health()
 
-	case ports.Weapon:
+	case cards.Weapon:
 		switch c.Type() {
 		case types.SwordWeaponType:
 			aCardType = CardTypeSword
@@ -60,19 +60,19 @@ func FromDomainCard(dc ports.Card) Card {
 		}
 		value = c.DamageAmount()
 
-	case ports.Resource:
+	case cards.Resource:
 		aCardType = CardTypeResource
 		value = c.Value()
 
-	case ports.Spy:
+	case cards.Spy:
 		aCardType = CardTypeSpy
 		value = 0
 
-	case ports.Thief:
+	case cards.Thief:
 		aCardType = CardTypeThief
 		value = 0
 
-	case ports.Catapult:
+	case cards.Catapult:
 		aCardType = CardTypeCatapult
 		value = 0
 	}

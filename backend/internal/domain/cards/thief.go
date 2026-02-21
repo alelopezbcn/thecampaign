@@ -1,14 +1,15 @@
 package cards
 
-import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
-)
+type Thief interface {
+	Card
+	CanSteal()
+}
 
 type thief struct {
 	*cardBase
 }
 
-func NewThief(id string) ports.Thief {
+func NewThief(id string) *thief {
 	return &thief{
 		cardBase: newCardBase(id, "Thief"),
 	}

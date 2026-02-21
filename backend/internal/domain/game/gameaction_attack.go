@@ -3,22 +3,22 @@ package game
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type AttackAction struct {
+type attackAction struct {
 	playerName       string
 	targetPlayerName string
 	targetID         string
 	weaponID         string
-	target           ports.Attackable
-	weapon           ports.Weapon
+	target           cards.Attackable
+	weapon           cards.Weapon
 }
 
-func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *AttackAction {
-	return &AttackAction{
+func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *attackAction {
+	return &attackAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		targetID:         targetID,
@@ -26,9 +26,9 @@ func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *A
 	}
 }
 
-func (a *AttackAction) PlayerName() string { return a.playerName }
+func (a *attackAction) PlayerName() string { return a.playerName }
 
-func (a *AttackAction) Validate(g *Game) error {
+func (a *attackAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot attack in the %s phase", g.currentAction)
 	}
@@ -49,12 +49,12 @@ func (a *AttackAction) Validate(g *Game) error {
 		return fmt.Errorf("weapon card not in hand: %s", a.weaponID)
 	}
 
-	a.target, ok = targetCard.(ports.Attackable)
+	a.target, ok = targetCard.(cards.Attackable)
 	if !ok {
 		return fmt.Errorf("the target cardBase cannot be attacked")
 	}
 
-	a.weapon, ok = weaponCard.(ports.Weapon)
+	a.weapon, ok = weaponCard.(cards.Weapon)
 	if !ok {
 		return fmt.Errorf("the card is not a weapon")
 	}
@@ -62,7 +62,7 @@ func (a *AttackAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *attackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := p.Attack(a.target, a.weapon); err != nil {
@@ -87,6 +87,6 @@ func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Ga
 	return result, statusFn, nil
 }
 
-func (a *AttackAction) NextPhase() types.PhaseType {
+func (a *attackAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
 }

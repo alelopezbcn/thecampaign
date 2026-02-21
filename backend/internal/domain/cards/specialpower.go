@@ -3,7 +3,6 @@ package cards
 import (
 	"errors"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -12,13 +11,21 @@ const (
 	specialPowerMaxHealth = 10
 )
 
+type SpecialPower interface {
+	Card
+	Attackable
+	Weapon
+	Use(usedBy Warrior, target Warrior) error
+	Destroyed()
+}
+
 type specialPower struct {
 	*cardBase
 	*attackableBase
 	*weaponBase
 }
 
-func NewSpecialPower(id string) ports.SpecialPower {
+func NewSpecialPower(id string) *specialPower {
 	return &specialPower{
 		cardBase:       newCardBase(id, "Special Power"),
 		attackableBase: newAttackableBase(specialPowerMaxHealth),
@@ -26,10 +33,10 @@ func NewSpecialPower(id string) ports.SpecialPower {
 	}
 }
 
-func (s *specialPower) MultiplierFactor(_ ports.Warrior) int {
+func (s *specialPower) MultiplierFactor(_ Warrior) int {
 	return 1
 }
-func (s *specialPower) BeAttacked(w ports.Weapon) error {
+func (s *specialPower) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
 	}
@@ -39,7 +46,7 @@ func (s *specialPower) BeAttacked(w ports.Weapon) error {
 
 	return nil
 }
-func (s *specialPower) Use(usedBy ports.Warrior, target ports.Warrior) error {
+func (s *specialPower) Use(usedBy Warrior, target Warrior) error {
 	if _, ok := usedBy.(*dragon); ok {
 		return errors.New("special power action not allowed to be used by Dragon")
 	}
@@ -69,10 +76,10 @@ func (s *specialPower) Destroyed() {
 	for _, a := range s.attackedBy {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
-	s.attackedBy = []ports.Weapon{}
+	s.attackedBy = []Weapon{}
 	s.cardMovedToPileObserver.OnCardMovedToPile(s)
 }
-func (s *specialPower) ReceiveDamage(w ports.Weapon, _ int) (isDefeated bool) {
+func (s *specialPower) ReceiveDamage(w Weapon, _ int) (isDefeated bool) {
 	s.health -= w.DamageAmount()
 	s.attackedBy = append(s.attackedBy, w)
 

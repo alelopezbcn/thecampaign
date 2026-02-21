@@ -1,7 +1,8 @@
 package gamestatus
 
 import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -27,7 +28,7 @@ func newHandCard(cardID string, cardType CardType, value int,
 	}
 }
 
-func NewWarriorHandCard(warrior ports.Warrior) HandCard {
+func NewWarriorHandCard(warrior cards.Warrior) HandCard {
 	var aCardType CardType
 	switch warrior.Type() {
 	case types.KnightWarriorType:
@@ -44,8 +45,8 @@ func NewWarriorHandCard(warrior ports.Warrior) HandCard {
 		warrior.Health(), []string{}, true)
 }
 
-func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
-	enemyFields []ports.Field, castleConstructed bool,
+func NewWeaponHandCard(weapon cards.Weapon, myField board.Field,
+	enemyFields []board.Field, castleConstructed bool,
 	action types.PhaseType) HandCard {
 
 	canBeUsed := false
@@ -97,8 +98,8 @@ func NewWeaponHandCard(weapon ports.Weapon, myField ports.Field,
 	return hc
 }
 
-func NewSpecialPowerHandCard(specialPower ports.SpecialPower,
-	myField ports.Field, allyFields []ports.Field, enemyFields []ports.Field,
+func NewSpecialPowerHandCard(specialPower cards.SpecialPower,
+	myField board.Field, allyFields []board.Field, enemyFields []board.Field,
 	action types.PhaseType) HandCard {
 
 	if action != types.PhaseTypeAttack {
@@ -177,7 +178,7 @@ func NewThiefHandCard(cardID string, action types.PhaseType) HandCard {
 		action == types.PhaseTypeSpySteal)
 }
 
-func NewResourceHandCard(resource ports.Resource, playerCastleConstructed bool,
+func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 	allyCastleConstructed bool, canBuy bool, action types.PhaseType) HandCard {
 
 	if action != types.PhaseTypeBuy && action != types.PhaseTypeConstruct {

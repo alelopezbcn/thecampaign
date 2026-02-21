@@ -4,19 +4,26 @@ import (
 	"errors"
 	"math/rand"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 )
 
-type deck struct {
-	cards  []ports.Card
-	dealer ports.Dealer
+type Deck interface {
+	Deal(players []Player)
+	DrawCards(count int, discardPile DiscardPile) ([]cards.Card, error)
+	Reveal(n int) []cards.Card
+	Count() int
 }
 
-func newDeck(d ports.Dealer) *deck {
+type deck struct {
+	cards  []cards.Card
+	dealer cards.Dealer
+}
+
+func newDeck(d cards.Dealer) *deck {
 	return &deck{dealer: d}
 }
 
-func (d *deck) Reveal(n int) []ports.Card {
+func (d *deck) Reveal(n int) []cards.Card {
 	if n > len(d.cards) {
 		n = len(d.cards)
 	}
@@ -27,10 +34,10 @@ func (d *deck) Count() int {
 	return len(d.cards)
 }
 
-func (d *deck) Deal(players []ports.Player) {
+func (d *deck) Deal(players []Player) {
 	warriorCards := shuffle(d.dealer.WarriorsCards(len(players)))
 
-	// Each player gets 3 Warrior cards
+	// Each player gets 3 cards.Warrior cards
 	warriorsIdx := 0
 	for _, p := range players {
 		p.TakeCards(warriorCards[warriorsIdx : warriorsIdx+3]...)
@@ -51,9 +58,9 @@ func (d *deck) Deal(players []ports.Player) {
 	d.cards = deckCards
 }
 
-func (d *deck) DrawCards(count int, discardPile ports.DiscardPile) (
-	cards []ports.Card, err error) {
-	cards = make([]ports.Card, 0, count)
+func (d *deck) DrawCards(count int, discardPile DiscardPile) (
+	cardsDrew []cards.Card, err error) {
+	cardsDrew = make([]cards.Card, 0, count)
 	for i := 0; i < count; i++ {
 		c, ok := d.drawCard()
 		if !ok {
@@ -65,13 +72,13 @@ func (d *deck) DrawCards(count int, discardPile ports.DiscardPile) (
 			}
 		}
 
-		cards = append(cards, c)
+		cardsDrew = append(cardsDrew, c)
 	}
 
-	return cards, nil
+	return cardsDrew, nil
 }
 
-func (d *deck) drawCard() (ports.Card, bool) {
+func (d *deck) drawCard() (cards.Card, bool) {
 	if len(d.cards) == 0 {
 		return nil, false
 	}
@@ -80,15 +87,15 @@ func (d *deck) drawCard() (ports.Card, bool) {
 	return c, true
 }
 
-func (d *deck) shuffleDiscardPileIntoDeck(discardPile ports.DiscardPile) {
+func (d *deck) shuffleDiscardPileIntoDeck(discardPile DiscardPile) {
 	d.replenish(discardPile.Empty())
 }
 
-func (d *deck) replenish(discardPile []ports.Card) {
+func (d *deck) replenish(discardPile []cards.Card) {
 	d.cards = shuffle(discardPile)
 }
 
-func shuffle(cards []ports.Card) []ports.Card {
+func shuffle(cards []cards.Card) []cards.Card {
 	if len(cards) == 0 {
 		return cards
 	}

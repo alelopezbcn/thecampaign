@@ -4,28 +4,28 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
-	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type SpyAction struct {
+type spyAction struct {
 	playerName       string
 	targetPlayerName string
 	option           int
 }
 
-func NewSpyAction(playerName, targetPlayerName string, option int) *SpyAction {
-	return &SpyAction{
+func NewSpyAction(playerName, targetPlayerName string, option int) *spyAction {
+	return &spyAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		option:           option,
 	}
 }
 
-func (a *SpyAction) PlayerName() string { return a.playerName }
+func (a *spyAction) PlayerName() string { return a.playerName }
 
-func (a *SpyAction) Validate(g *Game) error {
+func (a *spyAction) Validate(g *Game) error {
 	if g.currentAction != types.PhaseTypeSpySteal {
 		return fmt.Errorf("cannot use spy in the %s phase", g.currentAction)
 	}
@@ -38,10 +38,10 @@ func (a *SpyAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *spyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
-	var spiedCards []ports.Card
+	var spiedCards []cards.Card
 	result := &GameActionResult{}
 
 	switch a.option {
@@ -83,6 +83,6 @@ func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 	return result, statusFn, nil
 }
 
-func (a *SpyAction) NextPhase() types.PhaseType {
+func (a *spyAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeBuy
 }
