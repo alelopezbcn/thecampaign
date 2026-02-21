@@ -55,7 +55,7 @@ func (a *TradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 
 	p.TakeCards(cards...)
 
-	g.addToHistory(fmt.Sprintf("%s traded 3 cards", p.Name()), types.CategoryAction)
+	g.AddHistory(fmt.Sprintf("%s traded 3 cards", p.Name()), types.CategoryAction)
 
 	g.turnState.HasTraded = true
 	g.turnState.CanTrade = false

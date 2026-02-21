@@ -2,8 +2,7 @@ package ports
 
 type Deck interface {
 	Deal(players []Player)
-	DrawCard() (Card, bool)
-	Replenish(discardPile []Card)
+	DrawCards(count int, discardPile DiscardPile) ([]Card, error)
 	Reveal(n int) []Card
 	Count() int
 }

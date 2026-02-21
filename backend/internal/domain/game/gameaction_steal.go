@@ -68,7 +68,7 @@ func (a *StealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 	result.StolenCard = stolenCard
 	result.Action = types.LastActionSteal
 
-	g.addToHistory(fmt.Sprintf("%s stole a card from %s",
+	g.AddHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {

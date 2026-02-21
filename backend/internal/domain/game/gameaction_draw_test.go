@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -40,10 +41,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
-		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{})
-		mockDeck.EXPECT().Replenish([]ports.Card{})
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
 
 		g := &Game{
 			Players:     []ports.Player{mockPlayer1, mockPlayer2},
@@ -76,7 +74,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]ports.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
 		g := &Game{
@@ -148,10 +146,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
 		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{mockDiscardedCard})
-		mockDeck.EXPECT().Replenish([]ports.Card{mockDiscardedCard})
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]ports.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
 		g := &Game{
@@ -185,7 +182,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]ports.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
 		g := &Game{

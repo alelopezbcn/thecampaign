@@ -71,7 +71,7 @@ func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() gamestatus
 
 		p.Hand().RemoveCard(resourceCard)
 
-		g.addToHistory(fmt.Sprintf("%s added gold to %s's castle", p.Name(),
+		g.AddHistory(fmt.Sprintf("%s added gold to %s's castle", p.Name(),
 			a.targetPlayer.Name()), types.CategoryAction)
 	} else {
 		// Own castle construction
@@ -79,7 +79,7 @@ func (a *ConstructAction) Execute(g *Game) (*GameActionResult, func() gamestatus
 			return result, nil, fmt.Errorf("constructing card failed: %w", err)
 		}
 
-		g.addToHistory(fmt.Sprintf("%s constructed his castle", p.Name()), types.CategoryAction)
+		g.AddHistory(fmt.Sprintf("%s constructed his castle", p.Name()), types.CategoryAction)
 	}
 
 	result.Action = types.LastActionConstruct

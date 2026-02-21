@@ -65,7 +65,7 @@ func (a *CatapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 
 	g.OnCardMovedToPile(stolenGold)
 
-	g.addToHistory(fmt.Sprintf("%s removed %d gold from %s's castle",
+	g.AddHistory(fmt.Sprintf("%s removed %d gold from %s's castle",
 		p.Name(), stolenGold.Value(), a.targetPlayer.Name()),
 		types.CategoryAction)
 

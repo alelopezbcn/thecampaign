@@ -65,31 +65,19 @@ func (mr *MockDeckMockRecorder) Deal(players any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Deal", reflect.TypeOf((*MockDeck)(nil).Deal), players)
 }
 
-// DrawCard mocks base method.
-func (m *MockDeck) DrawCard() (ports.Card, bool) {
+// DrawCards mocks base method.
+func (m *MockDeck) DrawCards(count int, discardPile ports.DiscardPile) ([]ports.Card, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DrawCard")
-	ret0, _ := ret[0].(ports.Card)
-	ret1, _ := ret[1].(bool)
+	ret := m.ctrl.Call(m, "DrawCards", count, discardPile)
+	ret0, _ := ret[0].([]ports.Card)
+	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// DrawCard indicates an expected call of DrawCard.
-func (mr *MockDeckMockRecorder) DrawCard() *gomock.Call {
+// DrawCards indicates an expected call of DrawCards.
+func (mr *MockDeckMockRecorder) DrawCards(count, discardPile any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrawCard", reflect.TypeOf((*MockDeck)(nil).DrawCard))
-}
-
-// Replenish mocks base method.
-func (m *MockDeck) Replenish(discardPile []ports.Card) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Replenish", discardPile)
-}
-
-// Replenish indicates an expected call of Replenish.
-func (mr *MockDeckMockRecorder) Replenish(discardPile any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Replenish", reflect.TypeOf((*MockDeck)(nil).Replenish), discardPile)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DrawCards", reflect.TypeOf((*MockDeck)(nil).DrawCards), count, discardPile)
 }
 
 // Reveal mocks base method.

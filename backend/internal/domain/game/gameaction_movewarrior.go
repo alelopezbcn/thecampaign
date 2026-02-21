@@ -75,7 +75,7 @@ func (a *MoveWarriorAction) Execute(g *Game) (*GameActionResult, func() gamestat
 		a.targetPlayer.Field().AddWarriors(a.warrior)
 		p.Hand().RemoveCard(a.warrior)
 
-		g.addToHistory(fmt.Sprintf("%s moved warrior to %s's field", p.Name(),
+		g.AddHistory(fmt.Sprintf("%s moved warrior to %s's field", p.Name(),
 			a.targetPlayer.Name()), types.CategoryAction)
 	} else {
 		// Own field move
@@ -83,7 +83,7 @@ func (a *MoveWarriorAction) Execute(g *Game) (*GameActionResult, func() gamestat
 			return result, nil, fmt.Errorf("moving warrior to field failed: %w", err)
 		}
 
-		g.addToHistory(fmt.Sprintf("%s moved warrior to field", p.Name()),
+		g.AddHistory(fmt.Sprintf("%s moved warrior to field", p.Name()),
 			types.CategoryAction)
 	}
 

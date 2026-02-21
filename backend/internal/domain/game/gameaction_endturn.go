@@ -26,10 +26,10 @@ func (a *EndTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() gamesta
 	p := g.CurrentPlayer()
 
 	if a.expired {
-		g.addToHistory(fmt.Sprintf("%s's turn expired", p.Name()),
+		g.AddHistory(fmt.Sprintf("%s's turn expired", p.Name()),
 			types.CategoryTurnExpired)
 	} else {
-		g.addToHistory(fmt.Sprintf("%s ended their turn", p.Name()),
+		g.AddHistory(fmt.Sprintf("%s ended their turn", p.Name()),
 			types.CategoryEndTurn)
 	}
 

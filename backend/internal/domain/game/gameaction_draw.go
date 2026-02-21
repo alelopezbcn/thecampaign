@@ -29,7 +29,7 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 	cards, err := g.drawCards(p, 1)
 	if err != nil {
 		if errors.Is(err, board.ErrHandLimitExceeded) {
-			g.addToHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()),
+			g.AddHistory(fmt.Sprintf("%s can't take more cards (hand limit reached)", p.Name()),
 				types.CategoryError)
 
 			result := &GameActionResult{}
@@ -44,7 +44,7 @@ func (a *DrawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.
 
 	p.TakeCards(cards...)
 
-	g.addToHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
+	g.AddHistory(fmt.Sprintf("%s drew a card", p.Name()), types.CategoryAction)
 
 	result := &GameActionResult{Action: types.LastActionDraw}
 	statusFn := func() gamestatus.GameStatus {

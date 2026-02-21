@@ -68,7 +68,7 @@ func (a *BuyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 
 	g.OnCardMovedToPile(a.resource)
 
-	g.addToHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy),
+	g.AddHistory(fmt.Sprintf("%s bought %d card(s)", p.Name(), cardsToBuy),
 		types.CategoryAction)
 
 	result.Action = types.LastActionBuy

@@ -115,7 +115,7 @@ func (a *SpecialPowerAction) Execute(g *Game) (*GameActionResult, func() gamesta
 		return result, nil, fmt.Errorf("special power action failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s used special power on %s",
+	g.AddHistory(fmt.Sprintf("%s used special power on %s",
 		a.playerName, a.usedOn.String()), types.CategoryAction)
 
 	result := &GameActionResult{

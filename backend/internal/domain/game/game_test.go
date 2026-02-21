@@ -994,7 +994,7 @@ func TestGame_OnCardMovedToPile(t *testing.T) {
 func TestGame_addToHistory(t *testing.T) {
 	t.Run("Adds message to history", func(t *testing.T) {
 		g := &Game{history: []types.HistoryLine{}}
-		g.addToHistory("test message", types.CategoryInfo)
+		g.AddHistory("test message", types.CategoryInfo)
 		assert.Len(t, g.history, 1)
 		assert.Equal(t, "test message", g.history[0].Msg)
 		assert.Equal(t, types.CategoryInfo, g.history[0].Category)
@@ -1002,7 +1002,7 @@ func TestGame_addToHistory(t *testing.T) {
 
 	t.Run("Does not add empty message", func(t *testing.T) {
 		g := &Game{history: []types.HistoryLine{}}
-		g.addToHistory("", types.CategoryInfo)
+		g.AddHistory("", types.CategoryInfo)
 		assert.Empty(t, g.history)
 	})
 }

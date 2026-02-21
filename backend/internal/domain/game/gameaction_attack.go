@@ -70,7 +70,7 @@ func (a *AttackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Ga
 		return result, nil, fmt.Errorf("attack action failed: %w", err)
 	}
 
-	g.addToHistory(fmt.Sprintf("%s attacked %s with %s",
+	g.AddHistory(fmt.Sprintf("%s attacked %s with %s",
 		p.Name(), a.target.String(), a.weapon.String()),
 		types.CategoryAction)
 

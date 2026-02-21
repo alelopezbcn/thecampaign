@@ -124,29 +124,10 @@ func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err err
 		return nil, board.ErrHandLimitExceeded
 	}
 
-	cards = make([]ports.Card, 0, count)
-	for i := 0; i < count; i++ {
-		c, ok := g.deck.DrawCard()
-		if !ok {
-			g.shuffleDiscardPileIntoDeck()
-
-			c, ok = g.deck.DrawCard()
-			if !ok {
-				return nil, errors.New("no cards left to draw")
-			}
-		}
-
-		cards = append(cards, c)
-	}
-
-	return cards, nil
+	return g.deck.DrawCards(count, g.discardPile)
 }
 
-func (g *Game) shuffleDiscardPileIntoDeck() {
-	g.deck.Replenish(g.discardPile.Empty())
-}
-
-func (g *Game) addToHistory(msg string, cat types.Category) {
+func (g *Game) AddHistory(msg string, cat types.Category) {
 	if len(msg) == 0 {
 		return
 	}
@@ -175,7 +156,7 @@ func (g *Game) OnCardMovedToPile(card ports.Card) {
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 	g.cemetery.AddCorp(warrior)
 
-	g.addToHistory("warrior buried in cemetery", types.CategoryInfo)
+	g.AddHistory("warrior buried in cemetery", types.CategoryInfo)
 }
 
 func (g *Game) OnCastleCompletion(p ports.Player) {
@@ -234,7 +215,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		}
 	}
 
-	g.addToHistory(playerName+" has been eliminated!", types.CategoryElimination)
+	g.AddHistory(playerName+" has been eliminated!", types.CategoryElimination)
 
 	eliminatedPlayer := g.Players[eliminatedIdx]
 	// Move all cards from the eliminated player's hand to the discard pile
@@ -274,7 +255,7 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 
 	wasTheirTurn := g.CurrentTurn == playerIdx
 	g.DisconnectedPlayers[playerIdx] = true
-	g.addToHistory(playerName+" disconnected", types.CategoryElimination)
+	g.AddHistory(playerName+" disconnected", types.CategoryElimination)
 
 	// Check win conditions
 	isOut := func(i int) bool {
@@ -348,7 +329,7 @@ func (g *Game) ReconnectPlayer(playerName string) {
 	}
 
 	g.DisconnectedPlayers[playerIdx] = false
-	g.addToHistory(playerName+" reconnected", types.CategoryElimination)
+	g.AddHistory(playerName+" reconnected", types.CategoryElimination)
 }
 
 func (g *Game) nextAction(expectedAction types.PhaseType,

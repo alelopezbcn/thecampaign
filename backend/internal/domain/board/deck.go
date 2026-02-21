@@ -1,6 +1,7 @@
 package board
 
 import (
+	"errors"
 	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/ports"
@@ -13,19 +14,6 @@ type deck struct {
 
 func NewDeck(d ports.Dealer) *deck {
 	return &deck{dealer: d}
-}
-
-func (d *deck) DrawCard() (ports.Card, bool) {
-	if len(d.cards) == 0 {
-		return nil, false
-	}
-	c := d.cards[0]
-	d.cards = d.cards[1:]
-	return c, true
-}
-
-func (d *deck) Replenish(discardPile []ports.Card) {
-	d.cards = shuffle(discardPile)
 }
 
 func (d *deck) Reveal(n int) []ports.Card {
@@ -61,6 +49,43 @@ func (d *deck) Deal(players []ports.Player) {
 
 	deckCards = deckCards[otherIdx:]
 	d.cards = deckCards
+}
+
+func (d *deck) DrawCards(count int, discardPile ports.DiscardPile) (
+	cards []ports.Card, err error) {
+	cards = make([]ports.Card, 0, count)
+	for i := 0; i < count; i++ {
+		c, ok := d.drawCard()
+		if !ok {
+			d.shuffleDiscardPileIntoDeck(discardPile)
+
+			c, ok = d.drawCard()
+			if !ok {
+				return nil, errors.New("no cards left to draw")
+			}
+		}
+
+		cards = append(cards, c)
+	}
+
+	return cards, nil
+}
+
+func (d *deck) drawCard() (ports.Card, bool) {
+	if len(d.cards) == 0 {
+		return nil, false
+	}
+	c := d.cards[0]
+	d.cards = d.cards[1:]
+	return c, true
+}
+
+func (d *deck) shuffleDiscardPileIntoDeck(discardPile ports.DiscardPile) {
+	d.replenish(discardPile.Empty())
+}
+
+func (d *deck) replenish(discardPile []ports.Card) {
+	d.cards = shuffle(discardPile)
 }
 
 func shuffle(cards []ports.Card) []ports.Card {

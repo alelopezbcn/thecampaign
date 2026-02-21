@@ -47,7 +47,7 @@ func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 	switch a.option {
 	case 1:
 		// Reveal top 5 cards from deck
-		g.addToHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()),
+		g.AddHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()),
 			types.CategoryAction)
 
 		result.Spy = types.SpyInfo{Target: types.SpyTargetDeck}
@@ -59,7 +59,7 @@ func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 			return result, nil, err
 		}
 
-		g.addToHistory(fmt.Sprintf("%s spied on %s's hand",
+		g.AddHistory(fmt.Sprintf("%s spied on %s's hand",
 			p.Name(), targetPlayer.Name()), types.CategoryAction)
 
 		result.Spy = types.SpyInfo{Target: types.SpyTargetPlayer, TargetPlayer: targetPlayer.Name()}

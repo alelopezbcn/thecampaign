@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -168,7 +169,7 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockResource.EXPECT().GetID().Return("gold-123")
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]ports.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
@@ -215,8 +216,7 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockResource.EXPECT().GetID().Return("gold-456")
 		mockPlayer1.EXPECT().GiveCards("gold-456").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
+		mockDeck.EXPECT().DrawCards(2, mockDiscardPile).Return([]ports.Card{mockDrawnCard1, mockDrawnCard2}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
@@ -263,8 +263,7 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockResource.EXPECT().GetID().Return("gold-5")
 		mockPlayer1.EXPECT().GiveCards("gold-5").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard1, true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard2, true)
+		mockDeck.EXPECT().DrawCards(2, mockDiscardPile).Return([]ports.Card{mockDrawnCard1, mockDrawnCard2}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
@@ -312,12 +311,10 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		// First draw fails - deck is empty
-		mockDeck.EXPECT().DrawCard().Return(nil, false)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
 		// Replenish from discard pile
 		mockDiscardPile.EXPECT().Empty().Return([]ports.Card{mockDiscardedCard})
-		mockDeck.EXPECT().Replenish([]ports.Card{mockDiscardedCard})
-		// Second draw succeeds
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]ports.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
@@ -360,7 +357,7 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockResource.EXPECT().GetID().Return("gold-123")
 		mockPlayer1.EXPECT().GiveCards("gold-123").Return(nil, nil)
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]ports.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
