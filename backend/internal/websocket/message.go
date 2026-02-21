@@ -9,6 +9,7 @@ const (
 	MsgDrawCard     MessageType = "draw_card"
 	MsgAttack       MessageType = "attack"
 	MsgSpecialPower MessageType = "special_power"
+	MsgHarpoon      MessageType = "harpoon"
 	MsgMoveWarrior  MessageType = "move_warrior"
 	MsgTrade        MessageType = "trade"
 	MsgBuy          MessageType = "buy"
@@ -55,6 +56,13 @@ type SpecialPowerPayload struct {
 	UserID   string `json:"user_id"`
 	TargetID string `json:"target_id"`
 	WeaponID string `json:"weapon_id"`
+}
+
+// HarpoonPayload for harpoon action
+type HarpoonPayload struct {
+	TargetPlayer string `json:"target_player"`
+	TargetID     string `json:"target_id"`
+	WeaponID     string `json:"weapon_id"`
 }
 
 // MoveWarriorPayload for moving a warrior to field
@@ -113,38 +121,38 @@ type GameStatusDTO struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand   []HandCardDTO       `json:"current_player_hand"`
-	CurrentPlayerField  []FieldCardDTO      `json:"current_player_field"`
-	CurrentPlayerCastle CastleDTO           `json:"current_player_castle"`
-	IsEliminated        bool                `json:"is_eliminated"`
-	IsDisconnected      bool                `json:"is_disconnected"`
-	Opponents           []OpponentStatusDTO `json:"opponents"`
-	GameMode            string              `json:"game_mode"`
-	Cemetery            CemeteryDTO         `json:"cemetery"`
-	DiscardPile         DiscardPileDTO      `json:"discard_pile"`
-	CardsInDeck         int                 `json:"cards_in_deck"`
-	ModalCards          []CardDTO           `json:"modal_cards,omitempty"`
-	LastMovedWarriorID    string              `json:"last_moved_warrior_id,omitempty"`
-	LastAttackWeaponID    string              `json:"last_attack_weapon_id,omitempty"`
-	LastAttackTargetID    string              `json:"last_attack_target_id,omitempty"`
-	LastAttackTargetPlayer string             `json:"last_attack_target_player,omitempty"`
-	StolenFromYouCard   []CardDTO           `json:"stolen_from_you_card,omitempty"`
-	SpyNotification     string              `json:"spy_notification,omitempty"`
-	History             []HistoryLineDTO    `json:"history"`
-	PlayersOrder        []string            `json:"players_order"`
-	NextTurnPlayer      string              `json:"next_turn_player,omitempty"`
-	GameOverMsg         string              `json:"game_over_msg,omitempty"`
-	IsWinner            bool                `json:"is_winner"`
-	GameStartedAt       string              `json:"game_started_at"`
-	TurnStartedAt       string              `json:"turn_started_at"`
-	TurnTimeLimitSecs   int                 `json:"turn_time_limit_secs"`
+	CurrentPlayerHand      []HandCardDTO       `json:"current_player_hand"`
+	CurrentPlayerField     []FieldCardDTO      `json:"current_player_field"`
+	CurrentPlayerCastle    CastleDTO           `json:"current_player_castle"`
+	IsEliminated           bool                `json:"is_eliminated"`
+	IsDisconnected         bool                `json:"is_disconnected"`
+	Opponents              []OpponentStatusDTO `json:"opponents"`
+	GameMode               string              `json:"game_mode"`
+	Cemetery               CemeteryDTO         `json:"cemetery"`
+	DiscardPile            DiscardPileDTO      `json:"discard_pile"`
+	CardsInDeck            int                 `json:"cards_in_deck"`
+	ModalCards             []CardDTO           `json:"modal_cards,omitempty"`
+	LastMovedWarriorID     string              `json:"last_moved_warrior_id,omitempty"`
+	LastAttackWeaponID     string              `json:"last_attack_weapon_id,omitempty"`
+	LastAttackTargetID     string              `json:"last_attack_target_id,omitempty"`
+	LastAttackTargetPlayer string              `json:"last_attack_target_player,omitempty"`
+	StolenFromYouCard      []CardDTO           `json:"stolen_from_you_card,omitempty"`
+	SpyNotification        string              `json:"spy_notification,omitempty"`
+	History                []HistoryLineDTO    `json:"history"`
+	PlayersOrder           []string            `json:"players_order"`
+	NextTurnPlayer         string              `json:"next_turn_player,omitempty"`
+	GameOverMsg            string              `json:"game_over_msg,omitempty"`
+	IsWinner               bool                `json:"is_winner"`
+	GameStartedAt          string              `json:"game_started_at"`
+	TurnStartedAt          string              `json:"turn_started_at"`
+	TurnTimeLimitSecs      int                 `json:"turn_time_limit_secs"`
 }
 
 type OpponentStatusDTO struct {
-	PlayerName   string         `json:"player_name"`
-	Field        []FieldCardDTO `json:"field"`
-	Castle       CastleDTO      `json:"castle"`
-	CardsInHand  int            `json:"cards_in_hand"`
+	PlayerName     string         `json:"player_name"`
+	Field          []FieldCardDTO `json:"field"`
+	Castle         CastleDTO      `json:"castle"`
+	CardsInHand    int            `json:"cards_in_hand"`
 	IsAlly         bool           `json:"is_ally"`
 	IsEliminated   bool           `json:"is_eliminated"`
 	IsDisconnected bool           `json:"is_disconnected"`

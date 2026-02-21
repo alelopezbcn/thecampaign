@@ -88,32 +88,29 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 	return g, nil
 }
 
-func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Card) {
+// AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
+func (g *Game) AutoMoveWarriorsToField(playerName string) error {
+	p := g.GetPlayer(playerName)
+	if p == nil {
+		return fmt.Errorf("player %s not found", playerName)
+	}
+
 	i := 0
 	for _, p := range g.board.Players() {
 		if p.Name() == playerName {
 			for _, c := range p.Hand().ShowCards() {
 				if w, ok := c.(cards.Warrior); ok {
-					warriors[i] = gamestatus.FromDomainCard(w)
+					p.MoveCardToField(w.GetID())
 					i++
 					if i == 3 {
-						return warriors
+						return nil
 					}
 				}
 			}
 		}
 	}
 
-	return warriors
-}
-
-// AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
-func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
-	p := g.GetPlayer(playerName)
-	if p == nil {
-		return fmt.Errorf("player %s not found", playerName)
-	}
-	return p.MoveCardToField(warriorID)
+	return nil
 }
 
 func (g *Game) IsGameOver() (bool, string) {

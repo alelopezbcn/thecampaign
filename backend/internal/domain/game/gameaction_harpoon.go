@@ -11,19 +11,19 @@ import (
 type harpoonAction struct {
 	playerName       string
 	targetPlayerName string
-	dragonID         string
-	harpoonID        string
+	targetID         string
+	weaponID         string
 
 	dragon  cards.Dragon
 	harpoon cards.Harpoon
 }
 
-func NewHarpoonAction(playerName, targetPlayerName, harpoonID, dragonID string) *harpoonAction {
+func NewHarpoonAction(playerName, targetPlayerName, targetID, weaponID string) *harpoonAction {
 	return &harpoonAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
-		harpoonID:        harpoonID,
-		dragonID:         dragonID,
+		weaponID:         weaponID,
+		targetID:         targetID,
 	}
 }
 
@@ -40,9 +40,9 @@ func (a *harpoonAction) Validate(g *Game) error {
 		return err
 	}
 
-	targetCard, ok := targetPlayer.GetCardFromField(a.dragonID)
+	targetCard, ok := targetPlayer.GetCardFromField(a.targetID)
 	if !ok {
-		return fmt.Errorf("dragon card not in enemy field: %s", a.dragonID)
+		return fmt.Errorf("dragon card not in enemy field: %s", a.targetID)
 	}
 
 	a.dragon, ok = targetCard.(cards.Dragon)
@@ -71,7 +71,7 @@ func (a *harpoonAction) Execute(g *Game) (*GameActionResult, func() gamestatus.G
 		return result, nil, fmt.Errorf("harpoon action failed: %w", err)
 	}
 
-	if _, err := p.RemoveFromHand(a.harpoonID); err != nil {
+	if _, err := p.RemoveFromHand(a.weaponID); err != nil {
 		result := &GameActionResult{}
 		return result, nil, fmt.Errorf("removing harpoon from hand failed: %w", err)
 	}

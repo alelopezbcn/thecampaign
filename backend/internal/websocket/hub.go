@@ -145,6 +145,8 @@ func (h *Hub) processMessage(client *Client, msg *Message) {
 		h.handleAttack(client, msg.Payload)
 	case MsgSpecialPower:
 		h.handleSpecialPower(client, msg.Payload)
+	case MsgHarpoon:
+		h.handleHarpoon(client, msg.Payload)
 	case MsgMoveWarrior:
 		h.handleMoveWarrior(client, msg.Payload)
 	case MsgTrade:
@@ -418,16 +420,10 @@ func (h *Hub) handleStartGame(client *Client) {
 	}
 	room.Game = game
 
-	// Auto-move initial 3 warriors to field for each player
+	// Auto-move initial warriors to field for each player
 	for _, name := range playerNames {
-		warriors := game.GetInitialWarriors(name)
-		for _, w := range warriors {
-			if w.CardID != "" {
-				if err := game.AutoMoveWarriorToField(name, w.CardID); err != nil {
-					log.Printf("Error auto-moving warrior %s for %s: %v",
-						w.CardID, name, err)
-				}
-			}
+		if err := game.AutoMoveWarriorsToField(name); err != nil {
+			log.Printf("Error auto-moving warriors for %s: %v", name, err)
 		}
 	}
 

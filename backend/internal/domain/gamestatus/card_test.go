@@ -12,9 +12,9 @@ import (
 
 func TestFromDomainCard_Warrior(t *testing.T) {
 	tests := []struct {
-		name       string
+		name        string
 		warriorType types.WarriorType
-		wantType   CardType
+		wantType    CardType
 	}{
 		{"Knight", types.KnightWarriorType, CardTypeKnight},
 		{"Archer", types.ArcherWarriorType, CardTypeArcher},
@@ -32,7 +32,7 @@ func TestFromDomainCard_Warrior(t *testing.T) {
 			warrior.EXPECT().Type().Return(tt.warriorType)
 			warrior.EXPECT().Health().Return(20)
 
-			c := FromDomainCard(warrior)
+			c := fromDomainCard(warrior)
 
 			assert.Equal(t, "W1", c.CardID)
 			assert.Equal(t, tt.wantType, c.CardType)
@@ -63,7 +63,7 @@ func TestFromDomainCard_Weapon(t *testing.T) {
 			weapon.EXPECT().Type().Return(tt.weaponType)
 			weapon.EXPECT().DamageAmount().Return(7)
 
-			c := FromDomainCard(weapon)
+			c := fromDomainCard(weapon)
 
 			assert.Equal(t, "WP1", c.CardID)
 			assert.Equal(t, tt.wantType, c.CardType)
@@ -80,7 +80,7 @@ func TestFromDomainCard_Resource(t *testing.T) {
 	resource.EXPECT().GetID().Return("G1")
 	resource.EXPECT().Value().Return(5)
 
-	c := FromDomainCard(resource)
+	c := fromDomainCard(resource)
 
 	assert.Equal(t, "G1", c.CardID)
 	assert.Equal(t, CardTypeResource, c.CardType)
@@ -94,7 +94,7 @@ func TestFromDomainCard_Spy(t *testing.T) {
 	spy := mocks.NewMockSpy(ctrl)
 	spy.EXPECT().GetID().Return("SPY1")
 
-	c := FromDomainCard(spy)
+	c := fromDomainCard(spy)
 
 	assert.Equal(t, "SPY1", c.CardID)
 	assert.Equal(t, CardTypeSpy, c.CardType)
@@ -108,7 +108,7 @@ func TestFromDomainCard_Thief(t *testing.T) {
 	thief := mocks.NewMockThief(ctrl)
 	thief.EXPECT().GetID().Return("THIEF1")
 
-	c := FromDomainCard(thief)
+	c := fromDomainCard(thief)
 
 	assert.Equal(t, "THIEF1", c.CardID)
 	assert.Equal(t, CardTypeThief, c.CardType)
@@ -122,7 +122,7 @@ func TestFromDomainCard_Catapult(t *testing.T) {
 	catapult := mocks.NewMockCatapult(ctrl)
 	catapult.EXPECT().GetID().Return("CAT1")
 
-	c := FromDomainCard(catapult)
+	c := fromDomainCard(catapult)
 
 	assert.Equal(t, "CAT1", c.CardID)
 	assert.Equal(t, CardTypeCatapult, c.CardType)
@@ -142,7 +142,7 @@ func TestFromDomainCards(t *testing.T) {
 	resource.EXPECT().GetID().Return("G1")
 	resource.EXPECT().Value().Return(3)
 
-	cards := FromDomainCards([]cards.Card{warrior, resource})
+	cards := fromDomainCards([]cards.Card{warrior, resource})
 
 	assert.Len(t, cards, 2)
 	assert.Equal(t, "K1", cards[0].CardID)
@@ -152,7 +152,7 @@ func TestFromDomainCards(t *testing.T) {
 }
 
 func TestFromDomainCards_Empty(t *testing.T) {
-	cards := FromDomainCards([]cards.Card{})
+	cards := fromDomainCards([]cards.Card{})
 
 	assert.Empty(t, cards)
 }

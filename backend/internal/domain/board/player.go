@@ -313,6 +313,17 @@ func (p *player) HasCatapult() bool {
 	return false
 }
 
+func HasCardTypeInHand[T any](p Player) (T, bool) {
+	for _, c := range p.Hand().ShowCards() {
+		if card, ok := c.(T); ok {
+			return card, true
+		}
+	}
+	
+	var zero T
+	return zero, false
+}
+
 func (p *player) HasHarpoon() bool {
 	for _, c := range p.hand.ShowCards() {
 		if _, ok := c.(cards.Harpoon); ok {

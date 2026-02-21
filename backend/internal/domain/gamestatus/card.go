@@ -19,16 +19,16 @@ func newCard(cardID string, cardType CardType, value int) Card {
 	}
 }
 
-func FromDomainCards(dcs []cards.Card) []Card {
+func fromDomainCards(dcs []cards.Card) []Card {
 	cards := []Card{}
 	for _, v := range dcs {
-		cards = append(cards, FromDomainCard(v))
+		cards = append(cards, fromDomainCard(v))
 	}
 
 	return cards
 }
 
-func FromDomainCard(dc cards.Card) Card {
+func fromDomainCard(dc cards.Card) Card {
 	cardID := dc.GetID()
 	var aCardType CardType
 	var value int
@@ -57,6 +57,8 @@ func FromDomainCard(dc cards.Card) Card {
 			aCardType = CardTypePoison
 		case types.SpecialPowerWeaponType:
 			aCardType = CardTypeSpecialPower
+		case types.HarpoonWeaponType:
+			aCardType = CardTypeHarpoon
 		}
 		value = c.DamageAmount()
 
@@ -78,5 +80,4 @@ func FromDomainCard(dc cards.Card) Card {
 	}
 
 	return newCard(cardID, aCardType, value)
-
 }

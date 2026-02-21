@@ -138,7 +138,7 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	}
 	if len(dto.ModalCards) > 0 {
 		for _, c := range dto.ModalCards {
-			gs.ModalCards = append(gs.ModalCards, FromDomainCard(c))
+			gs.ModalCards = append(gs.ModalCards, fromDomainCard(c))
 		}
 	}
 
@@ -157,7 +157,7 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	// Include stolen card info for the victim (only on the steal action itself)
 	if dto.LastAction == types.LastActionSteal && dto.StolenFrom != "" &&
 		dto.StolenCard != nil && dto.Viewer.Name() == dto.StolenFrom {
-		gs.StolenFromYouCard = FromDomainCards([]cards.Card{dto.StolenCard})
+		gs.StolenFromYouCard = fromDomainCards([]cards.Card{dto.StolenCard})
 	}
 
 	// Include spy notification for all players except the spy
@@ -212,6 +212,12 @@ func processHandCards(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 					NewSpecialPowerHandCard(ct.(cards.SpecialPower), viewer.Field(),
 						allyFields, enemyFields, action))
+
+				continue
+			}
+			if ct.Type() == types.HarpoonWeaponType {
+				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+					NewHarpoonHandCard(ct.(cards.Harpoon), enemyFields, action))
 
 				continue
 			}

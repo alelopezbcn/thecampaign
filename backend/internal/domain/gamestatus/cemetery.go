@@ -12,7 +12,7 @@ func NewCemetery(corps int, lastCorp cards.Warrior) Cemetery {
 		Corps: corps,
 	}
 	if lastCorp != nil {
-		c.LastCorp = FromDomainCard(lastCorp)
+		c.LastCorp = fromDomainCard(lastCorp)
 	}
 
 	return c
