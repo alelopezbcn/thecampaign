@@ -18,29 +18,32 @@ const (
 	maxCastleResources2v2 = 30
 )
 
+type Board interface {
+	Deck() ports.Deck
+	DiscardPile() ports.DiscardPile
+	Cemetery() ports.Cemetery
+	Players() []ports.Player
+}
+
 type Games []Game
 
 type Game struct {
 	id                  string
+	board               Board
 	createdAt           time.Time
-	Mode                types.GameMode
-	Players             []ports.Player
-	Teams               map[int][]int // teamID -> player indices (2v2 only)
-	EliminatedPlayers   map[int]bool  // player index -> eliminated (FFA only)
-	DisconnectedPlayers map[int]bool  // player index -> disconnected
+	mode                types.GameMode
+	teams               map[int][]int // teamID -> player indices (2v2 only)
+	eliminatedPlayers   map[int]bool  // player index -> eliminated (FFA only)
+	disconnectedPlayers map[int]bool  // player index -> disconnected
 	CurrentTurn         int
 	currentAction       types.PhaseType
 	turnState           TurnState
-
-	deck               ports.Deck
-	discardPile        ports.DiscardPile
-	cemetery           ports.Cemetery
-	gameStatusProvider GameStatusProvider
-	history            []types.HistoryLine
-	historyTracker     int
-	lastResult         GameActionResult
-	winState           WinState
-	GameStartedAt      time.Time
+	gameStatusProvider  GameStatusProvider
+	history             []types.HistoryLine
+	historyTracker      int
+	lastResult          GameActionResult
+	winState            WinState
+	gameStartedAt       time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
@@ -51,26 +54,23 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 	}
 
 	now := time.Now()
+	players := make([]ports.Player, len(playerNames))
 	g := &Game{
 		id:                  uuid.NewString(),
 		CurrentTurn:         0,
-		deck:                board.NewDeck(dealer),
-		discardPile:         board.NewDiscardPile(),
-		cemetery:            board.NewCemetery(),
 		history:             []types.HistoryLine{},
 		gameStatusProvider:  gameStatusProvider,
-		Players:             make([]ports.Player, len(playerNames)),
-		Mode:                mode,
-		EliminatedPlayers:   make(map[int]bool),
-		DisconnectedPlayers: make(map[int]bool),
-		GameStartedAt:       now,
+		mode:                mode,
+		eliminatedPlayers:   make(map[int]bool),
+		disconnectedPlayers: make(map[int]bool),
+		gameStartedAt:       now,
 		turnState:           TurnState{StartedAt: now},
 	}
 
 	castleResourcesToWin := maxCastleResourcesFFA
 	if mode == types.GameMode2v2 {
 		castleResourcesToWin = maxCastleResources2v2
-		g.Teams = map[int][]int{
+		g.teams = map[int][]int{
 			1: {0, 2}, // Team 1: Player 1 and Player 3
 			2: {1, 3}, // Team 2: Player 2 and Player 4
 		}
@@ -78,17 +78,19 @@ func NewGame(playerNames []string, mode types.GameMode, dealer ports.Dealer,
 
 	for i, name := range playerNames {
 		p := board.NewPlayer(name, i, g, g, g, g, castleResourcesToWin)
-		g.Players[i] = p
+		players[i] = p
 	}
 
-	g.deck.Deal(g.Players)
+	g.board = board.New(dealer, players)
+
+	g.board.Deck().Deal(g.board.Players())
 
 	return g, nil
 }
 
 func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Card) {
 	i := 0
-	for _, p := range g.Players {
+	for _, p := range g.board.Players() {
 		if p.Name() == playerName {
 			for _, c := range p.Hand().ShowCards() {
 				if w, ok := c.(ports.Warrior); ok {
@@ -124,7 +126,8 @@ func (g *Game) drawCards(p ports.Player, count int) (cards []ports.Card, err err
 		return nil, board.ErrHandLimitExceeded
 	}
 
-	return g.deck.DrawCards(count, g.discardPile)
+	return g.board.Deck().DrawCards(count,
+		g.board.DiscardPile())
 }
 
 func (g *Game) AddHistory(msg string, cat types.Category) {
@@ -150,11 +153,11 @@ func (g *Game) GetHistory() []types.HistoryLine {
 }
 
 func (g *Game) OnCardMovedToPile(card ports.Card) {
-	g.discardPile.Discard(card)
+	g.board.DiscardPile().Discard(card)
 }
 
 func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
-	g.cemetery.AddCorp(warrior)
+	g.board.Cemetery().AddCorp(warrior)
 
 	g.AddHistory("warrior buried in cemetery", types.CategoryInfo)
 }
@@ -162,7 +165,7 @@ func (g *Game) OnWarriorMovedToCemetery(warrior ports.Warrior) {
 func (g *Game) OnCastleCompletion(p ports.Player) {
 	g.winState.GameOver = true
 	g.winState.WinnerIdx = g.PlayerIndex(p.Name())
-	if g.Mode == types.GameMode2v2 {
+	if g.mode == types.GameMode2v2 {
 		g.winState.Winner = p.Name() + "'s team"
 	} else {
 		g.winState.Winner = p.Name()
@@ -172,7 +175,7 @@ func (g *Game) OnCastleCompletion(p ports.Player) {
 func (g *Game) OnFieldWithoutWarriors(playerName string) {
 	eliminatedIdx := g.PlayerIndex(playerName)
 
-	switch g.Mode {
+	switch g.mode {
 	case types.GameMode1v1:
 		g.winState.GameOver = true
 		g.winState.Winner = g.CurrentPlayer().Name()
@@ -180,11 +183,11 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		return
 
 	case types.GameModeFFA3, types.GameModeFFA5:
-		g.EliminatedPlayers[eliminatedIdx] = true
+		g.eliminatedPlayers[eliminatedIdx] = true
 		active := 0
 		var lastActive string
-		for i, p := range g.Players {
-			if !g.EliminatedPlayers[i] {
+		for i, p := range g.board.Players() {
+			if !g.eliminatedPlayers[i] {
 				active++
 				lastActive = p.Name()
 			}
@@ -196,14 +199,14 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		}
 
 	case types.GameMode2v2:
-		g.EliminatedPlayers[eliminatedIdx] = true
+		g.eliminatedPlayers[eliminatedIdx] = true
 		// Check if all enemies of the eliminated player's team are also eliminated
 		// (i.e., the opposing team is fully eliminated)
 		attackerIdx := g.CurrentTurn
 		allEnemiesEliminated := true
 		for _, enemy := range g.Enemies(attackerIdx) {
 			enemyIdx := g.PlayerIndex(enemy.Name())
-			if !g.EliminatedPlayers[enemyIdx] {
+			if !g.eliminatedPlayers[enemyIdx] {
 				allEnemiesEliminated = false
 				break
 			}
@@ -217,14 +220,14 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 
 	g.AddHistory(playerName+" has been eliminated!", types.CategoryElimination)
 
-	eliminatedPlayer := g.Players[eliminatedIdx]
+	eliminatedPlayer := g.board.Players()[eliminatedIdx]
 	// Move all cards from the eliminated player's hand to the discard pile
 	for _, c := range eliminatedPlayer.Hand().ShowCards() {
-		g.discardPile.Discard(c)
+		g.board.DiscardPile().Discard(c)
 	}
 	// Move all castled cards to the discard pile
 	for _, c := range eliminatedPlayer.Castle().ResourceCards() {
-		g.discardPile.Discard(c)
+		g.board.DiscardPile().Discard(c)
 	}
 }
 
@@ -234,8 +237,8 @@ func (g *Game) switchTurn() {
 	g.currentAction = types.PhaseTypeDrawCard
 
 	for {
-		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.Players)
-		if !g.EliminatedPlayers[g.CurrentTurn] && !g.DisconnectedPlayers[g.CurrentTurn] {
+		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.board.Players())
+		if !g.eliminatedPlayers[g.CurrentTurn] && !g.disconnectedPlayers[g.CurrentTurn] {
 			break
 		}
 	}
@@ -249,23 +252,23 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 		return errors.New("player not found")
 	}
 
-	if g.winState.GameOver || g.EliminatedPlayers[playerIdx] || g.DisconnectedPlayers[playerIdx] {
+	if g.winState.GameOver || g.eliminatedPlayers[playerIdx] || g.disconnectedPlayers[playerIdx] {
 		return nil
 	}
 
 	wasTheirTurn := g.CurrentTurn == playerIdx
-	g.DisconnectedPlayers[playerIdx] = true
+	g.disconnectedPlayers[playerIdx] = true
 	g.AddHistory(playerName+" disconnected", types.CategoryElimination)
 
 	// Check win conditions
 	isOut := func(i int) bool {
-		return g.EliminatedPlayers[i] || g.DisconnectedPlayers[i]
+		return g.eliminatedPlayers[i] || g.disconnectedPlayers[i]
 	}
 
-	switch g.Mode {
+	switch g.mode {
 	case types.GameMode2v2:
 		// Check if all members of any team are out
-		for _, members := range g.Teams {
+		for _, members := range g.teams {
 			allOut := true
 			for _, idx := range members {
 				if !isOut(idx) {
@@ -276,7 +279,7 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 			if allOut {
 				// Opposing team wins
 				for _, idx := range members {
-					for j, p := range g.Players {
+					for j, p := range g.board.Players() {
 						if j != idx && !isOut(j) && !g.SameTeam(idx, j) {
 							g.winState.GameOver = true
 							g.winState.Winner = p.Name() + "'s team"
@@ -293,7 +296,7 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 	default:
 		active := 0
 		var lastActive string
-		for i, p := range g.Players {
+		for i, p := range g.board.Players() {
 			if !isOut(i) {
 				active++
 				lastActive = p.Name()
@@ -324,11 +327,11 @@ func (g *Game) ReconnectPlayer(playerName string) {
 		return
 	}
 
-	if !g.DisconnectedPlayers[playerIdx] {
+	if !g.disconnectedPlayers[playerIdx] {
 		return
 	}
 
-	g.DisconnectedPlayers[playerIdx] = false
+	g.disconnectedPlayers[playerIdx] = false
 	g.AddHistory(playerName+" reconnected", types.CategoryElimination)
 }
 
@@ -447,7 +450,7 @@ func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
 
 // CurrentPlayer returns the player whose turn it is
 func (g *Game) CurrentPlayer() ports.Player {
-	return g.Players[g.CurrentTurn]
+	return g.board.Players()[g.CurrentTurn]
 }
 
 // nextActiveTurnPlayer returns the name of the player who will go next,
@@ -455,9 +458,9 @@ func (g *Game) CurrentPlayer() ports.Player {
 func (g *Game) nextActiveTurnPlayer() string {
 	next := g.CurrentTurn
 	for {
-		next = (next + 1) % len(g.Players)
-		if !g.EliminatedPlayers[next] && !g.DisconnectedPlayers[next] {
-			return g.Players[next].Name()
+		next = (next + 1) % len(g.board.Players())
+		if !g.eliminatedPlayers[next] && !g.disconnectedPlayers[next] {
+			return g.board.Players()[next].Name()
 		}
 		if next == g.CurrentTurn {
 			return ""
@@ -467,7 +470,7 @@ func (g *Game) nextActiveTurnPlayer() string {
 
 // GetPlayer returns a player by name, or nil if not found
 func (g *Game) GetPlayer(name string) ports.Player {
-	for _, p := range g.Players {
+	for _, p := range g.board.Players() {
 		if p.Name() == name {
 			return p
 		}
@@ -477,7 +480,7 @@ func (g *Game) GetPlayer(name string) ports.Player {
 
 // PlayerIndex returns the index of a player by name, or -1
 func (g *Game) PlayerIndex(name string) int {
-	for i, p := range g.Players {
+	for i, p := range g.board.Players() {
 		if p.Name() == name {
 			return i
 		}
@@ -488,14 +491,14 @@ func (g *Game) PlayerIndex(name string) int {
 // Enemies returns all opponents (non-eliminated, non-ally) of a given player
 func (g *Game) Enemies(playerIdx int) []ports.Player {
 	var enemies []ports.Player
-	for i, p := range g.Players {
+	for i, p := range g.board.Players() {
 		if i == playerIdx {
 			continue
 		}
-		if g.EliminatedPlayers[i] {
+		if g.eliminatedPlayers[i] {
 			continue
 		}
-		if g.Mode == types.GameMode2v2 && g.SameTeam(playerIdx, i) {
+		if g.mode == types.GameMode2v2 && g.SameTeam(playerIdx, i) {
 			continue
 		}
 		enemies = append(enemies, p)
@@ -505,11 +508,11 @@ func (g *Game) Enemies(playerIdx int) []ports.Player {
 
 // Allies returns teammates (for 2v2 only, excluding self)
 func (g *Game) Allies(playerIdx int) []ports.Player {
-	if g.Mode != types.GameMode2v2 {
+	if g.mode != types.GameMode2v2 {
 		return nil
 	}
 	var allies []ports.Player
-	for i, p := range g.Players {
+	for i, p := range g.board.Players() {
 		if i == playerIdx {
 			continue
 		}
@@ -522,10 +525,10 @@ func (g *Game) Allies(playerIdx int) []ports.Player {
 
 // SameTeam checks if two player indices are on the same team
 func (g *Game) SameTeam(i, j int) bool {
-	if g.Mode != types.GameMode2v2 {
+	if g.mode != types.GameMode2v2 {
 		return false
 	}
-	for _, team := range g.Teams {
+	for _, team := range g.teams {
 		hasI, hasJ := false, false
 		for _, idx := range team {
 			if idx == i {
@@ -562,7 +565,7 @@ func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
 		return nil, errors.New("cannot attack your ally")
 	}
 
-	if g.EliminatedPlayers[tIdx] {
+	if g.eliminatedPlayers[tIdx] {
 		return nil, errors.New("cannot attack eliminated player")
 	}
 

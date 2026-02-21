@@ -34,7 +34,7 @@ func TestCatapultAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
@@ -57,7 +57,7 @@ func TestCatapultAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().HasCatapult().Return(false)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -82,7 +82,7 @@ func TestCatapultAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Catapult().Return(nil)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -108,7 +108,7 @@ func TestCatapultAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -138,7 +138,7 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockCatapult.EXPECT().Attack(mockCastle, 0).Return(nil, errors.New("invalid position"))
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -176,7 +176,7 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockDiscardPile.EXPECT().Discard(mockStolenGold)
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			discardPile:        mockDiscardPile,
@@ -217,7 +217,7 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockDiscardPile.EXPECT().Discard(mockStolenGold)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			discardPile:   mockDiscardPile,

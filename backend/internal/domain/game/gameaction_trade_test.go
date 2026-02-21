@@ -29,7 +29,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			turnState:   TurnState{HasTraded: true},
 		}
@@ -51,7 +51,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 		}
 
@@ -72,7 +72,7 @@ func TestTradeAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 		}
 
@@ -95,7 +95,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().GiveCards("C1", "C2", "C3").Return(nil, errors.New("card not found"))
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 		}
 
@@ -138,7 +138,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
@@ -184,7 +184,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,
@@ -224,7 +224,7 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,

@@ -44,7 +44,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
@@ -81,7 +81,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        1,
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
@@ -112,7 +112,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			discardPile: mockDiscardPile,
 			history:     []types.HistoryLine{},
@@ -145,7 +145,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			discardPile: mockDiscardPile,
 			history:     []types.HistoryLine{},

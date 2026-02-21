@@ -6,7 +6,7 @@ type cemetery struct {
 	corps []ports.Warrior
 }
 
-func NewCemetery() *cemetery {
+func newCemetery() *cemetery {
 	return &cemetery{
 		corps: []ports.Warrior{},
 	}

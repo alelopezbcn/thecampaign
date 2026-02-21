@@ -12,7 +12,7 @@ type deck struct {
 	dealer ports.Dealer
 }
 
-func NewDeck(d ports.Dealer) *deck {
+func newDeck(d ports.Dealer) *deck {
 	return &deck{dealer: d}
 }
 

@@ -36,7 +36,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
@@ -60,7 +60,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(nil, false)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -86,7 +86,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(nil, false)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -113,7 +113,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -140,7 +140,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockResource, true)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -167,7 +167,7 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -195,7 +195,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(errors.New("attack failed"))
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
@@ -229,7 +229,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			gameStatusProvider: mockProvider,
@@ -268,7 +268,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 
 		g := &Game{
-			Players:       []ports.Player{mockPlayer1, mockPlayer2},
+			players:       []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			history:       []types.HistoryLine{},
@@ -313,7 +313,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		}
 		p1 = newPlayerWithCardAndObserver("Player1", p1Cards, p1Warriors, g)
 		p2 = newPlayerWithCardAndObserver("Player2", p2Cards, p2Warriors, g)
-		g.Players = []ports.Player{p1, p2}
+		g.players = []ports.Player{p1, p2}
 		return g, p1, p2
 	}
 
@@ -653,7 +653,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			g,
 		)
 
-		g.Players = []ports.Player{p1, p2}
+		g.players = []ports.Player{p1, p2}
 
 		err := executeAttack(g, p1.Name(), p2.Name(), a.GetID(), sword1.GetID())
 		assert.NoError(t, err)
@@ -706,7 +706,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 			g,
 		)
 
-		g.Players = []ports.Player{p1, p2}
+		g.players = []ports.Player{p1, p2}
 
 		err := executeAttack(g, p1.Name(), p2.Name(), target.GetID(), poison1.GetID())
 		assert.NoError(t, err)

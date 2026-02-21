@@ -44,7 +44,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
@@ -78,7 +78,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -112,7 +112,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false)
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -152,7 +152,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
 		g := &Game{
-			Players:            []ports.Player{mockPlayer1, mockPlayer2},
+			players:            []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -186,7 +186,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
@@ -221,7 +221,7 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false)
 
 		g := &Game{
-			Players:     []ports.Player{mockPlayer1, mockPlayer2},
+			players:     []ports.Player{mockPlayer1, mockPlayer2},
 			CurrentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,

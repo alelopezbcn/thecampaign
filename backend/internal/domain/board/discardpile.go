@@ -6,7 +6,7 @@ type discardPile struct {
 	cards []ports.Card
 }
 
-func NewDiscardPile() *discardPile {
+func newDiscardPile() *discardPile {
 	return &discardPile{
 		cards: []ports.Card{},
 	}

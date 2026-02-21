@@ -51,7 +51,7 @@ func (a *SpyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 			types.CategoryAction)
 
 		result.Spy = types.SpyInfo{Target: types.SpyTargetDeck}
-		spiedCards = g.deck.Reveal(5)
+		spiedCards = g.board.Deck().Reveal(5)
 	case 2:
 		// Reveal target's cards
 		targetPlayer, err := g.getTargetPlayer(p.Name(), a.targetPlayerName)
