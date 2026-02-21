@@ -39,6 +39,20 @@ func (m *MockDiscardPile) EXPECT() *MockDiscardPileMockRecorder {
 	return m.recorder
 }
 
+// Cards mocks base method.
+func (m *MockDiscardPile) Cards() []ports.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Cards")
+	ret0, _ := ret[0].([]ports.Card)
+	return ret0
+}
+
+// Cards indicates an expected call of Cards.
+func (mr *MockDiscardPileMockRecorder) Cards() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Cards", reflect.TypeOf((*MockDiscardPile)(nil).Cards))
+}
+
 // Count mocks base method.
 func (m *MockDiscardPile) Count() int {
 	m.ctrl.T.Helper()

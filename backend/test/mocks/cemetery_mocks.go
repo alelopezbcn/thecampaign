@@ -51,6 +51,20 @@ func (mr *MockCemeteryMockRecorder) AddCorp(arg0 any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCorp", reflect.TypeOf((*MockCemetery)(nil).AddCorp), arg0)
 }
 
+// Corps mocks base method.
+func (m *MockCemetery) Corps() []ports.Warrior {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Corps")
+	ret0, _ := ret[0].([]ports.Warrior)
+	return ret0
+}
+
+// Corps indicates an expected call of Corps.
+func (mr *MockCemeteryMockRecorder) Corps() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Corps", reflect.TypeOf((*MockCemetery)(nil).Corps))
+}
+
 // Count mocks base method.
 func (m *MockCemetery) Count() int {
 	m.ctrl.T.Helper()

@@ -27,3 +27,7 @@ func (c *cemetery) GetLast() ports.Warrior {
 
 	return c.corps[len(c.corps)-1]
 }
+
+func (c *cemetery) Corps() []ports.Warrior {
+	return c.corps
+}

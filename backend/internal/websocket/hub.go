@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/game"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -26,7 +26,7 @@ type GameRoom struct {
 	ID              string
 	GameMode        types.GameMode
 	MaxPlayers      int
-	Game            *domain.Game
+	Game            *game.Game
 	Players         map[string]*Client // playerName -> client
 	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
 	mutex           sync.RWMutex
@@ -391,8 +391,8 @@ func (h *Hub) handleStartGame(client *Client) {
 		}
 	}
 
-	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(),
-		domain.NewGameStatusProvider())
+	game, err := game.NewGame(playerNames, room.GameMode, cards.NewDealer(),
+		game.NewGameStatusProvider())
 	if err != nil {
 		room.mutex.Unlock()
 		log.Printf("Error creating game: %v", err)
@@ -453,7 +453,7 @@ func (h *Hub) autoDrawAndBroadcast(gameID string) {
 
 	room.mutex.Lock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status, err := room.Game.ExecuteAction(domain.NewDrawCardAction(currentPlayer.Name()))
+	status, err := room.Game.ExecuteAction(game.NewDrawCardAction(currentPlayer.Name()))
 	room.mutex.Unlock()
 
 	if err != nil {
@@ -504,7 +504,7 @@ func (h *Hub) startTurnTimer(gameID string) {
 			currentPlayer := room.Game.CurrentPlayer().Name()
 			log.Printf("Turn timer expired for %s in game %s", currentPlayer, gameID)
 
-			status, err := room.Game.ExecuteAction(domain.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
+			status, err := room.Game.ExecuteAction(game.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
 			room.mutex.Unlock()
 
 			if err != nil {
@@ -797,7 +797,7 @@ func (h *Hub) handleSwapTeam(client *Client) {
 }
 
 // executeGameAction executes a game action and sends state to all players
-func (h *Hub) executeGameAction(client *Client, action func(*domain.Game) (gamestatus.GameStatus, error)) {
+func (h *Hub) executeGameAction(client *Client, action func(*game.Game) (gamestatus.GameStatus, error)) {
 	room, exists := h.getGameRoom(client)
 	if !exists || room.Game == nil {
 		client.SendError("Game not found")

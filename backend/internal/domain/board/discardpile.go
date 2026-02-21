@@ -33,3 +33,7 @@ func (d *discardPile) GetLast() ports.Card {
 
 	return d.cards[len(d.cards)-1]
 }
+
+func (d *discardPile) Cards() []ports.Card {
+	return d.cards
+}
