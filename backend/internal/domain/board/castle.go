@@ -19,7 +19,7 @@ type Castle interface {
 }
 
 type CastleCompletionObserver interface {
-	OnCastleCompletion(p Player)
+	OnCastleCompletion(playerName string)
 }
 
 type castle struct {
@@ -141,7 +141,7 @@ func (c *castle) addResource(card cards.Card) error {
 
 	c.resources = append(c.resources, gold)
 	if c.Value() >= c.resourcesToWin {
-		c.castleCompletionObserver.OnCastleCompletion(c.player)
+		c.castleCompletionObserver.OnCastleCompletion(c.player.Name())
 	}
 
 	return nil

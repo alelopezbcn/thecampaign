@@ -152,13 +152,13 @@ func (g *Game) OnWarriorMovedToCemetery(warrior cards.Warrior) {
 	g.AddHistory("warrior buried in cemetery", types.CategoryInfo)
 }
 
-func (g *Game) OnCastleCompletion(p board.Player) {
+func (g *Game) OnCastleCompletion(playerName string) {
 	g.winState.GameOver = true
-	g.winState.WinnerIdx = g.PlayerIndex(p.Name())
+	g.winState.WinnerIdx = g.PlayerIndex(playerName)
 	if g.mode == types.GameMode2v2 {
-		g.winState.Winner = p.Name() + "'s team"
+		g.winState.Winner = playerName + "'s team"
 	} else {
-		g.winState.Winner = p.Name()
+		g.winState.Winner = playerName
 	}
 }
 
