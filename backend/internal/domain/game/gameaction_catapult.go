@@ -37,7 +37,8 @@ func (a *catapultAction) Validate(g *Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	if !p.HasCatapult() {
+	catapult, ok := board.HasCardTypeInHand[cards.Catapult](p)
+	if !ok {
 		return errors.New("player does not have a catapult to use")
 	}
 
@@ -47,10 +48,7 @@ func (a *catapultAction) Validate(g *Game) error {
 		return err
 	}
 
-	a.catapult = p.Catapult()
-	if a.catapult == nil {
-		return errors.New("player does not have a catapult to attack")
-	}
+	a.catapult = catapult
 
 	return nil
 }

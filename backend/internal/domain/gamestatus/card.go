@@ -59,6 +59,8 @@ func fromDomainCard(dc cards.Card) Card {
 			aCardType = CardTypeSpecialPower
 		case types.HarpoonWeaponType:
 			aCardType = CardTypeHarpoon
+		case types.BloodRainWeaponType:
+			aCardType = CardTypeBloodRain
 		}
 		value = c.DamageAmount()
 

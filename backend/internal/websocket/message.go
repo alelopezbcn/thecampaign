@@ -10,6 +10,7 @@ const (
 	MsgAttack       MessageType = "attack"
 	MsgSpecialPower MessageType = "special_power"
 	MsgHarpoon      MessageType = "harpoon"
+	MsgBloodRain    MessageType = "blood_rain"
 	MsgMoveWarrior  MessageType = "move_warrior"
 	MsgTrade        MessageType = "trade"
 	MsgBuy          MessageType = "buy"
@@ -62,6 +63,12 @@ type SpecialPowerPayload struct {
 type HarpoonPayload struct {
 	TargetPlayer string `json:"target_player"`
 	TargetID     string `json:"target_id"`
+	WeaponID     string `json:"weapon_id"`
+}
+
+// BloodRainPayload for blood rain action
+type BloodRainPayload struct {
+	TargetPlayer string `json:"target_player"`
 	WeaponID     string `json:"weapon_id"`
 }
 

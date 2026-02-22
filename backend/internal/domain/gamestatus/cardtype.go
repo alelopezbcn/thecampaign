@@ -20,4 +20,5 @@ var (
 	CardTypeThief        = CardType{"Thief", "", "#D3D3D3"}         // Light Gray
 	CardTypeCatapult     = CardType{"Catapult", "", "#D3D3D3"}      // Light Gray
 	CardTypeHarpoon      = CardType{"Harpoon", "", "#c80000"}       // Dark Red
+	CardTypeBloodRain    = CardType{"Blood Rain", "", "#FFA500"}    // Orange
 )

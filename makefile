@@ -1,4 +1,6 @@
 mocks:
+	mockgen -destination=./backend/test/mocks/all_mocks.go -package=mocks your-module-name/backend/internal/domain/ports CardInterface,PlayerInterface,GameInterface
+
 	go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./backend/internal/domain/ports/card.go -destination ./backend/test/mocks/card_mocks.go
 	go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./backend/internal/domain/ports/castle.go -destination ./backend/test/mocks/castle_mocks.go
 	go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./backend/internal/domain/ports/deck.go -destination ./backend/test/mocks/deck_mocks.go

@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -51,14 +52,12 @@ func (a *harpoonAction) Validate(g *Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	if !p.HasHarpoon() {
+	harpoon, ok := board.HasCardTypeInHand[cards.Harpoon](p)
+	if !ok {
 		return fmt.Errorf("player does not have a harpoon to use")
 	}
 
-	a.harpoon = p.Harpoon()
-	if a.harpoon == nil {
-		return fmt.Errorf("player does not have a harpoon to attack")
-	}
+	a.harpoon = harpoon
 
 	return nil
 }

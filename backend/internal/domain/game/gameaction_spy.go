@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -13,6 +14,8 @@ type spyAction struct {
 	playerName       string
 	targetPlayerName string
 	option           int
+
+	spy cards.Spy
 }
 
 func NewSpyAction(playerName, targetPlayerName string, option int) *spyAction {
@@ -31,9 +34,12 @@ func (a *spyAction) Validate(g *Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	if !p.HasSpy() {
+	spy, ok := board.HasCardTypeInHand[cards.Spy](p)
+	if !ok {
 		return fmt.Errorf("player does not have a spy to use")
 	}
+
+	a.spy = spy
 
 	return nil
 }
@@ -68,12 +74,12 @@ func (a *spyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameS
 		return result, nil, errors.New("invalid Spy option")
 	}
 
-	s := p.Spy()
-	if s == nil {
-		return &GameActionResult{}, nil, errors.New("failed to retrieve spy card")
+	spy, err := p.RemoveFromHand(a.spy.GetID())
+	if err != nil {
+		return result, nil, fmt.Errorf("removing spy from hand failed: %w", err)
 	}
 
-	g.OnCardMovedToPile(s)
+	g.OnCardMovedToPile(spy[0])
 
 	result.Action = types.LastActionSpy
 	statusFn := func() gamestatus.GameStatus {

@@ -96,16 +96,17 @@ func (g *Game) AutoMoveWarriorsToField(playerName string) error {
 	}
 
 	i := 0
-	for _, p := range g.board.Players() {
-		if p.Name() == playerName {
-			for _, c := range p.Hand().ShowCards() {
-				if w, ok := c.(cards.Warrior); ok {
-					p.MoveCardToField(w.GetID())
-					i++
-					if i == 3 {
-						return nil
-					}
-				}
+	for _, c := range p.Hand().ShowCards() {
+		if w, ok := c.(cards.Warrior); ok {
+			if w.Type() == types.DragonWarriorType {
+				continue // Skip dragon warriors during auto-move
+			}
+
+			_ = p.MoveCardToField(w.GetID())
+
+			i++
+			if i == 3 {
+				return nil
 			}
 		}
 	}
@@ -484,7 +485,9 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 	if expectedAction == types.PhaseTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := false
-		if p.HasCatapult() {
+
+		_, ok := board.HasCardTypeInHand[cards.Catapult](p)
+		if ok {
 			for _, e := range g.Enemies(g.CurrentTurn) {
 				if e.Castle().CanBeAttacked() {
 					canAttackWithCatapult = true
@@ -503,7 +506,9 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 	}
 
 	if expectedAction == types.PhaseTypeSpySteal {
-		if p.HasSpy() || p.HasThief() {
+		_, hasSpy := board.HasCardTypeInHand[cards.Spy](p)
+		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
+		if hasSpy || hasThief {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()

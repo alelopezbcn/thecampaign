@@ -98,12 +98,12 @@ func NewWeaponHandCard(weapon cards.Weapon, myField board.Field,
 	return hc
 }
 
-func NewSpecialPowerHandCard(specialPower cards.SpecialPower,
+func NewSpecialPowerHandCard(cardID string,
 	myField board.Field, allyFields []board.Field, enemyFields []board.Field,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
-		return newHandCard(specialPower.GetID(), CardTypeSpecialPower,
+		return newHandCard(cardID, CardTypeSpecialPower,
 			0, []string{}, false)
 	}
 
@@ -153,15 +153,15 @@ func NewSpecialPowerHandCard(specialPower cards.SpecialPower,
 		}
 	}
 
-	return newHandCard(specialPower.GetID(), CardTypeSpecialPower,
+	return newHandCard(cardID, CardTypeSpecialPower,
 		0, canBeUsedOnIDs, true)
 }
 
-func NewHarpoonHandCard(harpoon cards.Harpoon, enemyFields []board.Field,
+func NewHarpoonHandCard(cardID string, enemyFields []board.Field,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
-		return newHandCard(harpoon.GetID(), CardTypeHarpoon,
+		return newHandCard(cardID, CardTypeHarpoon,
 			0, []string{}, false)
 	}
 
@@ -175,8 +175,20 @@ func NewHarpoonHandCard(harpoon cards.Harpoon, enemyFields []board.Field,
 		}
 	}
 
-	return newHandCard(harpoon.GetID(), CardTypeHarpoon,
+	return newHandCard(cardID, CardTypeHarpoon,
 		0, canBeUsedOnIDs, true)
+}
+
+func NewBloodRainHandCard(cardID string, enemyFields []board.Field,
+	action types.PhaseType,
+) HandCard {
+	if action != types.PhaseTypeAttack {
+		return newHandCard(cardID, CardTypeBloodRain,
+			0, []string{}, false)
+	}
+
+	return newHandCard(cardID, CardTypeBloodRain,
+		0, []string{}, true)
 }
 
 func NewCatapultHandCard(cardID string, canBeUsed bool,

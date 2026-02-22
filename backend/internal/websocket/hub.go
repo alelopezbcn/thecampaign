@@ -147,6 +147,8 @@ func (h *Hub) processMessage(client *Client, msg *Message) {
 		h.handleSpecialPower(client, msg.Payload)
 	case MsgHarpoon:
 		h.handleHarpoon(client, msg.Payload)
+	case MsgBloodRain:
+		h.handleBloodRain(client, msg.Payload)
 	case MsgMoveWarrior:
 		h.handleMoveWarrior(client, msg.Payload)
 	case MsgTrade:

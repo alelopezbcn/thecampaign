@@ -110,10 +110,12 @@ func (a *specialPowerAction) Validate(g *Game) error {
 func (a *specialPowerAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
-	if err := p.UseSpecialPower(a.usedBy, a.usedOn, a.specialPower); err != nil {
+	if err := a.specialPower.Use(a.usedBy, a.usedOn); err != nil {
 		result := &GameActionResult{}
 		return result, nil, fmt.Errorf("special power action failed: %w", err)
 	}
+
+	p.RemoveFromHand(a.specialPower.GetID())
 
 	g.AddHistory(fmt.Sprintf("%s used special power on %s",
 		a.playerName, a.usedOn.String()), types.CategoryAction)
