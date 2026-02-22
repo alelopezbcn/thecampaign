@@ -18,7 +18,7 @@ func TestSkipPhaseAction_PlayerName(t *testing.T) {
 
 func TestSkipPhaseAction_Validate(t *testing.T) {
 	t.Run("Error when trying to skip DrawCard phase", func(t *testing.T) {
-		g := &Game{currentAction: types.PhaseTypeDrawCard}
+		g := &game{currentAction: types.PhaseTypeDrawCard}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -28,7 +28,7 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("Error when trying to skip EndTurn phase", func(t *testing.T) {
-		g := &Game{currentAction: types.PhaseTypeEndTurn}
+		g := &game{currentAction: types.PhaseTypeEndTurn}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -38,7 +38,7 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("Attack phase sets next phase to SpySteal", func(t *testing.T) {
-		g := &Game{currentAction: types.PhaseTypeAttack}
+		g := &game{currentAction: types.PhaseTypeAttack}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -48,7 +48,7 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("SpySteal phase sets next phase to Buy", func(t *testing.T) {
-		g := &Game{currentAction: types.PhaseTypeSpySteal}
+		g := &game{currentAction: types.PhaseTypeSpySteal}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -58,7 +58,7 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("Buy phase sets next phase to Construct", func(t *testing.T) {
-		g := &Game{currentAction: types.PhaseTypeBuy}
+		g := &game{currentAction: types.PhaseTypeBuy}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -68,7 +68,7 @@ func TestSkipPhaseAction_Validate(t *testing.T) {
 	})
 
 	t.Run("Construct phase sets next phase to EndTurn", func(t *testing.T) {
-		g := &Game{currentAction: types.PhaseTypeConstruct}
+		g := &game{currentAction: types.PhaseTypeConstruct}
 		action := NewSkipPhaseAction("Player1")
 
 		err := action.Validate(g)
@@ -92,9 +92,9 @@ func TestSkipPhaseAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,

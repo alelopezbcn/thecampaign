@@ -1,8 +1,8 @@
 package game
 
 import (
-	"errors"
 	"fmt"
+	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -15,7 +15,9 @@ type stealAction struct {
 	targetPlayerName string
 	cardPosition     int
 
-	targetPlayer board.Player
+	targetPlayer          board.Player
+	thief                 cards.Thief
+	targetPlayerHandCards []cards.Card
 }
 
 func NewStealAction(playerName, targetPlayerName string, cardPosition int) *stealAction {
@@ -28,13 +30,14 @@ func NewStealAction(playerName, targetPlayerName string, cardPosition int) *stea
 
 func (a *stealAction) PlayerName() string { return a.playerName }
 
-func (a *stealAction) Validate(g *Game) error {
+func (a *stealAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeSpySteal {
 		return fmt.Errorf("cannot steal in the %s phase", g.currentAction)
 	}
 
 	p := g.CurrentPlayer()
-	if !p.HasThief() {
+	thief, ok := board.HasCardTypeInHand[cards.Thief](p)
+	if !ok {
 		return fmt.Errorf("player does not have a thief to use")
 	}
 
@@ -44,25 +47,28 @@ func (a *stealAction) Validate(g *Game) error {
 		return err
 	}
 
+	a.targetPlayerHandCards = a.targetPlayer.Hand().ShowCards()
+	if a.cardPosition < 1 || a.cardPosition > len(a.targetPlayerHandCards) {
+		return fmt.Errorf("invalid position %d for stealing cardBase", a.cardPosition)
+	}
+
+	a.thief = thief
+
 	return nil
 }
 
-func (a *stealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *stealAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}
+	stolenCard := a.steal()
 
-	stolenCard, err := a.targetPlayer.CardStolenFromHand(a.cardPosition)
+	thief, err := p.RemoveFromHand(a.thief.GetID())
 	if err != nil {
-		return result, nil, fmt.Errorf("stealing card failed: %w", err)
+		return result, nil, fmt.Errorf("removing thief from hand failed: %w", err)
 	}
 
-	t := p.Thief()
-	if t == nil {
-		return result, nil, errors.New("failed to retrieve thief card")
-	}
-
-	g.OnCardMovedToPile(t)
+	g.OnCardMovedToPile(thief[0])
 	p.TakeCards(stolenCard)
 
 	result.StolenFrom = a.targetPlayer.Name()
@@ -81,4 +87,19 @@ func (a *stealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.Gam
 
 func (a *stealAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeBuy
+}
+
+func (a *stealAction) steal() cards.Card {
+	copied := make([]cards.Card, len(a.targetPlayerHandCards))
+	copy(copied, a.targetPlayerHandCards)
+	// Shuffle copied slice
+	for i := range copied {
+		j := i + rand.Intn(len(copied)-i)
+		copied[i], copied[j] = copied[j], copied[i]
+	}
+
+	c := copied[a.cardPosition-1]
+	a.targetPlayer.Hand().RemoveCard(c)
+
+	return c
 }

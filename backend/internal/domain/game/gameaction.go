@@ -7,7 +7,7 @@ import (
 
 type GameAction interface {
 	PlayerName() string
-	Validate(g *Game) error
-	Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error)
+	Validate(g *game) error
+	Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error)
 	NextPhase() types.PhaseType
 }

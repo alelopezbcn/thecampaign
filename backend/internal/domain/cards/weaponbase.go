@@ -26,6 +26,10 @@ func (s *weaponBase) Type() types.WeaponType {
 	return s.weaponType
 }
 
+func (s *weaponBase) MultiplierFactor(_ Warrior) int {
+	return 1
+}
+
 func (s *weaponBase) CanConstruct() bool {
 	return s.DamageAmount() == 1
 }

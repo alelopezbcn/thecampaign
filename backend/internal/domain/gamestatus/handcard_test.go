@@ -350,7 +350,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 
 		sp.EXPECT().GetID().Return("SP1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeBuy)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeBuy)
 
 		assert.Equal(t, "SP1", hc.CardID)
 		assert.Equal(t, CardTypeSpecialPower, hc.CardType)
@@ -374,7 +374,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		enemy1.EXPECT().GetID().Return("EK1")
 		enemyField.EXPECT().Warriors().Return([]cards.Warrior{enemy1})
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{enemyField}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{enemyField}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -397,7 +397,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myWarrior.EXPECT().IsProtected().Return(false, nil)
 		myWarrior.EXPECT().GetID().Return("K1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"K1"}, hc.CanBeUsedOnIDs)
@@ -420,7 +420,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		dragon.EXPECT().IsProtected().Return(false, nil)
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -443,7 +443,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		protectedWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		protectedWarrior.EXPECT().IsProtected().Return(true, existingSP)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -466,7 +466,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		damagedWarrior.EXPECT().IsDamaged().Return(true)
 		damagedWarrior.EXPECT().GetID().Return("M1")
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"M1"}, hc.CanBeUsedOnIDs)
@@ -488,7 +488,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		healthyWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		healthyWarrior.EXPECT().IsDamaged().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -509,7 +509,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().Warriors().Return([]cards.Warrior{dragon})
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -527,7 +527,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		myField.EXPECT().HasKnight().Return(false)
 		myField.EXPECT().HasMage().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp, myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)

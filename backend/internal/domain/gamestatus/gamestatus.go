@@ -53,49 +53,6 @@ type OpponentStatus struct {
 	IsDisconnected bool
 }
 
-type GameStatusDTO struct {
-	Viewer                 board.Player
-	NewCards               []cards.Card
-	ModalCards             []cards.Card
-	PlayerIndex            int
-	PlayersNames           []string
-	Players                []board.Player
-	NextTurnPlayer         string
-	TurnPlayer             string
-	CurrentAction          types.PhaseType
-	LastAction             types.LastActionType
-	GameMode               string
-	IsEliminated           bool
-	IsDisconnected         bool
-	CanTrade               bool
-	CemeteryCount          int
-	CemeteryLastDead       cards.Warrior
-	DiscardPileCount       int
-	DiscardPileLastCard    cards.Card
-	DeckCount              int
-	GameStartedAt          time.Time
-	TurnStartedAt          time.Time
-	History                []types.HistoryLine
-	LastMovedWarriorID     string
-	LastAttackWeaponID     string
-	LastAttackTargetID     string
-	LastAttackTargetPlayer string
-	StolenFrom             string
-	StolenCard             cards.Card
-	SpyTarget              types.SpyTarget
-	SpyTargetPlayer        string
-	CurrentPlayerName      string
-	IsGameOver             bool
-	Winner                 string
-	IsPlayerWinner         bool
-	SameTeamFn             func(i, j int) bool
-	EliminatedPlayers      map[int]bool
-	DisconnectedPlayers    map[int]bool
-	CanMoveWarrior         bool
-	EnemiesFn              func(playerIdx int) []board.Player
-	AlliesFn               func(playerIdx int) []board.Player
-}
-
 func NewGameStatus(dto GameStatusDTO) GameStatus {
 	playersOrder := make([]string, len(dto.Players))
 	for i, p := range dto.Players {
@@ -138,7 +95,7 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	}
 	if len(dto.ModalCards) > 0 {
 		for _, c := range dto.ModalCards {
-			gs.ModalCards = append(gs.ModalCards, FromDomainCard(c))
+			gs.ModalCards = append(gs.ModalCards, fromDomainCard(c))
 		}
 	}
 
@@ -148,16 +105,21 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	}
 
 	// Include attack animation info (only on the attack action itself)
-	if dto.LastAction == types.LastActionAttack && dto.LastAttackWeaponID != "" {
+	if (dto.LastAction == types.LastActionAttack || dto.LastAction == types.LastActionHarpoon) && dto.LastAttackWeaponID != "" {
 		gs.LastAttackWeaponID = dto.LastAttackWeaponID
 		gs.LastAttackTargetID = dto.LastAttackTargetID
+		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer
+	}
+
+	// Include blood rain animation info (target player only, AoE attack)
+	if dto.LastAction == types.LastActionBloodRain && dto.LastAttackTargetPlayer != "" {
 		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer
 	}
 
 	// Include stolen card info for the victim (only on the steal action itself)
 	if dto.LastAction == types.LastActionSteal && dto.StolenFrom != "" &&
 		dto.StolenCard != nil && dto.Viewer.Name() == dto.StolenFrom {
-		gs.StolenFromYouCard = FromDomainCards([]cards.Card{dto.StolenCard})
+		gs.StolenFromYouCard = fromDomainCards([]cards.Card{dto.StolenCard})
 	}
 
 	// Include spy notification for all players except the spy
@@ -203,22 +165,33 @@ func processHandCards(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
 				enemyFields = append(enemyFields, enemy.Field())
 			}
 
-			if ct.Type() == types.SpecialPowerWeaponType {
+			switch ct.Type() {
+			case types.SpecialPowerWeaponType:
 				var allyFields []board.Field
 				for _, ally := range game.AlliesFn(viewer.Idx()) {
 					allyFields = append(allyFields, ally.Field())
 				}
 
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewSpecialPowerHandCard(ct.(cards.SpecialPower), viewer.Field(),
+					NewSpecialPowerHandCard(ct.GetID(), viewer.Field(),
 						allyFields, enemyFields, action))
 
 				continue
-			}
+			case types.HarpoonWeaponType:
+				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+					NewHarpoonHandCard(ct.GetID(), enemyFields, action))
 
-			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewWeaponHandCard(ct, viewer.Field(),
-					enemyFields, viewer.Castle().IsConstructed(), action))
+				continue
+			case types.BloodRainWeaponType:
+				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+					NewBloodRainHandCard(ct.GetID(), enemyFields,
+						action))
+				continue
+			default:
+				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+					NewWeaponHandCard(ct, viewer.Field(),
+						enemyFields, viewer.Castle().IsConstructed(), action))
+			}
 
 		case cards.Catapult:
 			canBeAttacked := false

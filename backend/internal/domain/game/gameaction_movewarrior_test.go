@@ -28,9 +28,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			turnState:   TurnState{HasMovedWarrior: true},
 		}
 
@@ -50,9 +50,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "")
@@ -72,9 +72,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 		}
 
 		action := NewMoveWarriorAction("Player1", "K1", "Unknown")
@@ -94,9 +94,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			mode:        types.GameMode1v1,
 		}
 
@@ -120,9 +120,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("K1").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			mode:        types.GameMode2v2,
 			teams:       map[int][]int{0: {0, 1}, 1: {2, 3}},
 		}
@@ -148,9 +148,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockCard, true)
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			mode:        types.GameMode2v2,
 			teams:       map[int][]int{0: {0, 1}, 1: {2, 3}},
 		}
@@ -176,9 +176,9 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("K1").Return(mockWarrior, true)
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			mode:        types.GameMode2v2,
 			teams:       map[int][]int{0: {0, 1}, 1: {2, 3}},
 		}
@@ -203,9 +203,9 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(errors.New("card not found"))
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			history:     []types.HistoryLine{},
 		}
 
@@ -230,9 +230,9 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
@@ -274,9 +274,9 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockWarrior).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			mode:               types.GameMode2v2,
 			teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
@@ -310,9 +310,9 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 			history:       []types.HistoryLine{},
 		}
@@ -335,9 +335,9 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			history:       []types.HistoryLine{},
 		}
@@ -376,9 +376,9 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockWarrior).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			history:       []types.HistoryLine{},
 		}

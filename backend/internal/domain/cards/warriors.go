@@ -87,6 +87,8 @@ func (m *mage) BeAttacked(w Weapon) error {
 	return nil
 }
 
+type Dragon Warrior
+
 type dragon struct {
 	*warriorBase
 }

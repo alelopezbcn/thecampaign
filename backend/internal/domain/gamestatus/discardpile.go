@@ -12,7 +12,7 @@ func NewDiscardPile(cards int, lastCard cards.Card) DiscardPile {
 		Cards: cards,
 	}
 	if lastCard != nil {
-		d.LastCard = FromDomainCard(lastCard)
+		d.LastCard = fromDomainCard(lastCard)
 	}
 
 	return d

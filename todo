@@ -1,15 +1,36 @@
+Steps to create a new weapon:
+- Add card in cards (ex bloodRain.go)
+- Add WeaponType (types.weapon)
+- Add the new card in dealer helper (helper.go)
+- Add card image (bloodrain.webp)
+- Create game_action (gameaction_bloodrain.go)
+- Add types.LastAction
+- Add handler call handleBloodRain (handlers.go)
+    - Add Payload (message.go)
+    - Add messageType (message.go)
+- Add CARD_DESCRIPTIONS && CARD_IMAGES (game.js)
+GameStatus:
+- Add Cardtype (cardtype.go)
+- Add code in fromDomainCard (card.go)
+- Constructor of HandCard
+
+
+
+
 cuando se presiona end turn no se ve el modal que indica que ha cambiado el turno
-Fix gen-mocks
 fix unit tests
 
-Nueva carta ballesta
+Chequear que pasa cuando BloodRain mata mas de un Warrior. Algo raro hay, multiples warriors, uno protegido. De 4 mató a 2, a uno no le hizo daño y al otro le ha quitado el shield
+hay una animation para bloodRain, pero no se ve. Se ve solo la animacion comun de ataque a multiples warriors
+
+refactor messages.go and hub.go
+
+Play again no funciona
+
 
 Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)
-Arpón - Tu idea. Mata al Dragón de un tiro. Le da un counter real al Dragón que hoy es muy fuerte por poder usar cualquier arma y ser inmune al instant kill del Archer. Podría descartarse si no hay Dragón en campo enemigo.
 
 Muralla - Protege tu castillo del Catapult por un turno (o hasta que sea destruida). Hoy el Catapult no tiene counter, esto le daría uno.
-
-Plaga / Lluvia de flechas - Hace 3-5 de daño a TODOS los guerreros enemigos en campo. Fuerza al oponente a curar o perder múltiples unidades. Buen equalizer cuando alguien tiene el campo lleno.
 
 Resurreción - Recupera un guerrero aleatorio del cementerio y lo pone en tu campo. Da valor a los guerreros caídos y abre jugadas de recuperación.
 

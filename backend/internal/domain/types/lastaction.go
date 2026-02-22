@@ -8,6 +8,8 @@ const (
 	LastActionMoveWarrior  LastActionType = "move_warrior"
 	LastActionTrade        LastActionType = "trade"
 	LastActionSpecialPower LastActionType = "special_power"
+	LastActionHarpoon      LastActionType = "harpoon"
+	LastActionBloodRain    LastActionType = "blood_rain"
 	LastActionCatapult     LastActionType = "catapult"
 	LastActionSpy          LastActionType = "spy"
 	LastActionSteal        LastActionType = "steal"

@@ -33,9 +33,9 @@ func TestConstructAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -55,9 +55,9 @@ func TestConstructAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 		}
 
@@ -78,9 +78,9 @@ func TestConstructAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			mode:          types.GameMode1v1,
 		}
@@ -105,9 +105,9 @@ func TestConstructAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			mode:          types.GameMode2v2,
 			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
@@ -134,9 +134,9 @@ func TestConstructAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			mode:          types.GameMode2v2,
 			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
@@ -161,9 +161,9 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().Construct("G1").Return(errors.New("invalid card"))
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			history:       []types.HistoryLine{},
 		}
@@ -189,9 +189,9 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().Construct("G1").Return(nil)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeConstruct,
 			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
@@ -232,9 +232,9 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockResource).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeConstruct,
 			mode:               types.GameMode2v2,
 			teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
@@ -273,9 +273,9 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockCastle.EXPECT().IsConstructed().Return(true).AnyTimes()
 		mockCastle.EXPECT().Construct(mockResource).Return(errors.New("castle full"))
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			mode:          types.GameMode2v2,
 			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
@@ -302,9 +302,9 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().Construct("G1").Return(nil)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			history:       []types.HistoryLine{},
 		}
@@ -345,9 +345,9 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockResource).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeConstruct,
 			mode:          types.GameMode2v2,
 			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},

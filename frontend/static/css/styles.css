@@ -4066,6 +4066,35 @@ body {
 }
 
 /* ============================================================
+   FEATURE: Blood Rain Animation
+   ============================================================ */
+
+.blood-rain-overlay {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+    border-radius: 8px;
+}
+
+.blood-drop {
+    position: absolute;
+    top: -20px;
+    width: 3px;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, #cc0000 40%, #6b0000);
+    border-radius: 0 0 3px 3px;
+    animation: bloodFall linear forwards;
+    filter: drop-shadow(0 0 3px rgba(255,0,0,0.5));
+}
+
+@keyframes bloodFall {
+    0%   { top: -20px; opacity: 1; }
+    70%  { opacity: 1; }
+    100% { top: 115%; opacity: 0.3; }
+}
+
+/* ============================================================
    FEATURE: Turn Transition Notification
    ============================================================ */
 

@@ -30,14 +30,15 @@ func NewCatapultAction(playerName, targetPlayerName string, cardPosition int) *c
 
 func (a *catapultAction) PlayerName() string { return a.playerName }
 
-func (a *catapultAction) Validate(g *Game) error {
+func (a *catapultAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use catapult in the %s phase",
 			g.currentAction)
 	}
 
 	p := g.CurrentPlayer()
-	if !p.HasCatapult() {
+	catapult, ok := board.HasCardTypeInHand[cards.Catapult](p)
+	if !ok {
 		return errors.New("player does not have a catapult to use")
 	}
 
@@ -47,15 +48,12 @@ func (a *catapultAction) Validate(g *Game) error {
 		return err
 	}
 
-	a.catapult = p.Catapult()
-	if a.catapult == nil {
-		return errors.New("player does not have a catapult to attack")
-	}
+	a.catapult = catapult
 
 	return nil
 }
 
-func (a *catapultAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *catapultAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	stolenGold, err := a.catapult.Attack(a.targetPlayer.Castle(), a.cardPosition)

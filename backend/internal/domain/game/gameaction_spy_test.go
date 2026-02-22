@@ -33,9 +33,9 @@ func TestSpyAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -56,9 +56,9 @@ func TestSpyAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().HasSpy().Return(false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
 
@@ -79,9 +79,9 @@ func TestSpyAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().HasSpy().Return(true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
 
@@ -102,9 +102,9 @@ func TestSpyAction_Execute(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 		}
 
@@ -128,9 +128,9 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockDeck.EXPECT().Reveal(5).Return([]cards.Card{})
 		mockPlayer1.EXPECT().Spy().Return(nil)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			deck:          mockDeck,
 			history:       []types.HistoryLine{},
@@ -164,9 +164,9 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockDiscardPile.EXPECT().Discard(mockSpy)
 		mockDeck.EXPECT().Reveal(5).Return(revealedCards)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeSpySteal,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -208,9 +208,9 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
 		mockEnemyHand.EXPECT().ShowCards().Return(enemyCards)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeSpySteal,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,
@@ -245,9 +245,9 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockDiscardPile.EXPECT().Discard(mockSpy)
 		mockDeck.EXPECT().Reveal(5).Return([]cards.Card{})
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			deck:          mockDeck,
 			discardPile:   mockDiscardPile,
@@ -286,9 +286,9 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
 		mockEnemyHand.EXPECT().ShowCards().Return([]cards.Card{})
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeSpySteal,
 			discardPile:   mockDiscardPile,
 			history:       []types.HistoryLine{},

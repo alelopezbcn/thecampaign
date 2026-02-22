@@ -9,8 +9,7 @@ type Dealer interface {
 	OtherCards(playerCount int) (other []Card)
 }
 
-type dealer struct {
-}
+type dealer struct{}
 
 func NewDealer() *dealer {
 	return &dealer{}
@@ -54,6 +53,20 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewCatapultCard("c1"),
+		NewHarpoon("ha1"),
+		NewBloodRain("br1"),
+		NewBloodRain("br2"),
+		NewBloodRain("br3"),
+		NewBloodRain("br4"),
+		NewBloodRain("br5"),
+		NewBloodRain("br6"),
+		NewBloodRain("br7"),
+		NewBloodRain("br8"),
+		NewBloodRain("br9"),
+		NewBloodRain("br10"),
+		NewBloodRain("br11"),
+		NewBloodRain("br12"),
+		NewBloodRain("br13"),
 	}
 
 	if playerCount > 3 {
@@ -63,6 +76,8 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewSpy("spy2"))
 		other = append(other, NewThief("t2"))
 		other = append(other, NewCatapultCard("c2"))
+		other = append(other, NewHarpoon("ha2"))
+		other = append(other, NewBloodRain("br2"))
 	}
 
 	for i := 1; i < 10; i++ {

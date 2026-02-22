@@ -440,6 +440,12 @@ function handleGameState(payload) {
         attackAnimData = prepareAttackAnimation(previousState, payload.game_status);
     }
 
+    // Detect blood rain for animation (before re-render)
+    let bloodRainAnimData = null;
+    if (previousState) {
+        bloodRainAnimData = prepareBloodRainAnimation(previousState, payload.game_status);
+    }
+
     // Detect deck draw for animation
     let deckDrawInfo = null;
     if (previousState) {
@@ -506,6 +512,9 @@ function handleGameState(payload) {
         }
         if (attackAnimData) {
             playAttackAnimation(attackAnimData, payload.game_status);
+        }
+        if (bloodRainAnimData) {
+            playBloodRainAnimation(bloodRainAnimData, payload.game_status);
         }
         if (stealData) {
             playStealAnimation(stealData);
@@ -816,6 +825,8 @@ function sendAction(actionType, payload = null) {
         'draw_card': 'draw',
         'attack': 'attack',
         'special_power': 'attack',
+        'harpoon': 'attack',
+        'blood_rain': 'attack',
         'spy': 'spy/steal',
         'steal': 'spy/steal',
         'catapult': 'spy/steal',
@@ -1054,6 +1065,30 @@ function handleAttackPhaseHandClick(cardID, card) {
         updateActionPrompt(`⚔️ ${weaponName} (${weaponDmg} DMG) - Select a target`);
         highlightValidTargets(card);
         showConfirmButtons();
+    } else if (cardType === 'harpoon') {
+        gameState.actionState.type = 'harpoon';
+        highlightSelectedCard(cardID);
+        updateActionPrompt(`🎯 Harpoon - Select a Dragon to kill`);
+        highlightValidTargets(card);
+        showConfirmButtons();
+    } else if (cardType === 'bloodrain') {
+        gameState.actionState.type = 'bloodrain';
+        gameState.actionState.weaponId = cardID;
+        highlightSelectedCard(cardID);
+        const enemies = getEnemyOpponents().filter(e => (e.field?.length ?? 0) > 0 && !e.is_eliminated);
+        if (enemies.length === 0) {
+            updateActionPrompt('No enemies with warriors to target!');
+            resetActionState();
+        } else if (enemies.length === 1) {
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            showBloodRainConfirmModal(card, enemies[0]);
+        } else {
+            showTargetPlayerModal('Select a field to drench in Blood Rain', enemies, (playerName) => {
+                const enemy = getOpponentByName(playerName);
+                gameState.actionState.targetPlayer = playerName;
+                showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
+            });
+        }
     }
 }
 
@@ -1123,7 +1158,62 @@ function handleAttackPhaseTargetClick(cardID, side) {
         // Show special power confirmation popup
         const user = findCardById(gameState.actionState.userId);
         showSpecialPowerConfirmModal(weapon, user, target);
+    } else if (actionType === 'harpoon') {
+        showHarpoonConfirmModal(weapon, target);
     }
+}
+
+function showHarpoonConfirmModal(weapon, target) {
+    const targetName = getCardName(target);
+
+    let cardsHtml = renderCardForModal(weapon);
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardForModal(target);
+
+    showActionConfirmModal({
+        title: 'Harpoon',
+        cardsHtml: cardsHtml,
+        description: `🎯 Harpoon → ${targetName} <span class="hp-preview hp-fatal">💀 INSTANT KILL</span>`,
+        onConfirm: () => {
+            sendAction('harpoon', {
+                target_player: gameState.actionState.targetPlayer,
+                weapon_id: gameState.actionState.weaponId,
+                target_id: gameState.actionState.targetId
+            });
+            resetActionState();
+        }
+    });
+}
+
+function showBloodRainConfirmModal(weapon, targetOpponent) {
+    const targetName = targetOpponent?.player_name || gameState.actionState.targetPlayer;
+    const targetField = targetOpponent?.field || [];
+    const dmg = weapon?.value || 4;
+
+    let cardsHtml = renderCardForModal(weapon);
+    cardsHtml += renderArrow();
+    targetField.forEach(c => { cardsHtml += renderCardForModal(c); });
+    if (targetField.length === 0) {
+        cardsHtml += `<div class="card card-placeholder">🗡️ All Warriors</div>`;
+    }
+
+    const warriorCount = targetField.length;
+    const warriorSummary = warriorCount === 1
+        ? `1 warrior (${dmg} DMG)`
+        : warriorCount > 1 ? `${warriorCount} warriors (${dmg} DMG each)` : `all warriors (${dmg} DMG each)`;
+
+    showActionConfirmModal({
+        title: 'Blood Rain',
+        cardsHtml: cardsHtml,
+        description: `🩸 Blood Rain hits all of ${targetName}'s warriors — ${warriorSummary}`,
+        onConfirm: () => {
+            sendAction('blood_rain', {
+                target_player: gameState.actionState.targetPlayer,
+                weapon_id: gameState.actionState.weaponId
+            });
+            resetActionState();
+        }
+    });
 }
 
 function showAttackConfirmModal(weapon, target) {
@@ -2216,7 +2306,7 @@ function playWarriorMoveAnimation(data, status) {
 
 // Prepare attack animation: capture weapon card position before re-render
 function prepareAttackAnimation(previousState, newState) {
-    if (newState.last_action !== 'attack') return null;
+    if (newState.last_action !== 'attack' && newState.last_action !== 'harpoon') return null;
     const weaponID = newState.last_attack_weapon_id;
     const targetID = newState.last_attack_target_id;
     const targetPlayer = newState.last_attack_target_player;
@@ -2293,6 +2383,57 @@ function playAttackAnimation(data, status) {
     }, 900);
 
     setTimeout(() => ghost.remove(), 1300);
+}
+
+function prepareBloodRainAnimation(previousState, newState) {
+    if (newState.last_action !== 'blood_rain') return null;
+    const targetPlayer = newState.last_attack_target_player;
+    if (!targetPlayer) return null;
+    return { targetPlayer };
+}
+
+function playBloodRainAnimation(data, status) {
+    if (!data) return;
+
+    const isTargetMe = data.targetPlayer === status.current_player;
+    let fieldEl;
+    if (isTargetMe) {
+        fieldEl = document.getElementById('player-field');
+    } else {
+        const oppBoard = document.querySelector(`[data-opponent-name="${data.targetPlayer}"]`);
+        if (oppBoard) fieldEl = oppBoard.querySelector('.opponent-field');
+    }
+    if (!fieldEl) return;
+
+    const rect = fieldEl.getBoundingClientRect();
+    const overlay = document.createElement('div');
+    overlay.className = 'blood-rain-overlay';
+    overlay.style.left = rect.left + 'px';
+    overlay.style.top = rect.top + 'px';
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+
+    const DROP_COUNT = 22;
+    for (let i = 0; i < DROP_COUNT; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'blood-drop';
+        drop.style.left = (Math.random() * 100) + '%';
+        drop.style.animationDelay = (Math.random() * 0.5) + 's';
+        drop.style.animationDuration = (0.45 + Math.random() * 0.35) + 's';
+        overlay.appendChild(drop);
+    }
+
+    document.body.appendChild(overlay);
+
+    // Flash all cards in the field on impact
+    setTimeout(() => {
+        fieldEl.querySelectorAll('.card').forEach(card => {
+            card.classList.add('attack-impact');
+            setTimeout(() => card.classList.remove('attack-impact'), 600);
+        });
+    }, 600);
+
+    setTimeout(() => overlay.remove(), 1400);
 }
 
 function prepareStealAnimation(previousState, newState) {
@@ -3118,6 +3259,8 @@ const CARD_DESCRIPTIONS = {
     'poison':       'Deals double damage to Knights. Used by Mages and Dragons. A value-1 Poison can also construct your castle. Can be traded.',
     'resource':     'Spend gold to buy cards (2 coins = 1 card). A value-1 Gold can also construct your castle.',
     'specialpower': 'Knight: shields an ally warrior. Archer: instantly kills an enemy. Mage: fully heals an ally. Cannot be used by Dragons.',
+    'harpoon':      'A powerful weapon that kills Dragons from one hit. Can only be used on Dragons.',
+    'bloodrain':    'A devastating attack that affects all enemy warriors. Deals 4 damage to all enemy warriors.',
     'spy':          "Peek at an opponent's full hand or the top 5 cards of the deck.",
     'thief':        "Steal a random card from an opponent's hand.",
     'catapult':     'Destroy one gold resource from a constructed enemy castle, reducing their castle value.',
@@ -3135,6 +3278,8 @@ const CARD_IMAGES = {
     'poison': 'poison.webp',
     'resource': 'gold.webp',
     'specialpower': 'specialpower.webp',
+    'harpoon': 'harpoon.webp',
+    'bloodrain': 'bloodrain.webp',
     'spy': 'spy.webp',
     'thief': 'thief.webp',
     'catapult': 'catapult.webp',

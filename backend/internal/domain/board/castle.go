@@ -19,7 +19,7 @@ type Castle interface {
 }
 
 type CastleCompletionObserver interface {
-	OnCastleCompletion(p Player)
+	OnCastleCompletion(playerName string)
 }
 
 type castle struct {
@@ -51,14 +51,14 @@ func (c *castle) Construct(card cards.Card) error {
 		switch valuableCard := card.(type) {
 		case cards.Weapon:
 			if valuableCard.DamageAmount() != 1 {
-				return fmt.Errorf("invalid card for constructing the castle")
+				return fmt.Errorf("damage != 1: invalid card for constructing the castle")
 			}
 		case cards.Resource:
 			if valuableCard.Value() != 1 {
-				return fmt.Errorf("invalid card for constructing the castle")
+				return fmt.Errorf("gold != 1: invalid card for constructing the castle")
 			}
 		default:
-			return fmt.Errorf("invalid card type for constructing the castle")
+			return fmt.Errorf("invalid card type for constructing the castle: %T", card)
 		}
 
 		c.isConstructed = true
@@ -121,7 +121,7 @@ func (c *castle) RemoveGold(position int) (cards.Resource, error) {
 		}
 	}
 
-	return nil, fmt.Errorf("failed to remove Resource cardBase from castle")
+	return nil, fmt.Errorf("failed to remove Resource card from castle")
 }
 
 func (c *castle) CanBeAttacked() bool {
@@ -136,12 +136,12 @@ func (c *castle) String() string {
 func (c *castle) addResource(card cards.Card) error {
 	gold, ok := card.(cards.Resource)
 	if !ok {
-		return fmt.Errorf("cardBase is not gold")
+		return fmt.Errorf("card is not gold resource: %T", card)
 	}
 
 	c.resources = append(c.resources, gold)
 	if c.Value() >= c.resourcesToWin {
-		c.castleCompletionObserver.OnCastleCompletion(c.player)
+		c.castleCompletionObserver.OnCastleCompletion(c.player.Name())
 	}
 
 	return nil

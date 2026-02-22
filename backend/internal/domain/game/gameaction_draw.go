@@ -19,11 +19,11 @@ func NewDrawCardAction(playerName string) *drawCardAction {
 
 func (a *drawCardAction) PlayerName() string { return a.playerName }
 
-func (a *drawCardAction) Validate(g *Game) error {
+func (a *drawCardAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *drawCardAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *drawCardAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	cards, err := g.drawCards(p, 1)

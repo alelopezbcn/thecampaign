@@ -52,6 +52,42 @@ func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
 	})
 }
 
+func (h *Hub) handleHarpoon(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p HarpoonPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid harpoon payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(game.NewHarpoonAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
+	})
+}
+
+func (h *Hub) handleBloodRain(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p BloodRainPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid blood rain payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(game.NewBloodRainAction(client.PlayerName, p.TargetPlayer, p.WeaponID))
+	})
+}
+
 func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
 	data, err := json.Marshal(payload)
 	if err != nil {

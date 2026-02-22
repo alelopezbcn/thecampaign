@@ -34,9 +34,9 @@ func TestAttackAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
 
@@ -58,9 +58,9 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -84,9 +84,9 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -111,9 +111,9 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockCard, true)
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -138,9 +138,9 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockResource, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -165,9 +165,9 @@ func TestAttackAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
 		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -193,9 +193,9 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().Attack(mockWarrior, mockWeapon).Return(errors.New("attack failed"))
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -227,9 +227,9 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
@@ -266,9 +266,9 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			history:       []types.HistoryLine{},
 		}
@@ -302,8 +302,8 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 	newAttackGame := func(
 		p1Cards []cards.Card, p1Warriors []cards.Warrior,
 		p2Cards []cards.Card, p2Warriors []cards.Warrior,
-	) (g *Game, p1, p2 board.Player) {
-		g = &Game{
+	) (g *game, p1, p2 board.Player) {
+		g = &game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
 			discardPile:        board.NewDiscardPile(),
@@ -316,7 +316,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		return g, p1, p2
 	}
 
-	executeAttack := func(g *Game, playerName, targetPlayerName, targetID, weaponID string) error {
+	executeAttack := func(g *game, playerName, targetPlayerName, targetID, weaponID string) error {
 		_, err := g.ExecuteAction(NewAttackAction(playerName, targetPlayerName, targetID, weaponID))
 		return err
 	}
@@ -634,7 +634,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		a2 := cards.NewArcher("a2")
 		sword1 := cards.NewSword("s1", dmgAmnt)
 		sword2 := cards.NewSword("s2", dmgAmnt)
-		g := &Game{
+		g := &game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
 			discardPile:        board.NewDiscardPile(),
@@ -687,7 +687,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		arrow3 := cards.NewArrow("ar3", dmgAmnt)
 		sword4 := cards.NewSword("s4", dmgAmnt)
 
-		g := &Game{
+		g := &game{
 			currentAction:      types.PhaseTypeAttack,
 			history:            []types.HistoryLine{},
 			discardPile:        board.NewDiscardPile(),
@@ -749,7 +749,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 	})
 }
 
-func foundInCemetery(g *Game, a cards.Warrior) bool {
+func foundInCemetery(g *game, a cards.Warrior) bool {
 	for _, w := range g.cemetery.Corps() {
 		if w == a || (w != nil && w.GetID() == a.GetID()) {
 			return true
@@ -758,7 +758,7 @@ func foundInCemetery(g *Game, a cards.Warrior) bool {
 	return false
 }
 
-func foundInDiscardPile(g *Game, a cards.Card) bool {
+func foundInDiscardPile(g *game, a cards.Card) bool {
 	for _, card := range g.discardPile.Cards() {
 		if card == a || (card != nil && card.GetID() == a.GetID()) {
 			return true
@@ -768,9 +768,8 @@ func foundInDiscardPile(g *Game, a cards.Card) bool {
 }
 
 func newPlayerWithCardAndObserver(name string, cardsInHand []cards.Card,
-	cardsInField []cards.Warrior, game *Game,
+	cardsInField []cards.Warrior, game *game,
 ) board.Player {
-
 	p := board.NewPlayer(name, 0, game, game, game, game, 25)
 	p.Hand().AddCards(cardsInHand...)
 	p.Field().AddWarriors(cardsInField...)

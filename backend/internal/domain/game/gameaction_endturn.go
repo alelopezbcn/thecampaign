@@ -18,11 +18,11 @@ func NewEndTurnPhaseAction(playerName string, expired bool) *endTurnPhaseAction 
 
 func (a *endTurnPhaseAction) PlayerName() string { return a.playerName }
 
-func (a *endTurnPhaseAction) Validate(g *Game) error {
+func (a *endTurnPhaseAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *endTurnPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *endTurnPhaseAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if a.expired {

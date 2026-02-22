@@ -24,7 +24,7 @@ func NewTradeAction(playerName string, cardIDs []string) *tradeAction {
 
 func (a *tradeAction) PlayerName() string { return a.playerName }
 
-func (a *tradeAction) Validate(g *Game) error {
+func (a *tradeAction) Validate(g *game) error {
 	if g.turnState.HasTraded {
 		return errors.New("already traded this turn")
 	}
@@ -36,11 +36,11 @@ func (a *tradeAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *tradeAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *tradeAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
-	tradedCards, err := p.GiveCards(a.cardIDs...)
+	tradedCards, err := p.RemoveFromHand(a.cardIDs...)
 	if err != nil {
 		return result, nil, fmt.Errorf("giving cards for trading failed: %w", err)
 	}

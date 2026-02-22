@@ -25,9 +25,9 @@ type Board interface {
 	Players() []board.Player
 }
 
-type Games []Game
+type Games []game
 
-type Game struct {
+type game struct {
 	id                  string
 	board               Board
 	createdAt           time.Time
@@ -35,7 +35,7 @@ type Game struct {
 	teams               map[int][]int // teamID -> player indices (2v2 only)
 	eliminatedPlayers   map[int]bool  // player index -> eliminated (FFA only)
 	disconnectedPlayers map[int]bool  // player index -> disconnected
-	CurrentTurn         int
+	currentTurn         int
 	currentAction       types.PhaseType
 	turnState           TurnState
 	gameStatusProvider  GameStatusProvider
@@ -48,16 +48,16 @@ type Game struct {
 
 func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 	gameStatusProvider GameStatusProvider,
-) (*Game, error) {
+) (*game, error) {
 	if err := validatePlayers(len(playerNames), mode); err != nil {
 		return nil, err
 	}
 
 	now := time.Now()
 	players := make([]board.Player, len(playerNames))
-	g := &Game{
+	g := &game{
 		id:                  uuid.NewString(),
-		CurrentTurn:         0,
+		currentTurn:         0,
 		history:             []types.HistoryLine{},
 		gameStatusProvider:  gameStatusProvider,
 		mode:                mode,
@@ -88,39 +88,39 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 	return g, nil
 }
 
-func (g *Game) GetInitialWarriors(playerName string) (warriors [3]gamestatus.Card) {
-	i := 0
-	for _, p := range g.board.Players() {
-		if p.Name() == playerName {
-			for _, c := range p.Hand().ShowCards() {
-				if w, ok := c.(cards.Warrior); ok {
-					warriors[i] = gamestatus.FromDomainCard(w)
-					i++
-					if i == 3 {
-						return warriors
-					}
-				}
-			}
-		}
-	}
-
-	return warriors
-}
-
 // AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
-func (g *Game) AutoMoveWarriorToField(playerName, warriorID string) error {
+func (g *game) AutoMoveWarriorsToField(playerName string) error {
 	p := g.GetPlayer(playerName)
 	if p == nil {
 		return fmt.Errorf("player %s not found", playerName)
 	}
-	return p.MoveCardToField(warriorID)
+
+	i := 0
+	snapshot := make([]cards.Card, len(p.Hand().ShowCards()))
+	copy(snapshot, p.Hand().ShowCards())
+	for _, c := range snapshot {
+		if w, ok := c.(cards.Warrior); ok {
+			if w.Type() == types.DragonWarriorType {
+				continue // Skip dragon warriors during auto-move
+			}
+
+			_ = p.MoveCardToField(w.GetID())
+
+			i++
+			if i == 3 {
+				return nil
+			}
+		}
+	}
+
+	return nil
 }
 
-func (g *Game) IsGameOver() (bool, string) {
+func (g *game) IsGameOver() (bool, string) {
 	return g.winState.GameOver, g.winState.Winner
 }
 
-func (g *Game) AddHistory(msg string, cat types.Category) {
+func (g *game) AddHistory(msg string, cat types.Category) {
 	if len(msg) == 0 {
 		return
 	}
@@ -132,7 +132,7 @@ func (g *Game) AddHistory(msg string, cat types.Category) {
 	g.history = append(g.history, hl)
 }
 
-func (g *Game) GetHistory() []types.HistoryLine {
+func (g *game) GetHistory() []types.HistoryLine {
 	if g.historyTracker == 0 {
 		g.historyTracker = len(g.history)
 		return g.history
@@ -142,34 +142,34 @@ func (g *Game) GetHistory() []types.HistoryLine {
 	return newMessages
 }
 
-func (g *Game) OnCardMovedToPile(card cards.Card) {
+func (g *game) OnCardMovedToPile(card cards.Card) {
 	g.board.DiscardPile().Discard(card)
 }
 
-func (g *Game) OnWarriorMovedToCemetery(warrior cards.Warrior) {
+func (g *game) OnWarriorMovedToCemetery(warrior cards.Warrior) {
 	g.board.Cemetery().AddCorp(warrior)
 
 	g.AddHistory("warrior buried in cemetery", types.CategoryInfo)
 }
 
-func (g *Game) OnCastleCompletion(p board.Player) {
+func (g *game) OnCastleCompletion(playerName string) {
 	g.winState.GameOver = true
-	g.winState.WinnerIdx = g.PlayerIndex(p.Name())
+	g.winState.WinnerIdx = g.PlayerIndex(playerName)
 	if g.mode == types.GameMode2v2 {
-		g.winState.Winner = p.Name() + "'s team"
+		g.winState.Winner = playerName + "'s team"
 	} else {
-		g.winState.Winner = p.Name()
+		g.winState.Winner = playerName
 	}
 }
 
-func (g *Game) OnFieldWithoutWarriors(playerName string) {
+func (g *game) OnFieldWithoutWarriors(playerName string) {
 	eliminatedIdx := g.PlayerIndex(playerName)
 
 	switch g.mode {
 	case types.GameMode1v1:
 		g.winState.GameOver = true
 		g.winState.Winner = g.CurrentPlayer().Name()
-		g.winState.WinnerIdx = g.CurrentTurn
+		g.winState.WinnerIdx = g.currentTurn
 		return
 
 	case types.GameModeFFA3, types.GameModeFFA5:
@@ -192,7 +192,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		g.eliminatedPlayers[eliminatedIdx] = true
 		// Check if all enemies of the eliminated player's team are also eliminated
 		// (i.e., the opposing team is fully eliminated)
-		attackerIdx := g.CurrentTurn
+		attackerIdx := g.currentTurn
 		allEnemiesEliminated := true
 		for _, enemy := range g.Enemies(attackerIdx) {
 			enemyIdx := g.PlayerIndex(enemy.Name())
@@ -204,7 +204,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 		if allEnemiesEliminated {
 			g.winState.GameOver = true
 			g.winState.Winner = g.CurrentPlayer().Name() + "'s team"
-			g.winState.WinnerIdx = g.CurrentTurn
+			g.winState.WinnerIdx = g.currentTurn
 		}
 	}
 
@@ -223,7 +223,7 @@ func (g *Game) OnFieldWithoutWarriors(playerName string) {
 
 // DisconnectPlayer marks a player as disconnected, removing them from turn rotation.
 // If it's their turn, switches to the next player. State is preserved for reconnection.
-func (g *Game) DisconnectPlayer(playerName string) error {
+func (g *game) DisconnectPlayer(playerName string) error {
 	playerIdx := g.PlayerIndex(playerName)
 	if playerIdx == -1 {
 		return errors.New("player not found")
@@ -233,7 +233,7 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 		return nil
 	}
 
-	wasTheirTurn := g.CurrentTurn == playerIdx
+	wasTheirTurn := g.currentTurn == playerIdx
 	g.disconnectedPlayers[playerIdx] = true
 	g.AddHistory(playerName+" disconnected", types.CategoryElimination)
 
@@ -298,7 +298,7 @@ func (g *Game) DisconnectPlayer(playerName string) error {
 }
 
 // ReconnectPlayer restores a disconnected player back into turn rotation.
-func (g *Game) ReconnectPlayer(playerName string) {
+func (g *game) ReconnectPlayer(playerName string) {
 	playerIdx := g.PlayerIndex(playerName)
 	if playerIdx == -1 {
 		return
@@ -312,7 +312,7 @@ func (g *Game) ReconnectPlayer(playerName string) {
 	g.AddHistory(playerName+" reconnected", types.CategoryElimination)
 }
 
-func (g *Game) ExecuteAction(action GameAction) (status gamestatus.GameStatus, err error) {
+func (g *game) ExecuteAction(action GameAction) (status gamestatus.GameStatus, err error) {
 	if g.CurrentPlayer().Name() != action.PlayerName() {
 		return status, fmt.Errorf("%s not your turn", action.PlayerName())
 	}
@@ -333,12 +333,12 @@ func (g *Game) ExecuteAction(action GameAction) (status gamestatus.GameStatus, e
 }
 
 // CurrentPlayer returns the player whose turn it is
-func (g *Game) CurrentPlayer() board.Player {
-	return g.board.Players()[g.CurrentTurn]
+func (g *game) CurrentPlayer() board.Player {
+	return g.board.Players()[g.currentTurn]
 }
 
 // GetPlayer returns a player by name, or nil if not found
-func (g *Game) GetPlayer(name string) board.Player {
+func (g *game) GetPlayer(name string) board.Player {
 	for _, p := range g.board.Players() {
 		if p.Name() == name {
 			return p
@@ -348,7 +348,7 @@ func (g *Game) GetPlayer(name string) board.Player {
 }
 
 // PlayerIndex returns the index of a player by name, or -1
-func (g *Game) PlayerIndex(name string) int {
+func (g *game) PlayerIndex(name string) int {
 	for i, p := range g.board.Players() {
 		if p.Name() == name {
 			return i
@@ -358,7 +358,7 @@ func (g *Game) PlayerIndex(name string) int {
 }
 
 // Enemies returns all opponents (non-eliminated, non-ally) of a given player
-func (g *Game) Enemies(playerIdx int) []board.Player {
+func (g *game) Enemies(playerIdx int) []board.Player {
 	var enemies []board.Player
 	for i, p := range g.board.Players() {
 		if i == playerIdx {
@@ -376,7 +376,7 @@ func (g *Game) Enemies(playerIdx int) []board.Player {
 }
 
 // Allies returns teammates (for 2v2 only, excluding self)
-func (g *Game) Allies(playerIdx int) []board.Player {
+func (g *game) Allies(playerIdx int) []board.Player {
 	if g.mode != types.GameMode2v2 {
 		return nil
 	}
@@ -393,7 +393,7 @@ func (g *Game) Allies(playerIdx int) []board.Player {
 }
 
 // SameTeam checks if two player indices are on the same team
-func (g *Game) SameTeam(i, j int) bool {
+func (g *game) SameTeam(i, j int) bool {
 	if g.mode != types.GameMode2v2 {
 		return false
 	}
@@ -414,7 +414,7 @@ func (g *Game) SameTeam(i, j int) bool {
 	return false
 }
 
-func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
+func (g *game) getTargetPlayer(playerName string, targetPlayerName string) (
 	board.Player, error,
 ) {
 	// Validate target player is an enemy
@@ -441,11 +441,11 @@ func (g *Game) getTargetPlayer(playerName string, targetPlayerName string) (
 	return targetPlayer, nil
 }
 
-func (g *Game) Status(viewer board.Player) gamestatus.GameStatus {
+func (g *game) Status(viewer board.Player) gamestatus.GameStatus {
 	return g.gameStatusProvider.Get(viewer, g)
 }
 
-func (g *Game) isPlayerWinner(playerIdx int) bool {
+func (g *game) isPlayerWinner(playerIdx int) bool {
 	if !g.winState.GameOver {
 		return false
 	}
@@ -455,7 +455,7 @@ func (g *Game) isPlayerWinner(playerIdx int) bool {
 	return g.SameTeam(playerIdx, g.winState.WinnerIdx)
 }
 
-func (g *Game) drawCards(p board.Player, count int) (cards []cards.Card, err error) {
+func (g *game) drawCards(p board.Player, count int) (cards []cards.Card, err error) {
 	if !p.CanTakeCards(count) {
 		return nil, board.ErrHandLimitExceeded
 	}
@@ -464,20 +464,20 @@ func (g *Game) drawCards(p board.Player, count int) (cards []cards.Card, err err
 		g.board.DiscardPile())
 }
 
-func (g *Game) switchTurn() {
+func (g *game) switchTurn() {
 	g.turnState = TurnState{StartedAt: time.Now()}
 	g.lastResult = GameActionResult{}
 	g.currentAction = types.PhaseTypeDrawCard
 
 	for {
-		g.CurrentTurn = (g.CurrentTurn + 1) % len(g.board.Players())
-		if !g.eliminatedPlayers[g.CurrentTurn] && !g.disconnectedPlayers[g.CurrentTurn] {
+		g.currentTurn = (g.currentTurn + 1) % len(g.board.Players())
+		if !g.eliminatedPlayers[g.currentTurn] && !g.disconnectedPlayers[g.currentTurn] {
 			break
 		}
 	}
 }
 
-func (g *Game) nextAction(expectedAction types.PhaseType,
+func (g *game) nextAction(expectedAction types.PhaseType,
 	gameStatusFn func() gamestatus.GameStatus,
 ) gamestatus.GameStatus {
 	p := g.CurrentPlayer()
@@ -487,8 +487,10 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 	if expectedAction == types.PhaseTypeAttack {
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := false
-		if p.HasCatapult() {
-			for _, e := range g.Enemies(g.CurrentTurn) {
+
+		_, ok := board.HasCardTypeInHand[cards.Catapult](p)
+		if ok {
+			for _, e := range g.Enemies(g.currentTurn) {
 				if e.Castle().CanBeAttacked() {
 					canAttackWithCatapult = true
 					break
@@ -496,7 +498,32 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 			}
 		}
 
-		if p.CanAttack() || canAttackWithCatapult || g.turnState.CanMoveWarrior {
+		canAttackWithBloodRain := false
+		if _, ok := board.HasCardTypeInHand[cards.BloodRain](p); ok {
+			for _, e := range g.Enemies(g.currentTurn) {
+				if len(e.Field().Warriors()) > 0 {
+					canAttackWithBloodRain = true
+					break
+				}
+			}
+		}
+
+		canAttackWithHarpoon := false
+		if _, ok := board.HasCardTypeInHand[cards.Harpoon](p); ok {
+			for _, e := range g.Enemies(g.currentTurn) {
+				for _, w := range e.Field().Warriors() {
+					if w.Type() == types.DragonWarriorType {
+						canAttackWithHarpoon = true
+						break
+					}
+				}
+				if canAttackWithHarpoon {
+					break
+				}
+			}
+		}
+
+		if p.CanAttack() || canAttackWithCatapult || canAttackWithBloodRain || canAttackWithHarpoon || g.turnState.CanMoveWarrior {
 			g.currentAction = types.PhaseTypeAttack
 
 			return gameStatusFn()
@@ -506,7 +533,9 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 	}
 
 	if expectedAction == types.PhaseTypeSpySteal {
-		if p.HasSpy() || p.HasThief() {
+		_, hasSpy := board.HasCardTypeInHand[cards.Spy](p)
+		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
+		if hasSpy || hasThief {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
@@ -563,14 +592,14 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 
 // nextActiveTurnPlayer returns the name of the player who will go next,
 // without mutating any state.
-func (g *Game) nextActiveTurnPlayer() string {
-	next := g.CurrentTurn
+func (g *game) nextActiveTurnPlayer() string {
+	next := g.currentTurn
 	for {
 		next = (next + 1) % len(g.board.Players())
 		if !g.eliminatedPlayers[next] && !g.disconnectedPlayers[next] {
 			return g.board.Players()[next].Name()
 		}
-		if next == g.CurrentTurn {
+		if next == g.currentTurn {
 			return ""
 		}
 	}
