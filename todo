@@ -18,7 +18,6 @@ GameStatus:
 
 
 cuando se presiona end turn no se ve el modal que indica que ha cambiado el turno
-Fix gen-mocks
 fix unit tests
 
 Chequear si el arpon se puede tradear
