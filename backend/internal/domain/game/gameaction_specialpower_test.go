@@ -33,9 +33,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
 
@@ -56,9 +56,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -80,9 +80,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockCard, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -107,9 +107,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -135,9 +135,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		// Target found in own field (ally)
 		mockPlayer1.EXPECT().GetCardFromField("T1").Return(mockTarget, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -165,9 +165,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		// Target found in enemy field
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -194,9 +194,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -224,9 +224,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockResource, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -254,9 +254,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTargetCard, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -284,9 +284,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -316,9 +316,9 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -346,9 +346,9 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(errors.New("power failed"))
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -381,9 +381,9 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeAttack,
 			gameStatusProvider: mockProvider,
 			history:            []types.HistoryLine{},
@@ -418,9 +418,9 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 			history:       []types.HistoryLine{},
 		}

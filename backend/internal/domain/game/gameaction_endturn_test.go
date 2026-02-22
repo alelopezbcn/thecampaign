@@ -19,7 +19,7 @@ func TestEndTurnPhaseAction_PlayerName(t *testing.T) {
 
 func TestEndTurnPhaseAction_Validate(t *testing.T) {
 	action := NewEndTurnPhaseAction("Player1", false)
-	err := action.Validate(&Game{})
+	err := action.Validate(&game{})
 	assert.NoError(t, err)
 }
 
@@ -43,9 +43,9 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,
@@ -60,7 +60,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionEndTurn, result.Action)
-		assert.Equal(t, 1, g.CurrentTurn)
+		assert.Equal(t, 1, g.currentTurn)
 		assert.False(t, g.turnState.HasMovedWarrior)
 		assert.False(t, g.turnState.HasTraded)
 		assert.Equal(t, expectedStatus, statusFn())
@@ -80,9 +80,9 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        1,
+			currentTurn:        1,
 			currentAction:      types.PhaseTypeEndTurn,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,
@@ -96,7 +96,7 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionEndTurn, result.Action)
-		assert.Equal(t, 0, g.CurrentTurn)
+		assert.Equal(t, 0, g.currentTurn)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -111,9 +111,9 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			discardPile: mockDiscardPile,
 			history:     []types.HistoryLine{},
 		}
@@ -144,9 +144,9 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			discardPile: mockDiscardPile,
 			history:     []types.HistoryLine{},
 		}

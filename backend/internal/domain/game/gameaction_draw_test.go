@@ -21,7 +21,7 @@ func TestDrawCardAction_PlayerName(t *testing.T) {
 
 func TestDrawCardAction_Validate(t *testing.T) {
 	action := NewDrawCardAction("Player1")
-	err := action.Validate(&Game{})
+	err := action.Validate(&game{})
 	assert.NoError(t, err)
 }
 
@@ -44,9 +44,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
 		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
 		}
@@ -78,9 +78,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,
@@ -112,9 +112,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,
@@ -152,9 +152,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
 			gameStatusProvider: mockProvider,
@@ -186,9 +186,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
 			history:     []types.HistoryLine{},
@@ -221,9 +221,9 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().CanTakeCards(1).Return(false)
 
-		g := &Game{
+		g := &game{
 			players:     []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn: 0,
+			currentTurn: 0,
 			deck:        mockDeck,
 			discardPile: mockDiscardPile,
 			history:     []types.HistoryLine{},

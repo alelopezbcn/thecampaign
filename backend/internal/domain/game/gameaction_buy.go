@@ -26,7 +26,7 @@ func NewBuyAction(playerName, cardID string) *buyAction {
 
 func (a *buyAction) PlayerName() string { return a.playerName }
 
-func (a *buyAction) Validate(g *Game) error {
+func (a *buyAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeBuy {
 		return fmt.Errorf("cannot buy in the %s phase", g.currentAction)
 	}
@@ -45,7 +45,7 @@ func (a *buyAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *buyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *buyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}

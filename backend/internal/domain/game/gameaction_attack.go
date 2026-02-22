@@ -31,7 +31,7 @@ func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *a
 
 func (a *attackAction) PlayerName() string { return a.playerName }
 
-func (a *attackAction) Validate(g *Game) error {
+func (a *attackAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot attack in the %s phase", g.currentAction)
 	}
@@ -81,7 +81,7 @@ func (a *attackAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *attackAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *attackAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	err := a.target.BeAttacked(a.weapon)
 	if err != nil {
 		result := &GameActionResult{}

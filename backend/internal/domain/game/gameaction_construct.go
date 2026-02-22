@@ -29,7 +29,7 @@ func NewConstructAction(playerName, cardID string, targetPlayerName string) *con
 
 func (a *constructAction) PlayerName() string { return a.playerName }
 
-func (a *constructAction) Validate(g *Game) error {
+func (a *constructAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeConstruct {
 		return fmt.Errorf("cannot construct in the %s phase", g.currentAction)
 	}
@@ -60,7 +60,7 @@ func (a *constructAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *constructAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *constructAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 

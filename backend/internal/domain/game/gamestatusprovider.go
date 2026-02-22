@@ -7,26 +7,26 @@ import (
 )
 
 type GameStatusProvider interface {
-	Get(viewer board.Player, game *Game, newCards ...cards.Card) gamestatus.GameStatus
-	GetWithModal(viewer board.Player, game *Game, modalCards []cards.Card) gamestatus.GameStatus
+	Get(viewer board.Player, game *game, newCards ...cards.Card) gamestatus.GameStatus
+	GetWithModal(viewer board.Player, game *game, modalCards []cards.Card) gamestatus.GameStatus
 }
 
 type gameStatusProvider struct{}
 
-func (gsp *gameStatusProvider) Get(viewer board.Player, game *Game,
+func (gsp *gameStatusProvider) Get(viewer board.Player, game *game,
 	newCards ...cards.Card,
 ) gamestatus.GameStatus {
 	return gsp.getGameStatus(viewer, game, newCards, nil)
 }
 
-func (gsp *gameStatusProvider) GetWithModal(viewer board.Player, game *Game,
+func (gsp *gameStatusProvider) GetWithModal(viewer board.Player, game *game,
 	modalCards []cards.Card,
 ) gamestatus.GameStatus {
 	return gsp.getGameStatus(viewer, game, nil, modalCards)
 }
 
 func (gsp *gameStatusProvider) getGameStatus(viewer board.Player,
-	game *Game, newCards []cards.Card, modalCards []cards.Card,
+	game *game, newCards []cards.Card, modalCards []cards.Card,
 ) gamestatus.GameStatus {
 	viewerIdx := game.PlayerIndex(viewer.Name())
 	gameStatusDTO := gamestatus.GameStatusDTO{

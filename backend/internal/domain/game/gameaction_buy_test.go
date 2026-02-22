@@ -34,9 +34,9 @@ func TestBuyAction_Validate(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeAttack,
 		}
 
@@ -57,9 +57,9 @@ func TestBuyAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(nil, false)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
 
@@ -81,9 +81,9 @@ func TestBuyAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(mockCard, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
 
@@ -105,9 +105,9 @@ func TestBuyAction_Validate(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
 
@@ -135,9 +135,9 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().CanTakeCards(2).Return(false)
 		mockPlayer1.EXPECT().TakeCards(mockResource).Return(true) // resource returned to hand
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 		}
 
@@ -174,9 +174,9 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -221,9 +221,9 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -268,9 +268,9 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -319,9 +319,9 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
-		g := &Game{
+		g := &game{
 			players:            []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:        0,
+			currentTurn:        0,
 			currentAction:      types.PhaseTypeBuy,
 			deck:               mockDeck,
 			discardPile:        mockDiscardPile,
@@ -362,9 +362,9 @@ func TestBuyAction_Execute(t *testing.T) {
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
 		mockDiscardPile.EXPECT().Discard(mockResource)
 
-		g := &Game{
+		g := &game{
 			players:       []board.Player{mockPlayer1, mockPlayer2},
-			CurrentTurn:   0,
+			currentTurn:   0,
 			currentAction: types.PhaseTypeBuy,
 			deck:          mockDeck,
 			discardPile:   mockDiscardPile,

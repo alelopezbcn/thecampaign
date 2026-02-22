@@ -28,7 +28,7 @@ func NewSpyAction(playerName, targetPlayerName string, option int) *spyAction {
 
 func (a *spyAction) PlayerName() string { return a.playerName }
 
-func (a *spyAction) Validate(g *Game) error {
+func (a *spyAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeSpySteal {
 		return fmt.Errorf("cannot use spy in the %s phase", g.currentAction)
 	}
@@ -44,7 +44,7 @@ func (a *spyAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *spyAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *spyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	var spiedCards []cards.Card

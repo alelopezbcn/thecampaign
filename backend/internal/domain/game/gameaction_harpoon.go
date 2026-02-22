@@ -30,7 +30,7 @@ func NewHarpoonAction(playerName, targetPlayerName, targetID, weaponID string) *
 
 func (a *harpoonAction) PlayerName() string { return a.playerName }
 
-func (a *harpoonAction) Validate(g *Game) error {
+func (a *harpoonAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use harpoon in the %s phase",
 			g.currentAction)
@@ -62,7 +62,7 @@ func (a *harpoonAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *harpoonAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *harpoonAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := a.harpoon.Attack(a.dragon); err != nil {

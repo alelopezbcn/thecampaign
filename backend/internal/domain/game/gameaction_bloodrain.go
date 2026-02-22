@@ -29,7 +29,7 @@ func NewBloodRainAction(playerName, targetPlayerName, weaponID string) *bloodRai
 
 func (a *bloodRainAction) PlayerName() string { return a.playerName }
 
-func (a *bloodRainAction) Validate(g *Game) error {
+func (a *bloodRainAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use blood rain in the %s phase",
 			g.currentAction)
@@ -56,7 +56,7 @@ func (a *bloodRainAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *bloodRainAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *bloodRainAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	if err := a.bloodRain.Attack(a.targets); err != nil {
 		result := &GameActionResult{}
 		return result, nil, fmt.Errorf("blood rain action failed: %w", err)

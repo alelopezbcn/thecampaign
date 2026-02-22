@@ -30,7 +30,7 @@ func NewStealAction(playerName, targetPlayerName string, cardPosition int) *stea
 
 func (a *stealAction) PlayerName() string { return a.playerName }
 
-func (a *stealAction) Validate(g *Game) error {
+func (a *stealAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeSpySteal {
 		return fmt.Errorf("cannot steal in the %s phase", g.currentAction)
 	}
@@ -57,7 +57,7 @@ func (a *stealAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *stealAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *stealAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}

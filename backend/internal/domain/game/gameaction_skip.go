@@ -18,7 +18,7 @@ func NewSkipPhaseAction(playerName string) *skipPhaseAction {
 
 func (a *skipPhaseAction) PlayerName() string { return a.playerName }
 
-func (a *skipPhaseAction) Validate(g *Game) error {
+func (a *skipPhaseAction) Validate(g *game) error {
 	switch g.currentAction {
 	case types.PhaseTypeAttack:
 		a.nextPhase = types.PhaseTypeSpySteal
@@ -35,7 +35,7 @@ func (a *skipPhaseAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *skipPhaseAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *skipPhaseAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{Action: types.LastActionSkip}

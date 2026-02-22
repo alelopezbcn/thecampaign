@@ -30,7 +30,7 @@ func NewSpecialPowerAction(playerName, userID, targetID, weaponID string) *speci
 
 func (a *specialPowerAction) PlayerName() string { return a.playerName }
 
-func (a *specialPowerAction) Validate(g *Game) error {
+func (a *specialPowerAction) Validate(g *game) error {
 	if g.currentAction != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use special power in the %s phase",
 			g.currentAction)
@@ -107,7 +107,7 @@ func (a *specialPowerAction) Validate(g *Game) error {
 	return nil
 }
 
-func (a *specialPowerAction) Execute(g *Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *specialPowerAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := a.specialPower.Use(a.usedBy, a.usedOn); err != nil {
