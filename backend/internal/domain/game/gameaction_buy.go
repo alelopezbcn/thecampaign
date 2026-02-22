@@ -74,7 +74,7 @@ func (a *buyAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameSt
 	result.Action = types.LastActionBuy
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(p, g, cards...)
+		return g.Status(p, cards...)
 	}
 
 	return result, statusFn, nil

@@ -37,7 +37,7 @@ func (a *endTurnPhaseAction) Execute(g Game) (*GameActionResult, func() gamestat
 	g.SwitchTurn()
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(g.CurrentPlayer(), g)
+		return g.Status(g.CurrentPlayer())
 	}
 
 	return result, statusFn, nil

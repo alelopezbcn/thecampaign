@@ -63,7 +63,7 @@ func (a *tradeAction) Execute(g Game) (*GameActionResult, func() gamestatus.Game
 	a.currentPhase = g.CurrentAction()
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(p, g, cards...)
+		return g.Status(p, cards...)
 	}
 
 	return result, statusFn, nil

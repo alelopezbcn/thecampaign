@@ -456,7 +456,7 @@ func TestGame_GetHistory(t *testing.T) {
 			},
 		}
 
-		result := g.GetHistory()
+		result := g.getHistory()
 
 		assert.Len(t, result, 3)
 		assert.Equal(t, "msg1", result[0].Msg)
@@ -471,13 +471,13 @@ func TestGame_GetHistory(t *testing.T) {
 			},
 		}
 
-		_ = g.GetHistory() // First call reads all
+		_ = g.getHistory() // First call reads all
 
 		g.history = append(g.history,
 			types.HistoryLine{Msg: "msg3", Category: types.CategoryInfo},
 			types.HistoryLine{Msg: "msg4", Category: types.CategoryInfo},
 		)
-		result := g.GetHistory()
+		result := g.getHistory()
 
 		assert.Len(t, result, 2)
 		assert.Equal(t, "msg3", result[0].Msg)
@@ -491,8 +491,8 @@ func TestGame_GetHistory(t *testing.T) {
 			},
 		}
 
-		_ = g.GetHistory()
-		result := g.GetHistory()
+		_ = g.getHistory()
+		result := g.getHistory()
 
 		assert.Empty(t, result)
 	})

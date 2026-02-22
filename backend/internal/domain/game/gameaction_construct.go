@@ -85,7 +85,7 @@ func (a *constructAction) Execute(g Game) (*GameActionResult, func() gamestatus.
 
 	result.Action = types.LastActionConstruct
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(p, g)
+		return g.Status(p)
 	}
 
 	return result, statusFn, nil

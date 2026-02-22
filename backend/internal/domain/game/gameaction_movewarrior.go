@@ -95,7 +95,7 @@ func (a *moveWarriorAction) Execute(g Game) (*GameActionResult, func() gamestatu
 	a.currentPhase = g.CurrentAction()
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(p, g)
+		return g.Status(p)
 	}
 
 	return result, statusFn, nil

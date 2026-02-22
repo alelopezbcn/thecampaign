@@ -1,4 +1,4 @@
-package game
+package types
 
 type WinState struct {
 	GameOver  bool

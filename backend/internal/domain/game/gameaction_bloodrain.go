@@ -76,7 +76,7 @@ func (a *bloodRainAction) Execute(g Game) (*GameActionResult, func() gamestatus.
 		AttackTargetPlayer: a.targetPlayerName,
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(a.currentPlayer, g)
+		return g.Status(a.currentPlayer)
 	}
 
 	return result, statusFn, nil

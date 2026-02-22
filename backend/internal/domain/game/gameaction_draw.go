@@ -34,7 +34,7 @@ func (a *drawCardAction) Execute(g Game) (*GameActionResult, func() gamestatus.G
 
 			result := &GameActionResult{}
 			statusFn := func() gamestatus.GameStatus {
-				return g.GameStatusProvider().Get(p, g)
+				return g.Status(p)
 			}
 			return result, statusFn, nil
 		}
@@ -48,7 +48,7 @@ func (a *drawCardAction) Execute(g Game) (*GameActionResult, func() gamestatus.G
 
 	result := &GameActionResult{Action: types.LastActionDraw}
 	statusFn := func() gamestatus.GameStatus {
-		return g.GameStatusProvider().Get(p, g, cards...)
+		return g.Status(p, cards...)
 	}
 
 	return result, statusFn, nil

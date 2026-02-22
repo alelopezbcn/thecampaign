@@ -24,7 +24,7 @@ type HubGame interface {
 	ReconnectPlayer(name string)
 	DisconnectPlayer(playerName string) error
 	IsGameOver() (bool, string)
-	Status(viewer board.Player) gamestatus.GameStatus
+	Status(viewer board.Player, newCards ...cards.Card) gamestatus.GameStatus
 }
 
 // ClientMessage represents a message from a client
@@ -407,8 +407,7 @@ func (h *Hub) handleStartGame(client *Client) {
 		}
 	}
 
-	game, err := game.NewGame(playerNames, room.GameMode, cards.NewDealer(),
-		game.NewGameStatusProvider())
+	game, err := game.NewGame(playerNames, room.GameMode, cards.NewDealer())
 	if err != nil {
 		room.mutex.Unlock()
 		log.Printf("Error creating game: %v", err)

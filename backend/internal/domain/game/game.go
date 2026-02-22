@@ -26,34 +26,26 @@ type Board interface {
 }
 
 type Game interface {
+	CurrentPlayer() board.Player
 	CurrentAction() types.PhaseType
+	TurnState() types.TurnState
 	GetTargetPlayer(playerName string, targetPlayerName string) (board.Player, error)
 	AddHistory(msg string, cat types.Category)
-	GetHistory() []types.HistoryLine
-	GameStatusProvider() GameStatusProvider
+	Status(viewer board.Player, newCards ...cards.Card) gamestatus.GameStatus
+	StatusWithModal(viewer board.Player, modalCards []cards.Card) gamestatus.GameStatus
 	OnCardMovedToPile(card cards.Card)
 	DrawCards(p board.Player, count int) (cards []cards.Card, err error)
 	SwitchTurn()
-	TurnState() TurnState
 	SetHasMovedWarrior(value bool)
 	SetHasTraded(value bool)
 	SetCanMoveWarrior(value bool)
 	SetCanTrade(value bool)
-	Board() Board
-	LastResult() GameActionResult
-	Mode() types.GameMode
-	NextActiveTurnPlayer() string
-	EliminatedPlayers() map[int]bool
-	DisconnectedPlayers() map[int]bool
-	GameStartedAt() time.Time
-	IsPlayerWinner(playerIdx int) bool
-	IsGameOver() (bool, string)
-	CurrentPlayer() board.Player
 	GetPlayer(name string) board.Player
 	PlayerIndex(name string) int
-	Enemies(playerIdx int) []board.Player
-	Allies(playerIdx int) []board.Player
 	SameTeam(i, j int) bool
+	Allies(playerIdx int) []board.Player
+	Enemies(playerIdx int) []board.Player
+	Board() Board
 }
 
 type Games []game
@@ -68,17 +60,15 @@ type game struct {
 	disconnectedPlayers map[int]bool  // player index -> disconnected
 	currentTurn         int
 	currentAction       types.PhaseType
-	turnState           TurnState
-	gameStatusProvider  GameStatusProvider
+	turnState           types.TurnState
 	history             []types.HistoryLine
 	historyTracker      int
 	lastResult          GameActionResult
-	winState            WinState
+	winState            types.WinState
 	gameStartedAt       time.Time
 }
 
 func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
-	gameStatusProvider GameStatusProvider,
 ) (*game, error) {
 	if err := validatePlayers(len(playerNames), mode); err != nil {
 		return nil, err
@@ -90,12 +80,11 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 		id:                  uuid.NewString(),
 		currentTurn:         0,
 		history:             []types.HistoryLine{},
-		gameStatusProvider:  gameStatusProvider,
 		mode:                mode,
 		eliminatedPlayers:   make(map[int]bool),
 		disconnectedPlayers: make(map[int]bool),
 		gameStartedAt:       now,
-		turnState:           TurnState{StartedAt: now},
+		turnState:           types.TurnState{StartedAt: now},
 	}
 
 	castleResourcesToWin := maxCastleResourcesFFA
@@ -123,11 +112,11 @@ func (g *game) CurrentAction() types.PhaseType {
 	return g.currentAction
 }
 
-func (g *game) GameStatusProvider() GameStatusProvider {
-	return g.gameStatusProvider
+func (g *game) Board() Board {
+	return g.board
 }
 
-func (g *game) TurnState() TurnState {
+func (g *game) TurnState() types.TurnState {
 	return g.turnState
 }
 
@@ -145,30 +134,6 @@ func (g *game) SetCanMoveWarrior(value bool) {
 
 func (g *game) SetCanTrade(value bool) {
 	g.turnState.CanTrade = value
-}
-
-func (g *game) Board() Board {
-	return g.board
-}
-
-func (g *game) LastResult() GameActionResult {
-	return g.lastResult
-}
-
-func (g *game) Mode() types.GameMode {
-	return g.mode
-}
-
-func (g *game) EliminatedPlayers() map[int]bool {
-	return g.eliminatedPlayers
-}
-
-func (g *game) DisconnectedPlayers() map[int]bool {
-	return g.disconnectedPlayers
-}
-
-func (g *game) GameStartedAt() time.Time {
-	return g.gameStartedAt
 }
 
 // AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
@@ -199,10 +164,6 @@ func (g *game) AutoMoveWarriorsToField(playerName string) error {
 	return nil
 }
 
-func (g *game) IsGameOver() (bool, string) {
-	return g.winState.GameOver, g.winState.Winner
-}
-
 func (g *game) AddHistory(msg string, cat types.Category) {
 	if len(msg) == 0 {
 		return
@@ -215,7 +176,7 @@ func (g *game) AddHistory(msg string, cat types.Category) {
 	g.history = append(g.history, hl)
 }
 
-func (g *game) GetHistory() []types.HistoryLine {
+func (g *game) getHistory() []types.HistoryLine {
 	if g.historyTracker == 0 {
 		g.historyTracker = len(g.history)
 		return g.history
@@ -524,11 +485,7 @@ func (g *game) GetTargetPlayer(playerName string, targetPlayerName string) (
 	return targetPlayer, nil
 }
 
-func (g *game) Status(viewer board.Player) gamestatus.GameStatus {
-	return g.gameStatusProvider.Get(viewer, g)
-}
-
-func (g *game) IsPlayerWinner(playerIdx int) bool {
+func (g *game) isPlayerWinner(playerIdx int) bool {
 	if !g.winState.GameOver {
 		return false
 	}
@@ -548,7 +505,7 @@ func (g *game) DrawCards(p board.Player, count int) (cards []cards.Card, err err
 }
 
 func (g *game) SwitchTurn() {
-	g.turnState = TurnState{StartedAt: time.Now()}
+	g.turnState = types.TurnState{StartedAt: time.Now()}
 	g.lastResult = GameActionResult{}
 	g.currentAction = types.PhaseTypeDrawCard
 
@@ -675,7 +632,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 
 // NextActiveTurnPlayer returns the name of the player who will go next,
 // without mutating any state.
-func (g *game) NextActiveTurnPlayer() string {
+func (g *game) nextActiveTurnPlayer() string {
 	next := g.currentTurn
 	for {
 		next = (next + 1) % len(g.board.Players())
@@ -711,4 +668,68 @@ func validatePlayers(playersCount int, mode types.GameMode) error {
 	}
 
 	return nil
+}
+
+func (g *game) Status(viewer board.Player, newCards ...cards.Card,
+) gamestatus.GameStatus {
+	return g.getStatus(viewer, newCards, nil)
+}
+
+func (g *game) StatusWithModal(viewer board.Player,
+	modalCards []cards.Card,
+) gamestatus.GameStatus {
+	return g.getStatus(viewer, nil, modalCards)
+}
+
+func (g *game) getStatus(viewer board.Player,
+	newCards []cards.Card, modalCards []cards.Card,
+) gamestatus.GameStatus {
+	viewerIdx := g.PlayerIndex(viewer.Name())
+	gameStatusDTO := gamestatus.GameStatusDTO{
+		Viewer:                 viewer,
+		NewCards:               newCards,
+		ModalCards:             modalCards,
+		PlayerIndex:            viewerIdx,
+		Players:                g.board.Players(),
+		NextTurnPlayer:         g.nextActiveTurnPlayer(),
+		TurnPlayer:             g.CurrentPlayer().Name(),
+		CurrentAction:          g.CurrentAction(),
+		LastAction:             g.lastResult.Action,
+		GameMode:               string(g.mode),
+		IsEliminated:           g.eliminatedPlayers[viewerIdx],
+		IsDisconnected:         g.disconnectedPlayers[viewerIdx],
+		CanTrade:               g.turnState.CanTrade,
+		CemeteryCount:          g.board.Cemetery().Count(),
+		CemeteryLastDead:       g.board.Cemetery().GetLast(),
+		DiscardPileCount:       g.board.DiscardPile().Count(),
+		DiscardPileLastCard:    g.board.DiscardPile().GetLast(),
+		DeckCount:              g.board.Deck().Count(),
+		GameStartedAt:          g.gameStartedAt,
+		TurnStartedAt:          g.turnState.StartedAt,
+		History:                g.getHistory(),
+		LastMovedWarriorID:     g.lastResult.MovedWarriorID,
+		LastAttackWeaponID:     g.lastResult.AttackWeaponID,
+		LastAttackTargetID:     g.lastResult.AttackTargetID,
+		LastAttackTargetPlayer: g.lastResult.AttackTargetPlayer,
+		StolenFrom:             g.lastResult.StolenFrom,
+		StolenCard:             g.lastResult.StolenCard,
+		SpyTarget:              g.lastResult.Spy.Target,
+		SpyTargetPlayer:        g.lastResult.Spy.TargetPlayer,
+		CurrentPlayerName:      g.CurrentPlayer().Name(),
+		IsPlayerWinner:         g.isPlayerWinner(viewerIdx),
+		SameTeamFn:             g.SameTeam,
+		EliminatedPlayers:      g.eliminatedPlayers,
+		DisconnectedPlayers:    g.disconnectedPlayers,
+		CanMoveWarrior:         g.turnState.CanMoveWarrior,
+		EnemiesFn:              g.Enemies,
+		AlliesFn:               g.Allies,
+	}
+
+	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
+
+	return gamestatus.NewGameStatus(gameStatusDTO)
+}
+
+func (g *game) IsGameOver() (bool, string) {
+	return g.winState.GameOver, g.winState.Winner
 }
