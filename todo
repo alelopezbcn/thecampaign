@@ -22,7 +22,6 @@ fix unit tests
 
 Chequear si el arpon se puede tradear
 Harpoon appears active when no Dragon in enemies field
-AutoMoveWarriors sometimes moving only 2 warriors
 
 Chequear que pasa cuando BloodRain mata mas de un Warrior
 refactor messages.go and hub.go

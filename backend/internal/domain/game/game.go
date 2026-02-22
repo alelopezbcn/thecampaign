@@ -96,7 +96,9 @@ func (g *Game) AutoMoveWarriorsToField(playerName string) error {
 	}
 
 	i := 0
-	for _, c := range p.Hand().ShowCards() {
+	snapshot := make([]cards.Card, len(p.Hand().ShowCards()))
+	copy(snapshot, p.Hand().ShowCards())
+	for _, c := range snapshot {
 		if w, ok := c.(cards.Warrior); ok {
 			if w.Type() == types.DragonWarriorType {
 				continue // Skip dragon warriors during auto-move
