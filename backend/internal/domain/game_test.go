@@ -96,7 +96,7 @@ func TestGame_ExecuteAction(t *testing.T) {
 		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
-		actionResult := &GameActionResult{Action: types.LastActionDraw}
+		actionResult := &Result{Action: types.LastActionDraw}
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
@@ -136,7 +136,7 @@ func TestGame_ExecuteAction(t *testing.T) {
 		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
-		actionResult := &GameActionResult{Action: types.LastActionDraw}
+		actionResult := &Result{Action: types.LastActionDraw}
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()

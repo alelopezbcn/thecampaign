@@ -1,8 +1,9 @@
-package board
+package board_test
 
 import (
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -10,7 +11,7 @@ import (
 )
 
 func newTestPlayer(t *testing.T, ctrl *gomock.Controller) (
-	Player,
+	board.Player,
 	*mocks.MockCardMovedToPileObserver,
 	*mocks.MockWarriorMovedToCemeteryObserver,
 	*mocks.MockCastleCompletionObserver,
@@ -21,7 +22,7 @@ func newTestPlayer(t *testing.T, ctrl *gomock.Controller) (
 	castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
 	fieldObs := mocks.NewMockFieldWithoutWarriorsObserver(ctrl)
 
-	p := NewPlayer("TestPlayer", 0, pileObs, cemeteryObs, castleObs, fieldObs, 10)
+	p := board.NewPlayer("TestPlayer", 0, pileObs, cemeteryObs, castleObs, fieldObs, 10)
 	return p, pileObs, cemeteryObs, castleObs, fieldObs
 }
 

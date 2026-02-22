@@ -1,4 +1,4 @@
-package gamestatus
+package gamestatus_test
 
 import (
 	"testing"

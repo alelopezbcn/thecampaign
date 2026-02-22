@@ -1,4 +1,4 @@
-package gameactions
+package gameactions_test
 
 import (
 	"errors"
