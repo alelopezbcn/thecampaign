@@ -12,7 +12,6 @@ package mocks
 import (
 	reflect "reflect"
 
-	board "github.com/alelopezbcn/thecampaign/internal/domain/board"
 	cards "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -163,13 +162,13 @@ func (m *MockCastleCompletionObserver) EXPECT() *MockCastleCompletionObserverMoc
 }
 
 // OnCastleCompletion mocks base method.
-func (m *MockCastleCompletionObserver) OnCastleCompletion(p board.Player) {
+func (m *MockCastleCompletionObserver) OnCastleCompletion(playerName string) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "OnCastleCompletion", p)
+	m.ctrl.Call(m, "OnCastleCompletion", playerName)
 }
 
 // OnCastleCompletion indicates an expected call of OnCastleCompletion.
-func (mr *MockCastleCompletionObserverMockRecorder) OnCastleCompletion(p any) *gomock.Call {
+func (mr *MockCastleCompletionObserverMockRecorder) OnCastleCompletion(playerName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnCastleCompletion", reflect.TypeOf((*MockCastleCompletionObserver)(nil).OnCastleCompletion), p)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "OnCastleCompletion", reflect.TypeOf((*MockCastleCompletionObserver)(nil).OnCastleCompletion), playerName)
 }

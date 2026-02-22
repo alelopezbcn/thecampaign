@@ -42,7 +42,7 @@ func (m *MockGameStatusProvider) EXPECT() *MockGameStatusProviderMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockGameStatusProvider) Get(viewer board.Player, game *game, newCards ...cards.Card) gamestatus.GameStatus {
+func (m *MockGameStatusProvider) Get(viewer board.Player, game Game, newCards ...cards.Card) gamestatus.GameStatus {
 	m.ctrl.T.Helper()
 	varargs := []any{viewer, game}
 	for _, a := range newCards {
@@ -61,7 +61,7 @@ func (mr *MockGameStatusProviderMockRecorder) Get(viewer, game any, newCards ...
 }
 
 // GetWithModal mocks base method.
-func (m *MockGameStatusProvider) GetWithModal(viewer board.Player, game *game, modalCards []cards.Card) gamestatus.GameStatus {
+func (m *MockGameStatusProvider) GetWithModal(viewer board.Player, game Game, modalCards []cards.Card) gamestatus.GameStatus {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetWithModal", viewer, game, modalCards)
 	ret0, _ := ret[0].(gamestatus.GameStatus)

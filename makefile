@@ -21,7 +21,7 @@ mocks:
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/warriors.go -destination ./test/mocks/warrior_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/weapons.go -destination ./test/mocks/weapon_mocks.go
 # game package (same-package mocks)
-	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/game.go -destination ./internal/domain/game/board_mocks.go
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/game.go -destination ./internal/domain/game/game_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/gameaction.go -destination ./internal/domain/game/gameaction_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/gamestatusprovider.go -destination ./internal/domain/game/gamestatusprovider_mocks.go
 # websocket package
