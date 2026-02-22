@@ -105,7 +105,7 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	}
 
 	// Include attack animation info (only on the attack action itself)
-	if dto.LastAction == types.LastActionAttack && dto.LastAttackWeaponID != "" {
+	if (dto.LastAction == types.LastActionAttack || dto.LastAction == types.LastActionHarpoon) && dto.LastAttackWeaponID != "" {
 		gs.LastAttackWeaponID = dto.LastAttackWeaponID
 		gs.LastAttackTargetID = dto.LastAttackTargetID
 		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer

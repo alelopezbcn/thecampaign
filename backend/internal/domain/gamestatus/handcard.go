@@ -161,8 +161,9 @@ func NewHarpoonHandCard(cardID string, enemyFields []board.Field,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
-		return newHandCard(cardID, CardTypeHarpoon,
-			0, []string{}, false)
+		hc := newHandCard(cardID, CardTypeHarpoon, 0, []string{}, false)
+		hc.CanBeTraded = true
+		return hc
 	}
 
 	canBeUsedOnIDs := []string{}
@@ -175,8 +176,9 @@ func NewHarpoonHandCard(cardID string, enemyFields []board.Field,
 		}
 	}
 
-	return newHandCard(cardID, CardTypeHarpoon,
-		0, canBeUsedOnIDs, true)
+	hc := newHandCard(cardID, CardTypeHarpoon, 0, canBeUsedOnIDs, len(canBeUsedOnIDs) > 0)
+	hc.CanBeTraded = true
+	return hc
 }
 
 func NewBloodRainHandCard(cardID string, enemyFields []board.Field,

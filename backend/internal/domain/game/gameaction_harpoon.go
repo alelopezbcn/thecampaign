@@ -79,7 +79,10 @@ func (a *harpoonAction) Execute(g *Game) (*GameActionResult, func() gamestatus.G
 		a.playerName, a.dragon.String()), types.CategoryAction)
 
 	result := &GameActionResult{
-		Action: types.LastActionHarpoon,
+		Action:             types.LastActionHarpoon,
+		AttackWeaponID:     a.weaponID,
+		AttackTargetID:     a.targetID,
+		AttackTargetPlayer: a.targetPlayerName,
 	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.gameStatusProvider.Get(p, g)

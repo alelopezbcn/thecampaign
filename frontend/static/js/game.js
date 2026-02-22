@@ -1056,6 +1056,12 @@ function handleAttackPhaseHandClick(cardID, card) {
         updateActionPrompt(`⚔️ ${weaponName} (${weaponDmg} DMG) - Select a target`);
         highlightValidTargets(card);
         showConfirmButtons();
+    } else if (cardType === 'harpoon') {
+        gameState.actionState.type = 'harpoon';
+        highlightSelectedCard(cardID);
+        updateActionPrompt(`🎯 Harpoon - Select a Dragon to kill`);
+        highlightValidTargets(card);
+        showConfirmButtons();
     }
 }
 
@@ -1125,7 +1131,31 @@ function handleAttackPhaseTargetClick(cardID, side) {
         // Show special power confirmation popup
         const user = findCardById(gameState.actionState.userId);
         showSpecialPowerConfirmModal(weapon, user, target);
+    } else if (actionType === 'harpoon') {
+        showHarpoonConfirmModal(weapon, target);
     }
+}
+
+function showHarpoonConfirmModal(weapon, target) {
+    const targetName = getCardName(target);
+
+    let cardsHtml = renderCardForModal(weapon);
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardForModal(target);
+
+    showActionConfirmModal({
+        title: 'Harpoon',
+        cardsHtml: cardsHtml,
+        description: `🎯 Harpoon → ${targetName} <span class="hp-preview hp-fatal">💀 INSTANT KILL</span>`,
+        onConfirm: () => {
+            sendAction('harpoon', {
+                target_player: gameState.actionState.targetPlayer,
+                weapon_id: gameState.actionState.weaponId,
+                target_id: gameState.actionState.targetId
+            });
+            resetActionState();
+        }
+    });
 }
 
 function showAttackConfirmModal(weapon, target) {
@@ -2218,7 +2248,7 @@ function playWarriorMoveAnimation(data, status) {
 
 // Prepare attack animation: capture weapon card position before re-render
 function prepareAttackAnimation(previousState, newState) {
-    if (newState.last_action !== 'attack') return null;
+    if (newState.last_action !== 'attack' && newState.last_action !== 'harpoon') return null;
     const weaponID = newState.last_attack_weapon_id;
     const targetID = newState.last_attack_target_id;
     const targetPlayer = newState.last_attack_target_player;
