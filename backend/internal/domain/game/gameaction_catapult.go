@@ -30,10 +30,10 @@ func NewCatapultAction(playerName, targetPlayerName string, cardPosition int) *c
 
 func (a *catapultAction) PlayerName() string { return a.playerName }
 
-func (a *catapultAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeAttack {
+func (a *catapultAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use catapult in the %s phase",
-			g.currentAction)
+			g.CurrentAction())
 	}
 
 	p := g.CurrentPlayer()
@@ -43,7 +43,7 @@ func (a *catapultAction) Validate(g *game) error {
 	}
 
 	var err error
-	a.targetPlayer, err = g.getTargetPlayer(a.playerName, a.targetPlayerName)
+	a.targetPlayer, err = g.GetTargetPlayer(a.playerName, a.targetPlayerName)
 	if err != nil {
 		return err
 	}
@@ -53,7 +53,7 @@ func (a *catapultAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *catapultAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *catapultAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	stolenGold, err := a.catapult.Attack(a.targetPlayer.Castle(), a.cardPosition)
@@ -72,7 +72,7 @@ func (a *catapultAction) Execute(g *game) (*GameActionResult, func() gamestatus.
 		Action: types.LastActionCatapult,
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(p, g)
+		return g.GameStatusProvider().Get(p, g)
 	}
 
 	return result, statusFn, nil

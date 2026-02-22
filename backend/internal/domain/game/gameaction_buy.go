@@ -26,9 +26,9 @@ func NewBuyAction(playerName, cardID string) *buyAction {
 
 func (a *buyAction) PlayerName() string { return a.playerName }
 
-func (a *buyAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeBuy {
-		return fmt.Errorf("cannot buy in the %s phase", g.currentAction)
+func (a *buyAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeBuy {
+		return fmt.Errorf("cannot buy in the %s phase", g.CurrentAction())
 	}
 
 	p := g.CurrentPlayer()
@@ -45,7 +45,7 @@ func (a *buyAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *buyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *buyAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}
@@ -55,7 +55,7 @@ func (a *buyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameS
 	}
 
 	cardsToBuy := a.resource.Value() / 2
-	cards, err := g.drawCards(p, cardsToBuy)
+	cards, err := g.DrawCards(p, cardsToBuy)
 	if err != nil {
 		p.TakeCards(a.resource) // Return the resource card to player's hand if drawing fails
 		if errors.Is(err, board.ErrHandLimitExceeded) {
@@ -74,7 +74,7 @@ func (a *buyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameS
 	result.Action = types.LastActionBuy
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(p, g, cards...)
+		return g.GameStatusProvider().Get(p, g, cards...)
 	}
 
 	return result, statusFn, nil

@@ -156,8 +156,8 @@ func TestTradeAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionTrade, result.Action)
-		assert.True(t, g.turnState.HasTraded)
-		assert.False(t, g.turnState.CanTrade)
+		assert.True(t, g.TurnState().HasTraded)
+		assert.False(t, g.TurnState().CanTrade)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

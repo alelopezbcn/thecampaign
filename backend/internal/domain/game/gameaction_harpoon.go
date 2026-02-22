@@ -30,13 +30,13 @@ func NewHarpoonAction(playerName, targetPlayerName, targetID, weaponID string) *
 
 func (a *harpoonAction) PlayerName() string { return a.playerName }
 
-func (a *harpoonAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeAttack {
+func (a *harpoonAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use harpoon in the %s phase",
-			g.currentAction)
+			g.CurrentAction())
 	}
 
-	targetPlayer, err := g.getTargetPlayer(a.playerName, a.targetPlayerName)
+	targetPlayer, err := g.GetTargetPlayer(a.playerName, a.targetPlayerName)
 	if err != nil {
 		return err
 	}
@@ -62,7 +62,7 @@ func (a *harpoonAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *harpoonAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *harpoonAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := a.harpoon.Attack(a.dragon); err != nil {
@@ -85,7 +85,7 @@ func (a *harpoonAction) Execute(g *game) (*GameActionResult, func() gamestatus.G
 		AttackTargetPlayer: a.targetPlayerName,
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(p, g)
+		return g.GameStatusProvider().Get(p, g)
 	}
 
 	return result, statusFn, nil

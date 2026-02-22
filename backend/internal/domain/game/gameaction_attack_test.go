@@ -658,7 +658,7 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotContains(t, p1.Hand().ShowCards(), sword1)
 
-		g.currentAction = types.PhaseTypeAttack
+		g.CurrentAction() = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), a.GetID(), sword2.GetID())
 		assert.NoError(t, err)
 		assert.NotContains(t, p1.Hand().ShowCards(), sword2)
@@ -709,13 +709,13 @@ func TestAttackAction_CombatDamage(t *testing.T) {
 
 		err := executeAttack(g, p1.Name(), p2.Name(), target.GetID(), poison1.GetID())
 		assert.NoError(t, err)
-		g.currentAction = types.PhaseTypeAttack
+		g.CurrentAction() = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), target.GetID(), sword2.GetID())
 		assert.NoError(t, err)
-		g.currentAction = types.PhaseTypeAttack
+		g.CurrentAction() = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), target.GetID(), arrow3.GetID())
 		assert.NoError(t, err)
-		g.currentAction = types.PhaseTypeAttack
+		g.CurrentAction() = types.PhaseTypeAttack
 		err = executeAttack(g, p1.Name(), p2.Name(), target.GetID(), sword4.GetID())
 		assert.NoError(t, err)
 

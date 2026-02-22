@@ -29,9 +29,9 @@ func NewConstructAction(playerName, cardID string, targetPlayerName string) *con
 
 func (a *constructAction) PlayerName() string { return a.playerName }
 
-func (a *constructAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeConstruct {
-		return fmt.Errorf("cannot construct in the %s phase", g.currentAction)
+func (a *constructAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeConstruct {
+		return fmt.Errorf("cannot construct in the %s phase", g.CurrentAction())
 	}
 
 	// Ally castle construction (2v2 mode)
@@ -60,7 +60,7 @@ func (a *constructAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *constructAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *constructAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -85,7 +85,7 @@ func (a *constructAction) Execute(g *game) (*GameActionResult, func() gamestatus
 
 	result.Action = types.LastActionConstruct
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(p, g)
+		return g.GameStatusProvider().Get(p, g)
 	}
 
 	return result, statusFn, nil

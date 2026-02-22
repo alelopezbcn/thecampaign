@@ -29,13 +29,13 @@ func NewBloodRainAction(playerName, targetPlayerName, weaponID string) *bloodRai
 
 func (a *bloodRainAction) PlayerName() string { return a.playerName }
 
-func (a *bloodRainAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeAttack {
+func (a *bloodRainAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use blood rain in the %s phase",
-			g.currentAction)
+			g.CurrentAction())
 	}
 
-	targetPlayer, err := g.getTargetPlayer(a.playerName, a.targetPlayerName)
+	targetPlayer, err := g.GetTargetPlayer(a.playerName, a.targetPlayerName)
 	if err != nil {
 		return err
 	}
@@ -56,7 +56,7 @@ func (a *bloodRainAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *bloodRainAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *bloodRainAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	if err := a.bloodRain.Attack(a.targets); err != nil {
 		result := &GameActionResult{}
 		return result, nil, fmt.Errorf("blood rain action failed: %w", err)
@@ -76,7 +76,7 @@ func (a *bloodRainAction) Execute(g *game) (*GameActionResult, func() gamestatus
 		AttackTargetPlayer: a.targetPlayerName,
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(a.currentPlayer, g)
+		return g.GameStatusProvider().Get(a.currentPlayer, g)
 	}
 
 	return result, statusFn, nil

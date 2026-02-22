@@ -30,8 +30,8 @@ func NewMoveWarriorAction(playerName, warriorID string, targetPlayerName string)
 
 func (a *moveWarriorAction) PlayerName() string { return a.playerName }
 
-func (a *moveWarriorAction) Validate(g *game) error {
-	if g.turnState.HasMovedWarrior {
+func (a *moveWarriorAction) Validate(g Game) error {
+	if g.TurnState().HasMovedWarrior {
 		return errors.New("already moved a warrior this turn")
 	}
 
@@ -67,7 +67,7 @@ func (a *moveWarriorAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *moveWarriorAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *moveWarriorAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -88,14 +88,14 @@ func (a *moveWarriorAction) Execute(g *game) (*GameActionResult, func() gamestat
 			types.CategoryAction)
 	}
 
-	g.turnState.HasMovedWarrior = true
-	g.turnState.CanMoveWarrior = false
+	g.SetHasMovedWarrior(true)
+	g.SetCanMoveWarrior(false)
 	result.MovedWarriorID = a.warriorID
 	result.Action = types.LastActionMoveWarrior
-	a.currentPhase = g.currentAction
+	a.currentPhase = g.CurrentAction()
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(p, g)
+		return g.GameStatusProvider().Get(p, g)
 	}
 
 	return result, statusFn, nil

@@ -41,7 +41,7 @@ func (m *MockGameAction) EXPECT() *MockGameActionMockRecorder {
 }
 
 // Execute mocks base method.
-func (m *MockGameAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (m *MockGameAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Execute", g)
 	ret0, _ := ret[0].(*GameActionResult)
@@ -85,7 +85,7 @@ func (mr *MockGameActionMockRecorder) PlayerName() *gomock.Call {
 }
 
 // Validate mocks base method.
-func (m *MockGameAction) Validate(g *game) error {
+func (m *MockGameAction) Validate(g Game) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Validate", g)
 	ret0, _ := ret[0].(error)

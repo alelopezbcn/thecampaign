@@ -247,8 +247,8 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionMoveWarrior, result.Action)
 		assert.Equal(t, "K1", result.MovedWarriorID)
-		assert.True(t, g.turnState.HasMovedWarrior)
-		assert.False(t, g.turnState.CanMoveWarrior)
+		assert.True(t, g.TurnState().HasMovedWarrior)
+		assert.False(t, g.TurnState().CanMoveWarrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -296,7 +296,7 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionMoveWarrior, result.Action)
 		assert.Equal(t, "K1", result.MovedWarriorID)
-		assert.True(t, g.turnState.HasMovedWarrior)
+		assert.True(t, g.TurnState().HasMovedWarrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

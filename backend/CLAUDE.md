@@ -35,8 +35,8 @@ func (g *Game) Xxx(playerName string, ...) (status GameStatus, err error) {
     if p.Name() != playerName {
         return status, fmt.Errorf("%s not your turn", playerName)
     }
-    if g.currentAction != types.ActionTypeXxx {
-        return status, fmt.Errorf("cannot xxx in the %s phase", g.currentAction)
+    if g.CurrentAction() != types.ActionTypeXxx {
+        return status, fmt.Errorf("cannot xxx in the %s phase", g.CurrentAction())
     }
     // ... action logic ...
     g.AddHistory("...", types.CategoryXxx)

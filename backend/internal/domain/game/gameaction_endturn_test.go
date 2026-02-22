@@ -61,8 +61,8 @@ func TestEndTurnPhaseAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionEndTurn, result.Action)
 		assert.Equal(t, 1, g.currentTurn)
-		assert.False(t, g.turnState.HasMovedWarrior)
-		assert.False(t, g.turnState.HasTraded)
+		assert.False(t, g.TurnState().HasMovedWarrior)
+		assert.False(t, g.TurnState().HasTraded)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

@@ -28,9 +28,9 @@ func NewSpyAction(playerName, targetPlayerName string, option int) *spyAction {
 
 func (a *spyAction) PlayerName() string { return a.playerName }
 
-func (a *spyAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeSpySteal {
-		return fmt.Errorf("cannot use spy in the %s phase", g.currentAction)
+func (a *spyAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeSpySteal {
+		return fmt.Errorf("cannot use spy in the %s phase", g.CurrentAction())
 	}
 
 	p := g.CurrentPlayer()
@@ -44,7 +44,7 @@ func (a *spyAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *spyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *spyAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	var spiedCards []cards.Card
@@ -57,10 +57,10 @@ func (a *spyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameS
 			types.CategoryAction)
 
 		result.Spy = types.SpyInfo{Target: types.SpyTargetDeck}
-		spiedCards = g.board.Deck().Reveal(5)
+		spiedCards = g.Board().Deck().Reveal(5)
 	case 2:
 		// Reveal target's cards
-		targetPlayer, err := g.getTargetPlayer(p.Name(), a.targetPlayerName)
+		targetPlayer, err := g.GetTargetPlayer(p.Name(), a.targetPlayerName)
 		if err != nil {
 			return result, nil, err
 		}
@@ -83,7 +83,7 @@ func (a *spyAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameS
 
 	result.Action = types.LastActionSpy
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.GetWithModal(p, g, spiedCards)
+		return g.GameStatusProvider().GetWithModal(p, g, spiedCards)
 	}
 
 	return result, statusFn, nil
