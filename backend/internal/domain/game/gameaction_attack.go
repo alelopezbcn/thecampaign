@@ -31,12 +31,12 @@ func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *a
 
 func (a *attackAction) PlayerName() string { return a.playerName }
 
-func (a *attackAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeAttack {
-		return fmt.Errorf("cannot attack in the %s phase", g.currentAction)
+func (a *attackAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeAttack {
+		return fmt.Errorf("cannot attack in the %s phase", g.CurrentAction())
 	}
 
-	targetPlayer, err := g.getTargetPlayer(a.playerName, a.targetPlayerName)
+	targetPlayer, err := g.GetTargetPlayer(a.playerName, a.targetPlayerName)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (a *attackAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *attackAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *attackAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	err := a.target.BeAttacked(a.weapon)
 	if err != nil {
 		result := &GameActionResult{}
@@ -101,7 +101,7 @@ func (a *attackAction) Execute(g *game) (*GameActionResult, func() gamestatus.Ga
 		AttackTargetPlayer: a.targetPlayerName,
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(a.currentPlayer, g)
+		return g.GameStatusProvider().Get(a.currentPlayer, g)
 	}
 
 	return result, statusFn, nil

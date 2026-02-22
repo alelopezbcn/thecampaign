@@ -712,7 +712,7 @@ func TestGame_getTargetPlayer(t *testing.T) {
 			players: []board.Player{mockPlayer1},
 		}
 
-		_, err := g.getTargetPlayer("Player1", "Unknown")
+		_, err := g.GetTargetPlayer("Player1", "Unknown")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "target player Unknown not found")
 	})
@@ -729,7 +729,7 @@ func TestGame_getTargetPlayer(t *testing.T) {
 			eliminatedPlayers: make(map[int]bool),
 		}
 
-		_, err := g.getTargetPlayer("Player1", "Player1")
+		_, err := g.GetTargetPlayer("Player1", "Player1")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot attack yourself")
 	})
@@ -754,7 +754,7 @@ func TestGame_getTargetPlayer(t *testing.T) {
 			eliminatedPlayers: make(map[int]bool),
 		}
 
-		_, err := g.getTargetPlayer("Player1", "Player3") // Player3 is teammate
+		_, err := g.GetTargetPlayer("Player1", "Player3") // Player3 is teammate
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot attack your ally")
 	})
@@ -776,7 +776,7 @@ func TestGame_getTargetPlayer(t *testing.T) {
 			eliminatedPlayers: map[int]bool{1: true},
 		}
 
-		_, err := g.getTargetPlayer("Player1", "Player2")
+		_, err := g.GetTargetPlayer("Player1", "Player2")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot attack eliminated player")
 	})
@@ -796,7 +796,7 @@ func TestGame_getTargetPlayer(t *testing.T) {
 			eliminatedPlayers: make(map[int]bool),
 		}
 
-		target, err := g.getTargetPlayer("Player1", "Player2")
+		target, err := g.GetTargetPlayer("Player1", "Player2")
 		assert.NoError(t, err)
 		assert.Equal(t, mockPlayer2, target)
 	})
@@ -821,7 +821,7 @@ func TestGame_getTargetPlayer(t *testing.T) {
 			eliminatedPlayers: make(map[int]bool),
 		}
 
-		target, err := g.getTargetPlayer("Player1", "Player2") // Player2 is enemy
+		target, err := g.GetTargetPlayer("Player1", "Player2") // Player2 is enemy
 		assert.NoError(t, err)
 		assert.Equal(t, mockPlayer2, target)
 	})
@@ -843,7 +843,7 @@ func TestGame_switchTurn(t *testing.T) {
 			eliminatedPlayers: make(map[int]bool),
 		}
 
-		g.switchTurn()
+		g.SwitchTurn()
 
 		assert.Equal(t, 1, g.currentTurn)
 		assert.False(t, g.turnState.HasMovedWarrior)
@@ -864,7 +864,7 @@ func TestGame_switchTurn(t *testing.T) {
 			eliminatedPlayers: make(map[int]bool),
 		}
 
-		g.switchTurn()
+		g.SwitchTurn()
 
 		assert.Equal(t, 0, g.currentTurn)
 	})
@@ -883,7 +883,7 @@ func TestGame_switchTurn(t *testing.T) {
 			eliminatedPlayers: map[int]bool{1: true}, // Player2 eliminated
 		}
 
-		g.switchTurn()
+		g.SwitchTurn()
 
 		assert.Equal(t, 2, g.currentTurn) // Skips Player2
 	})
@@ -903,7 +903,7 @@ func TestGame_switchTurn(t *testing.T) {
 			eliminatedPlayers: map[int]bool{1: true, 2: true, 3: true},
 		}
 
-		g.switchTurn()
+		g.SwitchTurn()
 
 		assert.Equal(t, 4, g.currentTurn)
 	})

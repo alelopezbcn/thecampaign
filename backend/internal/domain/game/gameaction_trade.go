@@ -24,8 +24,8 @@ func NewTradeAction(playerName string, cardIDs []string) *tradeAction {
 
 func (a *tradeAction) PlayerName() string { return a.playerName }
 
-func (a *tradeAction) Validate(g *game) error {
-	if g.turnState.HasTraded {
+func (a *tradeAction) Validate(g Game) error {
+	if g.TurnState().HasTraded {
 		return errors.New("already traded this turn")
 	}
 
@@ -36,7 +36,7 @@ func (a *tradeAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *tradeAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *tradeAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &GameActionResult{}
 
@@ -48,7 +48,7 @@ func (a *tradeAction) Execute(g *game) (*GameActionResult, func() gamestatus.Gam
 		g.OnCardMovedToPile(c)
 	}
 
-	cards, err := g.drawCards(p, 1)
+	cards, err := g.DrawCards(p, 1)
 	if err != nil {
 		return result, nil, fmt.Errorf("drawing card for trading failed: %w", err)
 	}
@@ -57,13 +57,13 @@ func (a *tradeAction) Execute(g *game) (*GameActionResult, func() gamestatus.Gam
 
 	g.AddHistory(fmt.Sprintf("%s traded 3 cards", p.Name()), types.CategoryAction)
 
-	g.turnState.HasTraded = true
-	g.turnState.CanTrade = false
+	g.SetHasTraded(true)
+	g.SetCanTrade(false)
 	result.Action = types.LastActionTrade
-	a.currentPhase = g.currentAction
+	a.currentPhase = g.CurrentAction()
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.Get(p, g, cards...)
+		return g.GameStatusProvider().Get(p, g, cards...)
 	}
 
 	return result, statusFn, nil

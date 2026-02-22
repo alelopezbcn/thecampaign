@@ -30,9 +30,9 @@ func NewStealAction(playerName, targetPlayerName string, cardPosition int) *stea
 
 func (a *stealAction) PlayerName() string { return a.playerName }
 
-func (a *stealAction) Validate(g *game) error {
-	if g.currentAction != types.PhaseTypeSpySteal {
-		return fmt.Errorf("cannot steal in the %s phase", g.currentAction)
+func (a *stealAction) Validate(g Game) error {
+	if g.CurrentAction() != types.PhaseTypeSpySteal {
+		return fmt.Errorf("cannot steal in the %s phase", g.CurrentAction())
 	}
 
 	p := g.CurrentPlayer()
@@ -42,7 +42,7 @@ func (a *stealAction) Validate(g *game) error {
 	}
 
 	var err error
-	a.targetPlayer, err = g.getTargetPlayer(a.playerName, a.targetPlayerName)
+	a.targetPlayer, err = g.GetTargetPlayer(a.playerName, a.targetPlayerName)
 	if err != nil {
 		return err
 	}
@@ -57,7 +57,7 @@ func (a *stealAction) Validate(g *game) error {
 	return nil
 }
 
-func (a *stealAction) Execute(g *game) (*GameActionResult, func() gamestatus.GameStatus, error) {
+func (a *stealAction) Execute(g Game) (*GameActionResult, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &GameActionResult{}
@@ -79,7 +79,7 @@ func (a *stealAction) Execute(g *game) (*GameActionResult, func() gamestatus.Gam
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {
-		return g.gameStatusProvider.GetWithModal(p, g, []cards.Card{stolenCard})
+		return g.GameStatusProvider().GetWithModal(p, g, []cards.Card{stolenCard})
 	}
 
 	return result, statusFn, nil

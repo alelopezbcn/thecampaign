@@ -25,6 +25,37 @@ type Board interface {
 	Players() []board.Player
 }
 
+type Game interface {
+	CurrentAction() types.PhaseType
+	GetTargetPlayer(playerName string, targetPlayerName string) (board.Player, error)
+	AddHistory(msg string, cat types.Category)
+	GetHistory() []types.HistoryLine
+	GameStatusProvider() GameStatusProvider
+	OnCardMovedToPile(card cards.Card)
+	DrawCards(p board.Player, count int) (cards []cards.Card, err error)
+	SwitchTurn()
+	TurnState() TurnState
+	SetHasMovedWarrior(value bool)
+	SetHasTraded(value bool)
+	SetCanMoveWarrior(value bool)
+	SetCanTrade(value bool)
+	Board() Board
+	LastResult() GameActionResult
+	Mode() types.GameMode
+	NextActiveTurnPlayer() string
+	EliminatedPlayers() map[int]bool
+	DisconnectedPlayers() map[int]bool
+	GameStartedAt() time.Time
+	IsPlayerWinner(playerIdx int) bool
+	IsGameOver() (bool, string)
+	CurrentPlayer() board.Player
+	GetPlayer(name string) board.Player
+	PlayerIndex(name string) int
+	Enemies(playerIdx int) []board.Player
+	Allies(playerIdx int) []board.Player
+	SameTeam(i, j int) bool
+}
+
 type Games []game
 
 type game struct {
@@ -86,6 +117,58 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 	g.board.Deck().Deal(g.board.Players())
 
 	return g, nil
+}
+
+func (g *game) CurrentAction() types.PhaseType {
+	return g.currentAction
+}
+
+func (g *game) GameStatusProvider() GameStatusProvider {
+	return g.gameStatusProvider
+}
+
+func (g *game) TurnState() TurnState {
+	return g.turnState
+}
+
+func (g *game) SetHasMovedWarrior(value bool) {
+	g.turnState.HasMovedWarrior = value
+}
+
+func (g *game) SetHasTraded(value bool) {
+	g.turnState.HasTraded = value
+}
+
+func (g *game) SetCanMoveWarrior(value bool) {
+	g.turnState.CanMoveWarrior = value
+}
+
+func (g *game) SetCanTrade(value bool) {
+	g.turnState.CanTrade = value
+}
+
+func (g *game) Board() Board {
+	return g.board
+}
+
+func (g *game) LastResult() GameActionResult {
+	return g.lastResult
+}
+
+func (g *game) Mode() types.GameMode {
+	return g.mode
+}
+
+func (g *game) EliminatedPlayers() map[int]bool {
+	return g.eliminatedPlayers
+}
+
+func (g *game) DisconnectedPlayers() map[int]bool {
+	return g.disconnectedPlayers
+}
+
+func (g *game) GameStartedAt() time.Time {
+	return g.gameStartedAt
 }
 
 // AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
@@ -291,7 +374,7 @@ func (g *game) DisconnectPlayer(playerName string) error {
 	}
 
 	if wasTheirTurn && !g.winState.GameOver {
-		g.switchTurn()
+		g.SwitchTurn()
 	}
 
 	return nil
@@ -414,7 +497,7 @@ func (g *game) SameTeam(i, j int) bool {
 	return false
 }
 
-func (g *game) getTargetPlayer(playerName string, targetPlayerName string) (
+func (g *game) GetTargetPlayer(playerName string, targetPlayerName string) (
 	board.Player, error,
 ) {
 	// Validate target player is an enemy
@@ -445,7 +528,7 @@ func (g *game) Status(viewer board.Player) gamestatus.GameStatus {
 	return g.gameStatusProvider.Get(viewer, g)
 }
 
-func (g *game) isPlayerWinner(playerIdx int) bool {
+func (g *game) IsPlayerWinner(playerIdx int) bool {
 	if !g.winState.GameOver {
 		return false
 	}
@@ -455,7 +538,7 @@ func (g *game) isPlayerWinner(playerIdx int) bool {
 	return g.SameTeam(playerIdx, g.winState.WinnerIdx)
 }
 
-func (g *game) drawCards(p board.Player, count int) (cards []cards.Card, err error) {
+func (g *game) DrawCards(p board.Player, count int) (cards []cards.Card, err error) {
 	if !p.CanTakeCards(count) {
 		return nil, board.ErrHandLimitExceeded
 	}
@@ -464,7 +547,7 @@ func (g *game) drawCards(p board.Player, count int) (cards []cards.Card, err err
 		g.board.DiscardPile())
 }
 
-func (g *game) switchTurn() {
+func (g *game) SwitchTurn() {
 	g.turnState = TurnState{StartedAt: time.Now()}
 	g.lastResult = GameActionResult{}
 	g.currentAction = types.PhaseTypeDrawCard
@@ -590,9 +673,9 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	return gameStatusFn()
 }
 
-// nextActiveTurnPlayer returns the name of the player who will go next,
+// NextActiveTurnPlayer returns the name of the player who will go next,
 // without mutating any state.
-func (g *game) nextActiveTurnPlayer() string {
+func (g *game) NextActiveTurnPlayer() string {
 	next := g.currentTurn
 	for {
 		next = (next + 1) % len(g.board.Players())
