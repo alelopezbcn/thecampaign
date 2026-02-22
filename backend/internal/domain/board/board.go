@@ -2,6 +2,13 @@ package board
 
 import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 
+type Board interface {
+	Deck() Deck
+	DiscardPile() DiscardPile
+	Cemetery() Cemetery
+	Players() []Player
+}
+
 type board struct {
 	deck        Deck
 	discardPile DiscardPile
