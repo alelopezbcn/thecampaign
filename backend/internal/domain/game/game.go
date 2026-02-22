@@ -498,7 +498,32 @@ func (g *Game) nextAction(expectedAction types.PhaseType,
 			}
 		}
 
-		if p.CanAttack() || canAttackWithCatapult || g.turnState.CanMoveWarrior {
+		canAttackWithBloodRain := false
+		if _, ok := board.HasCardTypeInHand[cards.BloodRain](p); ok {
+			for _, e := range g.Enemies(g.CurrentTurn) {
+				if len(e.Field().Warriors()) > 0 {
+					canAttackWithBloodRain = true
+					break
+				}
+			}
+		}
+
+		canAttackWithHarpoon := false
+		if _, ok := board.HasCardTypeInHand[cards.Harpoon](p); ok {
+			for _, e := range g.Enemies(g.CurrentTurn) {
+				for _, w := range e.Field().Warriors() {
+					if w.Type() == types.DragonWarriorType {
+						canAttackWithHarpoon = true
+						break
+					}
+				}
+				if canAttackWithHarpoon {
+					break
+				}
+			}
+		}
+
+		if p.CanAttack() || canAttackWithCatapult || canAttackWithBloodRain || canAttackWithHarpoon || g.turnState.CanMoveWarrior {
 			g.currentAction = types.PhaseTypeAttack
 
 			return gameStatusFn()

@@ -440,6 +440,12 @@ function handleGameState(payload) {
         attackAnimData = prepareAttackAnimation(previousState, payload.game_status);
     }
 
+    // Detect blood rain for animation (before re-render)
+    let bloodRainAnimData = null;
+    if (previousState) {
+        bloodRainAnimData = prepareBloodRainAnimation(previousState, payload.game_status);
+    }
+
     // Detect deck draw for animation
     let deckDrawInfo = null;
     if (previousState) {
@@ -506,6 +512,9 @@ function handleGameState(payload) {
         }
         if (attackAnimData) {
             playAttackAnimation(attackAnimData, payload.game_status);
+        }
+        if (bloodRainAnimData) {
+            playBloodRainAnimation(bloodRainAnimData, payload.game_status);
         }
         if (stealData) {
             playStealAnimation(stealData);
@@ -1062,6 +1071,24 @@ function handleAttackPhaseHandClick(cardID, card) {
         updateActionPrompt(`🎯 Harpoon - Select a Dragon to kill`);
         highlightValidTargets(card);
         showConfirmButtons();
+    } else if (cardType === 'bloodrain') {
+        gameState.actionState.type = 'bloodrain';
+        gameState.actionState.weaponId = cardID;
+        highlightSelectedCard(cardID);
+        const enemies = getEnemyOpponents().filter(e => (e.field?.length ?? 0) > 0 && !e.is_eliminated);
+        if (enemies.length === 0) {
+            updateActionPrompt('No enemies with warriors to target!');
+            resetActionState();
+        } else if (enemies.length === 1) {
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            showBloodRainConfirmModal(card, enemies[0]);
+        } else {
+            showTargetPlayerModal('Select a field to drench in Blood Rain', enemies, (playerName) => {
+                const enemy = getOpponentByName(playerName);
+                gameState.actionState.targetPlayer = playerName;
+                showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
+            });
+        }
     }
 }
 
@@ -1152,6 +1179,37 @@ function showHarpoonConfirmModal(weapon, target) {
                 target_player: gameState.actionState.targetPlayer,
                 weapon_id: gameState.actionState.weaponId,
                 target_id: gameState.actionState.targetId
+            });
+            resetActionState();
+        }
+    });
+}
+
+function showBloodRainConfirmModal(weapon, targetOpponent) {
+    const targetName = targetOpponent?.player_name || gameState.actionState.targetPlayer;
+    const targetField = targetOpponent?.field || [];
+    const dmg = weapon?.value || 4;
+
+    let cardsHtml = renderCardForModal(weapon);
+    cardsHtml += renderArrow();
+    targetField.forEach(c => { cardsHtml += renderCardForModal(c); });
+    if (targetField.length === 0) {
+        cardsHtml += `<div class="card card-placeholder">🗡️ All Warriors</div>`;
+    }
+
+    const warriorCount = targetField.length;
+    const warriorSummary = warriorCount === 1
+        ? `1 warrior (${dmg} DMG)`
+        : warriorCount > 1 ? `${warriorCount} warriors (${dmg} DMG each)` : `all warriors (${dmg} DMG each)`;
+
+    showActionConfirmModal({
+        title: 'Blood Rain',
+        cardsHtml: cardsHtml,
+        description: `🩸 Blood Rain hits all of ${targetName}'s warriors — ${warriorSummary}`,
+        onConfirm: () => {
+            sendAction('blood_rain', {
+                target_player: gameState.actionState.targetPlayer,
+                weapon_id: gameState.actionState.weaponId
             });
             resetActionState();
         }
@@ -2325,6 +2383,57 @@ function playAttackAnimation(data, status) {
     }, 900);
 
     setTimeout(() => ghost.remove(), 1300);
+}
+
+function prepareBloodRainAnimation(previousState, newState) {
+    if (newState.last_action !== 'blood_rain') return null;
+    const targetPlayer = newState.last_attack_target_player;
+    if (!targetPlayer) return null;
+    return { targetPlayer };
+}
+
+function playBloodRainAnimation(data, status) {
+    if (!data) return;
+
+    const isTargetMe = data.targetPlayer === status.current_player;
+    let fieldEl;
+    if (isTargetMe) {
+        fieldEl = document.getElementById('player-field');
+    } else {
+        const oppBoard = document.querySelector(`[data-opponent-name="${data.targetPlayer}"]`);
+        if (oppBoard) fieldEl = oppBoard.querySelector('.opponent-field');
+    }
+    if (!fieldEl) return;
+
+    const rect = fieldEl.getBoundingClientRect();
+    const overlay = document.createElement('div');
+    overlay.className = 'blood-rain-overlay';
+    overlay.style.left = rect.left + 'px';
+    overlay.style.top = rect.top + 'px';
+    overlay.style.width = rect.width + 'px';
+    overlay.style.height = rect.height + 'px';
+
+    const DROP_COUNT = 22;
+    for (let i = 0; i < DROP_COUNT; i++) {
+        const drop = document.createElement('div');
+        drop.className = 'blood-drop';
+        drop.style.left = (Math.random() * 100) + '%';
+        drop.style.animationDelay = (Math.random() * 0.5) + 's';
+        drop.style.animationDuration = (0.45 + Math.random() * 0.35) + 's';
+        overlay.appendChild(drop);
+    }
+
+    document.body.appendChild(overlay);
+
+    // Flash all cards in the field on impact
+    setTimeout(() => {
+        fieldEl.querySelectorAll('.card').forEach(card => {
+            card.classList.add('attack-impact');
+            setTimeout(() => card.classList.remove('attack-impact'), 600);
+        });
+    }, 600);
+
+    setTimeout(() => overlay.remove(), 1400);
 }
 
 function prepareStealAnimation(previousState, newState) {

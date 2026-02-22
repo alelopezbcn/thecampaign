@@ -185,12 +185,22 @@ func NewBloodRainHandCard(cardID string, enemyFields []board.Field,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
-		return newHandCard(cardID, CardTypeBloodRain,
-			0, []string{}, false)
+		hc := newHandCard(cardID, CardTypeBloodRain, 0, []string{}, false)
+		hc.CanBeTraded = true
+		return hc
 	}
 
-	return newHandCard(cardID, CardTypeBloodRain,
-		0, []string{}, true)
+	hasTargets := false
+	for _, ef := range enemyFields {
+		if len(ef.Warriors()) > 0 {
+			hasTargets = true
+			break
+		}
+	}
+
+	hc := newHandCard(cardID, CardTypeBloodRain, 0, []string{}, hasTargets)
+	hc.CanBeTraded = true
+	return hc
 }
 
 func NewCatapultHandCard(cardID string, canBeUsed bool,

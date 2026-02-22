@@ -71,7 +71,9 @@ func (a *bloodRainAction) Execute(g *Game) (*GameActionResult, func() gamestatus
 		a.playerName, a.targetPlayerName), types.CategoryAction)
 
 	result := &GameActionResult{
-		Action: types.LastActionBloodRain,
+		Action:             types.LastActionBloodRain,
+		AttackWeaponID:     a.weaponID,
+		AttackTargetPlayer: a.targetPlayerName,
 	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.gameStatusProvider.Get(a.currentPlayer, g)

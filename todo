@@ -20,10 +20,9 @@ GameStatus:
 cuando se presiona end turn no se ve el modal que indica que ha cambiado el turno
 fix unit tests
 
-Chequear si el arpon se puede tradear
-Harpoon appears active when no Dragon in enemies field
+Chequear que pasa cuando BloodRain mata mas de un Warrior. Algo raro hay, multiples warriors, uno protegido. De 4 mató a 2, a uno no le hizo daño y al otro le ha quitado el shield
+hay una animation para bloodRain, pero no se ve. Se ve solo la animacion comun de ataque a multiples warriors
 
-Chequear que pasa cuando BloodRain mata mas de un Warrior
 refactor messages.go and hub.go
 
 Play again no funciona

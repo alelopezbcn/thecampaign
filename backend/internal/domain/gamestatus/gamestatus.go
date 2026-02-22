@@ -111,6 +111,11 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer
 	}
 
+	// Include blood rain animation info (target player only, AoE attack)
+	if dto.LastAction == types.LastActionBloodRain && dto.LastAttackTargetPlayer != "" {
+		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer
+	}
+
 	// Include stolen card info for the victim (only on the steal action itself)
 	if dto.LastAction == types.LastActionSteal && dto.StolenFrom != "" &&
 		dto.StolenCard != nil && dto.Viewer.Name() == dto.StolenFrom {
