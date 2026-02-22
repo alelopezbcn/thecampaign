@@ -18,9 +18,9 @@ type board struct {
 
 func New(dealer cards.Dealer, players []Player) *board {
 	return &board{
-		deck:        newDeck(dealer),
-		discardPile: newDiscardPile(),
-		cemetery:    newCemetery(),
+		deck:        NewDeck(dealer),
+		discardPile: NewDiscardPile(),
+		cemetery:    NewCemetery(),
 		players:     players,
 	}
 }

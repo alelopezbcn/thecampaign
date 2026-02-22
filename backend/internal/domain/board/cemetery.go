@@ -17,7 +17,7 @@ type cemetery struct {
 	corps []cards.Warrior
 }
 
-func newCemetery() *cemetery {
+func NewCemetery() *cemetery {
 	return &cemetery{
 		corps: []cards.Warrior{},
 	}

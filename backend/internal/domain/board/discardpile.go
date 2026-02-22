@@ -14,7 +14,7 @@ type discardPile struct {
 	cards []cards.Card
 }
 
-func newDiscardPile() *discardPile {
+func NewDiscardPile() *discardPile {
 	return &discardPile{
 		cards: []cards.Card{},
 	}

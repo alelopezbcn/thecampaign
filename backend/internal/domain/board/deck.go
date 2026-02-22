@@ -19,7 +19,7 @@ type deck struct {
 	dealer cards.Dealer
 }
 
-func newDeck(d cards.Dealer) *deck {
+func NewDeck(d cards.Dealer) *deck {
 	return &deck{dealer: d}
 }
 
@@ -59,7 +59,8 @@ func (d *deck) Deal(players []Player) {
 }
 
 func (d *deck) DrawCards(count int, discardPile DiscardPile) (
-	cardsDrew []cards.Card, err error) {
+	cardsDrew []cards.Card, err error,
+) {
 	cardsDrew = make([]cards.Card, 0, count)
 	for i := 0; i < count; i++ {
 		c, ok := d.drawCard()

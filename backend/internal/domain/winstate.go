@@ -1,4 +1,4 @@
-package types
+package domain
 
 type WinState struct {
 	GameOver  bool
