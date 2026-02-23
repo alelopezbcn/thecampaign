@@ -157,24 +157,10 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, NewWarriorHandCard(ct))
 
 		case cards.Weapon:
-			switch ct.Type() {
-			case types.SpecialPowerWeaponType:
+			if builder, ok := specialWeaponHandCardBuilders[ct.Type()]; ok {
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewSpecialPowerHandCard(ct.GetID(), viewer.Field,
-						game.AllyFields, game.EnemyFields, action))
-
-				continue
-			case types.HarpoonWeaponType:
-				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewHarpoonHandCard(ct.GetID(), game.EnemyFields, action))
-
-				continue
-			case types.BloodRainWeaponType:
-				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewBloodRainHandCard(ct.GetID(), game.EnemyFields,
-						action))
-				continue
-			default:
+					builder(ct.GetID(), viewer, game, action))
+			} else {
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 					NewWeaponHandCard(ct, viewer.Field,
 						game.EnemyFields, viewer.Castle.IsConstructed, action))
