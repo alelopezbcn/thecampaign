@@ -8,6 +8,16 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// tradeGame declares the minimum Game surface needed by tradeAction
+type tradeGame interface {
+	GamePlayers
+	GameTurn
+	GameTurnFlags
+	GameCards
+	GameHistory
+	GameStatusProvider
+}
+
 type tradeAction struct {
 	playerName string
 	cardIDs    []string
@@ -37,6 +47,10 @@ func (a *tradeAction) Validate(g Game) error {
 }
 
 func (a *tradeAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *tradeAction) execute(g tradeGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &Result{}
 

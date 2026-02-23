@@ -10,12 +10,27 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// moveWarriorGame declares the minimum Game surface needed by moveWarriorAction
+type moveWarriorGame interface {
+	GamePlayers
+	GameTurn
+	GameTurnFlags
+	GameHistory
+	GameStatusProvider
+}
+
+// moveWarriorTargetPlayer declares the minimum Player surface needed by moveWarriorAction
+type moveWarriorTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerField
+}
+
 type moveWarriorAction struct {
 	playerName       string
 	warriorID        string
 	targetPlayerName string
 
-	targetPlayer board.Player
+	targetPlayer moveWarriorTargetPlayer
 	warrior      cards.Warrior
 	currentPhase types.PhaseType
 }
@@ -68,6 +83,10 @@ func (a *moveWarriorAction) Validate(g Game) error {
 }
 
 func (a *moveWarriorAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *moveWarriorAction) execute(g moveWarriorGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &Result{}
 

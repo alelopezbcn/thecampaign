@@ -63,6 +63,38 @@ func (s *Server) handleVersion(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"version": Version})
 }
 
+// CardConfigEntry holds display metadata for a single card type.
+type CardConfigEntry struct {
+	Description string `json:"description"`
+	Image       string `json:"image"`
+}
+
+// cardConfig is the authoritative source of card descriptions and images.
+// Key is the lowercase card sub_type or type used by the frontend.
+// Adding a new card = one entry here.
+var cardConfig = map[string]CardConfigEntry{
+	"knight":       {Description: "A heavily armored warrior. Can attack with Swords. Special Power: Shield. Takes double damage from Poison.", Image: "knight.webp"},
+	"archer":       {Description: "A swift ranged fighter. Can attack with Arrows. Special Power: Instant Kill. Takes double damage from Swords.", Image: "archer.webp"},
+	"mage":         {Description: "A mystical spellcaster. Can attack with Poison. Special Power: Heal. Takes double damage from Arrows.", Image: "mage.webp"},
+	"dragon":       {Description: "A mighty beast. Can attack with any weapon. Takes equal damage from all weapons. Instant kill takes 10 DMG. Cannot use Special Powers.", Image: "dragon.webp"},
+	"sword":        {Description: "Deals double damage to Archers. Used by Knights and Dragons. A value-1 Sword can also construct your castle. Can be traded.", Image: "sword.webp"},
+	"arrow":        {Description: "Deals double damage to Mages. Used by Archers and Dragons. A value-1 Arrow can also construct your castle. Can be traded.", Image: "arrow.webp"},
+	"poison":       {Description: "Deals double damage to Knights. Used by Mages and Dragons. A value-1 Poison can also construct your castle. Can be traded.", Image: "poison.webp"},
+	"resource":     {Description: "Spend gold to buy cards (2 coins = 1 card). A value-1 Gold can also construct your castle.", Image: "gold.webp"},
+	"specialpower": {Description: "Knight: shields an ally warrior. Archer: instantly kills an enemy. Mage: fully heals an ally. Cannot be used by Dragons.", Image: "specialpower.webp"},
+	"harpoon":      {Description: "A powerful weapon that kills Dragons from one hit. Can only be used on Dragons.", Image: "harpoon.webp"},
+	"bloodrain":    {Description: "A devastating attack that affects all enemy warriors. Deals 4 damage to all enemy warriors.", Image: "bloodrain.webp"},
+	"spy":          {Description: "Peek at an opponent's full hand or the top 5 cards of the deck.", Image: "spy.webp"},
+	"thief":        {Description: "Steal a random card from an opponent's hand.", Image: "thief.webp"},
+	"catapult":     {Description: "Destroy one gold resource from a constructed enemy castle, reducing their castle value.", Image: "catapult.webp"},
+}
+
+// handleCardConfig serves card display metadata (descriptions and images).
+func (s *Server) handleCardConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(cardConfig)
+}
+
 // Start starts the HTTP server
 func (s *Server) Start(addr string) error {
 	// WebSocket endpoint
@@ -73,6 +105,9 @@ func (s *Server) Start(addr string) error {
 
 	// Version endpoint
 	http.HandleFunc("/api/version", s.handleVersion)
+
+	// Card config endpoint
+	http.HandleFunc("/api/card-config", s.handleCardConfig)
 
 	// Main page
 	http.HandleFunc("/", s.handleIndex)

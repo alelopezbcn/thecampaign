@@ -657,12 +657,66 @@ func (g *game) getStatus(viewer board.Player,
 	newCards []cards.Card, modalCards []cards.Card,
 ) gamestatus.GameStatus {
 	viewerIdx := g.PlayerIndex(viewer.Name())
+
+	viewerInput := gamestatus.ViewerInput{
+		Name:       viewer.Name(),
+		Idx:        viewerIdx,
+		Hand:       viewer.Hand().ShowCards(),
+		Field:      extractField(viewer.Field()),
+		Castle:     extractCastle(viewer.Castle()),
+		CanBuyWith: viewer.CanBuyWith,
+	}
+
+	allPlayers := g.board.Players()
+	playersNames := make([]string, len(allPlayers))
+	for i, p := range allPlayers {
+		playersNames[i] = p.Name()
+	}
+
+	opponents := []gamestatus.OpponentInput{}
+	for i, p := range allPlayers {
+		if i == viewerIdx {
+			continue
+		}
+		opponents = append(opponents, gamestatus.OpponentInput{
+			Name:           p.Name(),
+			CardsInHand:    p.CardsInHand(),
+			Field:          extractField(p.Field()),
+			Castle:         extractCastle(p.Castle()),
+			IsAlly:         g.SameTeam(viewerIdx, i),
+			IsEliminated:   g.eliminatedPlayers[i],
+			IsDisconnected: g.disconnectedPlayers[i],
+		})
+	}
+
+	enemyFields := []gamestatus.FieldInput{}
+	anyEnemyCastleAttackable := false
+	for _, enemy := range g.Enemies(viewerIdx) {
+		enemyFields = append(enemyFields, extractField(enemy.Field()))
+		if enemy.Castle().CanBeAttacked() {
+			anyEnemyCastleAttackable = true
+		}
+	}
+
+	allyFields := []gamestatus.FieldInput{}
+	allyHasCastleConstructed := false
+	for _, ally := range g.Allies(viewerIdx) {
+		allyFields = append(allyFields, extractField(ally.Field()))
+		if ally.Castle().IsConstructed() {
+			allyHasCastleConstructed = true
+		}
+	}
+
 	gameStatusDTO := gamestatus.GameStatusDTO{
-		Viewer:                 viewer,
+		Viewer:                   viewerInput,
+		PlayersNames:             playersNames,
+		Opponents:                opponents,
+		EnemyFields:              enemyFields,
+		AllyFields:               allyFields,
+		AnyEnemyCastleAttackable: anyEnemyCastleAttackable,
+		AllyHasCastleConstructed: allyHasCastleConstructed,
 		NewCards:               newCards,
 		ModalCards:             modalCards,
-		PlayerIndex:            viewerIdx,
-		Players:                g.board.Players(),
 		NextTurnPlayer:         g.nextActiveTurnPlayer(),
 		TurnPlayer:             g.CurrentPlayer().Name(),
 		CurrentAction:          g.CurrentAction(),
@@ -689,17 +743,30 @@ func (g *game) getStatus(viewer board.Player,
 		SpyTargetPlayer:        g.lastResult.Spy.TargetPlayer,
 		CurrentPlayerName:      g.CurrentPlayer().Name(),
 		IsPlayerWinner:         g.isPlayerWinner(viewerIdx),
-		SameTeamFn:             g.SameTeam,
-		EliminatedPlayers:      g.eliminatedPlayers,
-		DisconnectedPlayers:    g.disconnectedPlayers,
 		CanMoveWarrior:         g.turnState.CanMoveWarrior,
-		EnemiesFn:              g.Enemies,
-		AlliesFn:               g.Allies,
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
 
 	return gamestatus.NewGameStatus(gameStatusDTO)
+}
+
+func extractField(f board.Field) gamestatus.FieldInput {
+	return gamestatus.FieldInput{
+		Warriors:  f.Warriors(),
+		HasArcher: f.HasArcher(),
+		HasKnight: f.HasKnight(),
+		HasMage:   f.HasMage(),
+		HasDragon: f.HasDragon(),
+	}
+}
+
+func extractCastle(c board.Castle) gamestatus.CastleInput {
+	return gamestatus.CastleInput{
+		IsConstructed:      c.IsConstructed(),
+		ResourceCardsCount: c.ResourceCardsCount(),
+		Value:              c.Value(),
+	}
 }
 
 func (g *game) IsGameOver() (bool, string) {

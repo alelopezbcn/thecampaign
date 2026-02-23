@@ -133,46 +133,35 @@ func (h *Hub) Run() {
 	}
 }
 
+// messageHandlers maps each MessageType to its handler function.
+// Adding a new message type requires one entry here — no switch needed.
+var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
+	MsgJoinGame:    func(h *Hub, c *Client, p interface{}) { h.handleJoinGame(c, p) },
+	MsgDrawCard:    func(h *Hub, c *Client, _ interface{}) { h.handleDrawCard(c) },
+	MsgAttack:      func(h *Hub, c *Client, p interface{}) { h.handleAttack(c, p) },
+	MsgSpecialPower: func(h *Hub, c *Client, p interface{}) { h.handleSpecialPower(c, p) },
+	MsgHarpoon:     func(h *Hub, c *Client, p interface{}) { h.handleHarpoon(c, p) },
+	MsgBloodRain:   func(h *Hub, c *Client, p interface{}) { h.handleBloodRain(c, p) },
+	MsgMoveWarrior: func(h *Hub, c *Client, p interface{}) { h.handleMoveWarrior(c, p) },
+	MsgTrade:       func(h *Hub, c *Client, p interface{}) { h.handleTrade(c, p) },
+	MsgBuy:         func(h *Hub, c *Client, p interface{}) { h.handleBuy(c, p) },
+	MsgConstruct:   func(h *Hub, c *Client, p interface{}) { h.handleConstruct(c, p) },
+	MsgSpy:         func(h *Hub, c *Client, p interface{}) { h.handleSpy(c, p) },
+	MsgSteal:       func(h *Hub, c *Client, p interface{}) { h.handleSteal(c, p) },
+	MsgCatapult:    func(h *Hub, c *Client, p interface{}) { h.handleCatapult(c, p) },
+	MsgEndTurn:     func(h *Hub, c *Client, _ interface{}) { h.handleEndTurn(c) },
+	MsgSkipPhase:   func(h *Hub, c *Client, _ interface{}) { h.handleSkipPhase(c) },
+	MsgSwapTeam:    func(h *Hub, c *Client, _ interface{}) { h.handleSwapTeam(c) },
+	MsgStartGame:   func(h *Hub, c *Client, _ interface{}) { h.handleStartGame(c) },
+}
+
 // processMessage processes incoming messages from clients
 func (h *Hub) processMessage(client *Client, msg *Message) {
 	log.Printf("Processing message type: %s from player: %s", msg.Type, client.PlayerName)
 
-	switch msg.Type {
-	case MsgJoinGame:
-		h.handleJoinGame(client, msg.Payload)
-	case MsgDrawCard:
-		h.handleDrawCard(client)
-	case MsgAttack:
-		h.handleAttack(client, msg.Payload)
-	case MsgSpecialPower:
-		h.handleSpecialPower(client, msg.Payload)
-	case MsgHarpoon:
-		h.handleHarpoon(client, msg.Payload)
-	case MsgBloodRain:
-		h.handleBloodRain(client, msg.Payload)
-	case MsgMoveWarrior:
-		h.handleMoveWarrior(client, msg.Payload)
-	case MsgTrade:
-		h.handleTrade(client, msg.Payload)
-	case MsgBuy:
-		h.handleBuy(client, msg.Payload)
-	case MsgConstruct:
-		h.handleConstruct(client, msg.Payload)
-	case MsgSpy:
-		h.handleSpy(client, msg.Payload)
-	case MsgSteal:
-		h.handleSteal(client, msg.Payload)
-	case MsgCatapult:
-		h.handleCatapult(client, msg.Payload)
-	case MsgEndTurn:
-		h.handleEndTurn(client)
-	case MsgSkipPhase:
-		h.handleSkipPhase(client)
-	case MsgSwapTeam:
-		h.handleSwapTeam(client)
-	case MsgStartGame:
-		h.handleStartGame(client)
-	default:
+	if handler, ok := messageHandlers[msg.Type]; ok {
+		handler(h, client, msg.Payload)
+	} else {
 		client.SendError("Unknown message type")
 	}
 }

@@ -9,6 +9,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// attackGame declares the minimum Game surface needed by attackAction
+type attackGame interface {
+	GamePlayers
+	GameTurn
+	GameHistory
+	GameStatusProvider
+}
+
 type attackAction struct {
 	playerName       string
 	targetPlayerName string
@@ -82,6 +90,10 @@ func (a *attackAction) Validate(g Game) error {
 }
 
 func (a *attackAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameStatus, error) {
 	err := a.target.BeAttacked(a.weapon)
 	if err != nil {
 		result := &Result{}

@@ -59,16 +59,11 @@ type SpecialPowerPayload struct {
 	WeaponID string `json:"weapon_id"`
 }
 
-// HarpoonPayload for harpoon action
-type HarpoonPayload struct {
+// WeaponPayload is the shared payload for weapon card actions.
+// TargetID is optional — AoE weapons (e.g. blood rain) leave it empty.
+type WeaponPayload struct {
 	TargetPlayer string `json:"target_player"`
-	TargetID     string `json:"target_id"`
-	WeaponID     string `json:"weapon_id"`
-}
-
-// BloodRainPayload for blood rain action
-type BloodRainPayload struct {
-	TargetPlayer string `json:"target_player"`
+	TargetID     string `json:"target_id,omitempty"`
 	WeaponID     string `json:"weapon_id"`
 }
 

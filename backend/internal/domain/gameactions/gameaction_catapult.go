@@ -10,13 +10,28 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// catapultGame declares the minimum Game surface needed by catapultAction
+type catapultGame interface {
+	GamePlayers
+	GameTurn
+	GameCards
+	GameHistory
+	GameStatusProvider
+}
+
+// catapultTargetPlayer declares the minimum Player surface needed by catapultAction
+type catapultTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerCastle
+}
+
 type catapultAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
 
 	catapult     cards.Catapult
-	targetPlayer board.Player
+	targetPlayer catapultTargetPlayer
 	weapon       cards.Weapon
 }
 
@@ -54,6 +69,10 @@ func (a *catapultAction) Validate(g Game) error {
 }
 
 func (a *catapultAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *catapultAction) execute(g catapultGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	stolenGold, err := a.catapult.Attack(a.targetPlayer.Castle(), a.cardPosition)

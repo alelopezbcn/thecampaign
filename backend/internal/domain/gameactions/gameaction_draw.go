@@ -9,6 +9,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// drawGame declares the minimum Game surface needed by drawCardAction
+type drawGame interface {
+	GamePlayers
+	GameCards
+	GameHistory
+	GameStatusProvider
+}
+
 type drawCardAction struct {
 	playerName string
 }
@@ -24,6 +32,10 @@ func (a *drawCardAction) Validate(g Game) error {
 }
 
 func (a *drawCardAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *drawCardAction) execute(g drawGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	cards, err := g.DrawCards(p, 1)

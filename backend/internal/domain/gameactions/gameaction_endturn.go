@@ -7,6 +7,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// endTurnGame declares the minimum Game surface needed by endTurnPhaseAction
+type endTurnGame interface {
+	GamePlayers
+	GameTurn
+	GameHistory
+	GameStatusProvider
+}
+
 type endTurnPhaseAction struct {
 	playerName string
 	expired    bool
@@ -23,6 +31,10 @@ func (a *endTurnPhaseAction) Validate(g Game) error {
 }
 
 func (a *endTurnPhaseAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *endTurnPhaseAction) execute(g endTurnGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if a.expired {

@@ -3,7 +3,6 @@ package gamestatus
 import (
 	"time"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -54,13 +53,11 @@ type OpponentStatus struct {
 }
 
 func NewGameStatus(dto GameStatusDTO) GameStatus {
-	playersOrder := make([]string, len(dto.Players))
-	for i, p := range dto.Players {
-		playersOrder[i] = p.Name()
-	}
+	playersOrder := make([]string, len(dto.PlayersNames))
+	copy(playersOrder, dto.PlayersNames)
 
 	gs := GameStatus{
-		CurrentPlayer:       dto.Viewer.Name(),
+		CurrentPlayer:       dto.Viewer.Name,
 		NextTurnPlayer:      dto.NextTurnPlayer,
 		TurnPlayer:          dto.TurnPlayer,
 		CurrentAction:       string(dto.CurrentAction),
@@ -69,7 +66,7 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 		NewCards:            []string{},
 		CurrentPlayerHand:   []HandCard{},
 		CurrentPlayerField:  []FieldCard{},
-		CurrentPlayerCastle: NewCastle(dto.Viewer.Castle()),
+		CurrentPlayerCastle: NewCastle(dto.Viewer.Castle),
 		IsEliminated:        dto.IsEliminated,
 		IsDisconnected:      dto.IsDisconnected,
 		CanTrade:            dto.CanTrade,
@@ -118,13 +115,13 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 
 	// Include stolen card info for the victim (only on the steal action itself)
 	if dto.LastAction == types.LastActionSteal && dto.StolenFrom != "" &&
-		dto.StolenCard != nil && dto.Viewer.Name() == dto.StolenFrom {
+		dto.StolenCard != nil && dto.Viewer.Name == dto.StolenFrom {
 		gs.StolenFromYouCard = fromDomainCards([]cards.Card{dto.StolenCard})
 	}
 
 	// Include spy notification for all players except the spy
 	if dto.SpyTarget != "" && dto.LastAction == types.LastActionSpy &&
-		dto.Viewer.Name() != dto.CurrentPlayerName {
+		dto.Viewer.Name != dto.CurrentPlayerName {
 		spyPlayer := dto.CurrentPlayerName
 		if dto.SpyTarget == types.SpyTargetDeck {
 			gs.SpyNotification = spyPlayer + " spied on the deck"
@@ -135,11 +132,11 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 
 	processHandCards(dto.Viewer, dto, &gs)
 
-	for _, warrior := range dto.Viewer.Field().Warriors() {
+	for _, warrior := range dto.Viewer.Field.Warriors {
 		gs.CurrentPlayerField = append(gs.CurrentPlayerField, NewFieldCard(warrior))
 	}
 
-	processOpponents(dto.Viewer, dto, &gs)
+	processOpponents(dto, &gs)
 
 	if dto.IsGameOver {
 		gs.GameOverMgs = "Game over! The winner is " + dto.Winner
@@ -149,60 +146,43 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 	return gs
 }
 
-func processHandCards(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
+func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 	action := game.CurrentAction
 	canMove := game.CanMoveWarrior
 
-	for _, card := range viewer.Hand().ShowCards() {
+	for _, card := range viewer.Hand {
 		switch ct := card.(type) {
 		case cards.Warrior:
 			gs.CanMoveWarrior = canMove
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand, NewWarriorHandCard(ct))
 
 		case cards.Weapon:
-			var enemyFields []board.Field
-			for _, enemy := range game.EnemiesFn(viewer.Idx()) {
-				enemyFields = append(enemyFields, enemy.Field())
-			}
-
 			switch ct.Type() {
 			case types.SpecialPowerWeaponType:
-				var allyFields []board.Field
-				for _, ally := range game.AlliesFn(viewer.Idx()) {
-					allyFields = append(allyFields, ally.Field())
-				}
-
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewSpecialPowerHandCard(ct.GetID(), viewer.Field(),
-						allyFields, enemyFields, action))
+					NewSpecialPowerHandCard(ct.GetID(), viewer.Field,
+						game.AllyFields, game.EnemyFields, action))
 
 				continue
 			case types.HarpoonWeaponType:
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewHarpoonHandCard(ct.GetID(), enemyFields, action))
+					NewHarpoonHandCard(ct.GetID(), game.EnemyFields, action))
 
 				continue
 			case types.BloodRainWeaponType:
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewBloodRainHandCard(ct.GetID(), enemyFields,
+					NewBloodRainHandCard(ct.GetID(), game.EnemyFields,
 						action))
 				continue
 			default:
 				gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-					NewWeaponHandCard(ct, viewer.Field(),
-						enemyFields, viewer.Castle().IsConstructed(), action))
+					NewWeaponHandCard(ct, viewer.Field,
+						game.EnemyFields, viewer.Castle.IsConstructed, action))
 			}
 
 		case cards.Catapult:
-			canBeAttacked := false
-			for _, enemy := range game.EnemiesFn(viewer.Idx()) {
-				if enemy.Castle().CanBeAttacked() {
-					canBeAttacked = true
-					break
-				}
-			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewCatapultHandCard(ct.GetID(), canBeAttacked,
+				NewCatapultHandCard(ct.GetID(), game.AnyEnemyCastleAttackable,
 					action))
 
 		case cards.Spy:
@@ -214,38 +194,26 @@ func processHandCards(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
 				NewThiefHandCard(ct.GetID(), action))
 
 		case cards.Resource:
-			allyCastleConstructed := false
-			for _, ally := range game.AlliesFn(game.PlayerIndex) {
-				if ally.Castle().IsConstructed() {
-					allyCastleConstructed = true
-					break
-				}
-			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewResourceHandCard(ct, viewer.Castle().IsConstructed(),
-					allyCastleConstructed, viewer.CanBuyWith(ct), action))
+				NewResourceHandCard(ct, viewer.Castle.IsConstructed,
+					game.AllyHasCastleConstructed, viewer.CanBuyWith(ct), action))
 		}
 	}
 }
 
-func processOpponents(viewer board.Player, game GameStatusDTO, gs *GameStatus) {
-	viewerIdx := game.PlayerIndex
-
-	for i, p := range game.Players {
-		if i == viewerIdx {
-			continue
+func processOpponents(game GameStatusDTO, gs *GameStatus) {
+	for _, opp := range game.Opponents {
+		o := OpponentStatus{
+			PlayerName:     opp.Name,
+			CardsInHand:    opp.CardsInHand,
+			Castle:         NewCastle(opp.Castle),
+			IsAlly:         opp.IsAlly,
+			IsEliminated:   opp.IsEliminated,
+			IsDisconnected: opp.IsDisconnected,
 		}
-		opp := OpponentStatus{
-			PlayerName:     p.Name(),
-			CardsInHand:    p.CardsInHand(),
-			Castle:         NewCastle(p.Castle()),
-			IsAlly:         game.SameTeamFn(viewerIdx, i),
-			IsEliminated:   game.EliminatedPlayers[i],
-			IsDisconnected: game.DisconnectedPlayers[i],
+		for _, warrior := range opp.Field.Warriors {
+			o.Field = append(o.Field, NewFieldCard(warrior))
 		}
-		for _, warrior := range p.Field().Warriors() {
-			opp.Field = append(opp.Field, NewFieldCard(warrior))
-		}
-		gs.Opponents = append(gs.Opponents, opp)
+		gs.Opponents = append(gs.Opponents, o)
 	}
 }

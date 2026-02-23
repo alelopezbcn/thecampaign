@@ -48,20 +48,7 @@ func fromDomainCard(dc cards.Card) Card {
 		value = c.Health()
 
 	case cards.Weapon:
-		switch c.Type() {
-		case types.SwordWeaponType:
-			aCardType = CardTypeSword
-		case types.ArrowWeaponType:
-			aCardType = CardTypeArrow
-		case types.PoisonWeaponType:
-			aCardType = CardTypePoison
-		case types.SpecialPowerWeaponType:
-			aCardType = CardTypeSpecialPower
-		case types.HarpoonWeaponType:
-			aCardType = CardTypeHarpoon
-		case types.BloodRainWeaponType:
-			aCardType = CardTypeBloodRain
-		}
+		aCardType = weaponCardTypes[c.Type()]
 		value = c.DamageAmount()
 
 	case cards.Resource:

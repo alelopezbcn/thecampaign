@@ -1,5 +1,7 @@
 package gamestatus
 
+import "github.com/alelopezbcn/thecampaign/internal/domain/types"
+
 type CardType struct {
 	Name    string `json:"name"`
 	SubName string `json:"sub_name"`
@@ -22,3 +24,14 @@ var (
 	CardTypeHarpoon      = CardType{"Harpoon", "", "#c80000"}       // Dark Red
 	CardTypeBloodRain    = CardType{"BloodRain", "", "#FFA500"}     // Orange
 )
+
+// weaponCardTypes maps each WeaponType to its CardType for serialization.
+// Add one entry here when introducing a new weapon.
+var weaponCardTypes = map[types.WeaponType]CardType{
+	types.SwordWeaponType:        CardTypeSword,
+	types.ArrowWeaponType:        CardTypeArrow,
+	types.PoisonWeaponType:       CardTypePoison,
+	types.SpecialPowerWeaponType: CardTypeSpecialPower,
+	types.HarpoonWeaponType:      CardTypeHarpoon,
+	types.BloodRainWeaponType:    CardTypeBloodRain,
+}

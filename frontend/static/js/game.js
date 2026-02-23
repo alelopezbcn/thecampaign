@@ -53,6 +53,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el) el.textContent = data.version;
         })
         .catch(() => {});
+    fetch('/api/card-config')
+        .then(r => r.json())
+        .then(data => { cardConfig = data; })
+        .catch(() => {});
 });
 
 function checkUrlParams() {
@@ -2959,7 +2963,7 @@ function createCardElement(card, context) {
 
     // Add tooltip for new players
     const cardKey = (card.sub_type || card.type || '').toLowerCase();
-    const description = CARD_DESCRIPTIONS[cardKey];
+    const description = cardConfig[cardKey]?.description;
     if (description) {
         div.dataset.tooltip = description;
     }
@@ -3248,49 +3252,14 @@ function getCardStats(card, cardType) {
     return stats;
 }
 
-// Card description lookup (keyed by lowercase sub_type or type)
-const CARD_DESCRIPTIONS = {
-    'knight':       'A heavily armored warrior. Can attack with Swords. Special Power: Shield. Takes double damage from Poison.',
-    'archer':       'A swift ranged fighter. Can attack with Arrows. Special Power: Instant Kill. Takes double damage from Swords.',
-    'mage':         'A mystical spellcaster. Can attack with Poison. Special Power: Heal. Takes double damage from Arrows.',
-    'dragon':       'A mighty beast. Can attack with any weapon. Takes equal damage from all weapons. Instant kill takes 10 DMG. Cannot use Special Powers.',
-    'sword':        'Deals double damage to Archers. Used by Knights and Dragons. A value-1 Sword can also construct your castle. Can be traded.',
-    'arrow':        'Deals double damage to Mages. Used by Archers and Dragons. A value-1 Arrow can also construct your castle. Can be traded.',
-    'poison':       'Deals double damage to Knights. Used by Mages and Dragons. A value-1 Poison can also construct your castle. Can be traded.',
-    'resource':     'Spend gold to buy cards (2 coins = 1 card). A value-1 Gold can also construct your castle.',
-    'specialpower': 'Knight: shields an ally warrior. Archer: instantly kills an enemy. Mage: fully heals an ally. Cannot be used by Dragons.',
-    'harpoon':      'A powerful weapon that kills Dragons from one hit. Can only be used on Dragons.',
-    'bloodrain':    'A devastating attack that affects all enemy warriors. Deals 4 damage to all enemy warriors.',
-    'spy':          "Peek at an opponent's full hand or the top 5 cards of the deck.",
-    'thief':        "Steal a random card from an opponent's hand.",
-    'catapult':     'Destroy one gold resource from a constructed enemy castle, reducing their castle value.',
-};
-
-// Card image mapping: card key -> image filename
-// Key is derived from sub_type (e.g. "Knight") or type (e.g. "Resource") lowercased
-const CARD_IMAGES = {
-    'knight': 'knight.webp',
-    'archer': 'archer.webp',
-    'mage': 'mage.webp',
-    'dragon': 'dragon.webp',
-    'sword': 'sword.webp',
-    'arrow': 'arrow.webp',
-    'poison': 'poison.webp',
-    'resource': 'gold.webp',
-    'specialpower': 'specialpower.webp',
-    'harpoon': 'harpoon.webp',
-    'bloodrain': 'bloodrain.webp',
-    'spy': 'spy.webp',
-    'thief': 'thief.webp',
-    'catapult': 'catapult.webp',
-};
+// Card metadata fetched from /api/card-config on load.
+// Each entry: { description: string, image: string }
+let cardConfig = {};
 
 function getCardImageUrl(card) {
     const key = (card.sub_type || card.type || '').toLowerCase();
-    if (key && CARD_IMAGES[key]) {
-        return `/static/img/cards/${CARD_IMAGES[key]}`;
-    }
-    return null;
+    const image = cardConfig[key]?.image;
+    return image ? `/static/img/cards/${image}` : null;
 }
 
 function getCardStatBadge(card, cardType) {

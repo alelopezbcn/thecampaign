@@ -7,6 +7,13 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// skipGame declares the minimum Game surface needed by skipPhaseAction
+type skipGame interface {
+	GamePlayers
+	GameTurn
+	GameStatusProvider
+}
+
 type skipPhaseAction struct {
 	playerName string
 	nextPhase  types.PhaseType
@@ -36,6 +43,10 @@ func (a *skipPhaseAction) Validate(g Game) error {
 }
 
 func (a *skipPhaseAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *skipPhaseAction) execute(g skipGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &Result{Action: types.LastActionSkip}

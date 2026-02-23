@@ -10,12 +10,26 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// constructGame declares the minimum Game surface needed by constructAction
+type constructGame interface {
+	GamePlayers
+	GameTurn
+	GameHistory
+	GameStatusProvider
+}
+
+// constructTargetPlayer declares the minimum Player surface needed for ally castle construction
+type constructTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerCastle
+}
+
 type constructAction struct {
 	playerName       string
 	cardID           string
 	targetPlayerName string
 
-	targetPlayer board.Player
+	targetPlayer constructTargetPlayer
 	resourceCard cards.Card
 }
 
@@ -61,6 +75,10 @@ func (a *constructAction) Validate(g Game) error {
 }
 
 func (a *constructAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *constructAction) execute(g constructGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &Result{}
 
