@@ -1,29 +1,7 @@
-Steps to create a new weapon:
-- Add card in cards (ex bloodRain.go)
-- Add WeaponType (types.weapon)
-- Add the new card in dealer helper (helper.go)
-- Add card image (bloodrain.webp)
-- Create game_action (gameaction_bloodrain.go)
-- Add types.LastAction
-- Add handler call handleBloodRain (handlers.go)
-    - Add Payload (message.go)
-    - Add messageType (message.go)
-- Add CARD_DESCRIPTIONS && CARD_IMAGES (game.js)
-GameStatus:
-- Add Cardtype (cardtype.go)
-- Add code in fromDomainCard (card.go)
-- Constructor of HandCard
-
-
-
-
 cuando se presiona end turn no se ve el modal que indica que ha cambiado el turno
 fix unit tests
 
-Chequear que pasa cuando BloodRain mata mas de un Warrior. Algo raro hay, multiples warriors, uno protegido. De 4 mató a 2, a uno no le hizo daño y al otro le ha quitado el shield
 hay una animation para bloodRain, pero no se ve. Se ve solo la animacion comun de ataque a multiples warriors
-
-refactor messages.go and hub.go
 
 Play again no funciona
 

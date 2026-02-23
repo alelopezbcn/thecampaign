@@ -25,6 +25,15 @@ var (
 	CardTypeBloodRain    = CardType{"BloodRain", "", "#FFA500"}     // Orange
 )
 
+// warriorCardTypes maps each WarriorType to its CardType for serialization.
+// Add one entry here when introducing a new warrior.
+var warriorCardTypes = map[types.WarriorType]CardType{
+	types.KnightWarriorType: CardTypeKnight,
+	types.ArcherWarriorType: CardTypeArcher,
+	types.MageWarriorType:   CardTypeMage,
+	types.DragonWarriorType: CardTypeDragon,
+}
+
 // weaponCardTypes maps each WeaponType to its CardType for serialization.
 // Add one entry here when introducing a new weapon.
 var weaponCardTypes = map[types.WeaponType]CardType{
