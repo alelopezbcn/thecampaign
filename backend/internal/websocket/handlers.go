@@ -52,39 +52,39 @@ func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
 	})
 }
 
-func (h *Hub) handleHarpoon(client *Client, payload interface{}) {
+// handleWeaponAction is a shared handler for weapon card actions.
+// makeAction receives the parsed payload and returns the GameAction to execute.
+func (h *Hub) handleWeaponAction(
+	client *Client,
+	payload interface{},
+	makeAction func(playerName string, p WeaponPayload) gameactions.GameAction,
+) {
 	data, err := json.Marshal(payload)
 	if err != nil {
 		client.SendError("Invalid payload")
 		return
 	}
 
-	var p HarpoonPayload
+	var p WeaponPayload
 	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid harpoon payload")
+		client.SendError("Invalid weapon payload")
 		return
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewHarpoonAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
+		return g.ExecuteAction(makeAction(client.PlayerName, p))
+	})
+}
+
+func (h *Hub) handleHarpoon(client *Client, payload interface{}) {
+	h.handleWeaponAction(client, payload, func(name string, p WeaponPayload) gameactions.GameAction {
+		return gameactions.NewHarpoonAction(name, p.TargetPlayer, p.TargetID, p.WeaponID)
 	})
 }
 
 func (h *Hub) handleBloodRain(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
-		return
-	}
-
-	var p BloodRainPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid blood rain payload")
-		return
-	}
-
-	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewBloodRainAction(client.PlayerName, p.TargetPlayer, p.WeaponID))
+	h.handleWeaponAction(client, payload, func(name string, p WeaponPayload) gameactions.GameAction {
+		return gameactions.NewBloodRainAction(name, p.TargetPlayer, p.WeaponID)
 	})
 }
 
