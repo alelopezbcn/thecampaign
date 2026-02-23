@@ -6,6 +6,7 @@ mocks:
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/discardpile.go -destination ./test/mocks/discardpile_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/field.go -destination ./test/mocks/field_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/hand.go -destination ./test/mocks/hand_mocks.go
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/board.go -destination ./test/mocks/board_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/player.go -destination ./test/mocks/player_mocks.go
 # cards package
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/attackablebase.go -destination ./test/mocks/attackable_mocks.go
@@ -22,6 +23,7 @@ mocks:
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/weapons.go -destination ./test/mocks/weapon_mocks.go
 # gameactions package
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/gameactions/gameaction.go -destination ./test/mocks/gameaction_mocks.go
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/gameactions/game_roles.go -destination ./test/mocks/gameroles_mocks.go
 # websocket package
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package websocket -source ./internal/websocket/hub.go -destination ./internal/websocket/hubgame_mocks.go
 

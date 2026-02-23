@@ -187,6 +187,20 @@ func (mr *MockWarriorMockRecorder) IsProtected() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockWarrior)(nil).IsProtected))
 }
 
+// Name mocks base method.
+func (m *MockWarrior) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockWarriorMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockWarrior)(nil).Name))
+}
+
 // Protect mocks base method.
 func (m *MockWarrior) Protect(powerCard cards.SpecialPower) error {
 	m.ctrl.T.Helper()

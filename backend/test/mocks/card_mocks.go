@@ -79,6 +79,20 @@ func (mr *MockCardMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockCard)(nil).GetID))
 }
 
+// Name mocks base method.
+func (m *MockCard) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockCardMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockCard)(nil).Name))
+}
+
 // MockCardMovedToPileObserver is a mock of CardMovedToPileObserver interface.
 type MockCardMovedToPileObserver struct {
 	ctrl     *gomock.Controller

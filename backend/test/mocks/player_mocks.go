@@ -17,6 +17,384 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockPlayerIdentity is a mock of PlayerIdentity interface.
+type MockPlayerIdentity struct {
+	ctrl     *gomock.Controller
+	recorder *MockPlayerIdentityMockRecorder
+}
+
+// MockPlayerIdentityMockRecorder is the mock recorder for MockPlayerIdentity.
+type MockPlayerIdentityMockRecorder struct {
+	mock *MockPlayerIdentity
+}
+
+// NewMockPlayerIdentity creates a new mock instance.
+func NewMockPlayerIdentity(ctrl *gomock.Controller) *MockPlayerIdentity {
+	mock := &MockPlayerIdentity{ctrl: ctrl}
+	mock.recorder = &MockPlayerIdentityMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPlayerIdentity) EXPECT() *MockPlayerIdentityMockRecorder {
+	return m.recorder
+}
+
+// Idx mocks base method.
+func (m *MockPlayerIdentity) Idx() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Idx")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Idx indicates an expected call of Idx.
+func (mr *MockPlayerIdentityMockRecorder) Idx() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Idx", reflect.TypeOf((*MockPlayerIdentity)(nil).Idx))
+}
+
+// Name mocks base method.
+func (m *MockPlayerIdentity) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockPlayerIdentityMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockPlayerIdentity)(nil).Name))
+}
+
+// MockPlayerHand is a mock of PlayerHand interface.
+type MockPlayerHand struct {
+	ctrl     *gomock.Controller
+	recorder *MockPlayerHandMockRecorder
+}
+
+// MockPlayerHandMockRecorder is the mock recorder for MockPlayerHand.
+type MockPlayerHandMockRecorder struct {
+	mock *MockPlayerHand
+}
+
+// NewMockPlayerHand creates a new mock instance.
+func NewMockPlayerHand(ctrl *gomock.Controller) *MockPlayerHand {
+	mock := &MockPlayerHand{ctrl: ctrl}
+	mock.recorder = &MockPlayerHandMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPlayerHand) EXPECT() *MockPlayerHandMockRecorder {
+	return m.recorder
+}
+
+// CanTakeCards mocks base method.
+func (m *MockPlayerHand) CanTakeCards(count int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanTakeCards", count)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanTakeCards indicates an expected call of CanTakeCards.
+func (mr *MockPlayerHandMockRecorder) CanTakeCards(count any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanTakeCards", reflect.TypeOf((*MockPlayerHand)(nil).CanTakeCards), count)
+}
+
+// CardsInHand mocks base method.
+func (m *MockPlayerHand) CardsInHand() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CardsInHand")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// CardsInHand indicates an expected call of CardsInHand.
+func (mr *MockPlayerHandMockRecorder) CardsInHand() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardsInHand", reflect.TypeOf((*MockPlayerHand)(nil).CardsInHand))
+}
+
+// GetCardFromHand mocks base method.
+func (m *MockPlayerHand) GetCardFromHand(cardID string) (cards.Card, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardFromHand", cardID)
+	ret0, _ := ret[0].(cards.Card)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetCardFromHand indicates an expected call of GetCardFromHand.
+func (mr *MockPlayerHandMockRecorder) GetCardFromHand(cardID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardFromHand", reflect.TypeOf((*MockPlayerHand)(nil).GetCardFromHand), cardID)
+}
+
+// Hand mocks base method.
+func (m *MockPlayerHand) Hand() board.Hand {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Hand")
+	ret0, _ := ret[0].(board.Hand)
+	return ret0
+}
+
+// Hand indicates an expected call of Hand.
+func (mr *MockPlayerHandMockRecorder) Hand() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hand", reflect.TypeOf((*MockPlayerHand)(nil).Hand))
+}
+
+// RemoveFromHand mocks base method.
+func (m *MockPlayerHand) RemoveFromHand(cardIDs ...string) ([]cards.Card, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{}
+	for _, a := range cardIDs {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "RemoveFromHand", varargs...)
+	ret0, _ := ret[0].([]cards.Card)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveFromHand indicates an expected call of RemoveFromHand.
+func (mr *MockPlayerHandMockRecorder) RemoveFromHand(cardIDs ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveFromHand", reflect.TypeOf((*MockPlayerHand)(nil).RemoveFromHand), cardIDs...)
+}
+
+// TakeCards mocks base method.
+func (m *MockPlayerHand) TakeCards(cards ...cards.Card) bool {
+	m.ctrl.T.Helper()
+	varargs := []any{}
+	for _, a := range cards {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "TakeCards", varargs...)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// TakeCards indicates an expected call of TakeCards.
+func (mr *MockPlayerHandMockRecorder) TakeCards(cards ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "TakeCards", reflect.TypeOf((*MockPlayerHand)(nil).TakeCards), cards...)
+}
+
+// MockPlayerField is a mock of PlayerField interface.
+type MockPlayerField struct {
+	ctrl     *gomock.Controller
+	recorder *MockPlayerFieldMockRecorder
+}
+
+// MockPlayerFieldMockRecorder is the mock recorder for MockPlayerField.
+type MockPlayerFieldMockRecorder struct {
+	mock *MockPlayerField
+}
+
+// NewMockPlayerField creates a new mock instance.
+func NewMockPlayerField(ctrl *gomock.Controller) *MockPlayerField {
+	mock := &MockPlayerField{ctrl: ctrl}
+	mock.recorder = &MockPlayerFieldMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPlayerField) EXPECT() *MockPlayerFieldMockRecorder {
+	return m.recorder
+}
+
+// Field mocks base method.
+func (m *MockPlayerField) Field() board.Field {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Field")
+	ret0, _ := ret[0].(board.Field)
+	return ret0
+}
+
+// Field indicates an expected call of Field.
+func (mr *MockPlayerFieldMockRecorder) Field() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Field", reflect.TypeOf((*MockPlayerField)(nil).Field))
+}
+
+// GetCardFromField mocks base method.
+func (m *MockPlayerField) GetCardFromField(cardID string) (cards.Card, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardFromField", cardID)
+	ret0, _ := ret[0].(cards.Card)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetCardFromField indicates an expected call of GetCardFromField.
+func (mr *MockPlayerFieldMockRecorder) GetCardFromField(cardID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardFromField", reflect.TypeOf((*MockPlayerField)(nil).GetCardFromField), cardID)
+}
+
+// HasWarriorsInHand mocks base method.
+func (m *MockPlayerField) HasWarriorsInHand() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasWarriorsInHand")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasWarriorsInHand indicates an expected call of HasWarriorsInHand.
+func (mr *MockPlayerFieldMockRecorder) HasWarriorsInHand() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorsInHand", reflect.TypeOf((*MockPlayerField)(nil).HasWarriorsInHand))
+}
+
+// MoveCardToField mocks base method.
+func (m *MockPlayerField) MoveCardToField(cardID string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "MoveCardToField", cardID)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// MoveCardToField indicates an expected call of MoveCardToField.
+func (mr *MockPlayerFieldMockRecorder) MoveCardToField(cardID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCardToField", reflect.TypeOf((*MockPlayerField)(nil).MoveCardToField), cardID)
+}
+
+// MockPlayerCastle is a mock of PlayerCastle interface.
+type MockPlayerCastle struct {
+	ctrl     *gomock.Controller
+	recorder *MockPlayerCastleMockRecorder
+}
+
+// MockPlayerCastleMockRecorder is the mock recorder for MockPlayerCastle.
+type MockPlayerCastleMockRecorder struct {
+	mock *MockPlayerCastle
+}
+
+// NewMockPlayerCastle creates a new mock instance.
+func NewMockPlayerCastle(ctrl *gomock.Controller) *MockPlayerCastle {
+	mock := &MockPlayerCastle{ctrl: ctrl}
+	mock.recorder = &MockPlayerCastleMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPlayerCastle) EXPECT() *MockPlayerCastleMockRecorder {
+	return m.recorder
+}
+
+// CanBuy mocks base method.
+func (m *MockPlayerCastle) CanBuy() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBuy")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBuy indicates an expected call of CanBuy.
+func (mr *MockPlayerCastleMockRecorder) CanBuy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBuy", reflect.TypeOf((*MockPlayerCastle)(nil).CanBuy))
+}
+
+// CanBuyWith mocks base method.
+func (m *MockPlayerCastle) CanBuyWith(resource cards.Resource) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBuyWith", resource)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBuyWith indicates an expected call of CanBuyWith.
+func (mr *MockPlayerCastleMockRecorder) CanBuyWith(resource any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBuyWith", reflect.TypeOf((*MockPlayerCastle)(nil).CanBuyWith), resource)
+}
+
+// CanConstruct mocks base method.
+func (m *MockPlayerCastle) CanConstruct() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanConstruct")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanConstruct indicates an expected call of CanConstruct.
+func (mr *MockPlayerCastleMockRecorder) CanConstruct() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockPlayerCastle)(nil).CanConstruct))
+}
+
+// Castle mocks base method.
+func (m *MockPlayerCastle) Castle() board.Castle {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Castle")
+	ret0, _ := ret[0].(board.Castle)
+	return ret0
+}
+
+// Castle indicates an expected call of Castle.
+func (mr *MockPlayerCastleMockRecorder) Castle() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Castle", reflect.TypeOf((*MockPlayerCastle)(nil).Castle))
+}
+
+// MockPlayerCombat is a mock of PlayerCombat interface.
+type MockPlayerCombat struct {
+	ctrl     *gomock.Controller
+	recorder *MockPlayerCombatMockRecorder
+}
+
+// MockPlayerCombatMockRecorder is the mock recorder for MockPlayerCombat.
+type MockPlayerCombatMockRecorder struct {
+	mock *MockPlayerCombat
+}
+
+// NewMockPlayerCombat creates a new mock instance.
+func NewMockPlayerCombat(ctrl *gomock.Controller) *MockPlayerCombat {
+	mock := &MockPlayerCombat{ctrl: ctrl}
+	mock.recorder = &MockPlayerCombatMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockPlayerCombat) EXPECT() *MockPlayerCombatMockRecorder {
+	return m.recorder
+}
+
+// CanAttack mocks base method.
+func (m *MockPlayerCombat) CanAttack() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanAttack")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanAttack indicates an expected call of CanAttack.
+func (mr *MockPlayerCombatMockRecorder) CanAttack() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanAttack", reflect.TypeOf((*MockPlayerCombat)(nil).CanAttack))
+}
+
+// CanTradeCards mocks base method.
+func (m *MockPlayerCombat) CanTradeCards() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanTradeCards")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanTradeCards indicates an expected call of CanTradeCards.
+func (mr *MockPlayerCombatMockRecorder) CanTradeCards() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanTradeCards", reflect.TypeOf((*MockPlayerCombat)(nil).CanTradeCards))
+}
+
 // MockPlayer is a mock of Player interface.
 type MockPlayer struct {
 	ctrl     *gomock.Controller

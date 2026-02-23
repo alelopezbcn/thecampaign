@@ -93,6 +93,20 @@ func (mr *MockResourceMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockResource)(nil).GetID))
 }
 
+// Name mocks base method.
+func (m *MockResource) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockResourceMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockResource)(nil).Name))
+}
+
 // Value mocks base method.
 func (m *MockResource) Value() int {
 	m.ctrl.T.Helper()

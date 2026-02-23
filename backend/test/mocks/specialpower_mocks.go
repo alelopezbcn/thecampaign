@@ -80,6 +80,20 @@ func (mr *MockSpecialPowerMockRecorder) BeAttacked(weapon any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockSpecialPower)(nil).BeAttacked), weapon)
 }
 
+// CanBeUsedWith mocks base method.
+func (m *MockSpecialPower) CanBeUsedWith(field cards.FieldChecker) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeUsedWith", field)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeUsedWith indicates an expected call of CanBeUsedWith.
+func (mr *MockSpecialPowerMockRecorder) CanBeUsedWith(field any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeUsedWith", reflect.TypeOf((*MockSpecialPower)(nil).CanBeUsedWith), field)
+}
+
 // CanConstruct mocks base method.
 func (m *MockSpecialPower) CanConstruct() bool {
 	m.ctrl.T.Helper()
@@ -174,6 +188,20 @@ func (m *MockSpecialPower) MultiplierFactor(target cards.Warrior) int {
 func (mr *MockSpecialPowerMockRecorder) MultiplierFactor(target any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockSpecialPower)(nil).MultiplierFactor), target)
+}
+
+// Name mocks base method.
+func (m *MockSpecialPower) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockSpecialPowerMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockSpecialPower)(nil).Name))
 }
 
 // ReceiveDamage mocks base method.
