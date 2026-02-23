@@ -34,6 +34,10 @@ func (s *weaponBase) CanConstruct() bool {
 	return s.DamageAmount() == 1
 }
 
+func (s *weaponBase) CanBeUsedWith(_ FieldChecker) bool {
+	return true
+}
+
 func (s *weaponBase) String() string {
 	return fmt.Sprintf("%s (%d)", s.weaponType, s.damageAmount)
 }

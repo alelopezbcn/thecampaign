@@ -4,12 +4,26 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// FieldChecker is the minimal field interface needed by weapons to validate
+// whether the player's current field supports using them.
+// board.Field satisfies this interface.
+type FieldChecker interface {
+	HasKnight() bool
+	HasArcher() bool
+	HasMage() bool
+	HasDragon() bool
+}
+
 type Weapon interface {
 	Card
 	DamageAmount() int
 	Type() types.WeaponType
 	CanConstruct() bool
 	MultiplierFactor(target Warrior) int
+	// CanBeUsedWith returns true if the player's field supports this weapon.
+	// Special weapons (Harpoon, BloodRain, etc.) always return true here since
+	// they have their own game actions with dedicated validation.
+	CanBeUsedWith(field FieldChecker) bool
 	String() string
 }
 
@@ -28,8 +42,11 @@ func (s *sword) MultiplierFactor(target Warrior) int {
 	if target.Type() == types.ArcherWarriorType {
 		return 2
 	}
-
 	return 1
+}
+
+func (s *sword) CanBeUsedWith(field FieldChecker) bool {
+	return field.HasKnight() || field.HasDragon()
 }
 
 type arrow struct {
@@ -47,8 +64,11 @@ func (s *arrow) MultiplierFactor(target Warrior) int {
 	if target.Type() == types.MageWarriorType {
 		return 2
 	}
-
 	return 1
+}
+
+func (s *arrow) CanBeUsedWith(field FieldChecker) bool {
+	return field.HasArcher() || field.HasDragon()
 }
 
 type poison struct {
@@ -68,6 +88,9 @@ func (s *poison) MultiplierFactor(target Warrior) int {
 	if target.Type() == types.KnightWarriorType {
 		return 2
 	}
-
 	return 1
+}
+
+func (s *poison) CanBeUsedWith(field FieldChecker) bool {
+	return field.HasMage() || field.HasDragon()
 }
