@@ -41,7 +41,9 @@ func (h *field) AddWarriors(cards ...cards.Warrior) {
 }
 
 func (h *field) Warriors() []cards.Warrior {
-	return h.cards
+	result := make([]cards.Warrior, len(h.cards))
+	copy(result, h.cards)
+	return result
 }
 
 func (h *field) GetWarrior(cardID string) (cards.Warrior, bool) {

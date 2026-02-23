@@ -34,7 +34,7 @@ type game struct {
 	history             []types.HistoryLine
 	historyTracker      int
 	lastResult          gameactions.Result
-	winState            types.WinState
+	winState            winState
 	gameStartedAt       time.Time
 }
 

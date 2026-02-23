@@ -436,7 +436,7 @@ func TestGame_IsGameOver(t *testing.T) {
 
 	t.Run("Returns true after game ends", func(t *testing.T) {
 		g := &game{
-			winState: WinState{GameOver: true, Winner: "Player1"},
+			winState: winState{GameOver: true, Winner: "Player1"},
 		}
 
 		gameOver, winner := g.IsGameOver()

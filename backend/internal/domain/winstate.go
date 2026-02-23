@@ -1,6 +1,6 @@
 package domain
 
-type WinState struct {
+type winState struct {
 	GameOver  bool
 	Winner    string
 	WinnerIdx int
