@@ -10,6 +10,15 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// buyGame declares the minimum Game surface needed by buyAction
+type buyGame interface {
+	GamePlayers
+	GameTurn
+	GameCards
+	GameHistory
+	GameStatusProvider
+}
+
 type buyAction struct {
 	playerName string
 	cardID     string
@@ -46,6 +55,10 @@ func (a *buyAction) Validate(g Game) error {
 }
 
 func (a *buyAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *buyAction) execute(g buyGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &Result{}

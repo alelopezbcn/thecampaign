@@ -8,6 +8,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// specialPowerGame declares the minimum Game surface needed by specialPowerAction
+type specialPowerGame interface {
+	GamePlayers
+	GameTurn
+	GameHistory
+	GameStatusProvider
+}
+
 type specialPowerAction struct {
 	playerName string
 	userID     string
@@ -108,6 +116,10 @@ func (a *specialPowerAction) Validate(g Game) error {
 }
 
 func (a *specialPowerAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := a.specialPower.Use(a.usedBy, a.usedOn); err != nil {

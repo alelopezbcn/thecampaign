@@ -9,6 +9,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// harpoonGame declares the minimum Game surface needed by harpoonAction
+type harpoonGame interface {
+	GamePlayers
+	GameTurn
+	GameHistory
+	GameStatusProvider
+}
+
 type harpoonAction struct {
 	playerName       string
 	targetPlayerName string
@@ -63,6 +71,10 @@ func (a *harpoonAction) Validate(g Game) error {
 }
 
 func (a *harpoonAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *harpoonAction) execute(g harpoonGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	if err := a.harpoon.Attack(a.dragon); err != nil {

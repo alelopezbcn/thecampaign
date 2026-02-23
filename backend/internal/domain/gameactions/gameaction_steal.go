@@ -10,6 +10,15 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// stealGame declares the minimum Game surface needed by stealAction
+type stealGame interface {
+	GamePlayers
+	GameTurn
+	GameCards
+	GameHistory
+	GameStatusProvider
+}
+
 type stealAction struct {
 	playerName       string
 	targetPlayerName string
@@ -58,6 +67,10 @@ func (a *stealAction) Validate(g Game) error {
 }
 
 func (a *stealAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *stealAction) execute(g stealGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	result := &Result{}

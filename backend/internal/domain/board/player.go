@@ -7,25 +7,51 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type Player interface {
+// PlayerIdentity — name and index
+type PlayerIdentity interface {
 	Name() string
 	Idx() int
-	TakeCards(cards ...cards.Card) bool
-	MoveCardToField(cardID string) error
-	RemoveFromHand(cardIDs ...string) ([]cards.Card, error)
+}
+
+// PlayerHand — hand card management
+type PlayerHand interface {
 	Hand() Hand
-	Field() Field
-	CanTakeCards(count int) bool
 	CardsInHand() int
+	CanTakeCards(count int) bool
+	TakeCards(cards ...cards.Card) bool
+	RemoveFromHand(cardIDs ...string) ([]cards.Card, error)
 	GetCardFromHand(cardID string) (cards.Card, bool)
+}
+
+// PlayerField — field card management
+type PlayerField interface {
+	Field() Field
 	GetCardFromField(cardID string) (cards.Card, bool)
-	CanAttack() bool
+	MoveCardToField(cardID string) error
+	HasWarriorsInHand() bool
+}
+
+// PlayerCastle — castle and economy
+type PlayerCastle interface {
+	Castle() Castle
+	CanConstruct() bool
 	CanBuy() bool
 	CanBuyWith(resource cards.Resource) bool
-	CanConstruct() bool
-	HasWarriorsInHand() bool
+}
+
+// PlayerCombat — action eligibility
+type PlayerCombat interface {
+	CanAttack() bool
 	CanTradeCards() bool
-	Castle() Castle
+}
+
+// Player composes all roles
+type Player interface {
+	PlayerIdentity
+	PlayerHand
+	PlayerField
+	PlayerCastle
+	PlayerCombat
 }
 
 type player struct {

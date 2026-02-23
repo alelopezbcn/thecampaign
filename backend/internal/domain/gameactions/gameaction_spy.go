@@ -10,6 +10,16 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// spyGame declares the minimum Game surface needed by spyAction
+type spyGame interface {
+	GamePlayers
+	GameTurn
+	GameCards
+	GameBoard
+	GameHistory
+	GameStatusProvider
+}
+
 type spyAction struct {
 	playerName       string
 	targetPlayerName string
@@ -45,6 +55,10 @@ func (a *spyAction) Validate(g Game) error {
 }
 
 func (a *spyAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *spyAction) execute(g spyGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
 	var spiedCards []cards.Card

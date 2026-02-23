@@ -17,7 +17,8 @@
       "Bash(cmd.exe /c \"cd /d c:\\\\temp\\\\projects\\\\TheCampaign\\\\backend && go test -v ./internal/domain/ 1>c:\\\\temp\\\\test_output.txt 2>&1 && type c:\\\\temp\\\\test_output.txt\")",
       "Bash(dir:*)",
       "Bash(go vet:*)",
-      "Bash(pushd:*)"
+      "Bash(pushd:*)",
+      "Bash(ls:*)"
     ]
   }
 }

@@ -9,6 +9,14 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+// bloodRainGame declares the minimum Game surface needed by bloodRainAction
+type bloodRainGame interface {
+	GamePlayers
+	GameTurn
+	GameHistory
+	GameStatusProvider
+}
+
 type bloodRainAction struct {
 	playerName       string
 	targetPlayerName string
@@ -57,6 +65,10 @@ func (a *bloodRainAction) Validate(g Game) error {
 }
 
 func (a *bloodRainAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+	return a.execute(g)
+}
+
+func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.GameStatus, error) {
 	if err := a.bloodRain.Attack(a.targets); err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("blood rain action failed: %w", err)
