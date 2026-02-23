@@ -8,14 +8,25 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 )
 
-type Castle interface {
-	Construct(card cards.Card) error
+// CastleReader — read-only castle access
+type CastleReader interface {
 	IsConstructed() bool
 	Value() int
 	ResourceCardsCount() int
 	ResourceCards() []cards.Resource
-	RemoveGold(position int) (cards.Resource, error)
 	CanBeAttacked() bool
+}
+
+// CastleMutator — castle mutation
+type CastleMutator interface {
+	Construct(card cards.Card) error
+	RemoveGold(position int) (cards.Resource, error)
+}
+
+// Castle composes read and write access
+type Castle interface {
+	CastleReader
+	CastleMutator
 }
 
 type CastleCompletionObserver interface {

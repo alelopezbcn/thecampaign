@@ -19,12 +19,18 @@ type moveWarriorGame interface {
 	GameStatusProvider
 }
 
+// moveWarriorTargetPlayer declares the minimum Player surface needed by moveWarriorAction
+type moveWarriorTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerField
+}
+
 type moveWarriorAction struct {
 	playerName       string
 	warriorID        string
 	targetPlayerName string
 
-	targetPlayer board.Player
+	targetPlayer moveWarriorTargetPlayer
 	warrior      cards.Warrior
 	currentPhase types.PhaseType
 }

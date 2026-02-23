@@ -19,12 +19,18 @@ type stealGame interface {
 	GameStatusProvider
 }
 
+// stealTargetPlayer declares the minimum Player surface needed by stealAction
+type stealTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerHand
+}
+
 type stealAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
 
-	targetPlayer          board.Player
+	targetPlayer          stealTargetPlayer
 	thief                 cards.Thief
 	targetPlayerHandCards []cards.Card
 }

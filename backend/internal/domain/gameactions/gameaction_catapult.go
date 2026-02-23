@@ -19,13 +19,19 @@ type catapultGame interface {
 	GameStatusProvider
 }
 
+// catapultTargetPlayer declares the minimum Player surface needed by catapultAction
+type catapultTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerCastle
+}
+
 type catapultAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
 
 	catapult     cards.Catapult
-	targetPlayer board.Player
+	targetPlayer catapultTargetPlayer
 	weapon       cards.Weapon
 }
 

@@ -11,13 +11,24 @@ const MaxCardsInHand = 7
 
 var ErrHandLimitExceeded = errors.New("hand limit exceeded")
 
-type Hand interface {
+// HandReader — read-only hand access
+type HandReader interface {
 	ShowCards() []cards.Card
 	GetCard(cardID string) (cards.Card, bool)
-	AddCards(cards ...cards.Card) error
-	RemoveCard(card cards.Card) bool
 	CanAddCards(count int) bool
 	Count() int
+}
+
+// HandMutator — hand mutation
+type HandMutator interface {
+	AddCards(cards ...cards.Card) error
+	RemoveCard(card cards.Card) bool
+}
+
+// Hand composes read and write access
+type Hand interface {
+	HandReader
+	HandMutator
 }
 
 type hand struct {

@@ -18,12 +18,18 @@ type constructGame interface {
 	GameStatusProvider
 }
 
+// constructTargetPlayer declares the minimum Player surface needed for ally castle construction
+type constructTargetPlayer interface {
+	board.PlayerIdentity
+	board.PlayerCastle
+}
+
 type constructAction struct {
 	playerName       string
 	cardID           string
 	targetPlayerName string
 
-	targetPlayer board.Player
+	targetPlayer constructTargetPlayer
 	resourceCard cards.Card
 }
 

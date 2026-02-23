@@ -7,15 +7,26 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type Field interface {
+// FieldReader — read-only field access
+type FieldReader interface {
 	Warriors() []cards.Warrior
 	GetWarrior(cardID string) (cards.Warrior, bool)
-	AddWarriors(cards ...cards.Warrior)
-	RemoveWarrior(card cards.Warrior) bool
 	HasArcher() bool
 	HasMage() bool
 	HasKnight() bool
 	HasDragon() bool
+}
+
+// FieldMutator — field mutation
+type FieldMutator interface {
+	AddWarriors(cards ...cards.Warrior)
+	RemoveWarrior(card cards.Warrior) bool
+}
+
+// Field composes read and write access
+type Field interface {
+	FieldReader
+	FieldMutator
 }
 
 type FieldWithoutWarriorsObserver interface {
