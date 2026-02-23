@@ -6,6 +6,7 @@ import (
 
 type Card interface {
 	GetID() string
+	Name() string
 	AddCardMovedToPileObserver(observer CardMovedToPileObserver)
 	GetCardMovedToPileObserver() CardMovedToPileObserver
 }
@@ -34,6 +35,10 @@ func newCardBase(id string, name string) *cardBase {
 
 func (c *cardBase) GetID() string {
 	return c.id
+}
+
+func (c *cardBase) Name() string {
+	return c.name
 }
 func (c *cardBase) AddCardMovedToPileObserver(observer CardMovedToPileObserver) {
 	c.cardMovedToPileObserver = observer

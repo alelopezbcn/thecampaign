@@ -25,6 +25,14 @@ var (
 	CardTypeBloodRain    = CardType{"BloodRain", "", "#FFA500"}     // Orange
 )
 
+// zeroValueCardTypes maps the card Name() to its CardType for singleton cards
+// that always have value 0. Add one entry here when introducing a new such card.
+var zeroValueCardTypes = map[string]CardType{
+	"Spy":      CardTypeSpy,
+	"Thief":    CardTypeThief,
+	"Catapult": CardTypeCatapult,
+}
+
 // warriorCardTypes maps each WarriorType to its CardType for serialization.
 // Add one entry here when introducing a new warrior.
 var warriorCardTypes = map[types.WarriorType]CardType{

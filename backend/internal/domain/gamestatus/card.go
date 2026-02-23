@@ -45,17 +45,8 @@ func fromDomainCard(dc cards.Card) Card {
 		aCardType = CardTypeResource
 		value = c.Value()
 
-	case cards.Spy:
-		aCardType = CardTypeSpy
-		value = 0
-
-	case cards.Thief:
-		aCardType = CardTypeThief
-		value = 0
-
-	case cards.Catapult:
-		aCardType = CardTypeCatapult
-		value = 0
+	default:
+		aCardType = zeroValueCardTypes[dc.Name()]
 	}
 
 	return newCard(cardID, aCardType, value)
