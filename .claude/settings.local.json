@@ -18,7 +18,8 @@
       "Bash(dir:*)",
       "Bash(go vet:*)",
       "Bash(pushd:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(head:*)"
     ]
   }
 }

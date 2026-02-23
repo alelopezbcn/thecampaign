@@ -1,7 +1,6 @@
 package gamestatus
 
 import (
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -45,8 +44,8 @@ func NewWarriorHandCard(warrior cards.Warrior) HandCard {
 		warrior.Health(), []string{}, true)
 }
 
-func NewWeaponHandCard(weapon cards.Weapon, myField board.Field,
-	enemyFields []board.Field, castleConstructed bool,
+func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
+	enemyFields []FieldInput, castleConstructed bool,
 	action types.PhaseType,
 ) HandCard {
 	canBeUsed := false
@@ -55,13 +54,13 @@ func NewWeaponHandCard(weapon cards.Weapon, myField board.Field,
 	switch weapon.Type() {
 	case types.SwordWeaponType:
 		aCardType = CardTypeSword
-		canBeUsed = myField.HasKnight() || myField.HasDragon()
+		canBeUsed = myField.HasKnight || myField.HasDragon
 	case types.ArrowWeaponType:
 		aCardType = CardTypeArrow
-		canBeUsed = myField.HasArcher() || myField.HasDragon()
+		canBeUsed = myField.HasArcher || myField.HasDragon
 	case types.PoisonWeaponType:
 		aCardType = CardTypePoison
-		canBeUsed = myField.HasMage() || myField.HasDragon()
+		canBeUsed = myField.HasMage || myField.HasDragon
 	}
 
 	if action != types.PhaseTypeConstruct &&
@@ -84,7 +83,7 @@ func NewWeaponHandCard(weapon cards.Weapon, myField board.Field,
 	attackableIDs := []string{}
 	// Build attackableIDs from ALL enemy fields
 	for _, ef := range enemyFields {
-		for _, v := range ef.Warriors() {
+		for _, v := range ef.Warriors {
 			mults[v.GetID()] = weapon.MultiplierFactor(v)
 			attackableIDs = append(attackableIDs, v.GetID())
 		}
@@ -99,7 +98,7 @@ func NewWeaponHandCard(weapon cards.Weapon, myField board.Field,
 }
 
 func NewSpecialPowerHandCard(cardID string,
-	myField board.Field, allyFields []board.Field, enemyFields []board.Field,
+	myField FieldInput, allyFields []FieldInput, enemyFields []FieldInput,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
@@ -109,16 +108,16 @@ func NewSpecialPowerHandCard(cardID string,
 
 	canBeUsedOnIDs := []string{}
 
-	if myField.HasArcher() {
+	if myField.HasArcher {
 		for _, ef := range enemyFields {
-			for _, warrior := range ef.Warriors() {
+			for _, warrior := range ef.Warriors {
 				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 			}
 		}
 	}
 
-	if myField.HasKnight() {
-		for _, warrior := range myField.Warriors() {
+	if myField.HasKnight {
+		for _, warrior := range myField.Warriors {
 			isProtected, _ := warrior.IsProtected()
 			if warrior.Type() == types.DragonWarriorType || isProtected {
 				continue
@@ -126,7 +125,7 @@ func NewSpecialPowerHandCard(cardID string,
 			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 		}
 		for _, af := range allyFields {
-			for _, warrior := range af.Warriors() {
+			for _, warrior := range af.Warriors {
 				isProtected, _ := warrior.IsProtected()
 				if warrior.Type() == types.DragonWarriorType || isProtected {
 					continue
@@ -136,15 +135,15 @@ func NewSpecialPowerHandCard(cardID string,
 		}
 	}
 
-	if myField.HasMage() {
-		for _, warrior := range myField.Warriors() {
+	if myField.HasMage {
+		for _, warrior := range myField.Warriors {
 			if warrior.Type() == types.DragonWarriorType || !warrior.IsDamaged() {
 				continue
 			}
 			canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 		}
 		for _, af := range allyFields {
-			for _, warrior := range af.Warriors() {
+			for _, warrior := range af.Warriors {
 				if warrior.Type() == types.DragonWarriorType || !warrior.IsDamaged() {
 					continue
 				}
@@ -157,7 +156,7 @@ func NewSpecialPowerHandCard(cardID string,
 		0, canBeUsedOnIDs, true)
 }
 
-func NewHarpoonHandCard(cardID string, enemyFields []board.Field,
+func NewHarpoonHandCard(cardID string, enemyFields []FieldInput,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
@@ -169,7 +168,7 @@ func NewHarpoonHandCard(cardID string, enemyFields []board.Field,
 	canBeUsedOnIDs := []string{}
 
 	for _, ef := range enemyFields {
-		for _, warrior := range ef.Warriors() {
+		for _, warrior := range ef.Warriors {
 			if warrior.Type() == types.DragonWarriorType {
 				canBeUsedOnIDs = append(canBeUsedOnIDs, warrior.GetID())
 			}
@@ -181,7 +180,7 @@ func NewHarpoonHandCard(cardID string, enemyFields []board.Field,
 	return hc
 }
 
-func NewBloodRainHandCard(cardID string, enemyFields []board.Field,
+func NewBloodRainHandCard(cardID string, enemyFields []FieldInput,
 	action types.PhaseType,
 ) HandCard {
 	if action != types.PhaseTypeAttack {
@@ -192,7 +191,7 @@ func NewBloodRainHandCard(cardID string, enemyFields []board.Field,
 
 	hasTargets := false
 	for _, ef := range enemyFields {
-		if len(ef.Warriors()) > 0 {
+		if len(ef.Warriors) > 0 {
 			hasTargets = true
 			break
 		}
