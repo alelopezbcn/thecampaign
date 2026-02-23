@@ -1,4 +1,4 @@
-package cards
+package cards_test
 
 import (
 	"testing"

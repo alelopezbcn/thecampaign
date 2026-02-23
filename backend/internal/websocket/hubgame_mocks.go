@@ -13,7 +13,8 @@ import (
 	reflect "reflect"
 
 	board "github.com/alelopezbcn/thecampaign/internal/domain/board"
-	game "github.com/alelopezbcn/thecampaign/internal/domain/game"
+	cards "github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	gameactions "github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	gamestatus "github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	gomock "go.uber.org/mock/gomock"
 )
@@ -70,7 +71,7 @@ func (mr *MockHubGameMockRecorder) DisconnectPlayer(playerName any) *gomock.Call
 }
 
 // ExecuteAction mocks base method.
-func (m *MockHubGame) ExecuteAction(action game.GameAction) (gamestatus.GameStatus, error) {
+func (m *MockHubGame) ExecuteAction(action gameactions.GameAction) (gamestatus.GameStatus, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ExecuteAction", action)
 	ret0, _ := ret[0].(gamestatus.GameStatus)
@@ -126,15 +127,20 @@ func (mr *MockHubGameMockRecorder) ReconnectPlayer(name any) *gomock.Call {
 }
 
 // Status mocks base method.
-func (m *MockHubGame) Status(viewer board.Player) gamestatus.GameStatus {
+func (m *MockHubGame) Status(viewer board.Player, newCards ...cards.Card) gamestatus.GameStatus {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Status", viewer)
+	varargs := []any{viewer}
+	for _, a := range newCards {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Status", varargs...)
 	ret0, _ := ret[0].(gamestatus.GameStatus)
 	return ret0
 }
 
 // Status indicates an expected call of Status.
-func (mr *MockHubGameMockRecorder) Status(viewer any) *gomock.Call {
+func (mr *MockHubGameMockRecorder) Status(viewer any, newCards ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockHubGame)(nil).Status), viewer)
+	varargs := append([]any{viewer}, newCards...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Status", reflect.TypeOf((*MockHubGame)(nil).Status), varargs...)
 }

@@ -1,26 +1,27 @@
-package board
+package board_test
 
 import (
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
 func newTestCastle(ctrl *gomock.Controller) (
-	Castle,
+	board.Castle,
 	*mocks.MockPlayer,
 	*mocks.MockCastleCompletionObserver,
 ) {
 	mockPlayer := mocks.NewMockPlayer(ctrl)
 	mockPlayer.EXPECT().Name().Return("TestPlayer").AnyTimes()
 	castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
-	c := NewCastle(25, mockPlayer, castleObs)
+	c := board.NewCastle(25, mockPlayer, castleObs)
 	return c, mockPlayer, castleObs
 }
 
-func constructCastle(t *testing.T, c Castle, ctrl *gomock.Controller) {
+func constructCastle(t *testing.T, c board.Castle, ctrl *gomock.Controller) {
 	t.Helper()
 	r := mocks.NewMockResource(ctrl)
 	r.EXPECT().Value().Return(1).AnyTimes()

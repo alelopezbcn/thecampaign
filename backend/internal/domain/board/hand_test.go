@@ -1,15 +1,16 @@
-package board
+package board_test
 
 import (
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 )
 
 func TestHand_NewHand(t *testing.T) {
-	h := NewHand()
+	h := board.NewHand()
 	assert.Equal(t, 0, h.Count())
 	assert.Empty(t, h.ShowCards())
 }
@@ -18,7 +19,7 @@ func TestHand_AddCards(t *testing.T) {
 	t.Run("Adds cards successfully", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		c := mocks.NewMockCard(ctrl)
 		c.EXPECT().GetID().Return("c1").AnyTimes()
@@ -31,7 +32,7 @@ func TestHand_AddCards(t *testing.T) {
 	t.Run("Adds multiple cards", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		cards := make([]*mocks.MockCard, 3)
 		for i := range cards {
@@ -47,7 +48,7 @@ func TestHand_AddCards(t *testing.T) {
 	t.Run("Error when exceeding max cards", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		// Add 7 cards (max)
 		for i := 0; i < 7; i++ {
@@ -68,7 +69,7 @@ func TestHand_GetCard(t *testing.T) {
 	t.Run("Finds card by ID", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		c := mocks.NewMockCard(ctrl)
 		c.EXPECT().GetID().Return("c1").AnyTimes()
@@ -82,7 +83,7 @@ func TestHand_GetCard(t *testing.T) {
 	t.Run("Case insensitive search", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		c := mocks.NewMockCard(ctrl)
 		c.EXPECT().GetID().Return("Card1").AnyTimes()
@@ -94,7 +95,7 @@ func TestHand_GetCard(t *testing.T) {
 	})
 
 	t.Run("Returns false when not found", func(t *testing.T) {
-		h := NewHand()
+		h := board.NewHand()
 		_, ok := h.GetCard("nonexistent")
 		assert.False(t, ok)
 	})
@@ -104,7 +105,7 @@ func TestHand_RemoveCard(t *testing.T) {
 	t.Run("Removes card successfully", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		c := mocks.NewMockCard(ctrl)
 		c.EXPECT().GetID().Return("c1").AnyTimes()
@@ -118,7 +119,7 @@ func TestHand_RemoveCard(t *testing.T) {
 	t.Run("Returns false when card not in hand", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		h := NewHand()
+		h := board.NewHand()
 
 		c := mocks.NewMockCard(ctrl)
 		c.EXPECT().GetID().Return("c1").AnyTimes()
@@ -129,7 +130,7 @@ func TestHand_RemoveCard(t *testing.T) {
 }
 
 func TestHand_CanAddCards(t *testing.T) {
-	h := NewHand()
+	h := board.NewHand()
 	assert.True(t, h.CanAddCards(7))
 	assert.True(t, h.CanAddCards(1))
 	assert.False(t, h.CanAddCards(8))

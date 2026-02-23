@@ -20,10 +20,8 @@ mocks:
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/thief.go -destination ./test/mocks/thief_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/warriors.go -destination ./test/mocks/warrior_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/weapons.go -destination ./test/mocks/weapon_mocks.go
-# game package (same-package mocks)
-	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/game.go -destination ./internal/domain/game/game_mocks.go
-	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/gameaction.go -destination ./internal/domain/game/gameaction_mocks.go
-	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package game -source ./internal/domain/game/gamestatusprovider.go -destination ./internal/domain/game/gamestatusprovider_mocks.go
+# gameactions package
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/gameactions/gameaction.go -destination ./test/mocks/gameaction_mocks.go
 # websocket package
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package websocket -source ./internal/websocket/hub.go -destination ./internal/websocket/hubgame_mocks.go
 

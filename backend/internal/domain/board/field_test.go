@@ -1,4 +1,4 @@
-package board
+package board_test
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ func TestHasArcher(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	f := &field{
+	f := &board.field{
 		cards: []cards.Warrior{
 			cards.NewArcher("a1"),
 		},
@@ -26,7 +26,8 @@ func TestHasArcher(t *testing.T) {
 func TestHasDragon(t *testing.T) {
 	f := &field{
 		cards: []cards.Warrior{
-			cards.NewDragon("d1")},
+			cards.NewDragon("d1"),
+		},
 	}
 	assert.True(t, f.HasDragon())
 
@@ -37,7 +38,8 @@ func TestHasDragon(t *testing.T) {
 func TestHasKnight(t *testing.T) {
 	f := &field{
 		cards: []cards.Warrior{
-			cards.NewKnight("d1")},
+			cards.NewKnight("d1"),
+		},
 	}
 	assert.True(t, f.HasKnight())
 
@@ -48,7 +50,8 @@ func TestHasKnight(t *testing.T) {
 func TestHasMage(t *testing.T) {
 	f := &field{
 		cards: []cards.Warrior{
-			cards.NewMage("d1")},
+			cards.NewMage("d1"),
+		},
 	}
 	assert.True(t, f.HasMage())
 

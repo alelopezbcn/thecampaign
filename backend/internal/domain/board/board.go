@@ -2,6 +2,13 @@ package board
 
 import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 
+type Board interface {
+	Deck() Deck
+	DiscardPile() DiscardPile
+	Cemetery() Cemetery
+	Players() []Player
+}
+
 type board struct {
 	deck        Deck
 	discardPile DiscardPile
@@ -11,9 +18,9 @@ type board struct {
 
 func New(dealer cards.Dealer, players []Player) *board {
 	return &board{
-		deck:        newDeck(dealer),
-		discardPile: newDiscardPile(),
-		cemetery:    newCemetery(),
+		deck:        NewDeck(dealer),
+		discardPile: NewDiscardPile(),
+		cemetery:    NewCemetery(),
 		players:     players,
 	}
 }

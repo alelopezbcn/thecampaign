@@ -8,9 +8,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain"
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
-	"github.com/alelopezbcn/thecampaign/internal/domain/game"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -18,13 +19,13 @@ import (
 const turnTimeLimit = 120 * time.Second
 
 type HubGame interface {
-	ExecuteAction(action game.GameAction) (gamestatus.GameStatus, error)
+	ExecuteAction(action gameactions.GameAction) (gamestatus.GameStatus, error)
 	CurrentPlayer() board.Player
 	GetPlayer(name string) board.Player
 	ReconnectPlayer(name string)
 	DisconnectPlayer(playerName string) error
 	IsGameOver() (bool, string)
-	Status(viewer board.Player) gamestatus.GameStatus
+	Status(viewer board.Player, newCards ...cards.Card) gamestatus.GameStatus
 }
 
 // ClientMessage represents a message from a client
@@ -407,8 +408,7 @@ func (h *Hub) handleStartGame(client *Client) {
 		}
 	}
 
-	game, err := game.NewGame(playerNames, room.GameMode, cards.NewDealer(),
-		game.NewGameStatusProvider())
+	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer())
 	if err != nil {
 		room.mutex.Unlock()
 		log.Printf("Error creating game: %v", err)
@@ -463,7 +463,7 @@ func (h *Hub) autoDrawAndBroadcast(gameID string) {
 
 	room.mutex.Lock()
 	currentPlayer := room.Game.CurrentPlayer()
-	status, err := room.Game.ExecuteAction(game.NewDrawCardAction(currentPlayer.Name()))
+	status, err := room.Game.ExecuteAction(gameactions.NewDrawCardAction(currentPlayer.Name()))
 	room.mutex.Unlock()
 
 	if err != nil {
@@ -514,7 +514,7 @@ func (h *Hub) startTurnTimer(gameID string) {
 			currentPlayer := room.Game.CurrentPlayer().Name()
 			log.Printf("Turn timer expired for %s in game %s", currentPlayer, gameID)
 
-			status, err := room.Game.ExecuteAction(game.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
+			status, err := room.Game.ExecuteAction(gameactions.NewEndTurnPhaseAction(currentPlayer, true)) // Auto-end turn due to timer expiration
 			room.mutex.Unlock()
 
 			if err != nil {
