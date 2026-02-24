@@ -777,11 +777,12 @@ func (g *game) getStatus(viewer board.Player,
 
 func extractField(f board.Field) gamestatus.FieldInput {
 	return gamestatus.FieldInput{
-		Warriors:  f.Warriors(),
-		HasArcher: f.HasArcher(),
-		HasKnight: f.HasKnight(),
-		HasMage:   f.HasMage(),
-		HasDragon: f.HasDragon(),
+		Warriors:     f.Warriors(),
+		HasArcher:    f.HasWarriorType(types.ArcherWarriorType),
+		HasKnight:    f.HasWarriorType(types.KnightWarriorType),
+		HasMage:      f.HasWarriorType(types.MageWarriorType),
+		HasDragon:    f.HasWarriorType(types.DragonWarriorType),
+		HasMercenary: f.HasWarriorType(types.MercenaryWarriorType),
 	}
 }
 

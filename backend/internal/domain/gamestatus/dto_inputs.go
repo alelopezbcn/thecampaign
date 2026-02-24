@@ -12,11 +12,12 @@ type CastleInput struct {
 
 // FieldInput is a pre-extracted snapshot of a player's field.
 type FieldInput struct {
-	Warriors  []cards.Warrior
-	HasArcher bool
-	HasKnight bool
-	HasMage   bool
-	HasDragon bool
+	Warriors     []cards.Warrior
+	HasArcher    bool
+	HasKnight    bool
+	HasMage      bool
+	HasDragon    bool
+	HasMercenary bool
 }
 
 // ViewerInput is a pre-extracted snapshot of the viewing player.

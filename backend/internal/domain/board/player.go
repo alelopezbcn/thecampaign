@@ -172,26 +172,28 @@ func (p *player) MoveCardToField(cardID string) error {
 func (p *player) CanAttack() bool {
 	for _, c := range p.hand.ShowCards() {
 		if w, ok := c.(cards.Weapon); ok {
-			if p.field.HasDragon() {
+			if p.field.HasWarriorType(types.DragonWarriorType) || p.field.HasWarriorType(types.MercenaryWarriorType) {
 				return true
 			}
 
 			switch w.Type() {
 			case types.ArrowWeaponType:
-				if p.Field().HasArcher() {
+				if p.field.HasWarriorType(types.ArcherWarriorType) {
 					return true
 				}
 			case types.PoisonWeaponType:
-				if p.field.HasMage() {
+				if p.field.HasWarriorType(types.MageWarriorType) {
 					return true
 				}
 			case types.SwordWeaponType:
-				if p.field.HasKnight() {
+				if p.field.HasWarriorType(types.KnightWarriorType) {
 					return true
 				}
 			case types.SpecialPowerWeaponType:
 				// SpecialPower can be used by Archer, Knight, or Mage
-				if p.field.HasArcher() || p.field.HasKnight() || p.field.HasMage() {
+				if p.field.HasWarriorType(types.ArcherWarriorType) ||
+					p.field.HasWarriorType(types.KnightWarriorType) ||
+					p.field.HasWarriorType(types.MageWarriorType) {
 					return true
 				}
 			}

@@ -8,10 +8,7 @@ import (
 // whether the player's current field supports using them.
 // board.Field satisfies this interface.
 type FieldChecker interface {
-	HasKnight() bool
-	HasArcher() bool
-	HasMage() bool
-	HasDragon() bool
+	HasWarriorType(t types.WarriorType) bool
 }
 
 type Weapon interface {
@@ -46,7 +43,9 @@ func (s *sword) MultiplierFactor(target Warrior) int {
 }
 
 func (s *sword) CanBeUsedWith(field FieldChecker) bool {
-	return field.HasKnight() || field.HasDragon()
+	return field.HasWarriorType(types.KnightWarriorType) ||
+		field.HasWarriorType(types.DragonWarriorType) ||
+		field.HasWarriorType(types.MercenaryWarriorType)
 }
 
 type arrow struct {
@@ -68,7 +67,9 @@ func (s *arrow) MultiplierFactor(target Warrior) int {
 }
 
 func (s *arrow) CanBeUsedWith(field FieldChecker) bool {
-	return field.HasArcher() || field.HasDragon()
+	return field.HasWarriorType(types.ArcherWarriorType) ||
+		field.HasWarriorType(types.DragonWarriorType) ||
+		field.HasWarriorType(types.MercenaryWarriorType)
 }
 
 type poison struct {
@@ -92,5 +93,7 @@ func (s *poison) MultiplierFactor(target Warrior) int {
 }
 
 func (s *poison) CanBeUsedWith(field FieldChecker) bool {
-	return field.HasMage() || field.HasDragon()
+	return field.HasWarriorType(types.MageWarriorType) ||
+		field.HasWarriorType(types.DragonWarriorType) ||
+		field.HasWarriorType(types.MercenaryWarriorType)
 }

@@ -21,6 +21,7 @@ func TestNewFieldCard_BasicWarriorTypes(t *testing.T) {
 		{"Archer", types.ArcherWarriorType, gamestatus.CardTypeArcher},
 		{"Mage", types.MageWarriorType, gamestatus.CardTypeMage},
 		{"Dragon", types.DragonWarriorType, gamestatus.CardTypeDragon},
+		{"Mercenary", types.MercenaryWarriorType, gamestatus.CardTypeMercenary},
 	}
 
 	for _, tt := range tests {

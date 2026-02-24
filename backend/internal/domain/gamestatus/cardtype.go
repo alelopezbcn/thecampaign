@@ -15,7 +15,8 @@ var (
 	CardTypeArrow        = CardType{"Weapon", "Arrow", "#61dd61"}   // Light Green
 	CardTypeMage         = CardType{"Warrior", "Mage", "#892e89"}   // Purple
 	CardTypePoison       = CardType{"Weapon", "Poison", "#e571e5"}  // Light Purple (Thistle)
-	CardTypeDragon       = CardType{"Warrior", "Dragon", "#FF0000"} // Red
+	CardTypeDragon       = CardType{"Warrior", "Dragon", "#FF0000"}     // Red
+	CardTypeMercenary    = CardType{"Warrior", "Mercenary", "#8B6914"}  // Bronze
 	CardTypeResource     = CardType{"Resource", "", "#fbfbae"}      // Yellow
 	CardTypeSpecialPower = CardType{"SpecialPower", "", "#FFA500"}  // Orange
 	CardTypeSpy          = CardType{"Spy", "", "#D3D3D3"}           // Light Gray
@@ -45,7 +46,8 @@ var warriorCardTypes = map[types.WarriorType]CardType{
 	types.KnightWarriorType: CardTypeKnight,
 	types.ArcherWarriorType: CardTypeArcher,
 	types.MageWarriorType:   CardTypeMage,
-	types.DragonWarriorType: CardTypeDragon,
+	types.DragonWarriorType:     CardTypeDragon,
+	types.MercenaryWarriorType:  CardTypeMercenary,
 }
 
 // weaponCardTypes maps each WeaponType to its CardType for serialization.

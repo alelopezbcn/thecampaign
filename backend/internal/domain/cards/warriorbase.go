@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	warriorMaxHealth = 20
-	dragonMaxHealth  = 20
+	warriorMaxHealth    = 20
+	dragonMaxHealth     = 20
+	mercenaryMaxHealth  = 15
 )
 
 type warriorBase struct {

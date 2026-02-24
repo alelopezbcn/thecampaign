@@ -11,10 +11,7 @@ import (
 type FieldReader interface {
 	Warriors() []cards.Warrior
 	GetWarrior(cardID string) (cards.Warrior, bool)
-	HasArcher() bool
-	HasMage() bool
-	HasKnight() bool
-	HasDragon() bool
+	HasWarriorType(t types.WarriorType) bool
 }
 
 // FieldMutator — field mutation
@@ -81,46 +78,11 @@ func (h *field) RemoveWarrior(card cards.Warrior) bool {
 	return false
 }
 
-func (h *field) HasArcher() bool {
-	for _, warriorInField := range h.cards {
-		switch warriorInField.Type() {
-		case types.ArcherWarriorType:
+func (h *field) HasWarriorType(t types.WarriorType) bool {
+	for _, w := range h.cards {
+		if w.Type() == t {
 			return true
 		}
 	}
-
-	return false
-}
-
-func (h *field) HasDragon() bool {
-	for _, warriorInField := range h.cards {
-		switch warriorInField.Type() {
-		case types.DragonWarriorType:
-			return true
-		}
-	}
-
-	return false
-}
-
-func (h *field) HasKnight() bool {
-	for _, warriorInField := range h.cards {
-		switch warriorInField.Type() {
-		case types.KnightWarriorType:
-			return true
-		}
-	}
-
-	return false
-}
-
-func (h *field) HasMage() bool {
-	for _, warriorInField := range h.cards {
-		switch warriorInField.Type() {
-		case types.MageWarriorType:
-			return true
-		}
-	}
-
 	return false
 }

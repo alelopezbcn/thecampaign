@@ -4074,6 +4074,54 @@ body {
     100% { opacity: 0; transform: translate(-50%, -80%); }
 }
 
+/* ============================================================
+   FEATURE: Mercenary Hired Animation
+   ============================================================ */
+
+.field-hired-flash {
+    animation: fieldHiredFlash 1.2s ease-out;
+}
+
+@keyframes fieldHiredFlash {
+    0%   { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+    25%  { box-shadow: 0 0 24px 8px rgba(212, 175, 55, 0.85); }
+    60%  { box-shadow: 0 0 16px 4px rgba(212, 175, 55, 0.5); }
+    100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+
+.mercenary-entrance {
+    animation: mercenaryFlyIn 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes mercenaryFlyIn {
+    0%   { opacity: 0; transform: translateX(-180px) scale(0.6) rotate(-8deg); }
+    55%  { opacity: 1; transform: translateX(6px) scale(1.08) rotate(1deg); }
+    75%  { transform: translateX(-3px) scale(0.97) rotate(0deg); }
+    100% { opacity: 1; transform: translateX(0) scale(1) rotate(0deg); }
+}
+
+.mercenary-hired-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #d4af37;
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.9), 0 2px 4px rgba(0,0,0,0.8);
+    pointer-events: none;
+    white-space: nowrap;
+    z-index: 100;
+    animation: mercenaryHiredFloat 1.6s ease-out forwards;
+}
+
+@keyframes mercenaryHiredFloat {
+    0%   { opacity: 0; transform: translate(-50%, -30%) scale(0.6); }
+    20%  { opacity: 1; transform: translate(-50%, -60%) scale(1.15); }
+    55%  { opacity: 1; transform: translate(-50%, -80%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -120%) scale(0.9); }
+}
+
 .cemetery-modal-icon {
     font-size: 2.5rem;
     text-align: center;

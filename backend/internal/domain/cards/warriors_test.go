@@ -238,3 +238,94 @@ func TestDragon_BeAttacked_WithPoison_NoMultiplier(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, dragonMaxHealth-dmgAmnt, target.Health())
 }
+
+// Mercenary tests
+
+func TestNewMercenaryCard(t *testing.T) {
+	merc := NewMercenary("mc1")
+
+	assert.Equal(t, "MC1", merc.GetID())
+	assert.Equal(t, "Mercenary", merc.Name())
+	assert.Equal(t, mercenaryMaxHealth, merc.Health())
+}
+
+func TestMercenary_IsMercenaryCard(t *testing.T) {
+	merc := NewMercenary("mc1")
+	assert.True(t, merc.IsMercenaryCard())
+}
+
+func TestMercenary_BeAttacked_WeaponNil(t *testing.T) {
+	merc := NewMercenary("mc1")
+	err := merc.BeAttacked(nil)
+	assert.ErrorContains(t, err, "weapon cannot be nil")
+}
+
+func TestMercenary_BeAttacked_WithSword_NoMultiplier(t *testing.T) {
+	dmgAmnt := 5
+	target := NewMercenary("mc1")
+	sword := NewSword("sw1", dmgAmnt)
+
+	err := target.BeAttacked(sword)
+	assert.NoError(t, err)
+	assert.Equal(t, mercenaryMaxHealth-dmgAmnt, target.Health())
+}
+
+func TestMercenary_BeAttacked_WithArrow_NoMultiplier(t *testing.T) {
+	dmgAmnt := 5
+	target := NewMercenary("mc1")
+	arrow := NewArrow("ar1", dmgAmnt)
+
+	err := target.BeAttacked(arrow)
+	assert.NoError(t, err)
+	assert.Equal(t, mercenaryMaxHealth-dmgAmnt, target.Health())
+}
+
+func TestMercenary_BeAttacked_WithPoison_NoMultiplier(t *testing.T) {
+	dmgAmnt := 5
+	target := NewMercenary("mc1")
+	poison := NewPoison("po1", dmgAmnt)
+
+	err := target.BeAttacked(poison)
+	assert.NoError(t, err)
+	assert.Equal(t, mercenaryMaxHealth-dmgAmnt, target.Health())
+}
+
+func TestMercenary_IsDamaged_FalseAtFullHealth(t *testing.T) {
+	merc := NewMercenary("mc1")
+	assert.False(t, merc.IsDamaged())
+}
+
+func TestMercenary_IsDamaged_TrueAfterDamage(t *testing.T) {
+	merc := NewMercenary("mc1")
+	_ = merc.BeAttacked(NewSword("sw1", 3))
+	assert.True(t, merc.IsDamaged())
+}
+
+func TestMercenary_Heal_RestoresToMercenaryMaxHealth(t *testing.T) {
+	weaponObs := &fakeCardObs{}
+	spObs := &fakeCardObs{}
+	deadObs := &fakeWarriorDeadObs{}
+	weapon := &fakeWeapon{id: "w1", damage: 5, observer: weaponObs}
+	sp := &fakeSP{id: "sp1", observer: spObs}
+
+	merc := NewMercenary("mc1")
+	merc.AddWarriorDeadObserver(deadObs)
+	_ = merc.BeAttacked(weapon)
+	assert.True(t, merc.IsDamaged())
+
+	merc.Heal(sp)
+
+	assert.Equal(t, mercenaryMaxHealth, merc.Health())
+	assert.False(t, merc.IsDamaged())
+}
+
+func TestMercenary_Resurrect_RestoresToMercenaryMaxHealth(t *testing.T) {
+	merc := NewMercenary("mc1")
+	_ = merc.BeAttacked(NewSword("sw1", 10))
+	assert.True(t, merc.IsDamaged())
+
+	merc.Resurrect()
+
+	assert.Equal(t, mercenaryMaxHealth, merc.Health())
+	assert.False(t, merc.IsDamaged())
+}
