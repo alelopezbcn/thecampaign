@@ -1,23 +1,17 @@
-cuando se presiona end turn no se ve el modal que indica que ha cambiado el turno
-fix unit tests
-
-hay una animation para bloodRain, pero no se ve. Se ve solo la animacion comun de ataque a multiples warriors
-
-Play again no funciona
-
-
-Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)
-
 Muralla - Protege tu castillo del Catapult por un turno (o hasta que sea destruida). Hoy el Catapult no tiene counter, esto le daría uno.
 
 Resurreción - Recupera un guerrero aleatorio del cementerio y lo pone en tu campo. Da valor a los guerreros caídos y abre jugadas de recuperación.
 
 Sabotaje - Destruye una carta aleatoria de la mano del oponente (no la robas, se descarta). Más agresivo que el Thief porque elimina recursos.
 
+Mercenario - Un guerrero "neutro" que se compra con oro (costo 5-6) en vez de robarse del mazo. No tiene afinidad de arma (usa cualquiera como el Dragón) pero sin poder especial. Crea un puente entre economía y ejército.
+
+
+
+Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)
+
 Mecánicas nuevas
 Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
-
-Mercenario - Un guerrero "neutro" que se compra con oro (costo 5-6) en vez de robarse del mazo. No tiene afinidad de arma (usa cualquiera como el Dragón) pero sin poder especial. Crea un puente entre economía y ejército.
 
 Emboscada / Trampa - Una carta que colocas boca abajo en tu campo. Cuando el oponente ataca a uno de tus guerreros, se activa: refleja parte del daño, o anula el ataque, o mata al atacante. Agrega bluffing y tensión.
 
@@ -34,7 +28,6 @@ Modo draft - En vez de repartir cartas aleatorias, cada jugador elige cartas de 
 
 De todas estas, las que creo que tienen mejor relación esfuerzo/impacto para implementar son:
 
-Arpón - Es simple, una carta single-use como Catapult, y balancea al Dragón
 Muralla - Mismo patrón, counter al Catapult
 Plaga - Daño AOE agrega una dimensión nueva al combate
 Forja - Mecánica elegante que usa cartas existentes de forma nueva
@@ -42,6 +35,5 @@ Cuáles te gustan más? Puedo diseñar la implementación de cualquiera de estas
 
 
 adapt to small resolutions
-
 persist game status
 

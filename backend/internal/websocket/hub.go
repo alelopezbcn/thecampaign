@@ -153,6 +153,7 @@ var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
 	MsgSkipPhase:   func(h *Hub, c *Client, _ interface{}) { h.handleSkipPhase(c) },
 	MsgSwapTeam:    func(h *Hub, c *Client, _ interface{}) { h.handleSwapTeam(c) },
 	MsgStartGame:   func(h *Hub, c *Client, _ interface{}) { h.handleStartGame(c) },
+	MsgRestartGame: func(h *Hub, c *Client, _ interface{}) { h.handleRestartGame(c) },
 }
 
 // processMessage processes incoming messages from clients
@@ -436,6 +437,83 @@ func (h *Hub) handleStartGame(client *Client) {
 	room.mutex.Unlock()
 
 	// Auto draw card for the first player and send game state
+	h.autoDrawAndBroadcast(gameID)
+	h.startTurnTimer(gameID)
+}
+
+// handleRestartGame resets the game for all players in the room with the same players and mode.
+func (h *Hub) handleRestartGame(client *Client) {
+	room, exists := h.getGameRoom(client)
+	if !exists {
+		client.SendError("Game not found")
+		return
+	}
+
+	room.mutex.Lock()
+
+	if room.Game == nil {
+		room.mutex.Unlock()
+		client.SendError("Game not started yet")
+		return
+	}
+
+	over, _ := room.Game.IsGameOver()
+	if !over {
+		room.mutex.Unlock()
+		client.SendError("Game is not over yet")
+		return
+	}
+
+	gameID := room.ID
+
+	var playerNames []string
+	if room.GameMode == types.GameMode2v2 {
+		var t1Names, t2Names []string
+		for name, team := range room.TeamAssignments {
+			if team == 1 {
+				t1Names = append(t1Names, name)
+			} else {
+				t2Names = append(t2Names, name)
+			}
+		}
+		playerNames = []string{t1Names[0], t2Names[0], t1Names[1], t2Names[1]}
+	} else {
+		for name := range room.Players {
+			playerNames = append(playerNames, name)
+		}
+	}
+
+	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer())
+	if err != nil {
+		room.mutex.Unlock()
+		log.Printf("Error restarting game: %v", err)
+		client.SendError("Failed to restart game: " + err.Error())
+		return
+	}
+	room.Game = game
+
+	for _, name := range playerNames {
+		if err := game.AutoMoveWarriorsToField(name); err != nil {
+			log.Printf("Error auto-moving warriors for %s: %v", name, err)
+		}
+	}
+
+	log.Printf("Game restarted: %s with players %v (mode: %s)", gameID, playerNames, room.GameMode)
+
+	for name, c := range room.Players {
+		if c == nil {
+			continue
+		}
+		c.SendMessage(MsgGameStarted, GameStartedPayload{
+			GameID:   gameID,
+			Players:  playerNames,
+			YourName: name,
+		})
+	}
+
+	room.mutex.Unlock()
+
+	h.stopTurnTimer(gameID)
 	h.autoDrawAndBroadcast(gameID)
 	h.startTurnTimer(gameID)
 }

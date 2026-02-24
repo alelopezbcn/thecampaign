@@ -162,7 +162,7 @@ function setupEventListeners() {
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
 
     // Game over modal
-    document.getElementById('gameover-modal-btn').addEventListener('click', () => location.reload());
+    document.getElementById('gameover-modal-btn').addEventListener('click', () => sendMessage('restart_game'));
 
     // Global keyboard shortcuts
     document.addEventListener('keydown', handleGlobalKeyboard);
@@ -382,7 +382,11 @@ function handleGameStarted(payload) {
     console.log('Game started:', payload);
     gameState.playerName = payload.your_name;
     gameState.gameID = payload.game_id;
+    gameState.currentState = null;
+    gameState.isYourTurn = false;
+    gameState.executedPhases = [];
 
+    document.getElementById('gameover-modal').classList.add('hidden');
     document.getElementById('current-game-id').textContent = payload.game_id;
 }
 
@@ -558,6 +562,13 @@ function handleGameState(payload) {
             const label = isNextYou ? 'Your Turn Next!' : `Next: ${nextPlayer}`;
             showTurnTransitionModal(nextPlayer, END_TURN_COUNTDOWN_SECS * 1000, label);
         }
+    }
+
+    // Show turn transition modal when end_turn is actually processed
+    if (payload.game_status.last_action === 'end_turn') {
+        const turnPlayer = payload.game_status.turn_player;
+        const label = isNowYourTurn ? 'Your Turn!' : `${turnPlayer}'s Turn`;
+        showTurnTransitionModal(turnPlayer, END_TURN_COUNTDOWN_SECS * 1000, label);
     }
 
     // Detect if a card was stolen from us
@@ -1749,10 +1760,11 @@ function showDamageFeedback(previousState, newState) {
     screenFlashShown = false;
 
     // Check for HP changes
+    const skipSlash = newState.last_action === 'blood_rain';
     for (const cardId in previousHP) {
         if (newHP[cardId] !== undefined && newHP[cardId] < previousHP[cardId]) {
             const damage = previousHP[cardId] - newHP[cardId];
-            showFloatingDamage(cardId, damage);
+            showFloatingDamage(cardId, damage, skipSlash);
         }
     }
 
@@ -1911,12 +1923,12 @@ function playDeathAnimations(killedWarriors) {
 }
 
 // Display floating damage number on a card
-function showFloatingDamage(cardId, damage) {
+function showFloatingDamage(cardId, damage, skipSlash = false) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
 
     // Play attack impact animation
-    showAttackAnimation(cardElement);
+    if (!skipSlash) showAttackAnimation(cardElement);
 
     const floatingNum = document.createElement('div');
     floatingNum.className = 'floating-damage';
@@ -2410,34 +2422,59 @@ function playBloodRainAnimation(data, status) {
     if (!fieldEl) return;
 
     const rect = fieldEl.getBoundingClientRect();
+
+    // Full-screen red vignette
+    const vignette = document.createElement('div');
+    vignette.className = 'blood-rain-vignette';
+    document.body.appendChild(vignette);
+    setTimeout(() => vignette.remove(), 2300);
+
+    // Drop overlay — padded beyond field edges so drops spill over
+    const PAD = 40;
     const overlay = document.createElement('div');
     overlay.className = 'blood-rain-overlay';
-    overlay.style.left = rect.left + 'px';
-    overlay.style.top = rect.top + 'px';
-    overlay.style.width = rect.width + 'px';
-    overlay.style.height = rect.height + 'px';
+    overlay.style.left = (rect.left - PAD) + 'px';
+    overlay.style.top = (rect.top - PAD) + 'px';
+    overlay.style.width = (rect.width + PAD * 2) + 'px';
+    overlay.style.height = (rect.height + PAD * 2) + 'px';
 
-    const DROP_COUNT = 22;
+    const DROP_COUNT = 55;
     for (let i = 0; i < DROP_COUNT; i++) {
         const drop = document.createElement('div');
         drop.className = 'blood-drop';
-        drop.style.left = (Math.random() * 100) + '%';
-        drop.style.animationDelay = (Math.random() * 0.5) + 's';
-        drop.style.animationDuration = (0.45 + Math.random() * 0.35) + 's';
+        const w = 2 + Math.random() * 6;       // 2–8 px wide
+        const h = 22 + Math.random() * 28;      // 22–50 px tall
+        drop.style.width = w + 'px';
+        drop.style.height = h + 'px';
+        drop.style.left = (Math.random() * 110 - 5) + '%';
+        drop.style.animationDelay = (Math.random() * 0.4) + 's';
+        drop.style.animationDuration = (0.28 + Math.random() * 0.28) + 's';
         overlay.appendChild(drop);
     }
 
     document.body.appendChild(overlay);
 
-    // Flash all cards in the field on impact
+    // Impact: splatter particles + blood glow on each card
     setTimeout(() => {
-        fieldEl.querySelectorAll('.card').forEach(card => {
-            card.classList.add('attack-impact');
-            setTimeout(() => card.classList.remove('attack-impact'), 600);
-        });
-    }, 600);
+        for (let i = 0; i < 18; i++) {
+            const splat = document.createElement('div');
+            splat.className = 'blood-splatter';
+            const size = 10 + Math.random() * 28;
+            splat.style.width = size + 'px';
+            splat.style.height = size + 'px';
+            splat.style.left = (Math.random() * 95) + '%';
+            splat.style.top = (Math.random() * 85) + '%';
+            splat.style.animationDuration = (0.5 + Math.random() * 0.3) + 's';
+            overlay.appendChild(splat);
+        }
 
-    setTimeout(() => overlay.remove(), 1400);
+        fieldEl.querySelectorAll('.card').forEach(card => {
+            card.classList.add('blood-card-hit');
+            setTimeout(() => card.classList.remove('blood-card-hit'), 1400);
+        });
+    }, 350);
+
+    setTimeout(() => overlay.remove(), 2200);
 }
 
 function prepareStealAnimation(previousState, newState) {
