@@ -13,6 +13,7 @@ import (
 	reflect "reflect"
 
 	cards "github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -34,7 +35,7 @@ func NewMockFieldReader(ctrl *gomock.Controller) *MockFieldReader {
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected call of EXPECT.
 func (m *MockFieldReader) EXPECT() *MockFieldReaderMockRecorder {
 	return m.recorder
 }
@@ -54,60 +55,18 @@ func (mr *MockFieldReaderMockRecorder) GetWarrior(cardID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWarrior", reflect.TypeOf((*MockFieldReader)(nil).GetWarrior), cardID)
 }
 
-// HasArcher mocks base method.
-func (m *MockFieldReader) HasArcher() bool {
+// HasWarriorType mocks base method.
+func (m *MockFieldReader) HasWarriorType(t types.WarriorType) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasArcher")
+	ret := m.ctrl.Call(m, "HasWarriorType", t)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// HasArcher indicates an expected call of HasArcher.
-func (mr *MockFieldReaderMockRecorder) HasArcher() *gomock.Call {
+// HasWarriorType indicates an expected call of HasWarriorType.
+func (mr *MockFieldReaderMockRecorder) HasWarriorType(t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasArcher", reflect.TypeOf((*MockFieldReader)(nil).HasArcher))
-}
-
-// HasDragon mocks base method.
-func (m *MockFieldReader) HasDragon() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasDragon")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasDragon indicates an expected call of HasDragon.
-func (mr *MockFieldReaderMockRecorder) HasDragon() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasDragon", reflect.TypeOf((*MockFieldReader)(nil).HasDragon))
-}
-
-// HasKnight mocks base method.
-func (m *MockFieldReader) HasKnight() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasKnight")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasKnight indicates an expected call of HasKnight.
-func (mr *MockFieldReaderMockRecorder) HasKnight() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasKnight", reflect.TypeOf((*MockFieldReader)(nil).HasKnight))
-}
-
-// HasMage mocks base method.
-func (m *MockFieldReader) HasMage() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasMage")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasMage indicates an expected call of HasMage.
-func (mr *MockFieldReaderMockRecorder) HasMage() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasMage", reflect.TypeOf((*MockFieldReader)(nil).HasMage))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorType", reflect.TypeOf((*MockFieldReader)(nil).HasWarriorType), t)
 }
 
 // Warriors mocks base method.
@@ -142,7 +101,7 @@ func NewMockFieldMutator(ctrl *gomock.Controller) *MockFieldMutator {
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected call of EXPECT.
 func (m *MockFieldMutator) EXPECT() *MockFieldMutatorMockRecorder {
 	return m.recorder
 }
@@ -195,7 +154,7 @@ func NewMockField(ctrl *gomock.Controller) *MockField {
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected call of EXPECT.
 func (m *MockField) EXPECT() *MockFieldMockRecorder {
 	return m.recorder
 }
@@ -231,60 +190,18 @@ func (mr *MockFieldMockRecorder) GetWarrior(cardID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWarrior", reflect.TypeOf((*MockField)(nil).GetWarrior), cardID)
 }
 
-// HasArcher mocks base method.
-func (m *MockField) HasArcher() bool {
+// HasWarriorType mocks base method.
+func (m *MockField) HasWarriorType(t types.WarriorType) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasArcher")
+	ret := m.ctrl.Call(m, "HasWarriorType", t)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// HasArcher indicates an expected call of HasArcher.
-func (mr *MockFieldMockRecorder) HasArcher() *gomock.Call {
+// HasWarriorType indicates an expected call of HasWarriorType.
+func (mr *MockFieldMockRecorder) HasWarriorType(t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasArcher", reflect.TypeOf((*MockField)(nil).HasArcher))
-}
-
-// HasDragon mocks base method.
-func (m *MockField) HasDragon() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasDragon")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasDragon indicates an expected call of HasDragon.
-func (mr *MockFieldMockRecorder) HasDragon() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasDragon", reflect.TypeOf((*MockField)(nil).HasDragon))
-}
-
-// HasKnight mocks base method.
-func (m *MockField) HasKnight() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasKnight")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasKnight indicates an expected call of HasKnight.
-func (mr *MockFieldMockRecorder) HasKnight() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasKnight", reflect.TypeOf((*MockField)(nil).HasKnight))
-}
-
-// HasMage mocks base method.
-func (m *MockField) HasMage() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasMage")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasMage indicates an expected call of HasMage.
-func (mr *MockFieldMockRecorder) HasMage() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasMage", reflect.TypeOf((*MockField)(nil).HasMage))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorType", reflect.TypeOf((*MockField)(nil).HasWarriorType), t)
 }
 
 // RemoveWarrior mocks base method.
@@ -333,7 +250,7 @@ func NewMockFieldWithoutWarriorsObserver(ctrl *gomock.Controller) *MockFieldWith
 	return mock
 }
 
-// EXPECT returns an object that allows the caller to indicate expected use.
+// EXPECT returns an object that allows the caller to indicate expected call of EXPECT.
 func (m *MockFieldWithoutWarriorsObserver) EXPECT() *MockFieldWithoutWarriorsObserverMockRecorder {
 	return m.recorder
 }

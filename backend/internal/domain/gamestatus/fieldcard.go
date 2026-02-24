@@ -23,6 +23,8 @@ func NewFieldCard(warrior cards.Warrior) FieldCard {
 		aCardType = CardTypeMage
 	case types.DragonWarriorType:
 		aCardType = CardTypeDragon
+	case types.MercenaryWarriorType:
+		aCardType = CardTypeMercenary
 	}
 
 	var attackedByCards []Card

@@ -77,6 +77,7 @@ var cardConfig = map[string]CardConfigEntry{
 	"archer":       {Description: "A swift ranged fighter. Can attack with Arrows. Special Power: Instant Kill. Takes double damage from Swords.", Image: "archer.webp"},
 	"mage":         {Description: "A mystical spellcaster. Can attack with Poison. Special Power: Heal. Takes double damage from Arrows.", Image: "mage.webp"},
 	"dragon":       {Description: "A mighty beast. Can attack with any weapon. Takes equal damage from all weapons. Instant kill takes 10 DMG. Cannot use Special Powers.", Image: "dragon.webp"},
+	"mercenary":    {Description: "A neutral warrior for hire. Costs 6+ gold to recruit directly to your field. Can attack with any weapon. 15 HP. Cannot use Special Powers.", Image: "mercenary.webp"},
 	"sword":        {Description: "Deals double damage to Archers. Used by Knights and Dragons. A value-1 Sword can also construct your castle. Can be traded.", Image: "sword.webp"},
 	"arrow":        {Description: "Deals double damage to Mages. Used by Archers and Dragons. A value-1 Arrow can also construct your castle. Can be traded.", Image: "arrow.webp"},
 	"poison":       {Description: "Deals double damage to Knights. Used by Mages and Dragons. A value-1 Poison can also construct your castle. Can be traded.", Image: "poison.webp"},

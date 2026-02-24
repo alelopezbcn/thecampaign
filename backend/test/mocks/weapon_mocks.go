@@ -40,60 +40,18 @@ func (m *MockFieldChecker) EXPECT() *MockFieldCheckerMockRecorder {
 	return m.recorder
 }
 
-// HasArcher mocks base method.
-func (m *MockFieldChecker) HasArcher() bool {
+// HasWarriorType mocks base method.
+func (m *MockFieldChecker) HasWarriorType(t types.WarriorType) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasArcher")
+	ret := m.ctrl.Call(m, "HasWarriorType", t)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
-// HasArcher indicates an expected call of HasArcher.
-func (mr *MockFieldCheckerMockRecorder) HasArcher() *gomock.Call {
+// HasWarriorType indicates an expected call of HasWarriorType.
+func (mr *MockFieldCheckerMockRecorder) HasWarriorType(t any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasArcher", reflect.TypeOf((*MockFieldChecker)(nil).HasArcher))
-}
-
-// HasDragon mocks base method.
-func (m *MockFieldChecker) HasDragon() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasDragon")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasDragon indicates an expected call of HasDragon.
-func (mr *MockFieldCheckerMockRecorder) HasDragon() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasDragon", reflect.TypeOf((*MockFieldChecker)(nil).HasDragon))
-}
-
-// HasKnight mocks base method.
-func (m *MockFieldChecker) HasKnight() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasKnight")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasKnight indicates an expected call of HasKnight.
-func (mr *MockFieldCheckerMockRecorder) HasKnight() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasKnight", reflect.TypeOf((*MockFieldChecker)(nil).HasKnight))
-}
-
-// HasMage mocks base method.
-func (m *MockFieldChecker) HasMage() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasMage")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasMage indicates an expected call of HasMage.
-func (mr *MockFieldCheckerMockRecorder) HasMage() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasMage", reflect.TypeOf((*MockFieldChecker)(nil).HasMage))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorType", reflect.TypeOf((*MockFieldChecker)(nil).HasWarriorType), t)
 }
 
 // MockWeapon is a mock of Weapon interface.

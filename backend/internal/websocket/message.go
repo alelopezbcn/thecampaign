@@ -13,7 +13,8 @@ const (
 	MsgBloodRain    MessageType = "blood_rain"
 	MsgMoveWarrior  MessageType = "move_warrior"
 	MsgTrade        MessageType = "trade"
-	MsgBuy          MessageType = "buy"
+	MsgBuy             MessageType = "buy"
+	MsgBuyMercenary    MessageType = "buy_mercenary"
 	MsgConstruct    MessageType = "construct"
 	MsgSpy          MessageType = "spy"
 	MsgSteal        MessageType = "steal"
@@ -84,6 +85,11 @@ type TradePayload struct {
 
 // BuyPayload for buying cards
 type BuyPayload struct {
+	CardID string `json:"card_id"`
+}
+
+// BuyMercenaryPayload for hiring a mercenary directly
+type BuyMercenaryPayload struct {
 	CardID string `json:"card_id"`
 }
 

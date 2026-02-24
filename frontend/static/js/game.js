@@ -549,6 +549,7 @@ function handleGameState(payload) {
                 if (pileChanges.pileAdded) showPileAnimation();
                 if (pileChanges.cemeteryAdded) showCemeteryAnimation();
                 if (payload.game_status.last_action === 'resurrection') showResurrectionAnimation();
+                if (payload.game_status.last_action === 'buy_mercenary') showMercenaryHiredAnimation();
             }, 50);
         }
     };
@@ -1464,8 +1465,47 @@ function handleBuyPhaseHandClick(cardID, card) {
 function showBuyConfirmModal(resource, cardID) {
     const resourceValue = resource?.value || 0;
     const cardsToReceive = Math.floor(resourceValue / 2);
-    const resourceName = getCardName(resource);
 
+    // When gold >= 6, offer a choice: deck cards or mercenary
+    if (resourceValue >= 6) {
+        const content = `
+            <div class="target-player-options">
+                <div class="target-player-option" onclick="window._buyChoiceCallback('deck')">
+                    <span class="player-icon">🃏</span>
+                    <div class="player-info">
+                        <div class="player-name">Buy from Deck</div>
+                        <div class="player-detail">Receive ${cardsToReceive} card${cardsToReceive !== 1 ? 's' : ''}</div>
+                    </div>
+                </div>
+                <div class="target-player-option" onclick="window._buyChoiceCallback('mercenary')">
+                    <span class="player-icon">⚔️</span>
+                    <div class="player-info">
+                        <div class="player-name">Hire Mercenary</div>
+                        <div class="player-detail">15 HP · uses any weapon · no special powers</div>
+                    </div>
+                </div>
+            </div>`;
+
+        window._buyChoiceCallback = (choice) => {
+            hideGameModal();
+            delete window._buyChoiceCallback;
+            if (choice === 'mercenary') {
+                sendAction('buy_mercenary', { card_id: cardID });
+                resetActionState();
+            } else {
+                showBuyDeckConfirmModal(resource, cardID, cardsToReceive);
+            }
+        };
+
+        showGameModal('Use Gold', 'Choose how to spend your gold', content, true);
+        return;
+    }
+
+    showBuyDeckConfirmModal(resource, cardID, cardsToReceive);
+}
+
+function showBuyDeckConfirmModal(resource, cardID, cardsToReceive) {
+    const resourceValue = resource?.value || 0;
     let cardsHtml = renderCardForModal(resource);
     cardsHtml += renderArrow();
     cardsHtml += renderCardBacks(cardsToReceive);
@@ -1647,6 +1687,30 @@ function showResurrectionAnimation() {
     overlay.textContent = '✨ RESURRECTED ✨';
     cemElement.appendChild(overlay);
     setTimeout(() => overlay.remove(), 2400);
+}
+
+function showMercenaryHiredAnimation() {
+    const fieldEl = document.getElementById('player-field');
+    if (!fieldEl) return;
+
+    // Flash the field border
+    fieldEl.classList.add('field-hired-flash');
+    setTimeout(() => fieldEl.classList.remove('field-hired-flash'), 1200);
+
+    // Find the newly added mercenary card (last warrior card in the field)
+    const mercenaryCard = fieldEl.querySelector('.card.warrior:last-child');
+    if (mercenaryCard) {
+        mercenaryCard.classList.add('mercenary-entrance');
+        setTimeout(() => mercenaryCard.classList.remove('mercenary-entrance'), 900);
+    }
+
+    // Floating "Mercenary Hired!" text
+    const text = document.createElement('div');
+    text.className = 'mercenary-hired-text';
+    text.textContent = '⚔️ Mercenary Hired!';
+    fieldEl.style.position = 'relative';
+    fieldEl.appendChild(text);
+    setTimeout(() => text.remove(), 1600);
 }
 
 function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {

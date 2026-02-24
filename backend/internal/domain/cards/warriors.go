@@ -122,3 +122,54 @@ func (d *dragon) InstantKill(sp SpecialPower) {
 		d.dead()
 	}
 }
+
+type Mercenary interface {
+	Warrior
+	IsMercenaryCard() bool
+}
+
+type mercenary struct {
+	*warriorBase
+}
+
+func NewMercenary(id string) *mercenary {
+	return &mercenary{
+		warriorBase: newWarriorBase(
+			newCardBase(id, "Mercenary"),
+			newAttackableBase(mercenaryMaxHealth),
+			types.MercenaryWarriorType,
+		),
+	}
+}
+
+func (m *mercenary) IsMercenaryCard() bool { return true }
+
+func (m *mercenary) BeAttacked(w Weapon) error {
+	if w == nil {
+		return errors.New("weapon cannot be nil")
+	}
+
+	multiplier := 1
+	m.ReceiveDamage(w, multiplier)
+
+	return nil
+}
+
+func (m *mercenary) IsDamaged() bool {
+	return m.health < mercenaryMaxHealth
+}
+
+func (m *mercenary) Heal(sp SpecialPower) {
+	m.health = mercenaryMaxHealth
+	m.attackedBy = append(m.attackedBy, sp)
+	for _, a := range m.attackedBy {
+		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
+	}
+	m.attackedBy = []Weapon{}
+}
+
+func (m *mercenary) Resurrect() {
+	m.health = mercenaryMaxHealth
+	m.attackedBy = []Weapon{}
+	m.protectedBy = nil
+}

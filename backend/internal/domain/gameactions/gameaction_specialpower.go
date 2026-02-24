@@ -89,6 +89,13 @@ func (a *specialPowerAction) Validate(g Game) error {
 		return fmt.Errorf("target card not valid: %s", a.targetID)
 	}
 
+	// Only Archer, Knight and Mage can use special powers
+	if userType != types.ArcherWarriorType &&
+		userType != types.KnightWarriorType &&
+		userType != types.MageWarriorType {
+		return fmt.Errorf("warrior type %s cannot use special powers", userType)
+	}
+
 	// Validate target side based on warrior type
 	if userType == types.ArcherWarriorType && targetIsAllyOrSelf {
 		return fmt.Errorf("archer instant kill can only target enemies")

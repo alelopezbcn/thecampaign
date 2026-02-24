@@ -38,6 +38,8 @@ func NewWarriorHandCard(warrior cards.Warrior) HandCard {
 		aCardType = CardTypeMage
 	case types.DragonWarriorType:
 		aCardType = CardTypeDragon
+	case types.MercenaryWarriorType:
+		aCardType = CardTypeMercenary
 	}
 
 	return newHandCard(warrior.GetID(), aCardType,
@@ -54,13 +56,13 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 	switch weapon.Type() {
 	case types.SwordWeaponType:
 		aCardType = CardTypeSword
-		canBeUsed = myField.HasKnight || myField.HasDragon
+		canBeUsed = myField.HasKnight || myField.HasDragon || myField.HasMercenary
 	case types.ArrowWeaponType:
 		aCardType = CardTypeArrow
-		canBeUsed = myField.HasArcher || myField.HasDragon
+		canBeUsed = myField.HasArcher || myField.HasDragon || myField.HasMercenary
 	case types.PoisonWeaponType:
 		aCardType = CardTypePoison
-		canBeUsed = myField.HasMage || myField.HasDragon
+		canBeUsed = myField.HasMage || myField.HasDragon || myField.HasMercenary
 	}
 
 	if action != types.PhaseTypeConstruct &&

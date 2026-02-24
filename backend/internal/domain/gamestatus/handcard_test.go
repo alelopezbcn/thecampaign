@@ -21,6 +21,7 @@ func TestNewWarriorHandCard(t *testing.T) {
 		{"Archer", types.ArcherWarriorType, gamestatus.CardTypeArcher},
 		{"Mage", types.MageWarriorType, gamestatus.CardTypeMage},
 		{"Dragon", types.DragonWarriorType, gamestatus.CardTypeDragon},
+		{"Mercenary", types.MercenaryWarriorType, gamestatus.CardTypeMercenary},
 	}
 
 	for _, tt := range tests {
@@ -824,4 +825,73 @@ func TestNewCatapultHandCard(t *testing.T) {
 			assert.Empty(t, hc.CanBeUsedOnIDs)
 		})
 	}
+}
+
+func TestNewWeaponHandCard_MercenaryEnablesAllWeapons(t *testing.T) {
+	t.Run("Sword usable with Mercenary on field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		weapon := mocks.NewMockWeapon(ctrl)
+		weapon.EXPECT().Type().Return(types.SwordWeaponType)
+		weapon.EXPECT().GetID().Return("S1")
+		weapon.EXPECT().DamageAmount().Return(5)
+
+		myField := gamestatus.FieldInput{HasMercenary: true}
+		enemy := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{enemy}, false, types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+	})
+
+	t.Run("Arrow usable with Mercenary on field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		weapon := mocks.NewMockWeapon(ctrl)
+		weapon.EXPECT().Type().Return(types.ArrowWeaponType)
+		weapon.EXPECT().GetID().Return("A1")
+		weapon.EXPECT().DamageAmount().Return(5)
+
+		myField := gamestatus.FieldInput{HasMercenary: true}
+		enemy := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{enemy}, false, types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+	})
+
+	t.Run("Poison usable with Mercenary on field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		weapon := mocks.NewMockWeapon(ctrl)
+		weapon.EXPECT().Type().Return(types.PoisonWeaponType)
+		weapon.EXPECT().GetID().Return("P1")
+		weapon.EXPECT().DamageAmount().Return(5)
+
+		myField := gamestatus.FieldInput{HasMercenary: true}
+		enemy := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{enemy}, false, types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+	})
+
+	t.Run("Sword not usable when only Mercenary missing", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		weapon := mocks.NewMockWeapon(ctrl)
+		weapon.EXPECT().Type().Return(types.SwordWeaponType)
+		weapon.EXPECT().GetID().Return("S1")
+		weapon.EXPECT().DamageAmount().Return(5)
+
+		myField := gamestatus.FieldInput{HasMercenary: false, HasKnight: false, HasDragon: false}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeAttack)
+
+		assert.False(t, hc.CanBeUsed)
+	})
 }

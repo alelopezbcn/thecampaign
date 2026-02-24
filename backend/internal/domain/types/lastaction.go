@@ -16,6 +16,7 @@ const (
 	LastActionSteal              LastActionType = "steal"
 	LastActionSabotage           LastActionType = "sabotage"
 	LastActionBuy                LastActionType = "buy"
+	LastActionBuyMercenary       LastActionType = "buy_mercenary"
 	LastActionConstruct          LastActionType = "construct"
 	LastActionFortress           LastActionType = "fortress"
 	LastActionResurrection       LastActionType = "resurrection"
