@@ -188,7 +188,7 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 
 		case cards.Sabotage:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewSabotageHandCard(ct.GetID(), action))
+				NewSabotageHandCard(ct.GetID(), game.AnyEnemyHasCards, action))
 
 		case cards.Fortress:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,

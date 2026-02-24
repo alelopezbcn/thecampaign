@@ -14,6 +14,7 @@ type GameStatusDTO struct {
 	EnemyFields              []FieldInput
 	AllyFields               []FieldInput
 	AnyEnemyCastleAttackable bool
+	AnyEnemyHasCards         bool
 	AllyHasCastleConstructed bool
 	NewCards                 []cards.Card
 	ModalCards               []cards.Card

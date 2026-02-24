@@ -708,10 +708,14 @@ func (g *game) getStatus(viewer board.Player,
 
 	enemyFields := []gamestatus.FieldInput{}
 	anyEnemyCastleAttackable := false
+	anyEnemyHasCards := false
 	for _, enemy := range g.Enemies(viewerIdx) {
 		enemyFields = append(enemyFields, extractField(enemy.Field()))
 		if enemy.Castle().CanBeAttacked() {
 			anyEnemyCastleAttackable = true
+		}
+		if enemy.CardsInHand() > 0 {
+			anyEnemyHasCards = true
 		}
 	}
 
@@ -731,6 +735,7 @@ func (g *game) getStatus(viewer board.Player,
 		EnemyFields:              enemyFields,
 		AllyFields:               allyFields,
 		AnyEnemyCastleAttackable: anyEnemyCastleAttackable,
+		AnyEnemyHasCards:         anyEnemyHasCards,
 		AllyHasCastleConstructed: allyHasCastleConstructed,
 		NewCards:               newCards,
 		ModalCards:             modalCards,
