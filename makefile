@@ -19,6 +19,7 @@ mocks:
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/specialpower.go -destination ./test/mocks/specialpower_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/spy.go -destination ./test/mocks/spy_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/thief.go -destination ./test/mocks/thief_mocks.go
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/sabotage.go -destination ./test/mocks/sabotage_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/warriors.go -destination ./test/mocks/warrior_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/weapons.go -destination ./test/mocks/weapon_mocks.go
 # gameactions package

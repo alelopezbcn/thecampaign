@@ -97,14 +97,15 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 
 func (d *dealer) customCards() []Card {
 	return []Card{
-		NewResurrection("crs1"),
-		NewResurrection("crs2"),
-		NewResurrection("crs3"),
-		NewResurrection("crs4"),
-		NewResurrection("crs5"),
-		NewResurrection("crs6"),
-		NewResurrection("crs7"),
-		NewResurrection("crs8"),
-		NewResurrection("crs9"),
+		NewSabotage("crs1"),
+		NewSabotage("crs2"),
+		NewSabotage("crs3"),
+		NewSabotage("crs4"),
+		NewSabotage("crs5"),
+		NewSabotage("crs6"),
+		NewSabotage("crs7"),
+		NewSabotage("crs8"),
+		NewSabotage("crs9"),
+		NewSabotage("crs10"),
 	}
 }
