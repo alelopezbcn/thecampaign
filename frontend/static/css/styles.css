@@ -3860,6 +3860,33 @@ body {
     }
 }
 
+/* ========== Sabotage Card Animation ========== */
+
+.sabotage-card-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    animation: sabotageCardFly 1.1s ease-in-out forwards;
+}
+
+@keyframes sabotageCardFly {
+    0% {
+        transform: translate(0, 0) scale(1);
+        opacity: 1;
+        filter: brightness(1);
+    }
+    40% {
+        transform: translate(calc(var(--dx) * 0.4), calc(var(--dy) * 0.4 - 30px)) scale(1.1);
+        opacity: 1;
+        filter: brightness(1.3) saturate(2);
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) scale(0.3);
+        opacity: 0;
+        filter: brightness(0.5) grayscale(1);
+    }
+}
+
 /* ========== Deck Draw Animation ========== */
 
 .deck-draw-ghost {

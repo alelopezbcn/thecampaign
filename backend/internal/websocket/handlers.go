@@ -250,6 +250,24 @@ func (h *Hub) handleResurrection(client *Client, payload interface{}) {
 	})
 }
 
+func (h *Hub) handleSabotage(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p SabotagePayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid sabotage payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewSabotageAction(client.PlayerName, p.TargetPlayer))
+	})
+}
+
 func (h *Hub) handleEndTurn(client *Client) {
 	log.Printf("handleEndTurn called by %s", client.PlayerName)
 

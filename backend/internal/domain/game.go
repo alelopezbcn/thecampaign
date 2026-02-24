@@ -547,7 +547,8 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	if expectedAction == types.PhaseTypeSpySteal {
 		_, hasSpy := board.HasCardTypeInHand[cards.Spy](p)
 		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
-		if hasSpy || hasThief {
+		_, hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
+		if hasSpy || hasThief || hasSabotage {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
@@ -755,6 +756,8 @@ func (g *game) getStatus(viewer board.Player,
 		LastAttackTargetPlayer: g.lastResult.AttackTargetPlayer,
 		StolenFrom:             g.lastResult.StolenFrom,
 		StolenCard:             g.lastResult.StolenCard,
+		SabotagedFrom:          g.lastResult.SabotagedFrom,
+		SabotagedCard:          g.lastResult.SabotagedCard,
 		SpyTarget:              g.lastResult.Spy.Target,
 		SpyTargetPlayer:        g.lastResult.Spy.TargetPlayer,
 		CurrentPlayerName:      g.CurrentPlayer().Name(),

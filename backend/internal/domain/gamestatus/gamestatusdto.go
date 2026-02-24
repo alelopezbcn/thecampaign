@@ -39,6 +39,8 @@ type GameStatusDTO struct {
 	LastAttackTargetPlayer   string
 	StolenFrom               string
 	StolenCard               cards.Card
+	SabotagedFrom            string
+	SabotagedCard            cards.Card
 	SpyTarget                types.SpyTarget
 	SpyTargetPlayer          string
 	CurrentPlayerName        string

@@ -31,6 +31,7 @@ type GameStatus struct {
 	LastAttackTargetID     string               `json:"last_attack_target_id,omitempty"`
 	LastAttackTargetPlayer string               `json:"last_attack_target_player,omitempty"`
 	StolenFromYouCard      []Card               `json:"stolen_from_you_card,omitempty"`
+	SabotagedFromYouCard   []Card               `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification        string               `json:"spy_notification,omitempty"`
 	History                []HistoryLine        `json:"history"`
 	PlayersOrder           []string             `json:"players_order"`
@@ -119,6 +120,12 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 		gs.StolenFromYouCard = fromDomainCards([]cards.Card{dto.StolenCard})
 	}
 
+	// Include sabotaged card info for the victim (only on the sabotage action itself)
+	if dto.LastAction == types.LastActionSabotage && dto.SabotagedFrom != "" &&
+		dto.SabotagedCard != nil && dto.Viewer.Name == dto.SabotagedFrom {
+		gs.SabotagedFromYouCard = fromDomainCards([]cards.Card{dto.SabotagedCard})
+	}
+
 	// Include spy notification for all players except the spy
 	if dto.SpyTarget != "" && dto.LastAction == types.LastActionSpy &&
 		dto.Viewer.Name != dto.CurrentPlayerName {
@@ -178,6 +185,10 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 		case cards.Thief:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewThiefHandCard(ct.GetID(), action))
+
+		case cards.Sabotage:
+			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+				NewSabotageHandCard(ct.GetID(), action))
 
 		case cards.Fortress:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
