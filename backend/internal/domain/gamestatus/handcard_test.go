@@ -590,6 +590,64 @@ func TestNewThiefHandCard(t *testing.T) {
 	}
 }
 
+func TestNewResurrectionHandCard(t *testing.T) {
+	tests := []struct {
+		name          string
+		cardID        string
+		cemeteryCount int
+		action        types.PhaseType
+		wantUsed      bool
+	}{
+		{
+			name:          "Usable in Attack phase when cemetery has warriors",
+			cardID:        "RES1",
+			cemeteryCount: 2,
+			action:        types.PhaseTypeAttack,
+			wantUsed:      true,
+		},
+		{
+			name:          "Not usable in Attack phase when cemetery is empty",
+			cardID:        "RES1",
+			cemeteryCount: 0,
+			action:        types.PhaseTypeAttack,
+			wantUsed:      false,
+		},
+		{
+			name:          "Not usable outside Attack phase even with warriors in cemetery",
+			cardID:        "RES1",
+			cemeteryCount: 3,
+			action:        types.PhaseTypeBuy,
+			wantUsed:      false,
+		},
+		{
+			name:          "Not usable in Construct phase",
+			cardID:        "RES1",
+			cemeteryCount: 1,
+			action:        types.PhaseTypeConstruct,
+			wantUsed:      false,
+		},
+		{
+			name:          "Not usable in SpySteal phase",
+			cardID:        "RES1",
+			cemeteryCount: 1,
+			action:        types.PhaseTypeSpySteal,
+			wantUsed:      false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hc := gamestatus.NewResurrectionHandCard(tt.cardID, tt.cemeteryCount, tt.action)
+
+			assert.Equal(t, tt.cardID, hc.CardID)
+			assert.Equal(t, gamestatus.CardTypeResurrection, hc.CardType)
+			assert.Equal(t, 0, hc.Value)
+			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
+			assert.Empty(t, hc.CanBeUsedOnIDs)
+		})
+	}
+}
+
 func TestNewCatapultHandCard(t *testing.T) {
 	tests := []struct {
 		name      string

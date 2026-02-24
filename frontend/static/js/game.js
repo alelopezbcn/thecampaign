@@ -539,6 +539,7 @@ function handleGameState(payload) {
                 const pileChanges = detectPileAndCemeteryChanges(previousState, payload.game_status);
                 if (pileChanges.pileAdded) showPileAnimation();
                 if (pileChanges.cemeteryAdded) showCemeteryAnimation();
+                if (payload.game_status.last_action === 'resurrection') showResurrectionAnimation();
             }, 50);
         }
     };
@@ -1109,6 +1110,16 @@ function handleAttackPhaseHandClick(cardID, card) {
                 showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
             });
         }
+    } else if (cardType === 'resurrection') {
+        gameState.actionState.type = 'resurrection';
+        gameState.actionState.weaponId = cardID;
+        highlightSelectedCard(cardID);
+        const allies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated);
+        if (allies.length > 0) {
+            showResurrectionTargetModal(cardID, card, allies);
+        } else {
+            showResurrectionConfirmModal(cardID, card, '');
+        }
     }
 }
 
@@ -1536,6 +1547,77 @@ function showFortressConfirmModal(card, targetPlayer) {
             resetActionState();
         }
     });
+}
+
+function showResurrectionTargetModal(cardID, card, allies) {
+    let content = '<div class="target-player-options">';
+    content += `
+        <div class="target-player-option" onclick="window._resurrectionTargetCallback('')">
+            <span class="player-icon">⚔️</span>
+            <div class="player-info">
+                <div class="player-name">Your Field</div>
+                <div class="player-detail">Resurrect to your own field</div>
+            </div>
+        </div>
+    `;
+    allies.forEach(ally => {
+        const name = ally.player_name;
+        content += `
+            <div class="target-player-option" onclick="window._resurrectionTargetCallback('${name}')">
+                <span class="player-icon">🤝</span>
+                <div class="player-info">
+                    <div class="player-name">${name}'s Field</div>
+                    <div class="player-detail">Resurrect to ally's field</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._resurrectionTargetCallback = (targetPlayer) => {
+        hideGameModal();
+        delete window._resurrectionTargetCallback;
+        showResurrectionConfirmModal(cardID, card, targetPlayer);
+    };
+
+    showGameModal('Resurrection', 'Choose which field to resurrect a warrior to', content, true);
+}
+
+function showResurrectionConfirmModal(cardID, card, targetPlayer) {
+    const fieldLabel = targetPlayer ? `${targetPlayer}'s field` : 'your field';
+    const cemeteryIconHtml = `
+        <div class="castle-modal">
+            <div class="cemetery-modal-icon">☠️</div>
+            <span class="castle-modal-label">Cemetery</span>
+        </div>
+    `;
+    const cardsHtml = cemeteryIconHtml + renderArrow() + renderCardForModal(card);
+
+    showActionConfirmModal({
+        title: 'Resurrect Warrior',
+        cardsHtml: cardsHtml,
+        description: `Bring a random fallen warrior back from the cemetery to ${fieldLabel}`,
+        onConfirm: () => {
+            const payload = {};
+            if (targetPlayer) payload.target_player = targetPlayer;
+            sendAction('resurrection', payload);
+            resetActionState();
+        }
+    });
+}
+
+function showResurrectionAnimation() {
+    const cemElement = document.getElementById('cemetery');
+    if (!cemElement) return;
+
+    cemElement.classList.add('cemetery-resurrection');
+    setTimeout(() => cemElement.classList.remove('cemetery-resurrection'), 2800);
+
+    const overlay = document.createElement('div');
+    overlay.className = 'resurrection-overlay';
+    overlay.textContent = '✨ RESURRECTED ✨';
+    cemElement.appendChild(overlay);
+    setTimeout(() => overlay.remove(), 2400);
 }
 
 function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
@@ -3374,7 +3456,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection') return 'special';
     return 'unknown';
 }
 

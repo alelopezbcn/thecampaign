@@ -217,6 +217,39 @@ func TestWarriorBase_String_AliveNoWeapons(t *testing.T) {
 	assert.Contains(t, str, "20")
 }
 
+func TestWarriorBase_Resurrect_RestoresHealthAndClearsDamageState(t *testing.T) {
+	obs1 := &fakeCardObs{}
+	weapon1 := &fakeWeapon{id: "w1", damage: 5, observer: obs1}
+	sp := &fakeSP{}
+
+	w := &warriorBase{
+		attackableBase: &attackableBase{
+			health:     3,
+			attackedBy: []Weapon{weapon1},
+		},
+		protectedBy: sp,
+	}
+
+	w.Resurrect()
+	assert.Equal(t, warriorMaxHealth, w.health)
+	assert.Empty(t, w.attackedBy)
+	assert.Nil(t, w.protectedBy)
+}
+
+func TestWarriorBase_Resurrect_AlreadyFullHealth(t *testing.T) {
+	w := &warriorBase{
+		attackableBase: &attackableBase{
+			health:     warriorMaxHealth,
+			attackedBy: []Weapon{},
+		},
+	}
+
+	w.Resurrect()
+	assert.Equal(t, warriorMaxHealth, w.health)
+	assert.Empty(t, w.attackedBy)
+	assert.Nil(t, w.protectedBy)
+}
+
 func TestWarriorBase_String_Dead(t *testing.T) {
 	m := NewMage("m1")
 	str := m.String()

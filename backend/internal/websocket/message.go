@@ -18,8 +18,9 @@ const (
 	MsgSpy          MessageType = "spy"
 	MsgSteal        MessageType = "steal"
 	MsgCatapult     MessageType = "catapult"
-	MsgFortress     MessageType = "fortress"
-	MsgEndTurn      MessageType = "end_turn"
+	MsgFortress      MessageType = "fortress"
+	MsgResurrection  MessageType = "resurrection"
+	MsgEndTurn       MessageType = "end_turn"
 	MsgSkipPhase    MessageType = "skip_phase"
 	MsgSwapTeam     MessageType = "swap_team"
 	MsgStartGame    MessageType = "start_game"
@@ -111,6 +112,11 @@ type CatapultPayload struct {
 
 // FortressPayload for placing a fortress on a castle
 type FortressPayload struct {
+	TargetPlayer string `json:"target_player,omitempty"`
+}
+
+// ResurrectionPayload for using a resurrection card
+type ResurrectionPayload struct {
 	TargetPlayer string `json:"target_player,omitempty"`
 }
 

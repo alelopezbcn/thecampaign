@@ -158,6 +158,18 @@ func (mr *MockWarriorMockRecorder) InstantKill(sp any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockWarrior)(nil).InstantKill), sp)
 }
 
+// Resurrect mocks base method.
+func (m *MockWarrior) Resurrect() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Resurrect")
+}
+
+// Resurrect indicates an expected call of Resurrect.
+func (mr *MockWarriorMockRecorder) Resurrect() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resurrect", reflect.TypeOf((*MockWarrior)(nil).Resurrect))
+}
+
 // IsDamaged mocks base method.
 func (m *MockWarrior) IsDamaged() bool {
 	m.ctrl.T.Helper()

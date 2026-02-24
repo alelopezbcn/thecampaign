@@ -223,6 +223,13 @@ func NewFortressHandCard(cardID string, castleConstructed bool,
 	return newHandCard(cardID, CardTypeFortress, 0, []string{}, canBeUsed)
 }
 
+func NewResurrectionHandCard(cardID string, cemeteryCount int, action types.PhaseType) HandCard {
+	if action != types.PhaseTypeAttack {
+		return newHandCard(cardID, CardTypeResurrection, 0, []string{}, false)
+	}
+	return newHandCard(cardID, CardTypeResurrection, 0, []string{}, cemeteryCount > 0)
+}
+
 func NewSpyHandCard(cardID string, action types.PhaseType) HandCard {
 	return newHandCard(cardID, CardTypeSpy, 0, []string{},
 		action == types.PhaseTypeSpySteal)

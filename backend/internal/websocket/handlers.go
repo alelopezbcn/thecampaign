@@ -232,6 +232,24 @@ func (h *Hub) handleFortress(client *Client, payload interface{}) {
 	})
 }
 
+func (h *Hub) handleResurrection(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p ResurrectionPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid resurrection payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewResurrectionAction(client.PlayerName, p.TargetPlayer))
+	})
+}
+
 func (h *Hub) handleEndTurn(client *Client) {
 	log.Printf("handleEndTurn called by %s", client.PlayerName)
 

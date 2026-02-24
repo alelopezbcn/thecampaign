@@ -93,6 +93,20 @@ func (mr *MockCemeteryMockRecorder) GetLast() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLast", reflect.TypeOf((*MockCemetery)(nil).GetLast))
 }
 
+// RemoveRandom mocks base method.
+func (m *MockCemetery) RemoveRandom() cards.Warrior {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveRandom")
+	ret0, _ := ret[0].(cards.Warrior)
+	return ret0
+}
+
+// RemoveRandom indicates an expected call of RemoveRandom.
+func (mr *MockCemeteryMockRecorder) RemoveRandom() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveRandom", reflect.TypeOf((*MockCemetery)(nil).RemoveRandom))
+}
+
 // MockWarriorMovedToCemeteryObserver is a mock of WarriorMovedToCemeteryObserver interface.
 type MockWarriorMovedToCemeteryObserver struct {
 	ctrl     *gomock.Controller

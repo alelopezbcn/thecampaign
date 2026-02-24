@@ -17,6 +17,7 @@ const (
 	LastActionBuy                LastActionType = "buy"
 	LastActionConstruct          LastActionType = "construct"
 	LastActionFortress           LastActionType = "fortress"
+	LastActionResurrection       LastActionType = "resurrection"
 	LastActionSkip               LastActionType = "skip"
 	LastActionEndTurn            LastActionType = "end_turn"
 )
