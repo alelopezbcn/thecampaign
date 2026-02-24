@@ -94,6 +94,46 @@ func TestFromDomainCard_Catapult(t *testing.T) {
 	assert.Equal(t, 0, c.Value)
 }
 
+func TestFromDomainCard_Fortress(t *testing.T) {
+	fortress := cards.NewFortress("FW1")
+
+	c := fromDomainCard(fortress)
+
+	assert.Equal(t, "FW1", c.CardID)
+	assert.Equal(t, CardTypeFortress, c.CardType)
+	assert.Equal(t, 0, c.Value)
+}
+
+func TestFromDomainCard_Harpoon(t *testing.T) {
+	harpoon := cards.NewHarpoon("H1")
+
+	c := fromDomainCard(harpoon)
+
+	assert.Equal(t, "H1", c.CardID)
+	assert.Equal(t, CardTypeHarpoon, c.CardType)
+	assert.Equal(t, 20, c.Value) // harpoonDamage = 20; Harpoon is a Weapon, not default
+}
+
+func TestFromDomainCard_BloodRain(t *testing.T) {
+	bloodRain := cards.NewBloodRain("BR1")
+
+	c := fromDomainCard(bloodRain)
+
+	assert.Equal(t, "BR1", c.CardID)
+	assert.Equal(t, CardTypeBloodRain, c.CardType)
+	assert.Equal(t, 4, c.Value) // bloodRainDamage = 4; BloodRain is a Weapon, not default
+}
+
+func TestFromDomainCard_Resurrection(t *testing.T) {
+	resurrection := cards.NewResurrection("RES1")
+
+	c := fromDomainCard(resurrection)
+
+	assert.Equal(t, "RES1", c.CardID)
+	assert.Equal(t, CardTypeResurrection, c.CardType)
+	assert.Equal(t, 0, c.Value)
+}
+
 func TestFromDomainCards(t *testing.T) {
 	warrior := cards.NewKnight("K1")
 	resource := cards.NewGold("G1", 3)

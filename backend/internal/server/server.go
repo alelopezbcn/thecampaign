@@ -88,6 +88,7 @@ var cardConfig = map[string]CardConfigEntry{
 	"thief":        {Description: "Steal a random card from an opponent's hand.", Image: "thief.webp"},
 	"catapult":     {Description: "Destroy one gold resource from a constructed enemy castle, reducing their castle value.", Image: "catapult.webp"},
 	"fortress":     {Description: "Fortify your castle (or an ally's) to block the next catapult attack. The wall is destroyed when hit.", Image: "fortress.webp"},
+	"resurrection": {Description: "Resurrect a random fallen warrior from the cemetery and place it on your field (or an ally's).", Image: "resurrection.webp"},
 }
 
 // handleCardConfig serves card display metadata (descriptions and images).

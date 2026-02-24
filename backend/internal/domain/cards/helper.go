@@ -57,6 +57,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewFortress("fw1"),
 		NewHarpoon("ha1"),
 		NewBloodRain("br1"),
+		NewResurrection("res1"),
 	}
 
 	if playerCount > 3 {
@@ -70,6 +71,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewFortress("fw2"))
 		other = append(other, NewHarpoon("ha2"))
 		other = append(other, NewBloodRain("br2"))
+		other = append(other, NewResurrection("res2"))
 	}
 
 	for i := 1; i < 10; i++ {
@@ -93,38 +95,14 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 
 func (d *dealer) customCards() []Card {
 	return []Card{
-		NewSword(fmt.Sprintf("cuse%d", 1), 1),
-		NewArrow(fmt.Sprintf("cusf%d", 1), 1),
-		NewPoison(fmt.Sprintf("cusp%d", 1), 1),
-		NewGold(fmt.Sprintf("cusg%d", 1), 1),
-		NewSword(fmt.Sprintf("cuse%d", 2), 1),
-		NewArrow(fmt.Sprintf("cusf%d", 2), 1),
-		NewPoison(fmt.Sprintf("cusp%d", 2), 1),
-		NewGold(fmt.Sprintf("cusg%d", 2), 1),
-		NewSword(fmt.Sprintf("cuse%d", 3), 1),
-		NewArrow(fmt.Sprintf("cusf%d", 3), 1),
-		NewPoison(fmt.Sprintf("cusp%d", 3), 1),
-		NewGold(fmt.Sprintf("cusg%d", 3), 1),
-		NewSword(fmt.Sprintf("cuse%d", 4), 1),
-		NewArrow(fmt.Sprintf("cusf%d", 4), 1),
-		NewPoison(fmt.Sprintf("cusp%d", 4), 1),
-		NewGold(fmt.Sprintf("cusg%d", 4), 1),
-
-		NewCatapultCard("cusc1"),
-		NewCatapultCard("cusc2"),
-		NewCatapultCard("cusc3"),
-		NewCatapultCard("cusc4"),
-		NewCatapultCard("cusc5"),
-		NewCatapultCard("cusc6"),
-		NewFortress("cusfw1"),
-		NewFortress("cusfw2"),
-		NewFortress("cusfw3"),
-		NewFortress("cusfw4"),
-		NewFortress("cusfw5"),
-		NewFortress("cusfw6"),
-		NewFortress("cusfw7"),
-		NewFortress("cusfw8"),
-		NewFortress("cusfw9"),
-		NewFortress("cusfw10"),
+		NewResurrection("crs1"),
+		NewResurrection("crs2"),
+		NewResurrection("crs3"),
+		NewResurrection("crs4"),
+		NewResurrection("crs5"),
+		NewResurrection("crs6"),
+		NewResurrection("crs7"),
+		NewResurrection("crs8"),
+		NewResurrection("crs9"),
 	}
 }

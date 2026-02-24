@@ -16,6 +16,7 @@ type Warrior interface {
 	AddWarriorDeadObserver(o WarriorDeadObserver)
 	Type() types.WarriorType
 	IsDamaged() bool
+	Resurrect()
 }
 
 type knight struct {

@@ -97,6 +97,13 @@ func (w *warriorBase) Type() types.WarriorType {
 func (w *warriorBase) IsDamaged() bool {
 	return w.health < warriorMaxHealth
 }
+
+func (w *warriorBase) Resurrect() {
+	w.health = warriorMaxHealth
+	w.attackedBy = []Weapon{}
+	w.protectedBy = nil
+}
+
 func (w *warriorBase) dead() {
 	for _, a := range w.attackedBy {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)

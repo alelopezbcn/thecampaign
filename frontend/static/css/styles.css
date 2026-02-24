@@ -1415,6 +1415,9 @@ body {
     border: 1px solid rgba(100, 100, 100, 0.3);
     border-radius: 6px;
     padding: 6px 15px;
+    min-height: 157px;
+    min-width: 121px;
+    box-sizing: border-box;
 }
 
 .cemetery-count {
@@ -1462,6 +1465,9 @@ body {
     border: 1px solid rgba(100, 100, 100, 0.3);
     border-radius: 6px;
     padding: 6px 15px;
+    min-height: 157px;
+    min-width: 121px;
+    box-sizing: border-box;
 }
 
 .discard-pile-count {
@@ -3952,6 +3958,99 @@ body {
         filter: brightness(1);
         box-shadow: none;
     }
+}
+
+.cemetery.cemetery-resurrection {
+    animation: resurrectionRise 2.8s ease-out;
+    position: relative;
+}
+
+@keyframes resurrectionRise {
+    0% {
+        transform: scale(1);
+        box-shadow: none;
+        background: rgba(80, 80, 80, 0.2);
+        border-color: rgba(100, 100, 100, 0.3);
+        filter: brightness(1);
+    }
+    7% {
+        transform: scale(1.10);
+        box-shadow:
+            0 0 0 3px rgba(80, 200, 120, 1),
+            0 0 25px rgba(80, 200, 120, 1),
+            0 0 60px rgba(80, 200, 120, 0.8),
+            0 0 110px rgba(80, 200, 120, 0.5);
+        background: rgba(80, 200, 120, 0.35);
+        border-color: rgba(80, 200, 120, 1);
+        filter: brightness(2.5) saturate(1.8);
+    }
+    18% {
+        transform: scale(1.05);
+        box-shadow:
+            0 0 0 2px rgba(80, 200, 120, 0.9),
+            0 0 18px rgba(80, 200, 120, 0.8),
+            0 0 50px rgba(80, 200, 120, 0.5);
+        background: rgba(80, 200, 120, 0.15);
+        border-color: rgba(80, 200, 120, 0.8);
+        filter: brightness(1.8);
+    }
+    32% {
+        transform: scale(1.08);
+        box-shadow:
+            0 0 0 3px rgba(80, 200, 120, 1),
+            0 0 22px rgba(80, 200, 120, 0.9),
+            0 0 70px rgba(80, 200, 120, 0.6);
+        background: rgba(80, 200, 120, 0.25);
+        border-color: rgba(80, 200, 120, 1);
+        filter: brightness(2.2) saturate(1.5);
+    }
+    55% {
+        transform: scale(1.02);
+        box-shadow:
+            0 0 12px rgba(80, 200, 120, 0.5),
+            0 0 35px rgba(80, 200, 120, 0.3);
+        background: rgba(80, 200, 120, 0.07);
+        border-color: rgba(80, 200, 120, 0.4);
+        filter: brightness(1.2);
+    }
+    100% {
+        transform: scale(1);
+        box-shadow: none;
+        background: rgba(80, 80, 80, 0.2);
+        border-color: rgba(100, 100, 100, 0.3);
+        filter: brightness(1);
+    }
+}
+
+.resurrection-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #50C878;
+    font-weight: bold;
+    font-size: 1rem;
+    letter-spacing: 1px;
+    text-shadow:
+        0 0 8px rgba(80, 200, 120, 1),
+        0 0 20px rgba(80, 200, 120, 0.8);
+    pointer-events: none;
+    animation: resurrectionText 2.4s ease-out forwards;
+    white-space: nowrap;
+    z-index: 100;
+}
+
+@keyframes resurrectionText {
+    0%   { opacity: 0; transform: translate(-50%, -20%); }
+    15%  { opacity: 1; transform: translate(-50%, -50%); }
+    65%  { opacity: 1; transform: translate(-50%, -50%); }
+    100% { opacity: 0; transform: translate(-50%, -80%); }
+}
+
+.cemetery-modal-icon {
+    font-size: 2.5rem;
+    text-align: center;
+    margin-bottom: 4px;
 }
 
 /* ============================================================

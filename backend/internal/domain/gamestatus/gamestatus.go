@@ -184,6 +184,10 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 				NewFortressHandCard(ct.GetID(), viewer.Castle.IsConstructed,
 					game.AllyHasCastleConstructed, action))
 
+		case cards.Resurrection:
+			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+				NewResurrectionHandCard(ct.GetID(), game.CemeteryCount, action))
+
 		case cards.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewResourceHandCard(ct, viewer.Castle.IsConstructed,
