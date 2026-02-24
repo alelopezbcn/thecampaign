@@ -2,11 +2,10 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -14,13 +13,42 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+// validateStealAction calls Validate on a new steal action and returns key mocks.
+// player1 has mockThief in hand; player2 has mockStolenCard (position 1).
+func validateStealAction(t *testing.T, ctrl *gomock.Controller, cardPosition int) (
+	gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockHand, *mocks.MockCard, *mocks.MockThief,
+) {
+	t.Helper()
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockHand1 := mocks.NewMockHand(ctrl)
+	mockHand2 := mocks.NewMockHand(ctrl)
+	mockStolenCard := mocks.NewMockCard(ctrl)
+	mockThief := mocks.NewMockThief(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockPlayer1.EXPECT().Hand().Return(mockHand1)
+	mockHand1.EXPECT().ShowCards().Return([]cards.Card{mockThief})
+	mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
+	mockPlayer2.EXPECT().Hand().Return(mockHand2)
+	mockHand2.EXPECT().ShowCards().Return([]cards.Card{mockStolenCard})
+
+	action := gameactions.NewStealAction("Player1", "Player2", cardPosition)
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validate failed: %v", err)
+	}
+	return action, mockGame, mockPlayer1, mockPlayer2, mockHand2, mockStolenCard, mockThief
+}
+
 func TestStealAction_PlayerName(t *testing.T) {
-	action := NewStealAction("Player1", "Player2", 0)
+	action := gameactions.NewStealAction("Player1", "Player2", 0)
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestStealAction_NextPhase(t *testing.T) {
-	action := NewStealAction("Player1", "Player2", 0)
+	action := gameactions.NewStealAction("Player1", "Player2", 0)
 	assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 }
 
@@ -29,19 +57,11 @@ func TestStealAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy).Times(2)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewStealAction("Player1", "Player2", 0)
-		err := action.Validate(g)
+		action := gameactions.NewStealAction("Player1", "Player2", 0)
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot steal in the")
@@ -51,102 +71,96 @@ func TestStealAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockHand := mocks.NewMockHand(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().HasThief().Return(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Hand().Return(mockHand)
+		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeSpySteal,
-		}
-
-		action := NewStealAction("Player1", "Player2", 1)
-		err := action.Validate(g)
+		action := gameactions.NewStealAction("Player1", "Player2", 1)
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "player does not have a thief")
 	})
 
-	t.Run("Success stores target player", func(t *testing.T) {
+	t.Run("Error when card position is invalid", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockHand1 := mocks.NewMockHand(ctrl)
+		mockHand2 := mocks.NewMockHand(ctrl)
+		mockThief := mocks.NewMockThief(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().HasThief().Return(true)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Hand().Return(mockHand1)
+		mockHand1.EXPECT().ShowCards().Return([]cards.Card{mockThief})
+		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().ShowCards().Return([]cards.Card{mockCard}) // only 1 card
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeSpySteal,
-		}
+		action := gameactions.NewStealAction("Player1", "Player2", 5) // position 5 is invalid
+		err := action.Validate(mockGame)
 
-		action := NewStealAction("Player1", "Player2", 2)
-		err := action.Validate(g)
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "invalid position")
+	})
+
+	t.Run("Success with valid target and position", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockHand1 := mocks.NewMockHand(ctrl)
+		mockHand2 := mocks.NewMockHand(ctrl)
+		mockThief := mocks.NewMockThief(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Hand().Return(mockHand1)
+		mockHand1.EXPECT().ShowCards().Return([]cards.Card{mockThief})
+		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().ShowCards().Return([]cards.Card{mockCard})
+
+		action := gameactions.NewStealAction("Player1", "Player2", 1)
+		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
-		assert.Equal(t, mockPlayer2, action.targetPlayer)
 	})
 }
 
 func TestStealAction_Execute(t *testing.T) {
-	t.Run("Error when stealing fails", func(t *testing.T) {
+	t.Run("Error when RemoveFromHand (thief) fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockHand2, mockStolenCard, mockThief :=
+			validateStealAction(t, ctrl, 1)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(nil, errors.New("invalid position"))
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		// steal() calls Hand().RemoveCard on player2
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().RemoveCard(mockStolenCard)
+		// RemoveFromHand(thief) fails
+		mockThief.EXPECT().GetID().Return("T1")
+		mockPlayer1.EXPECT().RemoveFromHand("T1").Return(nil, errors.New("thief not found"))
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeSpySteal,
-		}
-
-		action := NewStealAction("Player1", "Player2", 0)
-		action.targetPlayer = mockPlayer2
-
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "stealing card failed")
-		assert.NotNil(t, result)
-	})
-
-	t.Run("Error when Thief returns nil", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockStolenCard := mocks.NewMockCard(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().CardStolenFromHand(0).Return(mockStolenCard, nil)
-		mockPlayer1.EXPECT().Thief().Return(nil)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeSpySteal,
-		}
-
-		action := NewStealAction("Player1", "Player2", 0)
-		action.targetPlayer = mockPlayer2
-
-		result, _, err := action.Execute(g)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "failed to retrieve thief card")
+		assert.Contains(t, err.Error(), "removing thief from hand failed")
 		assert.NotNil(t, result)
 	})
 
@@ -154,39 +168,24 @@ func TestStealAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockThief := mocks.NewMockThief(ctrl)
-		mockStolenCard := mocks.NewMockCard(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockHand2, mockStolenCard, mockThief :=
+			validateStealAction(t, ctrl, 1)
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().CardStolenFromHand(2).Return(mockStolenCard, nil)
-		mockPlayer1.EXPECT().Thief().Return(mockThief)
-		mockDiscardPile.EXPECT().Discard(mockThief)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().RemoveCard(mockStolenCard)
+		mockThief.EXPECT().GetID().Return("T1")
+		mockPlayer1.EXPECT().RemoveFromHand("T1").Return([]cards.Card{mockThief}, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockThief)
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().StatusWithModal(mockPlayer1, []cards.Card{mockStolenCard}).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeSpySteal,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().GetWithModal(
-			mockPlayer1, g, []cards.Card{mockStolenCard},
-		).Return(expectedStatus)
-
-		action := NewStealAction("Player1", "Player2", 2)
-		action.targetPlayer = mockPlayer2
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -200,41 +199,28 @@ func TestStealAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockThief := mocks.NewMockThief(ctrl)
-		mockStolenCard := mocks.NewMockCard(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockHand2, mockStolenCard, mockThief :=
+			validateStealAction(t, ctrl, 1)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer2.EXPECT().CardStolenFromHand(1).Return(mockStolenCard, nil)
-		mockPlayer1.EXPECT().Thief().Return(mockThief)
-		mockDiscardPile.EXPECT().Discard(mockThief)
+		var capturedMsg string
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer2.EXPECT().Hand().Return(mockHand2)
+		mockHand2.EXPECT().RemoveCard(mockStolenCard)
+		mockThief.EXPECT().GetID().Return("T1")
+		mockPlayer1.EXPECT().RemoveFromHand("T1").Return([]cards.Card{mockThief}, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockThief)
 		mockPlayer1.EXPECT().TakeCards(mockStolenCard)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeSpySteal,
-			discardPile:   mockDiscardPile,
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewStealAction("Player1", "Player2", 1)
-		action.targetPlayer = mockPlayer2
-
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "stole") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain steal action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "stole")
 	})
 }

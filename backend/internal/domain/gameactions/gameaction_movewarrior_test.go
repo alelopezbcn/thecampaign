@@ -2,10 +2,9 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -13,8 +12,51 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+// validateMoveOwnField runs Validate for an own-field warrior move.
+func validateMoveOwnField(
+	t *testing.T, ctrl *gomock.Controller, warriorID string,
+) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer) {
+	t.Helper()
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+
+	mockGame.EXPECT().TurnState().Return(types.TurnState{})
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+
+	action := gameactions.NewMoveWarriorAction("Player1", warriorID, "")
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateMoveOwnField: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer1
+}
+
+// validateMoveAllyField runs Validate for a 2v2 ally-field warrior move.
+func validateMoveAllyField(
+	t *testing.T, ctrl *gomock.Controller,
+) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockWarrior) {
+	t.Helper()
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockWarrior := mocks.NewMockWarrior(ctrl)
+
+	mockGame.EXPECT().TurnState().Return(types.TurnState{})
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+	mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+	mockGame.EXPECT().SameTeam(0, 1).Return(true)
+	mockPlayer1.EXPECT().GetCardFromHand("K1").Return(mockWarrior, true)
+
+	action := gameactions.NewMoveWarriorAction("Player1", "K1", "Player2")
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateMoveAllyField: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer1, mockPlayer2, mockWarrior
+}
+
 func TestMoveWarriorAction_PlayerName(t *testing.T) {
-	action := NewMoveWarriorAction("Player1", "K1", "")
+	action := gameactions.NewMoveWarriorAction("Player1", "K1", "")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
@@ -23,19 +65,11 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().TurnState().Return(types.TurnState{HasMovedWarrior: true})
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			turnState:   TurnState{HasMovedWarrior: true},
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "")
-		err := action.Validate(g)
+		action := gameactions.NewMoveWarriorAction("Player1", "K1", "")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "already moved a warrior this turn")
@@ -45,40 +79,23 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "")
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Nil(t, action.targetPlayer)
+		action, _, _ := validateMoveOwnField(t, ctrl, "K1")
+		assert.NotNil(t, action)
 	})
 
 	t.Run("Error when target player not found for ally move", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().TurnState().Return(types.TurnState{})
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().GetPlayer("Unknown").Return(nil)
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "Unknown")
-		err := action.Validate(g)
+		action := gameactions.NewMoveWarriorAction("Player1", "K1", "Unknown")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "target player Unknown not found")
@@ -88,20 +105,19 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().TurnState().Return(types.TurnState{})
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+		mockGame.EXPECT().SameTeam(0, 1).Return(false)
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			mode:        types.GameMode1v1,
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "Player2")
-		err := action.Validate(g)
+		action := gameactions.NewMoveWarriorAction("Player1", "K1", "Player2")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "can only move warriors to ally's field")
@@ -111,24 +127,20 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().TurnState().Return(types.TurnState{})
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+		mockGame.EXPECT().SameTeam(0, 1).Return(true)
 		mockPlayer1.EXPECT().GetCardFromHand("K1").Return(nil, false)
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn: 0,
-			mode:        types.GameMode2v2,
-			teams:       map[int][]int{0: {0, 1}, 1: {2, 3}},
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "Player2")
-		err := action.Validate(g)
+		action := gameactions.NewMoveWarriorAction("Player1", "K1", "Player2")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "card with ID K1 not found in hand")
@@ -138,25 +150,21 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockCard := mocks.NewMockCard(ctrl) // Not a Warrior
+		mockCard := mocks.NewMockCard(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().TurnState().Return(types.TurnState{})
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+		mockGame.EXPECT().SameTeam(0, 1).Return(true)
 		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockCard, true)
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn: 0,
-			mode:        types.GameMode2v2,
-			teams:       map[int][]int{0: {0, 1}, 1: {2, 3}},
-		}
-
-		action := NewMoveWarriorAction("Player1", "G1", "Player2")
-		err := action.Validate(g)
+		action := gameactions.NewMoveWarriorAction("Player1", "G1", "Player2")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "only warrior cards can be moved to field")
@@ -166,29 +174,8 @@ func TestMoveWarriorAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("K1").Return(mockWarrior, true)
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn: 0,
-			mode:        types.GameMode2v2,
-			teams:       map[int][]int{0: {0, 1}, 1: {2, 3}},
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "Player2")
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, mockPlayer2, action.targetPlayer)
-		assert.Equal(t, mockWarrior, action.warrior)
+		action, _, _, _, _ := validateMoveAllyField(t, ctrl)
+		assert.NotNil(t, action)
 	})
 }
 
@@ -197,20 +184,12 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		action, mockGame, mockPlayer1 := validateMoveOwnField(t, ctrl, "K1")
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(errors.New("card not found"))
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			history:     []types.HistoryLine{},
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "")
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "moving warrior to field failed")
@@ -221,34 +200,24 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-
+		action, mockGame, mockPlayer1 := validateMoveOwnField(t, ctrl, "K1")
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().SetHasMovedWarrior(true)
+		mockGame.EXPECT().SetCanMoveWarrior(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeAttack,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewMoveWarriorAction("Player1", "K1", "")
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionMoveWarrior, result.Action)
 		assert.Equal(t, "K1", result.MovedWarriorID)
-		assert.True(t, g.TurnState().HasMovedWarrior)
-		assert.False(t, g.TurnState().CanMoveWarrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -256,47 +225,30 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior := validateMoveAllyField(t, ctrl)
 		mockField := mocks.NewMockField(ctrl)
 		mockHand := mocks.NewMockHand(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField)
 		mockField.EXPECT().AddWarriors(mockWarrior)
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockWarrior).Return(true)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().SetHasMovedWarrior(true)
+		mockGame.EXPECT().SetCanMoveWarrior(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeAttack,
-			mode:               types.GameMode2v2,
-			teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewMoveWarriorAction("Player1", "K1", "Player2")
-		action.targetPlayer = mockPlayer2
-		action.warrior = mockWarrior
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionMoveWarrior, result.Action)
 		assert.Equal(t, "K1", result.MovedWarriorID)
-		assert.True(t, g.TurnState().HasMovedWarrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -304,24 +256,20 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		action, mockGame, mockPlayer1 := validateMoveOwnField(t, ctrl, "K1")
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().SetHasMovedWarrior(true)
+		mockGame.EXPECT().SetCanMoveWarrior(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		// statusFn not called; no Status expectation
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewMoveWarriorAction("Player1", "K1", "")
-		_, statusFn, err := action.Execute(g)
+		_, _, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
-		assert.NotNil(t, statusFn)
 		assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 	})
 
@@ -329,75 +277,57 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		action, mockGame, mockPlayer1 := validateMoveOwnField(t, ctrl, "K1")
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().MoveCardToField("K1").Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-			history:       []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
+		mockGame.EXPECT().SetHasMovedWarrior(true)
+		mockGame.EXPECT().SetCanMoveWarrior(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 
-		action := NewMoveWarriorAction("Player1", "K1", "")
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "moved warrior") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain move warrior action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "moved warrior")
 	})
 
 	t.Run("History updated on ally field move", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior := validateMoveAllyField(t, ctrl)
 		mockField := mocks.NewMockField(ctrl)
 		mockHand := mocks.NewMockHand(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField)
 		mockField.EXPECT().AddWarriors(mockWarrior)
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockWarrior).Return(true)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-			history:       []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
+		mockGame.EXPECT().SetHasMovedWarrior(true)
+		mockGame.EXPECT().SetCanMoveWarrior(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 
-		action := NewMoveWarriorAction("Player1", "K1", "Player2")
-		action.targetPlayer = mockPlayer2
-		action.warrior = mockWarrior
-
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "Player2's field") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain ally field move action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "Player2's field")
 	})
 }

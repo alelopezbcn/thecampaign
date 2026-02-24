@@ -16,6 +16,151 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockCastleReader is a mock of CastleReader interface.
+type MockCastleReader struct {
+	ctrl     *gomock.Controller
+	recorder *MockCastleReaderMockRecorder
+}
+
+// MockCastleReaderMockRecorder is the mock recorder for MockCastleReader.
+type MockCastleReaderMockRecorder struct {
+	mock *MockCastleReader
+}
+
+// NewMockCastleReader creates a new mock instance.
+func NewMockCastleReader(ctrl *gomock.Controller) *MockCastleReader {
+	mock := &MockCastleReader{ctrl: ctrl}
+	mock.recorder = &MockCastleReaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCastleReader) EXPECT() *MockCastleReaderMockRecorder {
+	return m.recorder
+}
+
+// CanBeAttacked mocks base method.
+func (m *MockCastleReader) CanBeAttacked() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeAttacked")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeAttacked indicates an expected call of CanBeAttacked.
+func (mr *MockCastleReaderMockRecorder) CanBeAttacked() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeAttacked", reflect.TypeOf((*MockCastleReader)(nil).CanBeAttacked))
+}
+
+// IsConstructed mocks base method.
+func (m *MockCastleReader) IsConstructed() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsConstructed")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsConstructed indicates an expected call of IsConstructed.
+func (mr *MockCastleReaderMockRecorder) IsConstructed() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConstructed", reflect.TypeOf((*MockCastleReader)(nil).IsConstructed))
+}
+
+// ResourceCards mocks base method.
+func (m *MockCastleReader) ResourceCards() []cards.Resource {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourceCards")
+	ret0, _ := ret[0].([]cards.Resource)
+	return ret0
+}
+
+// ResourceCards indicates an expected call of ResourceCards.
+func (mr *MockCastleReaderMockRecorder) ResourceCards() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCards", reflect.TypeOf((*MockCastleReader)(nil).ResourceCards))
+}
+
+// ResourceCardsCount mocks base method.
+func (m *MockCastleReader) ResourceCardsCount() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourceCardsCount")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// ResourceCardsCount indicates an expected call of ResourceCardsCount.
+func (mr *MockCastleReaderMockRecorder) ResourceCardsCount() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCardsCount", reflect.TypeOf((*MockCastleReader)(nil).ResourceCardsCount))
+}
+
+// Value mocks base method.
+func (m *MockCastleReader) Value() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Value")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Value indicates an expected call of Value.
+func (mr *MockCastleReaderMockRecorder) Value() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Value", reflect.TypeOf((*MockCastleReader)(nil).Value))
+}
+
+// MockCastleMutator is a mock of CastleMutator interface.
+type MockCastleMutator struct {
+	ctrl     *gomock.Controller
+	recorder *MockCastleMutatorMockRecorder
+}
+
+// MockCastleMutatorMockRecorder is the mock recorder for MockCastleMutator.
+type MockCastleMutatorMockRecorder struct {
+	mock *MockCastleMutator
+}
+
+// NewMockCastleMutator creates a new mock instance.
+func NewMockCastleMutator(ctrl *gomock.Controller) *MockCastleMutator {
+	mock := &MockCastleMutator{ctrl: ctrl}
+	mock.recorder = &MockCastleMutatorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockCastleMutator) EXPECT() *MockCastleMutatorMockRecorder {
+	return m.recorder
+}
+
+// Construct mocks base method.
+func (m *MockCastleMutator) Construct(card cards.Card) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Construct", card)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Construct indicates an expected call of Construct.
+func (mr *MockCastleMutatorMockRecorder) Construct(card any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Construct", reflect.TypeOf((*MockCastleMutator)(nil).Construct), card)
+}
+
+// RemoveGold mocks base method.
+func (m *MockCastleMutator) RemoveGold(position int) (cards.Resource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveGold", position)
+	ret0, _ := ret[0].(cards.Resource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// RemoveGold indicates an expected call of RemoveGold.
+func (mr *MockCastleMutatorMockRecorder) RemoveGold(position any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGold", reflect.TypeOf((*MockCastleMutator)(nil).RemoveGold), position)
+}
+
 // MockCastle is a mock of Castle interface.
 type MockCastle struct {
 	ctrl     *gomock.Controller

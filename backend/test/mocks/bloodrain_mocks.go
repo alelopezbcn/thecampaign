@@ -66,6 +66,20 @@ func (mr *MockBloodRainMockRecorder) Attack(targets any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockBloodRain)(nil).Attack), targets)
 }
 
+// CanBeUsedWith mocks base method.
+func (m *MockBloodRain) CanBeUsedWith(field cards.FieldChecker) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeUsedWith", field)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeUsedWith indicates an expected call of CanBeUsedWith.
+func (mr *MockBloodRainMockRecorder) CanBeUsedWith(field any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeUsedWith", reflect.TypeOf((*MockBloodRain)(nil).CanBeUsedWith), field)
+}
+
 // CanConstruct mocks base method.
 func (m *MockBloodRain) CanConstruct() bool {
 	m.ctrl.T.Helper()
@@ -134,6 +148,20 @@ func (m *MockBloodRain) MultiplierFactor(target cards.Warrior) int {
 func (mr *MockBloodRainMockRecorder) MultiplierFactor(target any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockBloodRain)(nil).MultiplierFactor), target)
+}
+
+// Name mocks base method.
+func (m *MockBloodRain) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockBloodRainMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockBloodRain)(nil).Name))
 }
 
 // String mocks base method.

@@ -3,8 +3,8 @@ package gamestatus_test
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -15,12 +15,12 @@ func TestNewWarriorHandCard(t *testing.T) {
 	tests := []struct {
 		name        string
 		warriorType types.WarriorType
-		wantType    CardType
+		wantType    gamestatus.CardType
 	}{
-		{"Knight", types.KnightWarriorType, CardTypeKnight},
-		{"Archer", types.ArcherWarriorType, CardTypeArcher},
-		{"Mage", types.MageWarriorType, CardTypeMage},
-		{"Dragon", types.DragonWarriorType, CardTypeDragon},
+		{"Knight", types.KnightWarriorType, gamestatus.CardTypeKnight},
+		{"Archer", types.ArcherWarriorType, gamestatus.CardTypeArcher},
+		{"Mage", types.MageWarriorType, gamestatus.CardTypeMage},
+		{"Dragon", types.DragonWarriorType, gamestatus.CardTypeDragon},
 	}
 
 	for _, tt := range tests {
@@ -33,7 +33,7 @@ func TestNewWarriorHandCard(t *testing.T) {
 			warrior.EXPECT().GetID().Return("W1")
 			warrior.EXPECT().Health().Return(20)
 
-			hc := NewWarriorHandCard(warrior)
+			hc := gamestatus.NewWarriorHandCard(warrior)
 
 			assert.Equal(t, "W1", hc.CardID)
 			assert.Equal(t, tt.wantType, hc.CardType)
@@ -50,19 +50,16 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(7)
-		// HasKnight/HasDragon are called before action check
-		myField.EXPECT().HasKnight().Return(true)
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeBuy)
+		myField := gamestatus.FieldInput{HasKnight: true}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeBuy)
 
 		assert.Equal(t, "S1", hc.CardID)
-		assert.Equal(t, CardTypeSword, hc.CardType)
+		assert.Equal(t, gamestatus.CardTypeSword, hc.CardType)
 		assert.Equal(t, 7, hc.Value)
 		assert.False(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
@@ -73,20 +70,16 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.ArrowWeaponType)
 		weapon.EXPECT().GetID().Return("A1")
 		weapon.EXPECT().DamageAmount().Return(5)
-		// HasArcher/HasDragon called before action check
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeSpySteal)
+		myField := gamestatus.FieldInput{HasArcher: false, HasDragon: false}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeSpySteal)
 
 		assert.Equal(t, "A1", hc.CardID)
-		assert.Equal(t, CardTypeArrow, hc.CardType)
+		assert.Equal(t, gamestatus.CardTypeArrow, hc.CardType)
 		assert.False(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
 	})
@@ -96,19 +89,15 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.PoisonWeaponType)
 		weapon.EXPECT().GetID().Return("P1")
 		weapon.EXPECT().DamageAmount().Return(4)
-		// HasMage/HasDragon called before action check
-		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeBuy)
+		myField := gamestatus.FieldInput{HasMage: false, HasDragon: false}
 
-		assert.Equal(t, CardTypePoison, hc.CardType)
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeBuy)
+
+		assert.Equal(t, gamestatus.CardTypePoison, hc.CardType)
 	})
 
 	t.Run("Weapon can construct when CanConstruct and in Construct phase", func(t *testing.T) {
@@ -116,18 +105,14 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.PoisonWeaponType)
 		weapon.EXPECT().GetID().Return("P1")
 		weapon.EXPECT().DamageAmount().Return(1)
 		weapon.EXPECT().CanConstruct().Return(true)
-		// HasMage/HasDragon called before action check
-		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().HasDragon().Return(false)
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeConstruct)
+		myField := gamestatus.FieldInput{HasMage: false, HasDragon: false}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeConstruct)
 
 		assert.Equal(t, "P1", hc.CardID)
 		assert.True(t, hc.CanBeUsed)
@@ -139,18 +124,14 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(1)
-		// Short-circuit: !castleConstructed is false, so CanConstruct() is NOT called
-		// HasKnight/HasDragon called before action check
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasDragon().Return(false)
+		// Short-circuit: castleConstructed=true, so CanConstruct() is NOT called
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, true, types.PhaseTypeConstruct)
+		myField := gamestatus.FieldInput{HasKnight: false, HasDragon: false}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, true, types.PhaseTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -160,17 +141,14 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(5)
 		weapon.EXPECT().CanConstruct().Return(false)
-		// HasKnight/HasDragon called before action check
-		myField.EXPECT().HasKnight().Return(true)
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeConstruct)
+		myField := gamestatus.FieldInput{HasKnight: true}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -180,19 +158,18 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		enemy1 := mocks.NewMockWarrior(ctrl)
 
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(7)
 		weapon.EXPECT().MultiplierFactor(enemy1).Return(2)
-		myField.EXPECT().HasKnight().Return(true)
 		enemy1.EXPECT().GetID().Return("EK1").Times(2)
-		enemyField.EXPECT().Warriors().Return([]cards.Warrior{enemy1})
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{HasKnight: true}
+		enemyField := gamestatus.FieldInput{Warriors: []cards.Warrior{enemy1}}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{enemyField}, false, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -204,17 +181,14 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(7)
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasDragon().Return(false)
-		enemyField.EXPECT().Warriors().Return([]cards.Warrior{})
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{HasKnight: false, HasDragon: false}
+		enemyField := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{enemyField}, false, types.PhaseTypeAttack)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -224,17 +198,14 @@ func TestNewWeaponHandCard(t *testing.T) {
 		defer ctrl.Finish()
 
 		weapon := mocks.NewMockWeapon(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
-
 		weapon.EXPECT().Type().Return(types.ArrowWeaponType)
 		weapon.EXPECT().GetID().Return("A1")
 		weapon.EXPECT().DamageAmount().Return(5)
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasDragon().Return(true)
-		enemyField.EXPECT().Warriors().Return([]cards.Warrior{})
 
-		hc := NewWeaponHandCard(weapon, myField, []board.Field{enemyField}, false, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{HasArcher: false, HasDragon: true}
+		enemyField := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
+
+		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{enemyField}, false, types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 	})
@@ -249,10 +220,10 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(5)
 
-		hc := NewResourceHandCard(resource, false, false, true, types.PhaseTypeAttack)
+		hc := gamestatus.NewResourceHandCard(resource, false, false, true, types.PhaseTypeAttack)
 
 		assert.Equal(t, "G1", hc.CardID)
-		assert.Equal(t, CardTypeResource, hc.CardType)
+		assert.Equal(t, gamestatus.CardTypeResource, hc.CardType)
 		assert.Equal(t, 5, hc.Value)
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -265,7 +236,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(5)
 
-		hc := NewResourceHandCard(resource, false, false, true, types.PhaseTypeBuy)
+		hc := gamestatus.NewResourceHandCard(resource, false, false, true, types.PhaseTypeBuy)
 
 		assert.Equal(t, "G1", hc.CardID)
 		assert.True(t, hc.CanBeUsed)
@@ -279,7 +250,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(1)
 
-		hc := NewResourceHandCard(resource, false, false, false, types.PhaseTypeBuy)
+		hc := gamestatus.NewResourceHandCard(resource, false, false, false, types.PhaseTypeBuy)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -292,7 +263,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().GetID().Return("G1")
 		resource.EXPECT().Value().Return(5)
 
-		hc := NewResourceHandCard(resource, true, false, false, types.PhaseTypeConstruct)
+		hc := gamestatus.NewResourceHandCard(resource, true, false, false, types.PhaseTypeConstruct)
 
 		assert.True(t, hc.CanBeUsed) // Castle constructed, any resource can be added
 	})
@@ -306,7 +277,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().Value().Return(1)
 		resource.EXPECT().CanConstruct().Return(true)
 
-		hc := NewResourceHandCard(resource, false, false, false, types.PhaseTypeConstruct)
+		hc := gamestatus.NewResourceHandCard(resource, false, false, false, types.PhaseTypeConstruct)
 
 		assert.True(t, hc.CanBeUsed) // CanConstruct is true
 	})
@@ -320,7 +291,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().Value().Return(5)
 		resource.EXPECT().CanConstruct().Return(false)
 
-		hc := NewResourceHandCard(resource, false, false, false, types.PhaseTypeConstruct)
+		hc := gamestatus.NewResourceHandCard(resource, false, false, false, types.PhaseTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -334,7 +305,7 @@ func TestNewResourceHandCard(t *testing.T) {
 		resource.EXPECT().Value().Return(5)
 
 		// Player castle NOT constructed, but ally castle IS
-		hc := NewResourceHandCard(resource, false, true, false, types.PhaseTypeConstruct)
+		hc := gamestatus.NewResourceHandCard(resource, false, true, false, types.PhaseTypeConstruct)
 
 		assert.True(t, hc.CanBeUsed) // Ally castle constructed, any resource can be added
 	})
@@ -342,18 +313,12 @@ func TestNewResourceHandCard(t *testing.T) {
 
 func TestNewSpecialPowerHandCard(t *testing.T) {
 	t.Run("Not usable outside Attack phase", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeBuy)
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			gamestatus.FieldInput{}, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeBuy)
 
 		assert.Equal(t, "SP1", hc.CardID)
-		assert.Equal(t, CardTypeSpecialPower, hc.CardType)
+		assert.Equal(t, gamestatus.CardTypeSpecialPower, hc.CardType)
 		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
@@ -362,19 +327,15 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
-		enemyField := mocks.NewMockField(ctrl)
 		enemy1 := mocks.NewMockWarrior(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(true)
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasMage().Return(false)
 		enemy1.EXPECT().GetID().Return("EK1")
-		enemyField.EXPECT().Warriors().Return([]cards.Warrior{enemy1})
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{enemyField}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{HasArcher: true, HasKnight: false, HasMage: false}
+		enemyField := gamestatus.FieldInput{Warriors: []cards.Warrior{enemy1}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{enemyField},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"EK1"}, hc.CanBeUsedOnIDs)
@@ -384,20 +345,19 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
 		myWarrior := mocks.NewMockWarrior(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(true)
-		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().Warriors().Return([]cards.Warrior{myWarrior})
 		myWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		myWarrior.EXPECT().IsProtected().Return(false, nil)
 		myWarrior.EXPECT().GetID().Return("K1")
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{
+			HasArcher: false, HasKnight: true, HasMage: false,
+			Warriors: []cards.Warrior{myWarrior},
+		}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"K1"}, hc.CanBeUsedOnIDs)
@@ -407,20 +367,18 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
 		dragon := mocks.NewMockWarrior(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(true)
-		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().Warriors().Return([]cards.Warrior{dragon})
-		// IsProtected() is called before Type() check
 		dragon.EXPECT().IsProtected().Return(false, nil)
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{
+			HasArcher: false, HasKnight: true, HasMage: false,
+			Warriors: []cards.Warrior{dragon},
+		}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -430,20 +388,19 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
 		protectedWarrior := mocks.NewMockWarrior(ctrl)
 		existingSP := mocks.NewMockSpecialPower(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(true)
-		myField.EXPECT().HasMage().Return(false)
-		myField.EXPECT().Warriors().Return([]cards.Warrior{protectedWarrior})
 		protectedWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		protectedWarrior.EXPECT().IsProtected().Return(true, existingSP)
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{
+			HasArcher: false, HasKnight: true, HasMage: false,
+			Warriors: []cards.Warrior{protectedWarrior},
+		}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -453,20 +410,19 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
 		damagedWarrior := mocks.NewMockWarrior(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasMage().Return(true)
-		myField.EXPECT().Warriors().Return([]cards.Warrior{damagedWarrior})
 		damagedWarrior.EXPECT().Type().Return(types.MageWarriorType)
 		damagedWarrior.EXPECT().IsDamaged().Return(true)
 		damagedWarrior.EXPECT().GetID().Return("M1")
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{
+			HasArcher: false, HasKnight: false, HasMage: true,
+			Warriors: []cards.Warrior{damagedWarrior},
+		}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Equal(t, []string{"M1"}, hc.CanBeUsedOnIDs)
@@ -476,19 +432,18 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
 		healthyWarrior := mocks.NewMockWarrior(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasMage().Return(true)
-		myField.EXPECT().Warriors().Return([]cards.Warrior{healthyWarrior})
 		healthyWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		healthyWarrior.EXPECT().IsDamaged().Return(false)
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{
+			HasArcher: false, HasKnight: false, HasMage: true,
+			Warriors: []cards.Warrior{healthyWarrior},
+		}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -498,36 +453,28 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
 		dragon := mocks.NewMockWarrior(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasMage().Return(true)
-		myField.EXPECT().Warriors().Return([]cards.Warrior{dragon})
 		dragon.EXPECT().Type().Return(types.DragonWarriorType)
 
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		myField := gamestatus.FieldInput{
+			HasArcher: false, HasKnight: false, HasMage: true,
+			Warriors: []cards.Warrior{dragon},
+		}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
 	t.Run("No field warriors means no targets", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
+		myField := gamestatus.FieldInput{HasArcher: false, HasKnight: false, HasMage: false}
 
-		sp := mocks.NewMockSpecialPower(ctrl)
-		myField := mocks.NewMockField(ctrl)
-
-		sp.EXPECT().GetID().Return("SP1")
-		myField.EXPECT().HasArcher().Return(false)
-		myField.EXPECT().HasKnight().Return(false)
-		myField.EXPECT().HasMage().Return(false)
-
-		hc := NewSpecialPowerHandCard(sp.GetID(), myField, []board.Field{}, []board.Field{}, types.PhaseTypeAttack)
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
 
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -540,48 +487,48 @@ func TestNewSpyHandCard(t *testing.T) {
 		cardID   string
 		action   types.PhaseType
 		wantUsed bool
-		wantType CardType
+		wantType gamestatus.CardType
 	}{
 		{
 			name:     "Spy can be used during SpySteal phase",
 			cardID:   "SPY1",
 			action:   types.PhaseTypeSpySteal,
 			wantUsed: true,
-			wantType: CardTypeSpy,
+			wantType: gamestatus.CardTypeSpy,
 		},
 		{
 			name:     "Spy cannot be used during Attack phase",
 			cardID:   "SPY2",
 			action:   types.PhaseTypeAttack,
 			wantUsed: false,
-			wantType: CardTypeSpy,
+			wantType: gamestatus.CardTypeSpy,
 		},
 		{
 			name:     "Spy cannot be used during Buy phase",
 			cardID:   "SPY3",
 			action:   types.PhaseTypeBuy,
 			wantUsed: false,
-			wantType: CardTypeSpy,
+			wantType: gamestatus.CardTypeSpy,
 		},
 		{
 			name:     "Spy cannot be used during Construct phase",
 			cardID:   "SPY4",
 			action:   types.PhaseTypeConstruct,
 			wantUsed: false,
-			wantType: CardTypeSpy,
+			wantType: gamestatus.CardTypeSpy,
 		},
 		{
 			name:     "Spy cannot be used during DrawCard phase",
 			cardID:   "SPY5",
 			action:   types.PhaseTypeDrawCard,
 			wantUsed: false,
-			wantType: CardTypeSpy,
+			wantType: gamestatus.CardTypeSpy,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := NewSpyHandCard(tt.cardID, tt.action)
+			hc := gamestatus.NewSpyHandCard(tt.cardID, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.CardID)
 			assert.Equal(t, tt.wantType, hc.CardType)
@@ -598,41 +545,41 @@ func TestNewThiefHandCard(t *testing.T) {
 		cardID   string
 		action   types.PhaseType
 		wantUsed bool
-		wantType CardType
+		wantType gamestatus.CardType
 	}{
 		{
 			name:     "Thief can be used during SpySteal phase",
 			cardID:   "THIEF1",
 			action:   types.PhaseTypeSpySteal,
 			wantUsed: true,
-			wantType: CardTypeThief,
+			wantType: gamestatus.CardTypeThief,
 		},
 		{
 			name:     "Thief cannot be used during Attack phase",
 			cardID:   "THIEF2",
 			action:   types.PhaseTypeAttack,
 			wantUsed: false,
-			wantType: CardTypeThief,
+			wantType: gamestatus.CardTypeThief,
 		},
 		{
 			name:     "Thief cannot be used during Buy phase",
 			cardID:   "THIEF3",
 			action:   types.PhaseTypeBuy,
 			wantUsed: false,
-			wantType: CardTypeThief,
+			wantType: gamestatus.CardTypeThief,
 		},
 		{
 			name:     "Thief cannot be used during Construct phase",
 			cardID:   "THIEF4",
 			action:   types.PhaseTypeConstruct,
 			wantUsed: false,
-			wantType: CardTypeThief,
+			wantType: gamestatus.CardTypeThief,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := NewThiefHandCard(tt.cardID, tt.action)
+			hc := gamestatus.NewThiefHandCard(tt.cardID, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.CardID)
 			assert.Equal(t, tt.wantType, hc.CardType)
@@ -650,7 +597,7 @@ func TestNewCatapultHandCard(t *testing.T) {
 		canBeUsed bool
 		action    types.PhaseType
 		wantUsed  bool
-		wantType  CardType
+		wantType  gamestatus.CardType
 	}{
 		{
 			name:      "Catapult can be used when enemy castle can be attacked in Attack phase",
@@ -658,7 +605,7 @@ func TestNewCatapultHandCard(t *testing.T) {
 			canBeUsed: true,
 			action:    types.PhaseTypeAttack,
 			wantUsed:  true,
-			wantType:  CardTypeCatapult,
+			wantType:  gamestatus.CardTypeCatapult,
 		},
 		{
 			name:      "Catapult cannot be used when enemy castle cannot be attacked in Attack phase",
@@ -666,7 +613,7 @@ func TestNewCatapultHandCard(t *testing.T) {
 			canBeUsed: false,
 			action:    types.PhaseTypeAttack,
 			wantUsed:  false,
-			wantType:  CardTypeCatapult,
+			wantType:  gamestatus.CardTypeCatapult,
 		},
 		{
 			name:      "Catapult cannot be used during Buy phase even if castle can be attacked",
@@ -674,7 +621,7 @@ func TestNewCatapultHandCard(t *testing.T) {
 			canBeUsed: true,
 			action:    types.PhaseTypeBuy,
 			wantUsed:  false,
-			wantType:  CardTypeCatapult,
+			wantType:  gamestatus.CardTypeCatapult,
 		},
 		{
 			name:      "Catapult cannot be used during SpySteal phase",
@@ -682,7 +629,7 @@ func TestNewCatapultHandCard(t *testing.T) {
 			canBeUsed: true,
 			action:    types.PhaseTypeSpySteal,
 			wantUsed:  false,
-			wantType:  CardTypeCatapult,
+			wantType:  gamestatus.CardTypeCatapult,
 		},
 		{
 			name:      "Catapult cannot be used during Construct phase",
@@ -690,13 +637,13 @@ func TestNewCatapultHandCard(t *testing.T) {
 			canBeUsed: true,
 			action:    types.PhaseTypeConstruct,
 			wantUsed:  false,
-			wantType:  CardTypeCatapult,
+			wantType:  gamestatus.CardTypeCatapult,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := NewCatapultHandCard(tt.cardID, tt.canBeUsed, tt.action)
+			hc := gamestatus.NewCatapultHandCard(tt.cardID, tt.canBeUsed, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.CardID)
 			assert.Equal(t, tt.wantType, hc.CardType)

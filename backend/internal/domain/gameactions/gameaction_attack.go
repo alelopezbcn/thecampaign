@@ -71,19 +71,8 @@ func (a *attackAction) Validate(g Game) error {
 		return fmt.Errorf("the card is not a weapon")
 	}
 
-	switch a.weapon.Type() {
-	case types.SwordWeaponType:
-		if !a.currentPlayer.Field().HasKnight() && !a.currentPlayer.Field().HasDragon() {
-			return fmt.Errorf("sword weapon cannot be used")
-		}
-	case types.ArrowWeaponType:
-		if !a.currentPlayer.Field().HasArcher() && !a.currentPlayer.Field().HasDragon() {
-			return fmt.Errorf("arrow weapon cannot be used")
-		}
-	case types.PoisonWeaponType:
-		if !a.currentPlayer.Field().HasMage() && !a.currentPlayer.Field().HasDragon() {
-			return fmt.Errorf("poison weapon cannot be used")
-		}
+	if !a.weapon.CanBeUsedWith(a.currentPlayer.Field()) {
+		return fmt.Errorf("%s weapon cannot be used", a.weapon.Type())
 	}
 
 	return nil

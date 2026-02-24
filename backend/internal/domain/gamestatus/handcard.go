@@ -245,3 +245,18 @@ func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 	return newHandCard(resource.GetID(), CardTypeResource,
 		resource.Value(), []string{}, canBuy)
 }
+
+// specialWeaponHandCardBuilders maps each special WeaponType to its HandCard builder.
+// Standard weapons (Sword/Arrow/Poison) fall through to NewWeaponHandCard.
+// Adding a new special weapon = one entry here.
+var specialWeaponHandCardBuilders = map[types.WeaponType]func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard{
+	types.SpecialPowerWeaponType: func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard {
+		return NewSpecialPowerHandCard(id, viewer.Field, game.AllyFields, game.EnemyFields, action)
+	},
+	types.HarpoonWeaponType: func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard {
+		return NewHarpoonHandCard(id, game.EnemyFields, action)
+	},
+	types.BloodRainWeaponType: func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard {
+		return NewBloodRainHandCard(id, game.EnemyFields, action)
+	},
+}

@@ -16,6 +16,167 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockFieldReader is a mock of FieldReader interface.
+type MockFieldReader struct {
+	ctrl     *gomock.Controller
+	recorder *MockFieldReaderMockRecorder
+}
+
+// MockFieldReaderMockRecorder is the mock recorder for MockFieldReader.
+type MockFieldReaderMockRecorder struct {
+	mock *MockFieldReader
+}
+
+// NewMockFieldReader creates a new mock instance.
+func NewMockFieldReader(ctrl *gomock.Controller) *MockFieldReader {
+	mock := &MockFieldReader{ctrl: ctrl}
+	mock.recorder = &MockFieldReaderMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFieldReader) EXPECT() *MockFieldReaderMockRecorder {
+	return m.recorder
+}
+
+// GetWarrior mocks base method.
+func (m *MockFieldReader) GetWarrior(cardID string) (cards.Warrior, bool) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWarrior", cardID)
+	ret0, _ := ret[0].(cards.Warrior)
+	ret1, _ := ret[1].(bool)
+	return ret0, ret1
+}
+
+// GetWarrior indicates an expected call of GetWarrior.
+func (mr *MockFieldReaderMockRecorder) GetWarrior(cardID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWarrior", reflect.TypeOf((*MockFieldReader)(nil).GetWarrior), cardID)
+}
+
+// HasArcher mocks base method.
+func (m *MockFieldReader) HasArcher() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasArcher")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasArcher indicates an expected call of HasArcher.
+func (mr *MockFieldReaderMockRecorder) HasArcher() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasArcher", reflect.TypeOf((*MockFieldReader)(nil).HasArcher))
+}
+
+// HasDragon mocks base method.
+func (m *MockFieldReader) HasDragon() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasDragon")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasDragon indicates an expected call of HasDragon.
+func (mr *MockFieldReaderMockRecorder) HasDragon() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasDragon", reflect.TypeOf((*MockFieldReader)(nil).HasDragon))
+}
+
+// HasKnight mocks base method.
+func (m *MockFieldReader) HasKnight() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasKnight")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasKnight indicates an expected call of HasKnight.
+func (mr *MockFieldReaderMockRecorder) HasKnight() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasKnight", reflect.TypeOf((*MockFieldReader)(nil).HasKnight))
+}
+
+// HasMage mocks base method.
+func (m *MockFieldReader) HasMage() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasMage")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasMage indicates an expected call of HasMage.
+func (mr *MockFieldReaderMockRecorder) HasMage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasMage", reflect.TypeOf((*MockFieldReader)(nil).HasMage))
+}
+
+// Warriors mocks base method.
+func (m *MockFieldReader) Warriors() []cards.Warrior {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Warriors")
+	ret0, _ := ret[0].([]cards.Warrior)
+	return ret0
+}
+
+// Warriors indicates an expected call of Warriors.
+func (mr *MockFieldReaderMockRecorder) Warriors() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Warriors", reflect.TypeOf((*MockFieldReader)(nil).Warriors))
+}
+
+// MockFieldMutator is a mock of FieldMutator interface.
+type MockFieldMutator struct {
+	ctrl     *gomock.Controller
+	recorder *MockFieldMutatorMockRecorder
+}
+
+// MockFieldMutatorMockRecorder is the mock recorder for MockFieldMutator.
+type MockFieldMutatorMockRecorder struct {
+	mock *MockFieldMutator
+}
+
+// NewMockFieldMutator creates a new mock instance.
+func NewMockFieldMutator(ctrl *gomock.Controller) *MockFieldMutator {
+	mock := &MockFieldMutator{ctrl: ctrl}
+	mock.recorder = &MockFieldMutatorMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFieldMutator) EXPECT() *MockFieldMutatorMockRecorder {
+	return m.recorder
+}
+
+// AddWarriors mocks base method.
+func (m *MockFieldMutator) AddWarriors(cards ...cards.Warrior) {
+	m.ctrl.T.Helper()
+	varargs := []any{}
+	for _, a := range cards {
+		varargs = append(varargs, a)
+	}
+	m.ctrl.Call(m, "AddWarriors", varargs...)
+}
+
+// AddWarriors indicates an expected call of AddWarriors.
+func (mr *MockFieldMutatorMockRecorder) AddWarriors(cards ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriors", reflect.TypeOf((*MockFieldMutator)(nil).AddWarriors), cards...)
+}
+
+// RemoveWarrior mocks base method.
+func (m *MockFieldMutator) RemoveWarrior(card cards.Warrior) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemoveWarrior", card)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// RemoveWarrior indicates an expected call of RemoveWarrior.
+func (mr *MockFieldMutatorMockRecorder) RemoveWarrior(card any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveWarrior", reflect.TypeOf((*MockFieldMutator)(nil).RemoveWarrior), card)
+}
+
 // MockField is a mock of Field interface.
 type MockField struct {
 	ctrl     *gomock.Controller

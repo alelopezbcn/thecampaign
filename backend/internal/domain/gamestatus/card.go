@@ -2,7 +2,6 @@ package gamestatus
 
 import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
-	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 type Card struct {
@@ -35,16 +34,7 @@ func fromDomainCard(dc cards.Card) Card {
 
 	switch c := dc.(type) {
 	case cards.Warrior:
-		switch c.Type() {
-		case types.ArcherWarriorType:
-			aCardType = CardTypeArcher
-		case types.MageWarriorType:
-			aCardType = CardTypeMage
-		case types.KnightWarriorType:
-			aCardType = CardTypeKnight
-		case types.DragonWarriorType:
-			aCardType = CardTypeDragon
-		}
+		aCardType = warriorCardTypes[c.Type()]
 		value = c.Health()
 
 	case cards.Weapon:
@@ -55,17 +45,8 @@ func fromDomainCard(dc cards.Card) Card {
 		aCardType = CardTypeResource
 		value = c.Value()
 
-	case cards.Spy:
-		aCardType = CardTypeSpy
-		value = 0
-
-	case cards.Thief:
-		aCardType = CardTypeThief
-		value = 0
-
-	case cards.Catapult:
-		aCardType = CardTypeCatapult
-		value = 0
+	default:
+		aCardType = zeroValueCardTypes[dc.Name()]
 	}
 
 	return newCard(cardID, aCardType, value)

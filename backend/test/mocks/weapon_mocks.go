@@ -17,6 +17,85 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
+// MockFieldChecker is a mock of FieldChecker interface.
+type MockFieldChecker struct {
+	ctrl     *gomock.Controller
+	recorder *MockFieldCheckerMockRecorder
+}
+
+// MockFieldCheckerMockRecorder is the mock recorder for MockFieldChecker.
+type MockFieldCheckerMockRecorder struct {
+	mock *MockFieldChecker
+}
+
+// NewMockFieldChecker creates a new mock instance.
+func NewMockFieldChecker(ctrl *gomock.Controller) *MockFieldChecker {
+	mock := &MockFieldChecker{ctrl: ctrl}
+	mock.recorder = &MockFieldCheckerMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockFieldChecker) EXPECT() *MockFieldCheckerMockRecorder {
+	return m.recorder
+}
+
+// HasArcher mocks base method.
+func (m *MockFieldChecker) HasArcher() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasArcher")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasArcher indicates an expected call of HasArcher.
+func (mr *MockFieldCheckerMockRecorder) HasArcher() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasArcher", reflect.TypeOf((*MockFieldChecker)(nil).HasArcher))
+}
+
+// HasDragon mocks base method.
+func (m *MockFieldChecker) HasDragon() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasDragon")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasDragon indicates an expected call of HasDragon.
+func (mr *MockFieldCheckerMockRecorder) HasDragon() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasDragon", reflect.TypeOf((*MockFieldChecker)(nil).HasDragon))
+}
+
+// HasKnight mocks base method.
+func (m *MockFieldChecker) HasKnight() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasKnight")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasKnight indicates an expected call of HasKnight.
+func (mr *MockFieldCheckerMockRecorder) HasKnight() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasKnight", reflect.TypeOf((*MockFieldChecker)(nil).HasKnight))
+}
+
+// HasMage mocks base method.
+func (m *MockFieldChecker) HasMage() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HasMage")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// HasMage indicates an expected call of HasMage.
+func (mr *MockFieldCheckerMockRecorder) HasMage() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasMage", reflect.TypeOf((*MockFieldChecker)(nil).HasMage))
+}
+
 // MockWeapon is a mock of Weapon interface.
 type MockWeapon struct {
 	ctrl     *gomock.Controller
@@ -50,6 +129,20 @@ func (m *MockWeapon) AddCardMovedToPileObserver(observer cards.CardMovedToPileOb
 func (mr *MockWeaponMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockWeapon)(nil).AddCardMovedToPileObserver), observer)
+}
+
+// CanBeUsedWith mocks base method.
+func (m *MockWeapon) CanBeUsedWith(field cards.FieldChecker) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeUsedWith", field)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeUsedWith indicates an expected call of CanBeUsedWith.
+func (mr *MockWeaponMockRecorder) CanBeUsedWith(field any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeUsedWith", reflect.TypeOf((*MockWeapon)(nil).CanBeUsedWith), field)
 }
 
 // CanConstruct mocks base method.
@@ -120,6 +213,20 @@ func (m *MockWeapon) MultiplierFactor(target cards.Warrior) int {
 func (mr *MockWeaponMockRecorder) MultiplierFactor(target any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MultiplierFactor", reflect.TypeOf((*MockWeapon)(nil).MultiplierFactor), target)
+}
+
+// Name mocks base method.
+func (m *MockWeapon) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockWeaponMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockWeapon)(nil).Name))
 }
 
 // String mocks base method.

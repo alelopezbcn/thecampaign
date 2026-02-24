@@ -2,10 +2,10 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -13,13 +13,40 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+// validateCatapultAction runs Validate with a hand containing mockCatapult and returns
+// the action and mocks ready for Execute tests.
+func validateCatapultAction(
+	t *testing.T, ctrl *gomock.Controller,
+	targetPlayerName string, cardPosition int,
+) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockCatapult) {
+	t.Helper()
+
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockCatapult := mocks.NewMockCatapult(ctrl)
+	mockHand := mocks.NewMockHand(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockPlayer1.EXPECT().Hand().Return(mockHand)
+	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockCatapult})
+	mockGame.EXPECT().GetTargetPlayer("Player1", targetPlayerName).Return(mockPlayer2, nil)
+
+	action := gameactions.NewCatapultAction("Player1", targetPlayerName, cardPosition)
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateCatapultAction: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer1, mockPlayer2, mockCatapult
+}
+
 func TestCatapultAction_PlayerName(t *testing.T) {
-	action := NewCatapultAction("Player1", "Player2", 0)
+	action := gameactions.NewCatapultAction("Player1", "Player2", 0)
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestCatapultAction_NextPhase(t *testing.T) {
-	action := NewCatapultAction("Player1", "Player2", 0)
+	action := gameactions.NewCatapultAction("Player1", "Player2", 0)
 	assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
 }
 
@@ -28,19 +55,11 @@ func TestCatapultAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy).Times(2)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewCatapultAction("Player1", "Player2", 0)
-		err := action.Validate(g)
+		action := gameactions.NewCatapultAction("Player1", "Player2", 0)
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use catapult in the")
@@ -50,75 +69,28 @@ func TestCatapultAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockHand := mocks.NewMockHand(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().HasCatapult().Return(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Hand().Return(mockHand)
+		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewCatapultAction("Player1", "Player2", 0)
-		err := action.Validate(g)
+		action := gameactions.NewCatapultAction("Player1", "Player2", 0)
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a catapult")
+		assert.Contains(t, err.Error(), "player does not have a catapult to use")
 	})
 
-	t.Run("Error when Catapult returns nil", func(t *testing.T) {
+	t.Run("Success validates and stores catapult and target player", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().HasCatapult().Return(true)
-		mockPlayer1.EXPECT().Catapult().Return(nil)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewCatapultAction("Player1", "Player2", 0)
-		err := action.Validate(g)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a catapult to attack")
-	})
-
-	t.Run("Success stores catapult and target player", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockCatapult := mocks.NewMockCatapult(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().HasCatapult().Return(true)
-		mockPlayer1.EXPECT().Catapult().Return(mockCatapult)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewCatapultAction("Player1", "Player2", 2)
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, mockCatapult, action.catapult)
-		assert.Equal(t, mockPlayer2, action.targetPlayer)
+		action, _, _, _, _ := validateCatapultAction(t, ctrl, "Player2", 2)
+		assert.NotNil(t, action)
 	})
 }
 
@@ -127,27 +99,14 @@ func TestCatapultAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockCatapult := mocks.NewMockCatapult(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockCatapult := validateCatapultAction(t, ctrl, "Player2", 0)
 		mockCastle := mocks.NewMockCastle(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCatapult.EXPECT().Attack(mockCastle, 0).Return(nil, errors.New("invalid position"))
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewCatapultAction("Player1", "Player2", 0)
-		action.catapult = mockCatapult
-		action.targetPlayer = mockPlayer2
-
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "attacking castle failed")
@@ -158,39 +117,22 @@ func TestCatapultAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockCatapult := mocks.NewMockCatapult(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockCatapult := validateCatapultAction(t, ctrl, "Player2", 2)
 		mockCastle := mocks.NewMockCastle(ctrl)
 		mockStolenGold := mocks.NewMockResource(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCatapult.EXPECT().Attack(mockCastle, 2).Return(mockStolenGold, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockStolenGold)
 		mockStolenGold.EXPECT().Value().Return(3)
-		mockDiscardPile.EXPECT().Discard(mockStolenGold)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeAttack,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewCatapultAction("Player1", "Player2", 2)
-		action.catapult = mockCatapult
-		action.targetPlayer = mockPlayer2
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -202,43 +144,29 @@ func TestCatapultAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockCatapult := mocks.NewMockCatapult(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockCatapult := validateCatapultAction(t, ctrl, "Player2", 1)
 		mockCastle := mocks.NewMockCastle(ctrl)
 		mockStolenGold := mocks.NewMockResource(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCatapult.EXPECT().Attack(mockCastle, 1).Return(mockStolenGold, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockStolenGold)
 		mockStolenGold.EXPECT().Value().Return(5)
-		mockDiscardPile.EXPECT().Discard(mockStolenGold)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-			discardPile:   mockDiscardPile,
-			history:       []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
 
-		action := NewCatapultAction("Player1", "Player2", 1)
-		action.catapult = mockCatapult
-		action.targetPlayer = mockPlayer2
-
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "gold") && strings.Contains(h.Msg, "Player2") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain catapult action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "gold")
+		assert.Contains(t, capturedMsg, "Player2")
 	})
 }

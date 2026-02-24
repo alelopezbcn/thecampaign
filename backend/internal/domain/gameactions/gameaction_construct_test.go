@@ -2,10 +2,9 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -13,13 +12,58 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+// validateConstructOwnCastle runs Validate for own castle construction.
+func validateConstructOwnCastle(t *testing.T, ctrl *gomock.Controller) (
+	gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockResource,
+) {
+	t.Helper()
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+	mockResource := mocks.NewMockResource(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
+
+	action := gameactions.NewConstructAction("Player1", "G1", "")
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateConstructOwnCastle: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer1, mockResource
+}
+
+// validateConstructAllyCastle runs Validate for ally castle construction (2v2).
+func validateConstructAllyCastle(t *testing.T, ctrl *gomock.Controller) (
+	gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockResource,
+) {
+	t.Helper()
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockResource := mocks.NewMockResource(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
+	mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+	mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+	mockGame.EXPECT().SameTeam(0, 1).Return(true)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
+
+	action := gameactions.NewConstructAction("Player1", "G1", "Player2")
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateConstructAllyCastle: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer1, mockPlayer2, mockResource
+}
+
 func TestConstructAction_PlayerName(t *testing.T) {
-	action := NewConstructAction("Player1", "G1", "")
+	action := gameactions.NewConstructAction("Player1", "G1", "")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestConstructAction_NextPhase(t *testing.T) {
-	action := NewConstructAction("Player1", "G1", "")
+	action := gameactions.NewConstructAction("Player1", "G1", "")
 	assert.Equal(t, types.PhaseTypeEndTurn, action.NextPhase())
 }
 
@@ -28,19 +72,11 @@ func TestConstructAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack).Times(2)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewConstructAction("Player1", "G1", "")
-		err := action.Validate(g)
+		action := gameactions.NewConstructAction("Player1", "G1", "")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot construct in the")
@@ -50,43 +86,25 @@ func TestConstructAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-		}
-
-		action := NewConstructAction("Player1", "G1", "")
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Nil(t, action.targetPlayer)
+		action, _, _, _ := validateConstructOwnCastle(t, ctrl)
+		assert.NotNil(t, action)
 	})
 
-	t.Run("Error when constructing on non-ally in 2v2", func(t *testing.T) {
+	t.Run("Error when constructing on non-ally", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
+		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+		mockGame.EXPECT().SameTeam(0, 1).Return(false)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			mode:          types.GameMode1v1,
-		}
-
-		action := NewConstructAction("Player1", "G1", "Player2")
-		err := action.Validate(g)
+		action := gameactions.NewConstructAction("Player1", "G1", "Player2")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "can only construct on ally's castle")
@@ -96,25 +114,20 @@ func TestConstructAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
+		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
+		mockGame.EXPECT().SameTeam(0, 1).Return(true)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(nil, false)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			mode:          types.GameMode2v2,
-			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
-		}
-
-		action := NewConstructAction("Player1", "G1", "Player2")
-		err := action.Validate(g)
+		action := gameactions.NewConstructAction("Player1", "G1", "Player2")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "card not in hand")
@@ -124,55 +137,27 @@ func TestConstructAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			mode:          types.GameMode2v2,
-			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
-		}
-
-		action := NewConstructAction("Player1", "G1", "Player2")
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, mockPlayer2, action.targetPlayer)
+		action, _, _, _, _ := validateConstructAllyCastle(t, ctrl)
+		assert.NotNil(t, action)
 	})
 }
 
 func TestConstructAction_Execute(t *testing.T) {
-	t.Run("Error when player Construct fails", func(t *testing.T) {
+	t.Run("Error when castle Construct fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		action, mockGame, mockPlayer1, mockResource := validateConstructOwnCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Construct("G1").Return(errors.New("invalid card"))
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().Construct(mockResource).Return(errors.New("invalid card"))
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewConstructAction("Player1", "G1", "")
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "constructing card failed")
+		assert.Contains(t, err.Error(), "constructing castle failed")
 		assert.NotNil(t, result)
 	})
 
@@ -180,27 +165,20 @@ func TestConstructAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-
+		action, mockGame, mockPlayer1, mockResource := validateConstructOwnCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Construct("G1").Return(nil)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().Construct(mockResource).Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeConstruct,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewConstructAction("Player1", "G1", "")
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -212,42 +190,21 @@ func TestConstructAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockResource := validateConstructAllyCastle(t, ctrl)
 		mockCastle := mocks.NewMockCastle(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
-		mockPlayer2.EXPECT().Castle().Return(mockCastle).AnyTimes()
-		mockCastle.EXPECT().IsConstructed().Return(true).AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(nil)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().RemoveCard(mockResource).Return(true)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeConstruct,
-			mode:               types.GameMode2v2,
-			teams:              map[int][]int{0: {0, 1}, 1: {2, 3}},
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewConstructAction("Player1", "G1", "Player2")
-		action.targetPlayer = mockPlayer2
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -259,33 +216,14 @@ func TestConstructAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockResource := validateConstructAllyCastle(t, ctrl)
 		mockCastle := mocks.NewMockCastle(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
-		mockPlayer2.EXPECT().Castle().Return(mockCastle).AnyTimes()
-		mockCastle.EXPECT().IsConstructed().Return(true).AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(errors.New("castle full"))
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			mode:          types.GameMode2v2,
-			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewConstructAction("Player1", "G1", "Player2")
-		action.targetPlayer = mockPlayer2
-
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "constructing on ally castle failed")
@@ -296,78 +234,53 @@ func TestConstructAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		action, mockGame, mockPlayer1, mockResource := validateConstructOwnCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().Construct("G1").Return(nil)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().Construct(mockResource).Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			history:       []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
 
-		action := NewConstructAction("Player1", "G1", "")
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "constructed") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain construct action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "constructed")
 	})
 
 	t.Run("History updated on ally castle construct", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockPlayer3 := mocks.NewMockPlayer(ctrl)
-		mockPlayer4 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockResource := validateConstructAllyCastle(t, ctrl)
 		mockCastle := mocks.NewMockCastle(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromHand("G1").Return(mockResource, true)
-		mockPlayer2.EXPECT().Castle().Return(mockCastle).AnyTimes()
-		mockCastle.EXPECT().IsConstructed().Return(true).AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(nil)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().RemoveCard(mockResource).Return(true)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeConstruct,
-			mode:          types.GameMode2v2,
-			teams:         map[int][]int{0: {0, 1}, 1: {2, 3}},
-			history:       []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
 
-		action := NewConstructAction("Player1", "G1", "Player2")
-		action.targetPlayer = mockPlayer2
-
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player2's castle") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should mention ally's castle")
+		assert.Contains(t, capturedMsg, "Player2's castle")
 	})
 }

@@ -2,11 +2,11 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -15,44 +15,38 @@ import (
 )
 
 func TestDrawCardAction_PlayerName(t *testing.T) {
-	action := NewDrawCardAction("Player1")
+	action := gameactions.NewDrawCardAction("Player1")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestDrawCardAction_Validate(t *testing.T) {
-	action := NewDrawCardAction("Player1")
-	err := action.Validate(&game{})
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	mockGame := mocks.NewMockGame(ctrl)
+	action := gameactions.NewDrawCardAction("Player1")
+	err := action.Validate(mockGame)
 	assert.NoError(t, err)
 }
 
 func TestDrawCardAction_NextPhase(t *testing.T) {
-	action := NewDrawCardAction("Player1")
+	action := gameactions.NewDrawCardAction("Player1")
 	assert.Equal(t, types.PhaseTypeAttack, action.NextPhase())
 }
 
 func TestDrawCardAction_Execute(t *testing.T) {
-	t.Run("Error when deck is empty and discard pile is also empty", func(t *testing.T) {
+	t.Run("Error when drawing fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return(nil, errors.New("no cards left to draw"))
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			deck:        mockDeck,
-			discardPile: mockDiscardPile,
-		}
-
-		action := NewDrawCardAction("Player1")
-		result, statusFn, err := action.Execute(g)
+		action := gameactions.NewDrawCardAction("Player1")
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "no cards left to draw")
@@ -60,36 +54,24 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		assert.Nil(t, statusFn)
 	})
 
-	t.Run("Success drawing card normally", func(t *testing.T) {
+	t.Run("Success drawing card", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1, mockDrawnCard).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
-
-		action := NewDrawCardAction("Player1")
-		result, statusFn, err := action.Execute(g)
+		action := gameactions.NewDrawCardAction("Player1")
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -97,33 +79,22 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
-	t.Run("Hand limit exceeded - returns result without error", func(t *testing.T) {
+	t.Run("Hand limit exceeded returns result without error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(false)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return(nil, board.ErrHandLimitExceeded)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewDrawCardAction("Player1")
-		result, statusFn, err := action.Execute(g)
+		action := gameactions.NewDrawCardAction("Player1")
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -131,116 +102,54 @@ func TestDrawCardAction_Execute(t *testing.T) {
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
-	t.Run("Deck replenishes from discard pile", func(t *testing.T) {
+	t.Run("History updated on successful draw", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardedCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
-		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
-		mockDiscardPile.EXPECT().Empty().Return([]cards.Card{mockDiscardedCard})
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
+		mockPlayer1.EXPECT().Name().Return("Player1")
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
 
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
-
-		action := NewDrawCardAction("Player1")
-		result, statusFn, err := action.Execute(g)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.Equal(t, types.LastActionDraw, result.Action)
-		assert.Equal(t, expectedStatus, statusFn())
-	})
-
-	t.Run("History is updated on successful draw", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			deck:        mockDeck,
-			discardPile: mockDiscardPile,
-			history:     []types.HistoryLine{},
-		}
-
-		action := NewDrawCardAction("Player1")
-		_, statusFn, err := action.Execute(g)
+		action := gameactions.NewDrawCardAction("Player1")
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "drew") && strings.Contains(h.Msg, "Player1") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain the draw action")
+		assert.Contains(t, capturedMsg, "drew")
+		assert.Contains(t, capturedMsg, "Player1")
 	})
 
-	t.Run("History is updated when hand limit exceeded", func(t *testing.T) {
+	t.Run("History updated when hand limit exceeded", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(false)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return(nil, board.ErrHandLimitExceeded)
+		mockPlayer1.EXPECT().Name().Return("Player1")
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			deck:        mockDeck,
-			discardPile: mockDiscardPile,
-			history:     []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
 
-		action := NewDrawCardAction("Player1")
-		_, statusFn, err := action.Execute(g)
+		action := gameactions.NewDrawCardAction("Player1")
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "can't take more cards") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain hand limit exceeded message")
+		assert.Contains(t, capturedMsg, "can't take more cards")
 	})
 }

@@ -1,84 +1,61 @@
-package gamestatus_test
+package gamestatus
 
 import (
 	"testing"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
-	"github.com/alelopezbcn/thecampaign/internal/domain/types"
-	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
 )
 
 func TestFromDomainCard_Warrior(t *testing.T) {
 	tests := []struct {
-		name        string
-		warriorType types.WarriorType
-		wantType    CardType
+		name     string
+		card     cards.Card
+		wantType CardType
 	}{
-		{"Knight", types.KnightWarriorType, CardTypeKnight},
-		{"Archer", types.ArcherWarriorType, CardTypeArcher},
-		{"Mage", types.MageWarriorType, CardTypeMage},
-		{"Dragon", types.DragonWarriorType, CardTypeDragon},
+		{"Knight", cards.NewKnight("W1"), CardTypeKnight},
+		{"Archer", cards.NewArcher("W1"), CardTypeArcher},
+		{"Mage", cards.NewMage("W1"), CardTypeMage},
+		{"Dragon", cards.NewDragon("W1"), CardTypeDragon},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			warrior := mocks.NewMockWarrior(ctrl)
-			warrior.EXPECT().GetID().Return("W1")
-			warrior.EXPECT().Type().Return(tt.warriorType)
-			warrior.EXPECT().Health().Return(20)
-
-			c := fromDomainCard(warrior)
+			c := fromDomainCard(tt.card)
 
 			assert.Equal(t, "W1", c.CardID)
 			assert.Equal(t, tt.wantType, c.CardType)
-			assert.Equal(t, 20, c.Value)
+			assert.Equal(t, 20, c.Value) // warriorMaxHealth / dragonMaxHealth = 20
 		})
 	}
 }
 
 func TestFromDomainCard_Weapon(t *testing.T) {
 	tests := []struct {
-		name       string
-		weaponType types.WeaponType
-		wantType   CardType
+		name      string
+		card      cards.Card
+		wantType  CardType
+		wantValue int
 	}{
-		{"Sword", types.SwordWeaponType, CardTypeSword},
-		{"Arrow", types.ArrowWeaponType, CardTypeArrow},
-		{"Poison", types.PoisonWeaponType, CardTypePoison},
-		{"SpecialPower", types.SpecialPowerWeaponType, CardTypeSpecialPower},
+		{"Sword", cards.NewSword("WP1", 7), CardTypeSword, 7},
+		{"Arrow", cards.NewArrow("WP1", 7), CardTypeArrow, 7},
+		{"Poison", cards.NewPoison("WP1", 7), CardTypePoison, 7},
+		{"SpecialPower", cards.NewSpecialPower("WP1"), CardTypeSpecialPower, 10},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-
-			weapon := mocks.NewMockWeapon(ctrl)
-			weapon.EXPECT().GetID().Return("WP1")
-			weapon.EXPECT().Type().Return(tt.weaponType)
-			weapon.EXPECT().DamageAmount().Return(7)
-
-			c := fromDomainCard(weapon)
+			c := fromDomainCard(tt.card)
 
 			assert.Equal(t, "WP1", c.CardID)
 			assert.Equal(t, tt.wantType, c.CardType)
-			assert.Equal(t, 7, c.Value)
+			assert.Equal(t, tt.wantValue, c.Value)
 		})
 	}
 }
 
 func TestFromDomainCard_Resource(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	resource := mocks.NewMockResource(ctrl)
-	resource.EXPECT().GetID().Return("G1")
-	resource.EXPECT().Value().Return(5)
+	resource := cards.NewGold("G1", 5)
 
 	c := fromDomainCard(resource)
 
@@ -88,11 +65,7 @@ func TestFromDomainCard_Resource(t *testing.T) {
 }
 
 func TestFromDomainCard_Spy(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	spy := mocks.NewMockSpy(ctrl)
-	spy.EXPECT().GetID().Return("SPY1")
+	spy := cards.NewSpy("SPY1")
 
 	c := fromDomainCard(spy)
 
@@ -102,11 +75,7 @@ func TestFromDomainCard_Spy(t *testing.T) {
 }
 
 func TestFromDomainCard_Thief(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	thief := mocks.NewMockThief(ctrl)
-	thief.EXPECT().GetID().Return("THIEF1")
+	thief := cards.NewThief("THIEF1")
 
 	c := fromDomainCard(thief)
 
@@ -116,11 +85,7 @@ func TestFromDomainCard_Thief(t *testing.T) {
 }
 
 func TestFromDomainCard_Catapult(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	catapult := mocks.NewMockCatapult(ctrl)
-	catapult.EXPECT().GetID().Return("CAT1")
+	catapult := cards.NewCatapultCard("CAT1")
 
 	c := fromDomainCard(catapult)
 
@@ -130,29 +95,21 @@ func TestFromDomainCard_Catapult(t *testing.T) {
 }
 
 func TestFromDomainCards(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
+	warrior := cards.NewKnight("K1")
+	resource := cards.NewGold("G1", 3)
 
-	warrior := mocks.NewMockWarrior(ctrl)
-	warrior.EXPECT().GetID().Return("K1")
-	warrior.EXPECT().Type().Return(types.KnightWarriorType)
-	warrior.EXPECT().Health().Return(20)
+	result := fromDomainCards([]cards.Card{warrior, resource})
 
-	resource := mocks.NewMockResource(ctrl)
-	resource.EXPECT().GetID().Return("G1")
-	resource.EXPECT().Value().Return(3)
-
-	cards := fromDomainCards([]cards.Card{warrior, resource})
-
-	assert.Len(t, cards, 2)
-	assert.Equal(t, "K1", cards[0].CardID)
-	assert.Equal(t, CardTypeKnight, cards[0].CardType)
-	assert.Equal(t, "G1", cards[1].CardID)
-	assert.Equal(t, CardTypeResource, cards[1].CardType)
+	assert.Len(t, result, 2)
+	assert.Equal(t, "K1", result[0].CardID)
+	assert.Equal(t, CardTypeKnight, result[0].CardType)
+	assert.Equal(t, "G1", result[1].CardID)
+	assert.Equal(t, CardTypeResource, result[1].CardType)
 }
 
 func TestFromDomainCards_Empty(t *testing.T) {
-	cards := fromDomainCards([]cards.Card{})
+	result := fromDomainCards([]cards.Card{})
 
-	assert.Empty(t, cards)
+	assert.Empty(t, result)
 }
+
