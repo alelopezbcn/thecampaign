@@ -582,6 +582,22 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 				}
 			}
 		}
+		if !canConstruct {
+			// Check if player has a Fortress card and a valid target castle
+			if _, hasFortress := board.HasCardTypeInHand[cards.Fortress](p); hasFortress {
+				if p.Castle().IsConstructed() && !p.Castle().IsProtected() {
+					canConstruct = true
+				}
+				if !canConstruct {
+					for _, ally := range g.Allies(g.PlayerIndex(p.Name())) {
+						if ally.Castle().IsConstructed() && !ally.Castle().IsProtected() {
+							canConstruct = true
+							break
+						}
+					}
+				}
+			}
+		}
 		if canConstruct {
 			g.currentAction = types.PhaseTypeConstruct
 
@@ -764,6 +780,7 @@ func extractField(f board.Field) gamestatus.FieldInput {
 func extractCastle(c board.Castle) gamestatus.CastleInput {
 	return gamestatus.CastleInput{
 		IsConstructed:      c.IsConstructed(),
+		IsProtected:        c.IsProtected(),
 		ResourceCardsCount: c.ResourceCardsCount(),
 		Value:              c.Value(),
 	}

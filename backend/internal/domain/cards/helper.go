@@ -53,6 +53,8 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewCatapultCard("c1"),
+		NewCatapultCard("c2"),
+		NewFortress("fw1"),
 		NewHarpoon("ha1"),
 		NewBloodRain("br1"),
 	}
@@ -63,7 +65,9 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewSpecialPower("s6"))
 		other = append(other, NewSpy("spy2"))
 		other = append(other, NewThief("t2"))
-		other = append(other, NewCatapultCard("c2"))
+		other = append(other, NewCatapultCard("c3"))
+		other = append(other, NewCatapultCard("c4"))
+		other = append(other, NewFortress("fw2"))
 		other = append(other, NewHarpoon("ha2"))
 		other = append(other, NewBloodRain("br2"))
 	}
@@ -84,5 +88,43 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		}
 	}
 
-	return other
+	return append(other, d.customCards()...)
+}
+
+func (d *dealer) customCards() []Card {
+	return []Card{
+		NewSword(fmt.Sprintf("cuse%d", 1), 1),
+		NewArrow(fmt.Sprintf("cusf%d", 1), 1),
+		NewPoison(fmt.Sprintf("cusp%d", 1), 1),
+		NewGold(fmt.Sprintf("cusg%d", 1), 1),
+		NewSword(fmt.Sprintf("cuse%d", 2), 1),
+		NewArrow(fmt.Sprintf("cusf%d", 2), 1),
+		NewPoison(fmt.Sprintf("cusp%d", 2), 1),
+		NewGold(fmt.Sprintf("cusg%d", 2), 1),
+		NewSword(fmt.Sprintf("cuse%d", 3), 1),
+		NewArrow(fmt.Sprintf("cusf%d", 3), 1),
+		NewPoison(fmt.Sprintf("cusp%d", 3), 1),
+		NewGold(fmt.Sprintf("cusg%d", 3), 1),
+		NewSword(fmt.Sprintf("cuse%d", 4), 1),
+		NewArrow(fmt.Sprintf("cusf%d", 4), 1),
+		NewPoison(fmt.Sprintf("cusp%d", 4), 1),
+		NewGold(fmt.Sprintf("cusg%d", 4), 1),
+
+		NewCatapultCard("cusc1"),
+		NewCatapultCard("cusc2"),
+		NewCatapultCard("cusc3"),
+		NewCatapultCard("cusc4"),
+		NewCatapultCard("cusc5"),
+		NewCatapultCard("cusc6"),
+		NewFortress("cusfw1"),
+		NewFortress("cusfw2"),
+		NewFortress("cusfw3"),
+		NewFortress("cusfw4"),
+		NewFortress("cusfw5"),
+		NewFortress("cusfw6"),
+		NewFortress("cusfw7"),
+		NewFortress("cusfw8"),
+		NewFortress("cusfw9"),
+		NewFortress("cusfw10"),
+	}
 }

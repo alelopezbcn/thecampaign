@@ -1275,6 +1275,7 @@ body {
 }
 
 .castle {
+    position: relative;
     background: rgba(255, 255, 255, 0.03);
     border: 2px dashed rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -4359,6 +4360,109 @@ body {
 @keyframes castleFlashFade {
     0% { opacity: 1; }
     100% { opacity: 0; }
+}
+
+/* ============================================================
+   FEATURE: Fortress / Castle Protection
+   ============================================================ */
+
+.castle.fortified {
+    border-color: #c8961e !important;
+    animation: fortifiedPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes fortifiedPulse {
+    0%, 100% {
+        box-shadow: 0 0 0 2px #c8961e, 0 0 10px rgba(200, 150, 30, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 2px #d4a825, 0 0 22px rgba(212, 168, 37, 0.7), 0 0 40px rgba(212, 168, 37, 0.2);
+    }
+}
+
+/* Overlay centered on the castle image (above the progress bar) */
+.castle-fortress-indicator {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 32px; /* clear the progress bar */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    pointer-events: none;
+    z-index: 3;
+}
+
+.fortress-shield-icon {
+    width: 44px;
+    height: 53px;
+    filter: drop-shadow(0 0 8px rgba(212, 168, 37, 0.95)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+    animation: shieldBob 2.5s ease-in-out infinite;
+}
+
+.fortress-badge {
+    background: rgba(0, 0, 0, 0.78);
+    color: #e8c244;
+    font-size: 0.58rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid rgba(212, 168, 37, 0.55);
+    white-space: nowrap;
+    text-shadow: 0 0 6px rgba(212, 168, 37, 0.7);
+}
+
+@keyframes shieldBob {
+    0%, 100% {
+        transform: translateY(0);
+        filter: drop-shadow(0 0 6px rgba(212, 168, 37, 0.8)) drop-shadow(0 0 4px rgba(0, 0, 0, 0.9));
+    }
+    50% {
+        transform: translateY(-4px);
+        filter: drop-shadow(0 0 14px rgba(212, 168, 37, 1.0)) drop-shadow(0 0 6px rgba(0, 0, 0, 0.9));
+    }
+}
+
+.fortress-destroyed {
+    animation: fortressShake 0.7s ease-in-out;
+}
+
+@keyframes fortressShake {
+    0%, 100% { transform: translateX(0); }
+    10% { transform: translateX(-8px) rotate(-2deg); }
+    20% { transform: translateX(8px) rotate(2deg); }
+    30% { transform: translateX(-6px) rotate(-1deg); }
+    40% { transform: translateX(6px) rotate(1deg); }
+    55% { transform: translateX(-3px); }
+    70% { transform: translateX(3px); }
+    85% { transform: translateX(-1px); }
+}
+
+.fortress-destroyed-text {
+    position: absolute;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #e8c244;
+    text-shadow: 0 0 10px rgba(212, 168, 37, 0.9), 0 0 20px rgba(212, 168, 37, 0.5);
+    animation: fortressDestroyedFloat 2.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+}
+
+@keyframes fortressDestroyedFloat {
+    0% { opacity: 1; transform: translateX(-50%) translateY(0) scale(0.5); }
+    15% { opacity: 1; transform: translateX(-50%) translateY(-5px) scale(1.2); }
+    40% { opacity: 1; transform: translateX(-50%) translateY(-15px) scale(1); }
+    100% { opacity: 0; transform: translateX(-50%) translateY(-40px) scale(0.8); }
 }
 
 /* ============================================================

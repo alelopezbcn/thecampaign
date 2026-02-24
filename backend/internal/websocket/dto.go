@@ -16,6 +16,7 @@ type CardDTO struct {
 // CastleDTO represents a castle for JSON serialization
 type CastleDTO struct {
 	Constructed   bool `json:"constructed"`
+	IsProtected   bool `json:"is_protected"`
 	ResourceCards int  `json:"resource_cards"`
 	Value         int  `json:"value"`
 }
@@ -165,6 +166,7 @@ func convertFieldCards(cards []gamestatus.FieldCard) []FieldCardDTO {
 func convertCastle(castle gamestatus.Castle) CastleDTO {
 	return CastleDTO{
 		Constructed:   castle.IsConstructed,
+		IsProtected:   castle.IsProtected,
 		ResourceCards: castle.ResourceCards,
 		Value:         castle.Value,
 	}

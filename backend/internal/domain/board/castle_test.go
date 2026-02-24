@@ -275,4 +275,16 @@ func TestCastle_CanBeAttacked(t *testing.T) {
 
 		assert.True(t, c.CanBeAttacked())
 	})
+
+	t.Run("True when constructed with fortress protection but no resources", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		c, _, _ := newTestCastle(ctrl)
+		constructCastle(t, c, ctrl)
+
+		fortress := mocks.NewMockFortress(ctrl)
+		c.SetProtection(fortress)
+
+		assert.True(t, c.CanBeAttacked())
+	})
 }

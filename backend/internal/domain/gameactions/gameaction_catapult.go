@@ -75,6 +75,20 @@ func (a *catapultAction) Execute(g Game) (*Result, func() gamestatus.GameStatus,
 func (a *catapultAction) execute(g catapultGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 
+	// Check if castle is protected by a fortress — destroy it instead of removing gold
+	if a.targetPlayer.Castle().IsProtected() {
+		fortressCard := a.targetPlayer.Castle().ConsumeProtection()
+		g.OnCardMovedToPile(fortressCard)
+		g.AddHistory(fmt.Sprintf("%s's castle wall blocked %s's catapult attack",
+			a.targetPlayer.Name(), p.Name()),
+			types.CategoryAction)
+		result := &Result{Action: types.LastActionCatapultBlocked}
+		statusFn := func() gamestatus.GameStatus {
+			return g.Status(p)
+		}
+		return result, statusFn, nil
+	}
+
 	stolenGold, err := a.catapult.Attack(a.targetPlayer.Castle(), a.cardPosition)
 	if err != nil {
 		result := &Result{}

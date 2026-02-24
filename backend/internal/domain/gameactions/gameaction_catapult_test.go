@@ -103,7 +103,8 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle).Times(2)
+		mockCastle.EXPECT().IsProtected().Return(false)
 		mockCatapult.EXPECT().Attack(mockCastle, 0).Return(nil, errors.New("invalid position"))
 
 		result, _, err := action.Execute(mockGame)
@@ -123,7 +124,8 @@ func TestCatapultAction_Execute(t *testing.T) {
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle).Times(2)
+		mockCastle.EXPECT().IsProtected().Return(false)
 		mockCatapult.EXPECT().Attack(mockCastle, 2).Return(mockStolenGold, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockStolenGold)
 		mockStolenGold.EXPECT().Value().Return(3)
@@ -149,7 +151,8 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockStolenGold := mocks.NewMockResource(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle).Times(2)
+		mockCastle.EXPECT().IsProtected().Return(false)
 		mockCatapult.EXPECT().Attack(mockCastle, 1).Return(mockStolenGold, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockStolenGold)
 		mockStolenGold.EXPECT().Value().Return(5)
@@ -168,5 +171,32 @@ func TestCatapultAction_Execute(t *testing.T) {
 		assert.Contains(t, capturedMsg, "Player1")
 		assert.Contains(t, capturedMsg, "gold")
 		assert.Contains(t, capturedMsg, "Player2")
+	})
+
+	t.Run("Fortress blocks catapult — wall destroyed, gold not removed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, _ := validateCatapultAction(t, ctrl, "Player2", 1)
+		mockCastle := mocks.NewMockCastle(ctrl)
+		mockFortressCard := mocks.NewMockCard(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer2.EXPECT().Castle().Return(mockCastle).Times(2)
+		mockCastle.EXPECT().IsProtected().Return(true)
+		mockCastle.EXPECT().ConsumeProtection().Return(mockFortressCard)
+		mockGame.EXPECT().OnCardMovedToPile(mockFortressCard)
+		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, types.LastActionCatapultBlocked, result.Action)
+		assert.Equal(t, expectedStatus, statusFn())
 	})
 }

@@ -179,6 +179,11 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewThiefHandCard(ct.GetID(), action))
 
+		case cards.Fortress:
+			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+				NewFortressHandCard(ct.GetID(), viewer.Castle.IsConstructed,
+					game.AllyHasCastleConstructed, action))
+
 		case cards.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewResourceHandCard(ct, viewer.Castle.IsConstructed,
