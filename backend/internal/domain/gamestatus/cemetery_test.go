@@ -3,6 +3,7 @@ package gamestatus_test
 import (
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
 	"github.com/stretchr/testify/assert"
@@ -13,10 +14,10 @@ func TestNewCemetery_Empty(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	c := NewCemetery(0, nil)
+	c := gamestatus.NewCemetery(0, nil)
 
 	assert.Equal(t, 0, c.Corps)
-	assert.Equal(t, Card{}, c.LastCorp)
+	assert.Equal(t, gamestatus.Card{}, c.LastCorp)
 }
 
 func TestNewCemetery_WithCorps(t *testing.T) {
@@ -28,10 +29,10 @@ func TestNewCemetery_WithCorps(t *testing.T) {
 	lastWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 	lastWarrior.EXPECT().Health().Return(0)
 
-	c := NewCemetery(3, lastWarrior)
+	c := gamestatus.NewCemetery(3, lastWarrior)
 
 	assert.Equal(t, 3, c.Corps)
 	assert.Equal(t, "K1", c.LastCorp.CardID)
-	assert.Equal(t, CardTypeKnight, c.LastCorp.CardType)
+	assert.Equal(t, gamestatus.CardTypeKnight, c.LastCorp.CardType)
 	assert.Equal(t, 0, c.LastCorp.Value)
 }

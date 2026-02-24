@@ -1,12 +1,12 @@
 package gameactions_test
 
 import (
-	"errors"
 	"strings"
 	"testing"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -15,12 +15,12 @@ import (
 )
 
 func TestBuyAction_PlayerName(t *testing.T) {
-	action := NewBuyAction("Player1", "gold-123")
+	action := gameactions.NewBuyAction("Player1", "gold-123")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestBuyAction_NextPhase(t *testing.T) {
-	action := NewBuyAction("Player1", "gold-123")
+	action := gameactions.NewBuyAction("Player1", "gold-123")
 	assert.Equal(t, types.PhaseTypeConstruct, action.NextPhase())
 }
 
@@ -29,19 +29,11 @@ func TestBuyAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack).Times(2)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewBuyAction("Player1", "gold-123")
-		err := action.Validate(g)
+		action := gameactions.NewBuyAction("Player1", "gold-123")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot buy in the")
@@ -51,20 +43,14 @@ func TestBuyAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(nil, false)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewBuyAction("Player1", "card-123")
-		err := action.Validate(g)
+		action := gameactions.NewBuyAction("Player1", "card-123")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "Resource card not in hand: card-123")
@@ -74,49 +60,59 @@ func TestBuyAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockCard := mocks.NewMockCard(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("card-123").Return(mockCard, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewBuyAction("Player1", "card-123")
-		err := action.Validate(g)
+		action := gameactions.NewBuyAction("Player1", "card-123")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "only gold cards can be used to buy")
 	})
 
-	t.Run("Success stores resource", func(t *testing.T) {
+	t.Run("Success validates without error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("gold-123").Return(mockResource, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewBuyAction("Player1", "gold-123")
-		err := action.Validate(g)
+		action := gameactions.NewBuyAction("Player1", "gold-123")
+		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
-		assert.Equal(t, mockResource, action.resource)
 	})
+}
+
+// validateBuyAction sets up a successful Validate call and returns the populated action.
+func validateBuyAction(t *testing.T, ctrl *gomock.Controller, cardID string) (
+	action gameactions.GameAction,
+	mockGame *mocks.MockGame,
+	mockPlayer1 *mocks.MockPlayer,
+	mockResource *mocks.MockResource,
+) {
+	t.Helper()
+	mockGame = mocks.NewMockGame(ctrl)
+	mockPlayer1 = mocks.NewMockPlayer(ctrl)
+	mockResource = mocks.NewMockResource(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockPlayer1.EXPECT().GetCardFromHand(cardID).Return(mockResource, true)
+
+	a := gameactions.NewBuyAction("Player1", cardID)
+	if err := a.Validate(mockGame); err != nil {
+		t.Fatalf("validateBuyAction: unexpected error: %v", err)
+	}
+	return a, mockGame, mockPlayer1, mockResource
 }
 
 func TestBuyAction_Execute(t *testing.T) {
@@ -124,27 +120,16 @@ func TestBuyAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
+		action, mockGame, mockPlayer1, mockResource := validateBuyAction(t, ctrl, "gold-123")
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockResource.EXPECT().Value().Return(4)
 		mockResource.EXPECT().GetID().Return("gold-123")
 		mockPlayer1.EXPECT().RemoveFromHand("gold-123").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(2).Return(false)
-		mockPlayer1.EXPECT().TakeCards(mockResource).Return(true) // resource returned to hand
+		mockGame.EXPECT().DrawCards(mockPlayer1, 2).Return(nil, board.ErrHandLimitExceeded)
+		mockPlayer1.EXPECT().TakeCards(mockResource).Return(true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewBuyAction("Player1", "gold-123")
-		action.resource = mockResource
-
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cards in hand limit exceeded")
@@ -155,41 +140,23 @@ func TestBuyAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+		mockDrawnCard := mocks.NewMockCard(ctrl)
+
+		action, mockGame, mockPlayer1, mockResource := validateBuyAction(t, ctrl, "gold-123")
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockResource.EXPECT().Value().Return(2)
 		mockResource.EXPECT().GetID().Return("gold-123")
 		mockPlayer1.EXPECT().RemoveFromHand("gold-123").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockDiscardPile.EXPECT().Discard(mockResource)
+		mockGame.EXPECT().OnCardMovedToPile(mockResource)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1, mockDrawnCard).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeBuy,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
-
-		action := NewBuyAction("Player1", "gold-123")
-		action.resource = mockResource
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -201,42 +168,24 @@ func TestBuyAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
-		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+		action, mockGame, mockPlayer1, mockResource := validateBuyAction(t, ctrl, "gold-456")
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockResource.EXPECT().Value().Return(4)
 		mockResource.EXPECT().GetID().Return("gold-456")
 		mockPlayer1.EXPECT().RemoveFromHand("gold-456").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
-		mockDeck.EXPECT().DrawCards(2, mockDiscardPile).Return([]cards.Card{mockDrawnCard1, mockDrawnCard2}, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 2).Return([]cards.Card{mockDrawnCard1, mockDrawnCard2}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
-		mockDiscardPile.EXPECT().Discard(mockResource)
+		mockGame.EXPECT().OnCardMovedToPile(mockResource)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1, mockDrawnCard1, mockDrawnCard2).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeBuy,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard1, mockDrawnCard2).Return(expectedStatus)
-
-		action := NewBuyAction("Player1", "gold-456")
-		action.resource = mockResource
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -248,42 +197,24 @@ func TestBuyAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 		mockDrawnCard1 := mocks.NewMockCard(ctrl)
 		mockDrawnCard2 := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
-		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+		action, mockGame, mockPlayer1, mockResource := validateBuyAction(t, ctrl, "gold-5")
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockResource.EXPECT().Value().Return(5)
 		mockResource.EXPECT().GetID().Return("gold-5")
 		mockPlayer1.EXPECT().RemoveFromHand("gold-5").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(2).Return(true)
-		mockDeck.EXPECT().DrawCards(2, mockDiscardPile).Return([]cards.Card{mockDrawnCard1, mockDrawnCard2}, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 2).Return([]cards.Card{mockDrawnCard1, mockDrawnCard2}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard1, mockDrawnCard2).Return(true)
-		mockDiscardPile.EXPECT().Discard(mockResource)
+		mockGame.EXPECT().OnCardMovedToPile(mockResource)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1, mockDrawnCard1, mockDrawnCard2).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeBuy,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard1, mockDrawnCard2).Return(expectedStatus)
-
-		action := NewBuyAction("Player1", "gold-5")
-		action.resource = mockResource
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -291,100 +222,29 @@ func TestBuyAction_Execute(t *testing.T) {
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
-	t.Run("Success when deck needs replenishing from discard pile", func(t *testing.T) {
+	t.Run("History is updated on successful buy", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
-		mockDiscardedCard := mocks.NewMockCard(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 
-		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+		action, mockGame, mockPlayer1, mockResource := validateBuyAction(t, ctrl, "gold-123")
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockResource.EXPECT().Value().Return(2)
 		mockResource.EXPECT().GetID().Return("gold-123")
 		mockPlayer1.EXPECT().RemoveFromHand("gold-123").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		// First draw fails - deck is empty
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return(nil, errors.New("no cards left to draw"))
-		// Replenish from discard pile
-		mockDiscardPile.EXPECT().Empty().Return([]cards.Card{mockDiscardedCard})
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockDiscardPile.EXPECT().Discard(mockResource)
-
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeBuy,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
-
-		action := NewBuyAction("Player1", "gold-123")
-		action.resource = mockResource
-
-		result, statusFn, err := action.Execute(g)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, result)
-		assert.Equal(t, types.LastActionBuy, result.Action)
-		assert.Equal(t, expectedStatus, statusFn())
-	})
-
-	t.Run("History updated on successful buy", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockResource := mocks.NewMockResource(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockResource.EXPECT().Value().Return(2)
-		mockResource.EXPECT().GetID().Return("gold-123")
-		mockPlayer1.EXPECT().RemoveFromHand("gold-123").Return(nil, nil)
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCards(1, mockDiscardPile).Return([]cards.Card{mockDrawnCard}, nil)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard).Return(true)
-		mockDiscardPile.EXPECT().Discard(mockResource)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-			deck:          mockDeck,
-			discardPile:   mockDiscardPile,
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewBuyAction("Player1", "gold-123")
-		action.resource = mockResource
-
-		_, statusFn, err := action.Execute(g)
+		mockGame.EXPECT().OnCardMovedToPile(mockResource)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			assert.True(t, strings.Contains(msg, "Player1") && strings.Contains(msg, "bought"),
+				"History should contain buy action")
+		})
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "bought") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain buy action")
 	})
 }

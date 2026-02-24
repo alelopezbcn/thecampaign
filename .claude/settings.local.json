@@ -19,7 +19,9 @@
       "Bash(go vet:*)",
       "Bash(pushd:*)",
       "Bash(ls:*)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(c:/temp/projects/TheCampaign/backend/internal/domain/cards/specialpower_test.go:*)",
+      "Bash(c:/temp/projects/TheCampaign/backend/internal/domain/board/field_test.go:*)"
     ]
   }
 }

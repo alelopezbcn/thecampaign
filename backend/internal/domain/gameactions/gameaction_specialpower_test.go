@@ -2,10 +2,10 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -13,13 +13,72 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
+// setUpSPArcherEnemySearch configures mock expectations for searching an enemy field in 1v1.
+func setUpSPArcherEnemySearch(
+	ctrl *gomock.Controller,
+	mockGame *mocks.MockGame,
+	mockPlayer1 *mocks.MockPlayer,
+	mockPlayer2 *mocks.MockPlayer,
+	targetID string,
+	targetReturn board.Player,
+	targetFound bool,
+) {
+	// Own field miss
+	mockPlayer1.EXPECT().GetCardFromField(targetID).Return(nil, false)
+	// Allies search (no allies in 1v1)
+	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+	mockGame.EXPECT().Allies(0).Return([]board.Player{})
+	// Enemies search
+	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+	if targetFound {
+		target, _ := targetReturn.(board.Player) // use the mock directly below
+		_ = target
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
+	} else {
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
+	}
+}
+
+// validateSPActionArcher runs Validate for archer targeting enemy warrior.
+func validateSPActionArcher(
+	t *testing.T, ctrl *gomock.Controller,
+) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockWarrior, *mocks.MockWarrior, *mocks.MockSpecialPower) {
+	t.Helper()
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer1 := mocks.NewMockPlayer(ctrl)
+	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockWarrior := mocks.NewMockWarrior(ctrl)
+	mockTarget := mocks.NewMockWarrior(ctrl)
+	mockSP := mocks.NewMockSpecialPower(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+	mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockWarrior, true)
+	mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
+	// Target search: own field miss, no allies, enemy hit
+	mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+	mockGame.EXPECT().Allies(0).Return([]board.Player{})
+	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+	mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
+	mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
+	// Weapon
+	mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
+
+	action := gameactions.NewSpecialPowerAction("Player1", "A1", "EK1", "SP1")
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateSPActionArcher: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP
+}
+
 func TestSpecialPowerAction_PlayerName(t *testing.T) {
-	action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+	action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestSpecialPowerAction_NextPhase(t *testing.T) {
-	action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+	action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
 	assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
 }
 
@@ -28,19 +87,11 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy).Times(2)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use special power in the")
@@ -50,20 +101,15 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(nil, false)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "warrior card not in field")
@@ -73,21 +119,16 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockCard := mocks.NewMockCard(ctrl) // Not a Warrior
+		mockCard := mocks.NewMockCard(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockCard, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "the attacking card is not a warrior")
@@ -97,24 +138,24 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Allies(0).Return([]board.Player{})
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(nil, false)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "target card not valid")
@@ -124,25 +165,20 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 		mockTarget := mocks.NewMockWarrior(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		// Target found in own field (ally)
 		mockPlayer1.EXPECT().GetCardFromField("T1").Return(mockTarget, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "A1", "T1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "A1", "T1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "archer instant kill can only target enemies")
@@ -152,27 +188,25 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 		mockTarget := mocks.NewMockWarrior(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.KnightWarriorType)
-		// Target not in own field
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
-		// Target found in enemy field
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Allies(0).Return([]board.Player{})
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "knight/mage special power can only target allies")
@@ -182,26 +216,26 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 		mockTarget := mocks.NewMockWarrior(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Allies(0).Return([]board.Player{})
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(nil, false)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "weapon card not in hand")
@@ -211,27 +245,27 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 		mockTarget := mocks.NewMockWarrior(ctrl)
 		mockResource := mocks.NewMockResource(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Allies(0).Return([]board.Player{})
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockResource, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "the card is not a special power")
@@ -241,27 +275,27 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockTargetCard := mocks.NewMockCard(ctrl) // Not a Warrior
+		mockTargetCard := mocks.NewMockCard(ctrl)
 		mockSP := mocks.NewMockSpecialPower(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
 		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Allies(0).Return([]board.Player{})
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
 		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTargetCard, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "A1", "EK1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "A1", "EK1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "the target card is not a warrior")
@@ -271,64 +305,32 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockTarget := mocks.NewMockWarrior(ctrl)
-		mockSP := mocks.NewMockSpecialPower(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockWarrior, true)
-		mockWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
-		mockPlayer1.EXPECT().GetCardFromField("EK1").Return(nil, false)
-		mockPlayer2.EXPECT().GetCardFromField("EK1").Return(mockTarget, true)
-		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "A1", "EK1", "SP1")
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, mockWarrior, action.usedBy)
-		assert.Equal(t, mockTarget, action.usedOn)
-		assert.Equal(t, mockSP, action.specialPower)
+		action, _, _, _, _, _ := validateSPActionArcher(t, ctrl)
+		assert.NotNil(t, action)
 	})
 
 	t.Run("Success on own target (knight protect/heal)", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 		mockTarget := mocks.NewMockWarrior(ctrl)
 		mockSP := mocks.NewMockSpecialPower(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromField("K1").Return(mockWarrior, true)
 		mockWarrior.EXPECT().Type().Return(types.KnightWarriorType)
 		// Target found in own field
 		mockPlayer1.EXPECT().GetCardFromField("A1").Return(mockTarget, true)
 		mockPlayer1.EXPECT().GetCardFromHand("SP1").Return(mockSP, true)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "A1", "SP1")
-		err := action.Validate(g)
+		action := gameactions.NewSpecialPowerAction("Player1", "K1", "A1", "SP1")
+		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
-		assert.Equal(t, mockWarrior, action.usedBy)
-		assert.Equal(t, mockTarget, action.usedOn)
-		assert.Equal(t, mockSP, action.specialPower)
 	})
 }
 
@@ -337,27 +339,12 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockTarget := mocks.NewMockWarrior(ctrl)
-		mockSP := mocks.NewMockSpecialPower(ctrl)
+		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(errors.New("power failed"))
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(errors.New("power failed"))
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-		}
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		action.usedBy = mockWarrior
-		action.usedOn = mockTarget
-		action.specialPower = mockSP
-
-		result, _, err := action.Execute(g)
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "special power action failed")
@@ -368,35 +355,18 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockTarget := mocks.NewMockWarrior(ctrl)
-		mockSP := mocks.NewMockSpecialPower(ctrl)
-
+		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(nil)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeAttack,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		action.usedBy = mockWarrior
-		action.usedOn = mockTarget
-		action.specialPower = mockSP
-
-		result, statusFn, err := action.Execute(g)
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
@@ -408,39 +378,25 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockTarget := mocks.NewMockWarrior(ctrl)
-		mockSP := mocks.NewMockSpecialPower(ctrl)
+		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().UseSpecialPower(mockWarrior, mockTarget, mockSP).Return(nil)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeAttack,
-			history:       []types.HistoryLine{},
-		}
+		var capturedMsg string
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
+		// statusFn not called; no Status expectation
 
-		action := NewSpecialPowerAction("Player1", "K1", "EK1", "SP1")
-		action.usedBy = mockWarrior
-		action.usedOn = mockTarget
-		action.specialPower = mockSP
-
-		_, statusFn, err := action.Execute(g)
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "special power") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain special power action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "special power")
 	})
 }

@@ -132,16 +132,16 @@ func TestCastle_Construct(t *testing.T) {
 
 		err := c.Construct(card)
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cardBase is not gold")
+		assert.Contains(t, err.Error(), "card is not gold resource")
 	})
 
 	t.Run("Triggers completion when value reaches 25", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		c, mockPlayer, castleObs := newTestCastle(ctrl)
+		c, _, castleObs := newTestCastle(ctrl)
 		constructCastle(t, c, ctrl)
 
-		castleObs.EXPECT().OnCastleCompletion(mockPlayer)
+		castleObs.EXPECT().OnCastleCompletion("TestPlayer")
 
 		gold := mocks.NewMockResource(ctrl)
 		gold.EXPECT().Value().Return(25).AnyTimes()

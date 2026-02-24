@@ -2,11 +2,10 @@ package gameactions_test
 
 import (
 	"errors"
-	"strings"
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestTradeAction_PlayerName(t *testing.T) {
-	action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+	action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
@@ -24,19 +23,11 @@ func TestTradeAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().TurnState().Return(types.TurnState{HasTraded: true})
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-			turnState:   TurnState{HasTraded: true},
-		}
-
-		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
-		err := action.Validate(g)
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "already traded this turn")
@@ -46,18 +37,11 @@ func TestTradeAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().TurnState().Return(types.TurnState{})
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-		}
-
-		action := NewTradeAction("Player1", []string{"C1", "C2"})
-		err := action.Validate(g)
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2"})
+		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "must trade exactly 3 cards")
@@ -67,18 +51,11 @@ func TestTradeAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockGame := mocks.NewMockGame(ctrl)
+		mockGame.EXPECT().TurnState().Return(types.TurnState{})
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-		}
-
-		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
-		err := action.Validate(g)
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
 	})
@@ -89,19 +66,14 @@ func TestTradeAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(nil, errors.New("card not found"))
 
-		g := &game{
-			players:     []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn: 0,
-		}
-
-		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
-		result, _, err := action.Execute(g)
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "giving cards for trading failed")
@@ -112,139 +84,73 @@ func TestTradeAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 		mockCard1 := mocks.NewMockCard(ctrl)
 		mockCard2 := mocks.NewMockCard(ctrl)
 		mockCard3 := mocks.NewMockCard(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
-
-		// Traded cards go to discard pile
-		mockDiscardPile.EXPECT().Discard(mockCard1)
-		mockDiscardPile.EXPECT().Discard(mockCard2)
-		mockDiscardPile.EXPECT().Discard(mockCard3)
-
-		// Draw 1 card
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard1)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard2)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard3)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().SetHasTraded(true)
+		mockGame.EXPECT().SetCanTrade(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().Status(mockPlayer1, mockDrawnCard).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeBuy,
-			deck:               mockDeck,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-			history:            []types.HistoryLine{},
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g, mockDrawnCard).Return(expectedStatus)
-
-		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
-		result, statusFn, err := action.Execute(g)
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionTrade, result.Action)
-		assert.True(t, g.TurnState().HasTraded)
-		assert.False(t, g.TurnState().CanTrade)
-		assert.Equal(t, expectedStatus, statusFn())
-	})
-
-	t.Run("NextPhase returns current game phase", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-		mockCard1 := mocks.NewMockCard(ctrl)
-		mockCard2 := mocks.NewMockCard(ctrl)
-		mockCard3 := mocks.NewMockCard(ctrl)
-		mockDrawnCard := mocks.NewMockCard(ctrl)
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
-			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
-		mockDiscardPile.EXPECT().Discard(mockCard1)
-		mockDiscardPile.EXPECT().Discard(mockCard2)
-		mockDiscardPile.EXPECT().Discard(mockCard3)
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
-		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
-
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-			deck:          mockDeck,
-			discardPile:   mockDiscardPile,
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
-		_, statusFn, err := action.Execute(g)
-
-		assert.NoError(t, err)
-		assert.NotNil(t, statusFn)
 		assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
+		assert.Equal(t, expectedStatus, statusFn())
 	})
 
 	t.Run("History updated on successful trade", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockDeck := mocks.NewMockDeck(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
 		mockCard1 := mocks.NewMockCard(ctrl)
 		mockCard2 := mocks.NewMockCard(ctrl)
 		mockCard3 := mocks.NewMockCard(ctrl)
 		mockDrawnCard := mocks.NewMockCard(ctrl)
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		var capturedMsg string
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
-		mockDiscardPile.EXPECT().Discard(mockCard1)
-		mockDiscardPile.EXPECT().Discard(mockCard2)
-		mockDiscardPile.EXPECT().Discard(mockCard3)
-		mockPlayer1.EXPECT().CanTakeCards(1).Return(true)
-		mockDeck.EXPECT().DrawCard().Return(mockDrawnCard, true)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard1)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard2)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard3)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
+			capturedMsg = msg
+		})
+		mockGame.EXPECT().SetHasTraded(true)
+		mockGame.EXPECT().SetCanTrade(false)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
 
-		g := &game{
-			players:       []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:   0,
-			currentAction: types.PhaseTypeBuy,
-			deck:          mockDeck,
-			discardPile:   mockDiscardPile,
-			history:       []types.HistoryLine{},
-		}
-
-		action := NewTradeAction("Player1", []string{"C1", "C2", "C3"})
-		_, statusFn, err := action.Execute(g)
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+		_, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
-		found := false
-		for _, h := range g.history {
-			if strings.Contains(h.Msg, "Player1") && strings.Contains(h.Msg, "traded") {
-				found = true
-				break
-			}
-		}
-		assert.True(t, found, "History should contain trade action")
+		assert.Contains(t, capturedMsg, "Player1")
+		assert.Contains(t, capturedMsg, "traded")
 	})
 }

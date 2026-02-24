@@ -3,7 +3,7 @@ package gameactions_test
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/alelopezbcn/thecampaign/test/mocks"
@@ -12,70 +12,45 @@ import (
 )
 
 func TestSkipPhaseAction_PlayerName(t *testing.T) {
-	action := NewSkipPhaseAction("Player1")
+	action := gameactions.NewSkipPhaseAction("Player1")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestSkipPhaseAction_Validate(t *testing.T) {
-	t.Run("Error when trying to skip DrawCard phase", func(t *testing.T) {
-		g := &game{currentAction: types.PhaseTypeDrawCard}
-		action := NewSkipPhaseAction("Player1")
+	phases := []struct {
+		current types.PhaseType
+		next    types.PhaseType
+		wantErr bool
+	}{
+		{types.PhaseTypeDrawCard, "", true},
+		{types.PhaseTypeEndTurn, "", true},
+		{types.PhaseTypeAttack, types.PhaseTypeSpySteal, false},
+		{types.PhaseTypeSpySteal, types.PhaseTypeBuy, false},
+		{types.PhaseTypeBuy, types.PhaseTypeConstruct, false},
+		{types.PhaseTypeConstruct, types.PhaseTypeEndTurn, false},
+	}
 
-		err := action.Validate(g)
+	for _, tt := range phases {
+		tt := tt
+		t.Run(string(tt.current), func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot skip this phase")
-	})
+			mockGame := mocks.NewMockGame(ctrl)
+			mockGame.EXPECT().CurrentAction().Return(tt.current)
 
-	t.Run("Error when trying to skip EndTurn phase", func(t *testing.T) {
-		g := &game{currentAction: types.PhaseTypeEndTurn}
-		action := NewSkipPhaseAction("Player1")
+			action := gameactions.NewSkipPhaseAction("Player1")
+			err := action.Validate(mockGame)
 
-		err := action.Validate(g)
-
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot skip this phase")
-	})
-
-	t.Run("Attack phase sets next phase to SpySteal", func(t *testing.T) {
-		g := &game{currentAction: types.PhaseTypeAttack}
-		action := NewSkipPhaseAction("Player1")
-
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
-	})
-
-	t.Run("SpySteal phase sets next phase to Buy", func(t *testing.T) {
-		g := &game{currentAction: types.PhaseTypeSpySteal}
-		action := NewSkipPhaseAction("Player1")
-
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
-	})
-
-	t.Run("Buy phase sets next phase to Construct", func(t *testing.T) {
-		g := &game{currentAction: types.PhaseTypeBuy}
-		action := NewSkipPhaseAction("Player1")
-
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, types.PhaseTypeConstruct, action.NextPhase())
-	})
-
-	t.Run("Construct phase sets next phase to EndTurn", func(t *testing.T) {
-		g := &game{currentAction: types.PhaseTypeConstruct}
-		action := NewSkipPhaseAction("Player1")
-
-		err := action.Validate(g)
-
-		assert.NoError(t, err)
-		assert.Equal(t, types.PhaseTypeEndTurn, action.NextPhase())
-	})
+			if tt.wantErr {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), "cannot skip this phase")
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.next, action.NextPhase())
+			}
+		})
+	}
 }
 
 func TestSkipPhaseAction_Execute(t *testing.T) {
@@ -83,27 +58,15 @@ func TestSkipPhaseAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
+		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockProvider := NewMockGameStatusProvider(ctrl)
-		mockDiscardPile := mocks.NewMockDiscardPile(ctrl)
-
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
-		g := &game{
-			players:            []board.Player{mockPlayer1, mockPlayer2},
-			currentTurn:        0,
-			currentAction:      types.PhaseTypeAttack,
-			discardPile:        mockDiscardPile,
-			gameStatusProvider: mockProvider,
-		}
-
-		mockProvider.EXPECT().Get(mockPlayer1, g).Return(expectedStatus)
-
-		action := NewSkipPhaseAction("Player1")
-		result, statusFn, err := action.Execute(g)
+		action := gameactions.NewSkipPhaseAction("Player1")
+		result, statusFn, err := action.Execute(mockGame)
 
 		assert.NoError(t, err)
 		assert.NotNil(t, result)

@@ -1,4 +1,4 @@
-package board_test
+package board
 
 import (
 	"testing"
@@ -12,7 +12,7 @@ func TestHasArcher(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	f := &board.field{
+	f := &field{
 		cards: []cards.Warrior{
 			cards.NewArcher("a1"),
 		},
