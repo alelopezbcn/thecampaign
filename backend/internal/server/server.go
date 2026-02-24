@@ -87,6 +87,7 @@ var cardConfig = map[string]CardConfigEntry{
 	"spy":          {Description: "Peek at an opponent's full hand or the top 5 cards of the deck.", Image: "spy.webp"},
 	"thief":        {Description: "Steal a random card from an opponent's hand.", Image: "thief.webp"},
 	"catapult":     {Description: "Destroy one gold resource from a constructed enemy castle, reducing their castle value.", Image: "catapult.webp"},
+	"fortress":     {Description: "Fortify your castle (or an ally's) to block the next catapult attack. The wall is destroyed when hit.", Image: "fortress.webp"},
 }
 
 // handleCardConfig serves card display metadata (descriptions and images).

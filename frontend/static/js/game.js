@@ -513,6 +513,10 @@ function handleGameState(payload) {
                 changes.constructions.forEach(c => showCastleConstructionAnimation(c));
                 changes.goldAdded.forEach(c => showCastleGoldAnimation(c));
                 changes.goldRemoved.forEach(c => showCastleAttackAnimation(c));
+                // Fortress destroyed by catapult
+                if (payload.game_status.last_action === 'catapult_blocked') {
+                    changes.fortressDestroyed.forEach(c => showFortressDestroyedAnimation(c));
+                }
             }, 50);
         }
         if (warriorMoveData) {
@@ -846,7 +850,8 @@ function sendAction(actionType, payload = null) {
         'steal': 'spy/steal',
         'catapult': 'spy/steal',
         'buy': 'buy',
-        'construct': 'construct'
+        'construct': 'construct',
+        'fortress': 'construct'
     };
     const phase = actionToPhase[actionType];
     if (phase && !gameState.executedPhases.includes(phase)) {
@@ -1059,7 +1064,7 @@ function handleAttackPhaseHandClick(cardID, card) {
         gameState.actionState.type = 'catapult';
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
-        const enemies = getEnemyOpponents().filter(e => e.castle?.constructed && e.castle?.resource_cards > 0);
+        const enemies = getEnemyOpponents().filter(e => e.castle?.constructed && (e.castle?.resource_cards > 0 || e.castle?.is_protected));
         if (enemies.length === 1) {
             gameState.actionState.targetPlayer = enemies[0].player_name;
             showCatapultModal();
@@ -1442,6 +1447,12 @@ function handleConstructPhaseHandClick(cardID, card) {
         return;
     }
 
+    // Fortress card: fortify a castle instead of constructing
+    if (card && card.type === 'Fortress') {
+        handleFortressPhaseHandClick(cardID, card);
+        return;
+    }
+
     // Select one resource card for construct
     clearSelections();
     gameState.selectedCards = [cardID];
@@ -1459,6 +1470,72 @@ function handleConstructPhaseHandClick(cardID, card) {
     } else {
         showConstructConfirmModal(card, cardID, '');
     }
+}
+
+function handleFortressPhaseHandClick(cardID, card) {
+    clearSelections();
+    highlightSelectedCard(cardID);
+
+    const allies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated);
+    const alliesWithCastle = allies.filter(a => a.castle?.constructed);
+
+    if (gameState.gameMode === '2v2' && alliesWithCastle.length > 0) {
+        // In 2v2, show target choice: own castle or ally's
+        showFortressTargetModal(card, alliesWithCastle);
+    } else {
+        showFortressConfirmModal(card, '');
+    }
+}
+
+function showFortressTargetModal(card, allies) {
+    let content = '<div class="target-player-options">';
+    content += `
+        <div class="target-player-option" onclick="window._fortressTargetCallback('')">
+            <span class="player-icon">🏰</span>
+            <div class="player-info">
+                <div class="player-name">Your Castle</div>
+                <div class="player-detail">Protect your own castle</div>
+            </div>
+        </div>
+    `;
+    allies.forEach(ally => {
+        const name = ally.player_name;
+        content += `
+            <div class="target-player-option" onclick="window._fortressTargetCallback('${name}')">
+                <span class="player-icon">🤝</span>
+                <div class="player-info">
+                    <div class="player-name">${name}'s Castle</div>
+                    <div class="player-detail">Protect ally's castle</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._fortressTargetCallback = (targetPlayer) => {
+        hideGameModal();
+        delete window._fortressTargetCallback;
+        showFortressConfirmModal(card, targetPlayer);
+    };
+
+    showGameModal('Fortress', 'Choose which castle to protect', content, true);
+}
+
+function showFortressConfirmModal(card, targetPlayer) {
+    const castleLabel = targetPlayer ? `${targetPlayer}'s castle` : 'your castle';
+    const cardsHtml = renderCardForModal(card) + renderArrow() + renderCastleIcon();
+
+    showActionConfirmModal({
+        title: 'Fortify Castle',
+        cardsHtml: cardsHtml,
+        description: `Place a fortress wall on ${castleLabel} to block the next catapult attack`,
+        onConfirm: () => {
+            const payload = {};
+            if (targetPlayer) payload.target_player = targetPlayer;
+            sendAction('fortress', payload);
+            resetActionState();
+        }
+    });
 }
 
 function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
@@ -2183,7 +2260,28 @@ function detectCastleChanges(previousState, newState) {
         }
     });
 
-    return { constructions, goldAdded, goldRemoved };
+    // Detect fortress destroyed (is_protected went from true to false)
+    const fortressDestroyed = [];
+
+    if (prevCastle.is_protected && !newCastle.is_protected) {
+        fortressDestroyed.push({ containerId: 'player-castle' });
+    }
+
+    newOpponents.forEach(newOpp => {
+        const prevOpp = prevOpponents.find(p => p.player_name === newOpp.player_name);
+        if (!prevOpp) return;
+        const prevC = prevOpp.castle || {};
+        const newC = newOpp.castle || {};
+        if (prevC.is_protected && !newC.is_protected) {
+            const oppArea = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+            if (!oppArea) return;
+            const castleContainer = oppArea.querySelector('.castle');
+            if (!castleContainer) return;
+            fortressDestroyed.push({ container: castleContainer });
+        }
+    });
+
+    return { constructions, goldAdded, goldRemoved, fortressDestroyed };
 }
 
 // Castle construction celebration animation
@@ -2247,6 +2345,25 @@ function showCastleAttackAnimation(change) {
         container.classList.remove('castle-attacked');
         floatingDmg.remove();
         flash.remove();
+    }, 3000);
+}
+
+// Fortress wall destroyed by catapult animation
+function showFortressDestroyedAnimation(change) {
+    const container = change.container || document.getElementById(change.containerId);
+    if (!container) return;
+
+    container.style.position = 'relative';
+    container.classList.add('fortress-destroyed');
+
+    const text = document.createElement('div');
+    text.className = 'fortress-destroyed-text';
+    text.textContent = '🛡 Wall Destroyed!';
+    container.appendChild(text);
+
+    setTimeout(() => {
+        container.classList.remove('fortress-destroyed');
+        text.remove();
     }, 3000);
 }
 
@@ -2814,17 +2931,23 @@ function renderCastleInto(container, castle) {
     const isConstructed = castle.constructed || false;
     const resourceCount = castle.resource_cards || 0;
     const castleValue = castle.value || 0;
+    const isProtected = castle.is_protected || false;
 
     container.className = 'castle';
     if (isConstructed) container.classList.add('constructed');
+    if (isProtected) container.classList.add('fortified');
 
     if (isConstructed) {
         const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
         const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
+        const fortressIndicator = isProtected
+            ? `<div class="castle-fortress-indicator" title="Protected by a Fortress wall"><svg class="fortress-shield-icon" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shieldGrad" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGrad)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/><line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/><line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/></svg><div class="fortress-badge">Fortified</div></div>`
+            : '';
         container.innerHTML = `
             <div class="castle-image">
                 <img src="/static/img/cards/castle.webp" alt="Castle" draggable="false">
             </div>
+            ${fortressIndicator}
             <div class="castle-progress">
                 <div class="castle-progress-bar">
                     <div class="castle-progress-fill" style="width: ${progressPct}%"></div>
@@ -3026,15 +3149,18 @@ function renderCastle(containerId, castle) {
     const isConstructed = castle.constructed || false;
     const resourceCount = castle.resource_cards || 0;
     const castleValue = castle.value || 0;
+    const isProtected = castle.is_protected || false;
 
     container.className = 'castle';
-    if (isConstructed) {
-        container.classList.add('constructed');
-    }
+    if (isConstructed) container.classList.add('constructed');
+    if (isProtected) container.classList.add('fortified');
 
     if (isConstructed) {
         const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
         const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
+        const fortressIndicator = isProtected
+            ? `<div class="castle-fortress-indicator" title="Protected by a Fortress wall"><svg class="fortress-shield-icon" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shieldGrad" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGrad)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/><line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/><line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/></svg><div class="fortress-badge">Fortified</div></div>`
+            : '';
         container.innerHTML = `
             <div class="castle-image">
                 <img src="/static/img/cards/castle.webp" alt="Castle" draggable="false">
@@ -3045,6 +3171,7 @@ function renderCastle(containerId, castle) {
                 </div>
                 <div class="castle-progress-label">${castleValue}/${castleGoal}</div>
             </div>
+            ${fortressIndicator}
         `;
     } else {
         container.innerHTML = `
@@ -3247,7 +3374,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress') return 'special';
     return 'unknown';
 }
 
@@ -3991,7 +4118,24 @@ function selectSpyOption(option) {
 function showCatapultModal() {
     const targetName = gameState.actionState.targetPlayer;
     const opponent = getOpponentByName(targetName);
+    const isProtected = opponent?.castle?.is_protected || false;
     const resourceCount = opponent?.castle?.resource_cards || 0;
+
+    if (isProtected) {
+        const content = `<div style="text-align:center;padding:16px 8px;">
+            <svg style="width:56px;height:68px;filter:drop-shadow(0 0 10px rgba(212,168,37,0.9))" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
+                <defs><linearGradient id="shieldGradM" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs>
+                <path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGradM)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/>
+                <line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
+                <line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <p style="color:#e8c244;font-weight:700;margin:12px 0 4px;">Fortress Wall</p>
+            <p style="color:#a0a0a0;font-size:0.85em;margin:0 0 16px;">The fortress wall will be destroyed instead of gold</p>
+            <button class="btn btn-danger" onclick="confirmCatapultFortress('${targetName}')">Destroy Wall</button>
+        </div>`;
+        showGameModal(`Catapult ${targetName}'s Castle`, 'Castle is fortified', content, true);
+        return;
+    }
 
     if (resourceCount === 0) {
         updateActionPrompt('Castle has no resources to attack!');
@@ -4017,6 +4161,11 @@ function showCatapultModal() {
 
 function selectCatapultPosition(position) {
     sendAction('catapult', { target_player: gameState.actionState.targetPlayer, card_position: position });
+    hideGameModal();
+}
+
+function confirmCatapultFortress(targetName) {
+    sendAction('catapult', { target_player: targetName, card_position: 1 });
     hideGameModal();
 }
 

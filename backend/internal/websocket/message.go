@@ -18,6 +18,7 @@ const (
 	MsgSpy          MessageType = "spy"
 	MsgSteal        MessageType = "steal"
 	MsgCatapult     MessageType = "catapult"
+	MsgFortress     MessageType = "fortress"
 	MsgEndTurn      MessageType = "end_turn"
 	MsgSkipPhase    MessageType = "skip_phase"
 	MsgSwapTeam     MessageType = "swap_team"
@@ -106,6 +107,11 @@ type StealPayload struct {
 type CatapultPayload struct {
 	TargetPlayer string `json:"target_player"`
 	CardPosition int    `json:"card_position"`
+}
+
+// FortressPayload for placing a fortress on a castle
+type FortressPayload struct {
+	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // GameStatePayload is sent to update clients with game state

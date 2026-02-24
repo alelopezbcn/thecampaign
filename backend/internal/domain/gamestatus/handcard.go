@@ -213,6 +213,16 @@ func NewCatapultHandCard(cardID string, canBeUsed bool,
 		canBeUsed)
 }
 
+func NewFortressHandCard(cardID string, castleConstructed bool,
+	allyCastleConstructed bool, action types.PhaseType,
+) HandCard {
+	if action != types.PhaseTypeConstruct {
+		return newHandCard(cardID, CardTypeFortress, 0, []string{}, false)
+	}
+	canBeUsed := castleConstructed || allyCastleConstructed
+	return newHandCard(cardID, CardTypeFortress, 0, []string{}, canBeUsed)
+}
+
 func NewSpyHandCard(cardID string, action types.PhaseType) HandCard {
 	return newHandCard(cardID, CardTypeSpy, 0, []string{},
 		action == types.PhaseTypeSpySteal)

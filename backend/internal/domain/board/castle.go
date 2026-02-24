@@ -11,6 +11,7 @@ import (
 // CastleReader — read-only castle access
 type CastleReader interface {
 	IsConstructed() bool
+	IsProtected() bool
 	Value() int
 	ResourceCardsCount() int
 	ResourceCards() []cards.Resource
@@ -21,6 +22,8 @@ type CastleReader interface {
 type CastleMutator interface {
 	Construct(card cards.Card) error
 	RemoveGold(position int) (cards.Resource, error)
+	SetProtection(f cards.Fortress)
+	ConsumeProtection() cards.Card
 }
 
 // Castle composes read and write access
@@ -38,6 +41,7 @@ type castle struct {
 	isConstructed            bool
 	initialCard              cards.Card
 	resources                []cards.Resource
+	protection               cards.Fortress
 	castleCompletionObserver CastleCompletionObserver
 	player                   Player
 	resourcesToWin           int
@@ -89,6 +93,20 @@ func (c *castle) IsConstructed() bool {
 	return c.isConstructed
 }
 
+func (c *castle) IsProtected() bool {
+	return c.protection != nil
+}
+
+func (c *castle) SetProtection(f cards.Fortress) {
+	c.protection = f
+}
+
+func (c *castle) ConsumeProtection() cards.Card {
+	f := c.protection
+	c.protection = nil
+	return f
+}
+
 func (c *castle) Value() int {
 	total := 0
 	for _, card := range c.resources {
@@ -136,7 +154,7 @@ func (c *castle) RemoveGold(position int) (cards.Resource, error) {
 }
 
 func (c *castle) CanBeAttacked() bool {
-	return c.IsConstructed() && c.ResourceCardsCount() > 0
+	return c.IsConstructed() && (c.ResourceCardsCount() > 0 || c.IsProtected())
 }
 
 func (c *castle) String() string {

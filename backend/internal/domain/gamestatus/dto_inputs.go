@@ -5,6 +5,7 @@ import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 // CastleInput is a pre-extracted snapshot of a castle's state.
 type CastleInput struct {
 	IsConstructed      bool
+	IsProtected        bool
 	ResourceCardsCount int
 	Value              int
 }
