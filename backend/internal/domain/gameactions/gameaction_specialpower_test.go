@@ -335,6 +335,24 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 }
 
 func TestSpecialPowerAction_Execute(t *testing.T) {
+	t.Run("Error when RemoveFromHand fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, errors.New("card not found"))
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "removing special power from hand failed")
+		assert.NotNil(t, result)
+	})
+
 	t.Run("Error when special power fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()

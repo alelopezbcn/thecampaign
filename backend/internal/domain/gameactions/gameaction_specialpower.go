@@ -127,7 +127,9 @@ func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamest
 		return result, nil, fmt.Errorf("special power action failed: %w", err)
 	}
 
-	p.RemoveFromHand(a.specialPower.GetID())
+	if _, err := p.RemoveFromHand(a.specialPower.GetID()); err != nil {
+		return &Result{}, nil, fmt.Errorf("removing special power from hand failed: %w", err)
+	}
 
 	g.AddHistory(fmt.Sprintf("%s used special power on %s",
 		a.playerName, a.usedOn.String()), types.CategoryAction)

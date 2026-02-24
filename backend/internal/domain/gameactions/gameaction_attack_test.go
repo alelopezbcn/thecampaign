@@ -129,6 +129,34 @@ func TestAttackAction_Validate(t *testing.T) {
 		assert.Contains(t, err.Error(), "the card is not a weapon")
 	})
 
+	t.Run("Error when weapon cannot be used with player's field", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+		mockWeapon := mocks.NewMockWeapon(ctrl)
+		mockField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
+		mockPlayer2.EXPECT().GetCardFromField("targetID").Return(mockWarrior, true)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().GetCardFromHand("weaponID").Return(mockWeapon, true)
+		mockPlayer1.EXPECT().Field().Return(mockField)
+		mockWeapon.EXPECT().CanBeUsedWith(mockField).Return(false)
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+
+		action := gameactions.NewAttackAction("Player1", "Player2", "targetID", "weaponID")
+		err := action.Validate(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "weapon cannot be used")
+	})
+
 	t.Run("Success validates without error", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()

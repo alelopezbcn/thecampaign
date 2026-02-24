@@ -1,6 +1,7 @@
 package gameactions_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -116,6 +117,26 @@ func validateBuyAction(t *testing.T, ctrl *gomock.Controller, cardID string) (
 }
 
 func TestBuyAction_Execute(t *testing.T) {
+	t.Run("Error when DrawCards fails (non-hand-limit)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockResource := validateBuyAction(t, ctrl, "gold-123")
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockResource.EXPECT().Value().Return(2)
+		mockResource.EXPECT().GetID().Return("gold-123")
+		mockPlayer1.EXPECT().RemoveFromHand("gold-123").Return(nil, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return(nil, errors.New("deck empty"))
+		mockPlayer1.EXPECT().TakeCards(mockResource).Return(true)
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "drawing card for buying failed")
+		assert.NotNil(t, result)
+	})
+
 	t.Run("Error when hand limit exceeded", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()

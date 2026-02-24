@@ -62,6 +62,32 @@ func TestTradeAction_Validate(t *testing.T) {
 }
 
 func TestTradeAction_Execute(t *testing.T) {
+	t.Run("Error when DrawCards fails", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockCard1 := mocks.NewMockCard(ctrl)
+		mockCard2 := mocks.NewMockCard(ctrl)
+		mockCard3 := mocks.NewMockCard(ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
+			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard1)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard2)
+		mockGame.EXPECT().OnCardMovedToPile(mockCard3)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return(nil, errors.New("deck empty"))
+
+		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
+		result, _, err := action.Execute(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "drawing card for trading failed")
+		assert.NotNil(t, result)
+	})
+
 	t.Run("Error when RemoveFromHand fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
