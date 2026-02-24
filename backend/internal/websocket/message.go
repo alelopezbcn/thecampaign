@@ -22,6 +22,7 @@ const (
 	MsgSkipPhase    MessageType = "skip_phase"
 	MsgSwapTeam     MessageType = "swap_team"
 	MsgStartGame    MessageType = "start_game"
+	MsgRestartGame  MessageType = "restart_game"
 
 	// Server to Client messages
 	MsgGameState        MessageType = "game_state"
