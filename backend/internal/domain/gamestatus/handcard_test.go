@@ -590,6 +590,64 @@ func TestNewThiefHandCard(t *testing.T) {
 	}
 }
 
+func TestNewFortressHandCard(t *testing.T) {
+	tests := []struct {
+		name                  string
+		cardID                string
+		castleConstructed     bool
+		allyCastleConstructed bool
+		action                types.PhaseType
+		wantUsed              bool
+	}{
+		{
+			name:              "Usable in Construct phase when own castle is constructed",
+			cardID:            "FW1",
+			castleConstructed: true,
+			action:            types.PhaseTypeConstruct,
+			wantUsed:          true,
+		},
+		{
+			name:                  "Usable in Construct phase when ally castle is constructed",
+			cardID:                "FW1",
+			allyCastleConstructed: true,
+			action:                types.PhaseTypeConstruct,
+			wantUsed:              true,
+		},
+		{
+			name:   "Not usable in Construct phase when no castle is constructed",
+			cardID: "FW1",
+			action: types.PhaseTypeConstruct,
+			wantUsed: false,
+		},
+		{
+			name:              "Not usable outside Construct phase even with castle constructed",
+			cardID:            "FW1",
+			castleConstructed: true,
+			action:            types.PhaseTypeAttack,
+			wantUsed:          false,
+		},
+		{
+			name:              "Not usable in Buy phase",
+			cardID:            "FW1",
+			castleConstructed: true,
+			action:            types.PhaseTypeBuy,
+			wantUsed:          false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hc := gamestatus.NewFortressHandCard(tt.cardID, tt.castleConstructed, tt.allyCastleConstructed, tt.action)
+
+			assert.Equal(t, tt.cardID, hc.CardID)
+			assert.Equal(t, gamestatus.CardTypeFortress, hc.CardType)
+			assert.Equal(t, 0, hc.Value)
+			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
+			assert.Empty(t, hc.CanBeUsedOnIDs)
+		})
+	}
+}
+
 func TestNewResurrectionHandCard(t *testing.T) {
 	tests := []struct {
 		name          string
