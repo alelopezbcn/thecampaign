@@ -14,6 +14,7 @@ type GameStatusDTO struct {
 	EnemyFields              []FieldInput
 	AllyFields               []FieldInput
 	AnyEnemyCastleAttackable bool
+	AnyEnemyHasCards         bool
 	AllyHasCastleConstructed bool
 	NewCards                 []cards.Card
 	ModalCards               []cards.Card
@@ -39,6 +40,8 @@ type GameStatusDTO struct {
 	LastAttackTargetPlayer   string
 	StolenFrom               string
 	StolenCard               cards.Card
+	SabotagedFrom            string
+	SabotagedCard            cards.Card
 	SpyTarget                types.SpyTarget
 	SpyTargetPlayer          string
 	CurrentPlayerName        string

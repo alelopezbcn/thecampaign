@@ -10,6 +10,8 @@ type Result struct {
 	MovedWarriorID     string
 	StolenFrom         string
 	StolenCard         cards.Card
+	SabotagedFrom      string
+	SabotagedCard      cards.Card
 	Spy                types.SpyInfo
 	AttackWeaponID     string
 	AttackTargetID     string

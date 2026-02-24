@@ -14,6 +14,7 @@ const (
 	LastActionCatapultBlocked    LastActionType = "catapult_blocked"
 	LastActionSpy                LastActionType = "spy"
 	LastActionSteal              LastActionType = "steal"
+	LastActionSabotage           LastActionType = "sabotage"
 	LastActionBuy                LastActionType = "buy"
 	LastActionConstruct          LastActionType = "construct"
 	LastActionFortress           LastActionType = "fortress"

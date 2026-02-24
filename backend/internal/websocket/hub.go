@@ -151,6 +151,7 @@ var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
 	MsgCatapult:    func(h *Hub, c *Client, p interface{}) { h.handleCatapult(c, p) },
 	MsgFortress:     func(h *Hub, c *Client, p interface{}) { h.handleFortress(c, p) },
 	MsgResurrection: func(h *Hub, c *Client, p interface{}) { h.handleResurrection(c, p) },
+	MsgSabotage:     func(h *Hub, c *Client, p interface{}) { h.handleSabotage(c, p) },
 	MsgEndTurn:      func(h *Hub, c *Client, _ interface{}) { h.handleEndTurn(c) },
 	MsgSkipPhase:   func(h *Hub, c *Client, _ interface{}) { h.handleSkipPhase(c) },
 	MsgSwapTeam:    func(h *Hub, c *Client, _ interface{}) { h.handleSwapTeam(c) },

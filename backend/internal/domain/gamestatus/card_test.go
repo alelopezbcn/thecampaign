@@ -134,6 +134,16 @@ func TestFromDomainCard_Resurrection(t *testing.T) {
 	assert.Equal(t, 0, c.Value)
 }
 
+func TestFromDomainCard_Sabotage(t *testing.T) {
+	sabotage := cards.NewSabotage("SAB1")
+
+	c := fromDomainCard(sabotage)
+
+	assert.Equal(t, "SAB1", c.CardID)
+	assert.Equal(t, CardTypeSabotage, c.CardType)
+	assert.Equal(t, 0, c.Value)
+}
+
 func TestFromDomainCards(t *testing.T) {
 	warrior := cards.NewKnight("K1")
 	resource := cards.NewGold("G1", 3)

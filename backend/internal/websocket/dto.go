@@ -73,6 +73,7 @@ func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 		LastAttackTargetID:     status.LastAttackTargetID,
 		LastAttackTargetPlayer: status.LastAttackTargetPlayer,
 		StolenFromYouCard:      convertModalCards(status.StolenFromYouCard),
+		SabotagedFromYouCard:   convertModalCards(status.SabotagedFromYouCard),
 		SpyNotification:        status.SpyNotification,
 		History:                convertHistory(status.History),
 		PlayersOrder:           status.PlayersOrder,

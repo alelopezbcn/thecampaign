@@ -547,7 +547,8 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	if expectedAction == types.PhaseTypeSpySteal {
 		_, hasSpy := board.HasCardTypeInHand[cards.Spy](p)
 		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
-		if hasSpy || hasThief {
+		_, hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
+		if hasSpy || hasThief || hasSabotage {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
@@ -707,10 +708,14 @@ func (g *game) getStatus(viewer board.Player,
 
 	enemyFields := []gamestatus.FieldInput{}
 	anyEnemyCastleAttackable := false
+	anyEnemyHasCards := false
 	for _, enemy := range g.Enemies(viewerIdx) {
 		enemyFields = append(enemyFields, extractField(enemy.Field()))
 		if enemy.Castle().CanBeAttacked() {
 			anyEnemyCastleAttackable = true
+		}
+		if enemy.CardsInHand() > 0 {
+			anyEnemyHasCards = true
 		}
 	}
 
@@ -730,6 +735,7 @@ func (g *game) getStatus(viewer board.Player,
 		EnemyFields:              enemyFields,
 		AllyFields:               allyFields,
 		AnyEnemyCastleAttackable: anyEnemyCastleAttackable,
+		AnyEnemyHasCards:         anyEnemyHasCards,
 		AllyHasCastleConstructed: allyHasCastleConstructed,
 		NewCards:               newCards,
 		ModalCards:             modalCards,
@@ -755,6 +761,8 @@ func (g *game) getStatus(viewer board.Player,
 		LastAttackTargetPlayer: g.lastResult.AttackTargetPlayer,
 		StolenFrom:             g.lastResult.StolenFrom,
 		StolenCard:             g.lastResult.StolenCard,
+		SabotagedFrom:          g.lastResult.SabotagedFrom,
+		SabotagedCard:          g.lastResult.SabotagedCard,
 		SpyTarget:              g.lastResult.Spy.Target,
 		SpyTargetPlayer:        g.lastResult.Spy.TargetPlayer,
 		CurrentPlayerName:      g.CurrentPlayer().Name(),

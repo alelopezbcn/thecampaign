@@ -590,6 +590,62 @@ func TestNewThiefHandCard(t *testing.T) {
 	}
 }
 
+func TestNewSabotageHandCard(t *testing.T) {
+	tests := []struct {
+		name             string
+		cardID           string
+		anyEnemyHasCards bool
+		action           types.PhaseType
+		wantUsed         bool
+		wantType         gamestatus.CardType
+	}{
+		{
+			name:             "Usable during SpySteal when enemy has cards",
+			cardID:           "SAB1",
+			anyEnemyHasCards: true,
+			action:           types.PhaseTypeSpySteal,
+			wantUsed:         true,
+			wantType:         gamestatus.CardTypeSabotage,
+		},
+		{
+			name:             "Not usable during SpySteal when no enemy has cards",
+			cardID:           "SAB2",
+			anyEnemyHasCards: false,
+			action:           types.PhaseTypeSpySteal,
+			wantUsed:         false,
+			wantType:         gamestatus.CardTypeSabotage,
+		},
+		{
+			name:             "Not usable during Attack phase",
+			cardID:           "SAB3",
+			anyEnemyHasCards: true,
+			action:           types.PhaseTypeAttack,
+			wantUsed:         false,
+			wantType:         gamestatus.CardTypeSabotage,
+		},
+		{
+			name:             "Not usable during Buy phase",
+			cardID:           "SAB4",
+			anyEnemyHasCards: true,
+			action:           types.PhaseTypeBuy,
+			wantUsed:         false,
+			wantType:         gamestatus.CardTypeSabotage,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hc := gamestatus.NewSabotageHandCard(tt.cardID, tt.anyEnemyHasCards, tt.action)
+
+			assert.Equal(t, tt.cardID, hc.CardID)
+			assert.Equal(t, tt.wantType, hc.CardType)
+			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
+			assert.Equal(t, 0, hc.Value)
+			assert.Empty(t, hc.CanBeUsedOnIDs)
+		})
+	}
+}
+
 func TestNewFortressHandCard(t *testing.T) {
 	tests := []struct {
 		name                  string

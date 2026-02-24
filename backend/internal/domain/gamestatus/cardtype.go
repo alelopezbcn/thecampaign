@@ -20,6 +20,7 @@ var (
 	CardTypeSpecialPower = CardType{"SpecialPower", "", "#FFA500"}  // Orange
 	CardTypeSpy          = CardType{"Spy", "", "#D3D3D3"}           // Light Gray
 	CardTypeThief        = CardType{"Thief", "", "#D3D3D3"}         // Light Gray
+	CardTypeSabotage     = CardType{"Sabotage", "", "#D3D3D3"}      // Light Gray
 	CardTypeCatapult     = CardType{"Catapult", "", "#D3D3D3"}      // Light Gray
 	CardTypeHarpoon      = CardType{"Harpoon", "", "#c80000"}       // Dark Red
 	CardTypeBloodRain    = CardType{"BloodRain", "", "#FFA500"}     // Orange
@@ -32,6 +33,7 @@ var (
 var zeroValueCardTypes = map[string]CardType{
 	"Spy":      CardTypeSpy,
 	"Thief":    CardTypeThief,
+	"Sabotage": CardTypeSabotage,
 	"Catapult": CardTypeCatapult,
 	"Fortress":     CardTypeFortress,
 	"Resurrection": CardTypeResurrection,

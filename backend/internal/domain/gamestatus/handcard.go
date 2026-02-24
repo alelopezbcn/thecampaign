@@ -240,6 +240,11 @@ func NewThiefHandCard(cardID string, action types.PhaseType) HandCard {
 		action == types.PhaseTypeSpySteal)
 }
 
+func NewSabotageHandCard(cardID string, anyEnemyHasCards bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeSabotage, 0, []string{},
+		anyEnemyHasCards && action == types.PhaseTypeSpySteal)
+}
+
 func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 	allyCastleConstructed bool, canBuy bool, action types.PhaseType,
 ) HandCard {

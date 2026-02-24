@@ -20,6 +20,7 @@ const (
 	MsgCatapult     MessageType = "catapult"
 	MsgFortress      MessageType = "fortress"
 	MsgResurrection  MessageType = "resurrection"
+	MsgSabotage      MessageType = "sabotage"
 	MsgEndTurn       MessageType = "end_turn"
 	MsgSkipPhase    MessageType = "skip_phase"
 	MsgSwapTeam     MessageType = "swap_team"
@@ -120,6 +121,11 @@ type ResurrectionPayload struct {
 	TargetPlayer string `json:"target_player,omitempty"`
 }
 
+// SabotagePayload for sabotage action
+type SabotagePayload struct {
+	TargetPlayer string `json:"target_player"`
+}
+
 // GameStatePayload is sent to update clients with game state
 type GameStatePayload struct {
 	GameStatus GameStatusDTO `json:"game_status"`
@@ -152,6 +158,7 @@ type GameStatusDTO struct {
 	LastAttackTargetID     string              `json:"last_attack_target_id,omitempty"`
 	LastAttackTargetPlayer string              `json:"last_attack_target_player,omitempty"`
 	StolenFromYouCard      []CardDTO           `json:"stolen_from_you_card,omitempty"`
+	SabotagedFromYouCard   []CardDTO           `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification        string              `json:"spy_notification,omitempty"`
 	History                []HistoryLineDTO    `json:"history"`
 	PlayersOrder           []string            `json:"players_order"`

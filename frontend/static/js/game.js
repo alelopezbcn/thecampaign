@@ -436,6 +436,12 @@ function handleGameState(payload) {
         stealData = prepareStealAnimation(previousState, payload.game_status);
     }
 
+    // Detect sabotage and clone opponent card-back before re-render
+    let sabotageData = null;
+    if (previousState) {
+        sabotageData = prepareSabotageAnimation(previousState, payload.game_status);
+    }
+
     // Detect warrior move for animation (before re-render)
     let warriorMoveData = null;
     if (previousState) {
@@ -531,6 +537,9 @@ function handleGameState(payload) {
         if (stealData) {
             playStealAnimation(stealData);
         }
+        if (sabotageData) {
+            playSabotageAnimation(sabotageData);
+        }
         if (deckDrawInfo) {
             setTimeout(() => playDeckDrawAnimation(deckDrawInfo), 50);
         }
@@ -582,6 +591,12 @@ function handleGameState(payload) {
         showStolenCardModal(stolenCards[0]);
     }
 
+    // Detect if a card was sabotaged from us
+    const sabotagedCards = payload.game_status.sabotaged_from_you_card;
+    if (sabotagedCards && sabotagedCards.length > 0) {
+        showStolenCardModal(sabotagedCards[0]);
+    }
+
     // Detect spy notification
     const spyNotification = payload.game_status.spy_notification;
     if (spyNotification) {
@@ -619,6 +634,8 @@ function handleGameState(payload) {
                 showCardsModal(modalCards, 'Enemy Hand', "These are the cards in your opponent's hand");
             } else if (action === 'steal') {
                 showCardsModal(modalCards, 'Card Stolen!', 'You stole this card from your opponent');
+            } else if (action === 'sabotage') {
+                showCardsModal(modalCards, 'Card Destroyed!', "You destroyed this card from your opponent's hand");
             }
         }, animDelay);
     }
@@ -849,6 +866,7 @@ function sendAction(actionType, payload = null) {
         'blood_rain': 'attack',
         'spy': 'spy/steal',
         'steal': 'spy/steal',
+        'sabotage': 'spy/steal',
         'catapult': 'spy/steal',
         'buy': 'buy',
         'construct': 'construct',
@@ -1413,6 +1431,17 @@ function handleSpyStealPhaseHandClick(cardID, card) {
                 gameState.actionState.targetPlayer = playerName;
                 showStealModal();
             }, (opp) => `${opp.cards_in_hand} cards in hand`);
+        }
+    } else if (cardType === 'sabotage') {
+        gameState.actionState.type = 'sabotage';
+        gameState.pendingModalAction = 'sabotage';
+        const enemies = getEnemyOpponents();
+        if (enemies.length === 1) {
+            sendAction('sabotage', { target_player: enemies[0].player_name });
+        } else {
+            showTargetPlayerModal('Select a player to sabotage', enemies,
+                (playerName) => sendAction('sabotage', { target_player: playerName }),
+                (opp) => `${opp.cards_in_hand} card(s) in hand`);
         }
     }
 }
@@ -2733,6 +2762,61 @@ function playStealAnimation(stealData) {
     setTimeout(() => ghost.remove(), 1300);
 }
 
+function prepareSabotageAnimation(previousState, newState) {
+    if (newState.last_action !== 'sabotage') return null;
+
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    for (const newOpp of newOpponents) {
+        const prevOpp = prevOpponents.find(o => o.player_name === newOpp.player_name);
+        if (!prevOpp) continue;
+        if ((prevOpp.cards_in_hand || 0) > (newOpp.cards_in_hand || 0)) {
+            const oppBoard = document.querySelector(`[data-opponent-name="${newOpp.player_name}"]`);
+            if (!oppBoard) continue;
+            const cardBacks = oppBoard.querySelectorAll('.opponent-hand-card');
+            if (cardBacks.length === 0) continue;
+
+            const lastCard = cardBacks[cardBacks.length - 1];
+            const rect = lastCard.getBoundingClientRect();
+            const clone = lastCard.cloneNode(true);
+
+            return { clone, rect };
+        }
+    }
+    return null;
+}
+
+// Play sabotage animation: card-back flies from victim's hand to discard pile
+function playSabotageAnimation(sabotageData) {
+    if (!sabotageData) return;
+
+    const { clone, rect } = sabotageData;
+    const pile = document.getElementById('discard-pile');
+    if (!pile) return;
+    const targetRect = pile.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (rect.left + rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (rect.top + rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'sabotage-card-ghost';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    clone.style.width = '100%';
+    clone.style.height = '100%';
+    clone.style.margin = '0';
+    ghost.appendChild(clone);
+
+    document.body.appendChild(ghost);
+    setTimeout(() => ghost.remove(), 1200);
+}
+
 // Detect deck count decrease for draw animation
 function detectDeckDraw(previousState, newState) {
     if (!previousState) return null;
@@ -3456,7 +3540,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage') return 'special';
     return 'unknown';
 }
 
