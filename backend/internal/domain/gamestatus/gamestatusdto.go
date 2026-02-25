@@ -49,4 +49,6 @@ type GameStatusDTO struct {
 	Winner                   string
 	IsPlayerWinner           bool
 	CanMoveWarrior           bool
+	AmbushEffect             types.AmbushEffect
+	AmbushAttackerName       string
 }

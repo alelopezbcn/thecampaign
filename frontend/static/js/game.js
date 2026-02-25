@@ -158,6 +158,9 @@ function setupEventListeners() {
     // Spy notification modal close
     document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
 
+    // Ambush triggered modal close
+    document.getElementById('ambush-triggered-close').addEventListener('click', hideAmbushTriggeredModal);
+
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
 
@@ -602,6 +605,12 @@ function handleGameState(payload) {
     const spyNotification = payload.game_status.spy_notification;
     if (spyNotification) {
         showSpyNotificationModal(spyNotification);
+    }
+
+    // Detect ambush triggered
+    const ambushTriggered = payload.game_status.ambush_triggered;
+    if (ambushTriggered) {
+        showAmbushTriggeredModal(ambushTriggered.effect_display);
     }
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -1450,6 +1459,12 @@ function handleSpyStealPhaseHandClick(cardID, card) {
 // Buy phase handlers
 function handleBuyPhaseHandClick(cardID, card) {
     if (card && card.can_be_used === false) {
+        return;
+    }
+
+    // Ambush card: place directly in field without buy confirmation
+    if (card && (card.type === 'Ambush' || card.sub_type === 'Ambush')) {
+        sendMessage('place_ambush', { card_id: cardID });
         return;
     }
 
@@ -3005,6 +3020,9 @@ function renderGameBoard(status) {
 
     // Render player field
     renderCards('player-field', status.current_player_field);
+    if (status.current_player_ambush_in_field) {
+        prependFaceDownAmbushCard(document.getElementById('player-field'));
+    }
 
     // Render player hand
     renderCards('player-hand', status.current_player_hand);
@@ -3127,9 +3145,12 @@ function renderOpponents(opponents) {
 
         // Render field cards
         const fieldCards = opponent.field || [];
-        if (fieldCards.length === 0) {
+        if (fieldCards.length === 0 && !opponent.ambush_in_field) {
             fieldDiv.innerHTML = '<div style="color: #666; padding: 10px; font-size: 0.85em;">No warriors</div>';
         } else {
+            if (opponent.ambush_in_field) {
+                prependFaceDownAmbushCard(fieldDiv);
+            }
             fieldCards.forEach(card => {
                 const cardElement = createCardElement(card, `opponent-field:${opponent.player_name}`);
                 fieldDiv.appendChild(cardElement);
@@ -4052,6 +4073,41 @@ function hideSpyNotificationModal() {
         clearTimeout(spyNotificationTimer);
         spyNotificationTimer = null;
     }
+}
+
+// Ambush Triggered Modal
+const ambushEffectDescriptions = {
+    'Reflect Damage':   'Your weapon damage was reflected back — your warrior took the hit instead.',
+    'Attack Cancelled': 'The attack was cancelled. Your weapon was discarded.',
+    'Weapon Stolen':    'Your weapon was intercepted and added to the defender\'s hand.',
+    'Drain Life':       'The warrior was hit but immediately healed for the exact damage dealt (2x if applicable).',
+    'Instant Kill':     'One of your warriors was instantly killed.',
+};
+
+function showAmbushTriggeredModal(effectDisplay) {
+    const modal = document.getElementById('ambush-triggered-modal');
+    const effectEl = document.getElementById('ambush-triggered-effect');
+    const textEl = document.getElementById('ambush-triggered-text');
+    if (!modal) return;
+    if (effectEl) effectEl.textContent = effectDisplay;
+    if (textEl) textEl.textContent = ambushEffectDescriptions[effectDisplay] || '';
+    modal.classList.remove('hidden');
+}
+
+function hideAmbushTriggeredModal() {
+    const modal = document.getElementById('ambush-triggered-modal');
+    if (modal) modal.classList.add('hidden');
+}
+
+// Ambush card in field — shows the card image (effect hidden until triggered)
+function prependFaceDownAmbushCard(container) {
+    const div = document.createElement('div');
+    div.className = 'card ambush-face-down has-image';
+    div.dataset.tooltip = 'Ambush — Triggers on weapon attacks only (not Special Powers). Possible effects: Reflect Damage (23%), Cancel Attack (23%), Steal Weapon (23%), Drain Life (23%), Instant Kill (8%)';
+    div.style.backgroundImage = 'url(/static/img/cards/ambush.webp)';
+    div.style.backgroundSize = 'cover';
+    div.style.backgroundPosition = 'center';
+    container.prepend(div);
 }
 
 // Action Confirm Modal Functions

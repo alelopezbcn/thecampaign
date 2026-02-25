@@ -76,6 +76,30 @@ func (w *warriorBase) Heal(sp SpecialPower) {
 	}
 	w.attackedBy = []Weapon{}
 }
+// HealToMax restores the warrior to full health without requiring a SpecialPower card.
+// Used by the Ambush Drain Life effect. Mercenary overrides this.
+func (w *warriorBase) HealToMax() {
+	w.health = warriorMaxHealth
+}
+
+// HealBy increases the warrior's health by amount, with no cap.
+// Used by the Ambush Drain Life effect so the heal mirrors the damage dealt.
+func (w *warriorBase) HealBy(amount int) {
+	w.health += amount
+}
+
+// KillByAmbush instantly kills the warrior, bypassing Dragon immunity.
+// Used by the Ambush Instant Kill effect.
+func (w *warriorBase) KillByAmbush() {
+	if w.protectedBy != nil {
+		w.protectedBy.Destroyed()
+		w.protectedBy = nil
+		return
+	}
+	w.health = 0
+	w.dead()
+}
+
 func (w *warriorBase) InstantKill(sp SpecialPower) {
 	if w.protectedBy != nil {
 		w.protectedBy.Destroyed()

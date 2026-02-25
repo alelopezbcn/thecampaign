@@ -1,12 +1,17 @@
+faltan tests de ambush en game status
+
+
+
 we are missing command mocks in the make file
 
 hoy las condiciones de victoria son 2, matar a todos los guerreros o completar el castillo.
 Me gustaria agregar al menos una condicion de victoria viable con la forma del juego. Me ayudas a buscar unas 5 nuevas condiciones de victoria
 
-Emboscada / Trampa - Una carta que colocas boca abajo en tu campo. Cuando el oponente ataca a uno de tus guerreros, se activa: refleja parte del daño, o anula el ataque, o mata al atacante. Agrega bluffing y tensión.
+
 
 Deserción - Roba un guerrero enemigo y lo pones en tu campo (solo si tiene poca vida, ej: < 5 HP). Le da uso al daño parcial en vez de siempre querer matar.
 
+Veneno - va quitando 2 hp por turno
 
 
 Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)

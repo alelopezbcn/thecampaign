@@ -59,6 +59,8 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewHarpoon("ha1"),
 		NewBloodRain("br1"),
 		NewResurrection("res1"),
+		NewAmbush("amb1"),
+		NewAmbush("amb2"),
 	}
 
 	if playerCount > 3 {
@@ -74,6 +76,8 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewHarpoon("ha2"))
 		other = append(other, NewBloodRain("br2"))
 		other = append(other, NewResurrection("res2"))
+		other = append(other, NewAmbush("amb3"))
+		other = append(other, NewAmbush("amb4"))
 	}
 
 	for i := 1; i < 10; i++ {
@@ -97,15 +101,13 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 
 func (d *dealer) customCards() []Card {
 	return []Card{
-		NewSabotage("crs1"),
-		NewSabotage("crs2"),
-		NewSabotage("crs3"),
-		NewSabotage("crs4"),
-		NewSabotage("crs5"),
-		NewSabotage("crs6"),
-		NewSabotage("crs7"),
-		NewSabotage("crs8"),
-		NewSabotage("crs9"),
-		NewSabotage("crs10"),
+		NewAmbush("custom1"),
+		NewAmbush("custom2"),
+		NewAmbush("custom3"),
+		NewAmbush("custom4"),
+		NewAmbush("custom5"),
+		NewAmbush("custom6"),
+		NewAmbush("custom7"),
+		NewAmbush("custom8"),
 	}
 }

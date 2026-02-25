@@ -247,6 +247,13 @@ func NewSabotageHandCard(cardID string, anyEnemyHasCards bool, action types.Phas
 		anyEnemyHasCards && action == types.PhaseTypeSpySteal)
 }
 
+func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
+	if action != types.PhaseTypeBuy {
+		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)
+	}
+	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, !fieldAlreadyHasAmbush)
+}
+
 func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 	allyCastleConstructed bool, canBuy bool, action types.PhaseType,
 ) HandCard {

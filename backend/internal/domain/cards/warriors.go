@@ -12,7 +12,10 @@ type Warrior interface {
 	Protect(powerCard SpecialPower) error
 	IsProtected() (bool, SpecialPower)
 	Heal(powerCard SpecialPower)
+	HealToMax()
+	HealBy(amount int)
 	InstantKill(sp SpecialPower)
+	KillByAmbush()
 	AddWarriorDeadObserver(o WarriorDeadObserver)
 	Type() types.WarriorType
 	IsDamaged() bool
@@ -166,6 +169,14 @@ func (m *mercenary) Heal(sp SpecialPower) {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
 	m.attackedBy = []Weapon{}
+}
+
+func (m *mercenary) HealToMax() {
+	m.health = mercenaryMaxHealth
+}
+
+func (m *mercenary) HealBy(amount int) {
+	m.health += amount
 }
 
 func (m *mercenary) Resurrect() {

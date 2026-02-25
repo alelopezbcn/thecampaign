@@ -20,6 +20,8 @@ const (
 	LastActionConstruct          LastActionType = "construct"
 	LastActionFortress           LastActionType = "fortress"
 	LastActionResurrection       LastActionType = "resurrection"
+	LastActionPlaceAmbush        LastActionType = "place_ambush"
+	LastActionAmbush             LastActionType = "ambush"
 	LastActionSkip               LastActionType = "skip"
 	LastActionEndTurn            LastActionType = "end_turn"
 )

@@ -286,6 +286,24 @@ func (h *Hub) handleSabotage(client *Client, payload interface{}) {
 	})
 }
 
+func (h *Hub) handlePlaceAmbush(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p PlaceAmbushPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid place_ambush payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewPlaceAmbushAction(client.PlayerName, p.CardID))
+	})
+}
+
 func (h *Hub) handleEndTurn(client *Client) {
 	log.Printf("handleEndTurn called by %s", client.PlayerName)
 

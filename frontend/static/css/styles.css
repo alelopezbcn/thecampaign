@@ -4683,3 +4683,10 @@ body {
     color: #ccd6f6;
     margin-bottom: 14px;
 }
+
+/* Ambush card in field */
+.card.ambush-face-down {
+    cursor: default;
+    border: 2px solid rgba(167, 139, 250, 0.5);
+    position: relative;
+}

@@ -132,6 +132,42 @@ func (mr *MockWarriorMockRecorder) Heal(powerCard any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockWarrior)(nil).Heal), powerCard)
 }
 
+// HealToMax mocks base method.
+func (m *MockWarrior) HealToMax() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "HealToMax")
+}
+
+// HealToMax indicates an expected call of HealToMax.
+func (mr *MockWarriorMockRecorder) HealToMax() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealToMax", reflect.TypeOf((*MockWarrior)(nil).HealToMax))
+}
+
+// HealBy mocks base method.
+func (m *MockWarrior) HealBy(amount int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "HealBy", amount)
+}
+
+// HealBy indicates an expected call of HealBy.
+func (mr *MockWarriorMockRecorder) HealBy(amount any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealBy", reflect.TypeOf((*MockWarrior)(nil).HealBy), amount)
+}
+
+// KillByAmbush mocks base method.
+func (m *MockWarrior) KillByAmbush() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "KillByAmbush")
+}
+
+// KillByAmbush indicates an expected call of KillByAmbush.
+func (mr *MockWarriorMockRecorder) KillByAmbush() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KillByAmbush", reflect.TypeOf((*MockWarrior)(nil).KillByAmbush))
+}
+
 // Health mocks base method.
 func (m *MockWarrior) Health() int {
 	m.ctrl.T.Helper()

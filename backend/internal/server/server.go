@@ -91,6 +91,7 @@ var cardConfig = map[string]CardConfigEntry{
 	"fortress":     {Description: "Fortify your castle (or an ally's) to block the next catapult attack. The wall is destroyed when hit.", Image: "fortress.webp"},
 	"resurrection": {Description: "Resurrect a random fallen warrior from the cemetery and place it on your field (or an ally's).", Image: "resurrection.webp"},
 	"sabotage":     {Description: "Destroy a random card from an opponent's hand. The card is discarded, not stolen.", Image: "sabotage.webp"},
+	"ambush":       {Description: "Trap card placed face-down in your field during the buy phase. Auto-triggers when an enemy attacks with a weapon. Does NOT trigger on Special Powers (Archer instant kill, etc.). Possible effects (hidden until triggered): Reflect Damage (23%), Cancel Attack (23%), Steal Weapon (23%), Drain Life (23%), Instant Kill (8%). Only one ambush per field.", Image: "ambush.webp"},
 }
 
 // handleCardConfig serves card display metadata (descriptions and images).

@@ -69,6 +69,20 @@ func (mr *MockFieldReaderMockRecorder) HasWarriorType(t any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasWarriorType", reflect.TypeOf((*MockFieldReader)(nil).HasWarriorType), t)
 }
 
+// SlotCards mocks base method.
+func (m *MockFieldReader) SlotCards() []cards.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SlotCards")
+	ret0, _ := ret[0].([]cards.Card)
+	return ret0
+}
+
+// SlotCards indicates an expected call of SlotCards.
+func (mr *MockFieldReaderMockRecorder) SlotCards() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlotCards", reflect.TypeOf((*MockFieldReader)(nil).SlotCards))
+}
+
 // Warriors mocks base method.
 func (m *MockFieldReader) Warriors() []cards.Warrior {
 	m.ctrl.T.Helper()
@@ -134,6 +148,30 @@ func (m *MockFieldMutator) RemoveWarrior(card cards.Warrior) bool {
 func (mr *MockFieldMutatorMockRecorder) RemoveWarrior(card any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveWarrior", reflect.TypeOf((*MockFieldMutator)(nil).RemoveWarrior), card)
+}
+
+// SetSlotCard mocks base method.
+func (m *MockFieldMutator) SetSlotCard(c cards.Card) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetSlotCard", c)
+}
+
+// SetSlotCard indicates an expected call of SetSlotCard.
+func (mr *MockFieldMutatorMockRecorder) SetSlotCard(c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSlotCard", reflect.TypeOf((*MockFieldMutator)(nil).SetSlotCard), c)
+}
+
+// RemoveSlotCard mocks base method.
+func (m *MockFieldMutator) RemoveSlotCard(c cards.Card) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RemoveSlotCard", c)
+}
+
+// RemoveSlotCard indicates an expected call of RemoveSlotCard.
+func (mr *MockFieldMutatorMockRecorder) RemoveSlotCard(c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSlotCard", reflect.TypeOf((*MockFieldMutator)(nil).RemoveSlotCard), c)
 }
 
 // MockField is a mock of Field interface.
@@ -216,6 +254,44 @@ func (m *MockField) RemoveWarrior(card cards.Warrior) bool {
 func (mr *MockFieldMockRecorder) RemoveWarrior(card any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveWarrior", reflect.TypeOf((*MockField)(nil).RemoveWarrior), card)
+}
+
+// SlotCards mocks base method.
+func (m *MockField) SlotCards() []cards.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SlotCards")
+	ret0, _ := ret[0].([]cards.Card)
+	return ret0
+}
+
+// SlotCards indicates an expected call of SlotCards.
+func (mr *MockFieldMockRecorder) SlotCards() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SlotCards", reflect.TypeOf((*MockField)(nil).SlotCards))
+}
+
+// SetSlotCard mocks base method.
+func (m *MockField) SetSlotCard(c cards.Card) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetSlotCard", c)
+}
+
+// SetSlotCard indicates an expected call of SetSlotCard.
+func (mr *MockFieldMockRecorder) SetSlotCard(c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetSlotCard", reflect.TypeOf((*MockField)(nil).SetSlotCard), c)
+}
+
+// RemoveSlotCard mocks base method.
+func (m *MockField) RemoveSlotCard(c cards.Card) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RemoveSlotCard", c)
+}
+
+// RemoveSlotCard indicates an expected call of RemoveSlotCard.
+func (mr *MockFieldMockRecorder) RemoveSlotCard(c any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveSlotCard", reflect.TypeOf((*MockField)(nil).RemoveSlotCard), c)
 }
 
 // Warriors mocks base method.
