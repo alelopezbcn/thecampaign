@@ -160,6 +160,9 @@ function setupEventListeners() {
 
     // Ambush triggered modal close
     document.getElementById('ambush-triggered-close').addEventListener('click', hideAmbushTriggeredModal);
+    document.getElementById('ambush-triggered-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) hideAmbushTriggeredModal();
+    });
 
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
@@ -553,6 +556,7 @@ function handleGameState(payload) {
                 if (pileChanges.cemeteryAdded) showCemeteryAnimation();
                 if (payload.game_status.last_action === 'resurrection') showResurrectionAnimation();
                 if (payload.game_status.last_action === 'buy_mercenary') showMercenaryHiredAnimation();
+                if (payload.game_status.last_action === 'place_ambush') showAmbushPlacedAnimation(payload.game_status);
             }, 50);
         }
     };
@@ -1462,9 +1466,9 @@ function handleBuyPhaseHandClick(cardID, card) {
         return;
     }
 
-    // Ambush card: place directly in field without buy confirmation
+    // Ambush card: show confirmation modal before placing in field
     if (card && (card.type === 'Ambush' || card.sub_type === 'Ambush')) {
-        sendMessage('place_ambush', { card_id: cardID });
+        showAmbushPlaceConfirmModal(card, cardID);
         return;
     }
 
@@ -4073,6 +4077,80 @@ function hideSpyNotificationModal() {
         clearTimeout(spyNotificationTimer);
         spyNotificationTimer = null;
     }
+}
+
+// Ambush placed animation — shown to all players when a player places an ambush card
+function showAmbushPlacedAnimation(gameStatus) {
+    const isOwnField = gameStatus.turn_player === gameStatus.current_player;
+
+    let fieldEl;
+    if (isOwnField) {
+        fieldEl = document.getElementById('player-field');
+    } else {
+        const opponentFields = document.querySelectorAll('.opponent-field');
+        for (const f of opponentFields) {
+            if (f.dataset.opponentName === gameStatus.turn_player) {
+                fieldEl = f;
+                break;
+            }
+        }
+    }
+    if (!fieldEl) return;
+
+    // Ominous purple flash on the field
+    fieldEl.classList.add('ambush-placed-flash');
+    setTimeout(() => fieldEl.classList.remove('ambush-placed-flash'), 1500);
+
+    // Card slams in from above
+    const ambushCard = fieldEl.querySelector('.card.ambush-face-down');
+    if (ambushCard) {
+        ambushCard.classList.add('ambush-card-entrance');
+        setTimeout(() => ambushCard.classList.remove('ambush-card-entrance'), 1000);
+    }
+
+    // Floating label
+    const text = document.createElement('div');
+    text.className = 'ambush-placed-text';
+    text.textContent = '⚠ Ambush Set!';
+    fieldEl.style.position = 'relative';
+    fieldEl.appendChild(text);
+    setTimeout(() => text.remove(), 1800);
+}
+
+// Ambush Place Confirmation Modal
+function showAmbushPlaceConfirmModal(card, cardID) {
+    const effectRows = [
+        { label: 'Reflect Damage', chance: '23%', desc: 'Attacker\'s weapon damage is reflected back at their own warrior.' },
+        { label: 'Attack Cancelled', chance: '23%', desc: 'The attack is cancelled and the weapon is discarded.' },
+        { label: 'Weapon Stolen', chance: '23%', desc: 'The attacking weapon is intercepted and added to your hand.' },
+        { label: 'Drain Life', chance: '23%', desc: 'Your warrior takes no damage and heals HP equal to the weapon\'s value.' },
+        { label: 'Instant Kill', chance: '8%', desc: 'One of the attacker\'s warriors is instantly killed.' },
+    ];
+
+    const rowsHtml = effectRows.map(e => `
+        <tr>
+            <td class="ambush-confirm-effect-label">${e.label}</td>
+            <td class="ambush-confirm-chance">${e.chance}</td>
+            <td class="ambush-confirm-desc">${e.desc}</td>
+        </tr>`).join('');
+
+    const description = `
+        <div class="ambush-confirm-info">
+            <p class="ambush-confirm-note">Triggers when an enemy uses a weapon attack against a warrior in your field. The effect is chosen randomly:</p>
+            <table class="ambush-confirm-table">
+                <tbody>${rowsHtml}</tbody>
+            </table>
+        </div>`;
+
+    showActionConfirmModal({
+        title: 'Place Ambush',
+        cardsHtml: renderCardForModal(card),
+        description,
+        onConfirm: () => {
+            sendMessage('place_ambush', { card_id: cardID });
+            resetActionState();
+        },
+    });
 }
 
 // Ambush Triggered Modal
