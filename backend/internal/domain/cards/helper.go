@@ -53,6 +53,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewSabotage("sab1"),
+		NewDesertionCard("des1"),
 		NewCatapultCard("c1"),
 		NewCatapultCard("c2"),
 		NewFortress("fw1"),
@@ -70,6 +71,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewSpy("spy2"))
 		other = append(other, NewThief("t2"))
 		other = append(other, NewSabotage("sab2"))
+		other = append(other, NewDesertionCard("des2"))
 		other = append(other, NewCatapultCard("c3"))
 		other = append(other, NewCatapultCard("c4"))
 		other = append(other, NewFortress("fw2"))

@@ -18,6 +18,7 @@ const (
 	MsgConstruct    MessageType = "construct"
 	MsgSpy          MessageType = "spy"
 	MsgSteal        MessageType = "steal"
+	MsgDesertion    MessageType = "desertion"
 	MsgCatapult     MessageType = "catapult"
 	MsgFortress      MessageType = "fortress"
 	MsgResurrection  MessageType = "resurrection"
@@ -112,6 +113,12 @@ type StealPayload struct {
 	CardPosition int    `json:"card_position"`
 }
 
+// DesertionPayload for desertion action
+type DesertionPayload struct {
+	TargetPlayer string `json:"target_player"`
+	WarriorID    string `json:"warrior_id"`
+}
+
 // CatapultPayload for catapult action
 type CatapultPayload struct {
 	TargetPlayer string `json:"target_player"`
@@ -173,6 +180,7 @@ type GameStatusDTO struct {
 	SabotagedFromYouCard       []CardDTO           `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification            string              `json:"spy_notification,omitempty"`
 	AmbushTriggered            *AmbushTriggeredDTO `json:"ambush_triggered,omitempty"`
+	DesertionNotification      *DesertionNotificationDTO `json:"desertion_notification,omitempty"`
 	CurrentPlayerAmbushInField bool                `json:"current_player_ambush_in_field"`
 	History                    []HistoryLineDTO    `json:"history"`
 	PlayersOrder           []string            `json:"players_order"`
@@ -188,6 +196,12 @@ type GameStatusDTO struct {
 type AmbushTriggeredDTO struct {
 	Effect        int    `json:"effect"`
 	EffectDisplay string `json:"effect_display"`
+}
+
+// DesertionNotificationDTO carries info about a deserted warrior for the victim
+type DesertionNotificationDTO struct {
+	WarriorCard CardDTO `json:"warrior_card"`
+	StolenBy    string  `json:"stolen_by"`
 }
 
 type OpponentStatusDTO struct {

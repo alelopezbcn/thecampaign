@@ -3887,6 +3887,48 @@ body {
     }
 }
 
+/* ========== Desertion Animation ========== */
+
+.desertion-ghost {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    animation: desertionFly 1.3s ease-in-out forwards;
+    transform-style: preserve-3d;
+}
+
+@keyframes desertionFly {
+    0% {
+        transform: translate(0, 0) rotateY(0deg) scale(1);
+        opacity: 1;
+        filter: brightness(1) drop-shadow(0 0 0px transparent);
+    }
+    35% {
+        transform: translate(calc(var(--dx) * 0.35), calc(var(--dy) * 0.35 - 60px)) rotateY(90deg) scale(1.25);
+        filter: brightness(1.8) drop-shadow(0 0 16px #22ff88);
+    }
+    65% {
+        transform: translate(calc(var(--dx) * 0.75), calc(var(--dy) * 0.75 - 20px)) rotateY(270deg) scale(1.15);
+        filter: brightness(1.6) drop-shadow(0 0 14px #22ff88);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(var(--dx), var(--dy)) rotateY(360deg) scale(0.8);
+        opacity: 0;
+        filter: brightness(1.2) drop-shadow(0 0 6px #22ff88);
+    }
+}
+
+/* Flash on the player-field when the warrior lands */
+.desertion-landing-flash {
+    animation: desertionLandingFlash 0.7s ease-out forwards;
+}
+
+@keyframes desertionLandingFlash {
+    0%   { box-shadow: inset 0 0 30px 10px rgba(34, 255, 136, 0.6); }
+    100% { box-shadow: inset 0 0 0 0 transparent; }
+}
+
 /* ========== Deck Draw Animation ========== */
 
 .deck-draw-ghost {
@@ -4839,4 +4881,81 @@ body {
 }
 .ambush-confirm-desc {
     color: #d1d5db;
+}
+
+/* ===== Desertion Notification Modal (victim) ============================= */
+.desertion-notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.desertion-notification-modal.hidden { display: none; }
+
+.desertion-notification-content {
+    background: linear-gradient(145deg, #1a0808 0%, #3b0d0d 100%);
+    border: 2px solid rgba(220, 38, 38, 0.6);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(220, 38, 38, 0.35), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.35s ease-out;
+    min-width: 280px;
+    max-width: 380px;
+}
+
+.desertion-notification-header {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #f87171;
+    margin-bottom: 14px;
+    text-shadow: 0 0 12px rgba(248, 113, 113, 0.5);
+    letter-spacing: 1px;
+}
+
+.desertion-notification-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.desertion-warrior-container {
+    display: flex;
+    justify-content: center;
+}
+
+.desertion-notification-text {
+    font-size: 0.95rem;
+    color: #fca5a5;
+    font-weight: 600;
+}
+
+/* ===== Desertion Modal warrior grid ====================================== */
+.desertion-warrior-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+    padding: 8px;
+}
+
+.desertion-warrior-option {
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    border-radius: 8px;
+}
+
+.desertion-warrior-option:hover {
+    transform: scale(1.08);
+    box-shadow: 0 0 20px rgba(34, 255, 136, 0.5);
 }

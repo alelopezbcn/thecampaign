@@ -249,6 +249,11 @@ func NewSabotageHandCard(cardID string, anyEnemyHasCards bool, action types.Phas
 		anyEnemyHasCards && action == types.PhaseTypeSpySteal)
 }
 
+func NewDesertionHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeDesertion, 0, []string{},
+		anyEnemyHasWeakWarriors && action == types.PhaseTypeSpySteal)
+}
+
 func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
 	if action != types.PhaseTypeBuy {
 		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)

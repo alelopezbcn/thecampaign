@@ -77,6 +77,7 @@ func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 		SabotagedFromYouCard:       convertModalCards(status.SabotagedFromYouCard),
 		SpyNotification:            status.SpyNotification,
 		AmbushTriggered:            convertAmbushTriggered(status.AmbushTriggered),
+		DesertionNotification:      convertDesertionNotification(status.DesertionNotification),
 		CurrentPlayerAmbushInField: status.CurrentPlayerAmbushInField,
 		History:                    convertHistory(status.History),
 		PlayersOrder:           status.PlayersOrder,
@@ -96,6 +97,22 @@ func convertAmbushTriggered(at *gamestatus.AmbushTrigger) *AmbushTriggeredDTO {
 	return &AmbushTriggeredDTO{
 		Effect:        int(at.Effect),
 		EffectDisplay: at.EffectDisplay,
+	}
+}
+
+func convertDesertionNotification(dn *gamestatus.DesertionNotification) *DesertionNotificationDTO {
+	if dn == nil {
+		return nil
+	}
+	return &DesertionNotificationDTO{
+		WarriorCard: CardDTO{
+			ID:      dn.WarriorCard.CardID,
+			Type:    dn.WarriorCard.CardType.Name,
+			SubType: dn.WarriorCard.CardType.SubName,
+			Color:   dn.WarriorCard.CardType.Color,
+			Value:   dn.WarriorCard.Value,
+		},
+		StolenBy: dn.StolenBy,
 	}
 }
 
