@@ -22,6 +22,7 @@ func (f *fakeWeapon) GetCardMovedToPileObserver() CardMovedToPileObserver { retu
 func (f *fakeWeapon) DamageAmount() int                          { return f.damage }
 func (f *fakeWeapon) Type() types.WeaponType                     { return types.SwordWeaponType }
 func (f *fakeWeapon) CanConstruct() bool                         { return false }
+func (f *fakeWeapon) CanBeTraded() bool                          { return true }
 func (f *fakeWeapon) MultiplierFactor(_ Warrior) int             { return 1 }
 func (f *fakeWeapon) CanBeUsedWith(_ FieldChecker) bool          { return true }
 func (f *fakeWeapon) String() string                             { return "fakeWeapon" }
@@ -40,6 +41,7 @@ func (f *fakeSP) GetCardMovedToPileObserver() CardMovedToPileObserver { return f
 func (f *fakeSP) DamageAmount() int                          { return specialPowerDamage }
 func (f *fakeSP) Type() types.WeaponType                     { return types.SpecialPowerWeaponType }
 func (f *fakeSP) CanConstruct() bool                         { return false }
+func (f *fakeSP) CanBeTraded() bool                          { return false }
 func (f *fakeSP) MultiplierFactor(_ Warrior) int             { return 1 }
 func (f *fakeSP) CanBeUsedWith(_ FieldChecker) bool          { return true }
 func (f *fakeSP) String() string                             { return "fakeSP" }

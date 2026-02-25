@@ -13,6 +13,7 @@ type FieldChecker interface {
 
 type Weapon interface {
 	Card
+	TradeCard
 	DamageAmount() int
 	Type() types.WeaponType
 	CanConstruct() bool

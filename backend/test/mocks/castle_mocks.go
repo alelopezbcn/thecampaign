@@ -53,20 +53,6 @@ func (mr *MockCastleReaderMockRecorder) CanBeAttacked() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeAttacked", reflect.TypeOf((*MockCastleReader)(nil).CanBeAttacked))
 }
 
-// IsProtected mocks base method.
-func (m *MockCastleReader) IsProtected() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsProtected")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsProtected indicates an expected call of IsProtected.
-func (mr *MockCastleReaderMockRecorder) IsProtected() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockCastleReader)(nil).IsProtected))
-}
-
 // IsConstructed mocks base method.
 func (m *MockCastleReader) IsConstructed() bool {
 	m.ctrl.T.Helper()
@@ -79,6 +65,20 @@ func (m *MockCastleReader) IsConstructed() bool {
 func (mr *MockCastleReaderMockRecorder) IsConstructed() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsConstructed", reflect.TypeOf((*MockCastleReader)(nil).IsConstructed))
+}
+
+// IsProtected mocks base method.
+func (m *MockCastleReader) IsProtected() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockCastleReaderMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockCastleReader)(nil).IsProtected))
 }
 
 // ResourceCards mocks base method.
@@ -160,6 +160,20 @@ func (mr *MockCastleMutatorMockRecorder) Construct(card any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Construct", reflect.TypeOf((*MockCastleMutator)(nil).Construct), card)
 }
 
+// ConsumeProtection mocks base method.
+func (m *MockCastleMutator) ConsumeProtection() cards.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumeProtection")
+	ret0, _ := ret[0].(cards.Card)
+	return ret0
+}
+
+// ConsumeProtection indicates an expected call of ConsumeProtection.
+func (mr *MockCastleMutatorMockRecorder) ConsumeProtection() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeProtection", reflect.TypeOf((*MockCastleMutator)(nil).ConsumeProtection))
+}
+
 // RemoveGold mocks base method.
 func (m *MockCastleMutator) RemoveGold(position int) (cards.Resource, error) {
 	m.ctrl.T.Helper()
@@ -185,20 +199,6 @@ func (m *MockCastleMutator) SetProtection(f cards.Fortress) {
 func (mr *MockCastleMutatorMockRecorder) SetProtection(f any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProtection", reflect.TypeOf((*MockCastleMutator)(nil).SetProtection), f)
-}
-
-// ConsumeProtection mocks base method.
-func (m *MockCastleMutator) ConsumeProtection() cards.Card {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ConsumeProtection")
-	ret0, _ := ret[0].(cards.Card)
-	return ret0
-}
-
-// ConsumeProtection indicates an expected call of ConsumeProtection.
-func (mr *MockCastleMutatorMockRecorder) ConsumeProtection() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeProtection", reflect.TypeOf((*MockCastleMutator)(nil).ConsumeProtection))
 }
 
 // MockCastle is a mock of Castle interface.
@@ -252,6 +252,20 @@ func (mr *MockCastleMockRecorder) Construct(card any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Construct", reflect.TypeOf((*MockCastle)(nil).Construct), card)
 }
 
+// ConsumeProtection mocks base method.
+func (m *MockCastle) ConsumeProtection() cards.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ConsumeProtection")
+	ret0, _ := ret[0].(cards.Card)
+	return ret0
+}
+
+// ConsumeProtection indicates an expected call of ConsumeProtection.
+func (mr *MockCastleMockRecorder) ConsumeProtection() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeProtection", reflect.TypeOf((*MockCastle)(nil).ConsumeProtection))
+}
+
 // IsConstructed mocks base method.
 func (m *MockCastle) IsConstructed() bool {
 	m.ctrl.T.Helper()
@@ -278,32 +292,6 @@ func (m *MockCastle) IsProtected() bool {
 func (mr *MockCastleMockRecorder) IsProtected() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockCastle)(nil).IsProtected))
-}
-
-// SetProtection mocks base method.
-func (m *MockCastle) SetProtection(f cards.Fortress) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SetProtection", f)
-}
-
-// SetProtection indicates an expected call of SetProtection.
-func (mr *MockCastleMockRecorder) SetProtection(f any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProtection", reflect.TypeOf((*MockCastle)(nil).SetProtection), f)
-}
-
-// ConsumeProtection mocks base method.
-func (m *MockCastle) ConsumeProtection() cards.Card {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ConsumeProtection")
-	ret0, _ := ret[0].(cards.Card)
-	return ret0
-}
-
-// ConsumeProtection indicates an expected call of ConsumeProtection.
-func (mr *MockCastleMockRecorder) ConsumeProtection() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ConsumeProtection", reflect.TypeOf((*MockCastle)(nil).ConsumeProtection))
 }
 
 // RemoveGold mocks base method.
@@ -347,6 +335,18 @@ func (m *MockCastle) ResourceCardsCount() int {
 func (mr *MockCastleMockRecorder) ResourceCardsCount() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCardsCount", reflect.TypeOf((*MockCastle)(nil).ResourceCardsCount))
+}
+
+// SetProtection mocks base method.
+func (m *MockCastle) SetProtection(f cards.Fortress) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetProtection", f)
+}
+
+// SetProtection indicates an expected call of SetProtection.
+func (mr *MockCastleMockRecorder) SetProtection(f any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetProtection", reflect.TypeOf((*MockCastle)(nil).SetProtection), f)
 }
 
 // Value mocks base method.

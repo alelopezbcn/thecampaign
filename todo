@@ -1,5 +1,4 @@
 faltan tests de ambush en game status
-canTrade is enabled when there is only 2 cards to trade
 
 
 we are missing command mocks in the make file

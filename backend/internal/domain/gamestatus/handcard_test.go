@@ -54,6 +54,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(7)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasKnight: true}
 
@@ -74,6 +75,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.ArrowWeaponType)
 		weapon.EXPECT().GetID().Return("A1")
 		weapon.EXPECT().DamageAmount().Return(5)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasArcher: false, HasDragon: false}
 
@@ -93,6 +95,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.PoisonWeaponType)
 		weapon.EXPECT().GetID().Return("P1")
 		weapon.EXPECT().DamageAmount().Return(4)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasMage: false, HasDragon: false}
 
@@ -110,6 +113,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().GetID().Return("P1")
 		weapon.EXPECT().DamageAmount().Return(1)
 		weapon.EXPECT().CanConstruct().Return(true)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasMage: false, HasDragon: false}
 
@@ -132,6 +136,8 @@ func TestNewWeaponHandCard(t *testing.T) {
 
 		myField := gamestatus.FieldInput{HasKnight: false, HasDragon: false}
 
+		weapon.EXPECT().CanBeTraded().Return(true)
+
 		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, true, types.PhaseTypeConstruct)
 
 		assert.False(t, hc.CanBeUsed)
@@ -146,6 +152,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(5)
 		weapon.EXPECT().CanConstruct().Return(false)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasKnight: true}
 
@@ -165,6 +172,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(7)
 		weapon.EXPECT().MultiplierFactor(enemy1).Return(2)
+		weapon.EXPECT().CanBeTraded().Return(true)
 		enemy1.EXPECT().GetID().Return("EK1").Times(2)
 
 		myField := gamestatus.FieldInput{HasKnight: true}
@@ -185,6 +193,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(7)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasKnight: false, HasDragon: false}
 		enemyField := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
@@ -202,6 +211,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.ArrowWeaponType)
 		weapon.EXPECT().GetID().Return("A1")
 		weapon.EXPECT().DamageAmount().Return(5)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasArcher: false, HasDragon: true}
 		enemyField := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
@@ -671,9 +681,9 @@ func TestNewFortressHandCard(t *testing.T) {
 			wantUsed:              true,
 		},
 		{
-			name:   "Not usable in Construct phase when no castle is constructed",
-			cardID: "FW1",
-			action: types.PhaseTypeConstruct,
+			name:     "Not usable in Construct phase when no castle is constructed",
+			cardID:   "FW1",
+			action:   types.PhaseTypeConstruct,
 			wantUsed: false,
 		},
 		{
@@ -836,6 +846,7 @@ func TestNewWeaponHandCard_MercenaryEnablesAllWeapons(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(5)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasMercenary: true}
 		enemy := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
@@ -853,6 +864,7 @@ func TestNewWeaponHandCard_MercenaryEnablesAllWeapons(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.ArrowWeaponType)
 		weapon.EXPECT().GetID().Return("A1")
 		weapon.EXPECT().DamageAmount().Return(5)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasMercenary: true}
 		enemy := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
@@ -870,6 +882,7 @@ func TestNewWeaponHandCard_MercenaryEnablesAllWeapons(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.PoisonWeaponType)
 		weapon.EXPECT().GetID().Return("P1")
 		weapon.EXPECT().DamageAmount().Return(5)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasMercenary: true}
 		enemy := gamestatus.FieldInput{Warriors: []cards.Warrior{}}
@@ -887,6 +900,7 @@ func TestNewWeaponHandCard_MercenaryEnablesAllWeapons(t *testing.T) {
 		weapon.EXPECT().Type().Return(types.SwordWeaponType)
 		weapon.EXPECT().GetID().Return("S1")
 		weapon.EXPECT().DamageAmount().Return(5)
+		weapon.EXPECT().CanBeTraded().Return(true)
 
 		myField := gamestatus.FieldInput{HasMercenary: false, HasKnight: false, HasDragon: false}
 

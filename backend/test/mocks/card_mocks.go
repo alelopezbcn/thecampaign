@@ -93,6 +93,43 @@ func (mr *MockCardMockRecorder) Name() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockCard)(nil).Name))
 }
 
+// MockTradeCard is a mock of TradeCard interface.
+type MockTradeCard struct {
+	ctrl     *gomock.Controller
+	recorder *MockTradeCardMockRecorder
+}
+
+// MockTradeCardMockRecorder is the mock recorder for MockTradeCard.
+type MockTradeCardMockRecorder struct {
+	mock *MockTradeCard
+}
+
+// NewMockTradeCard creates a new mock instance.
+func NewMockTradeCard(ctrl *gomock.Controller) *MockTradeCard {
+	mock := &MockTradeCard{ctrl: ctrl}
+	mock.recorder = &MockTradeCardMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockTradeCard) EXPECT() *MockTradeCardMockRecorder {
+	return m.recorder
+}
+
+// CanBeTraded mocks base method.
+func (m *MockTradeCard) CanBeTraded() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeTraded")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeTraded indicates an expected call of CanBeTraded.
+func (mr *MockTradeCardMockRecorder) CanBeTraded() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeTraded", reflect.TypeOf((*MockTradeCard)(nil).CanBeTraded))
+}
+
 // MockCardMovedToPileObserver is a mock of CardMovedToPileObserver interface.
 type MockCardMovedToPileObserver struct {
 	ctrl     *gomock.Controller

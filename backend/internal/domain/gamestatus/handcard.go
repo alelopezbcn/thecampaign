@@ -65,11 +65,13 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 		canBeUsed = myField.HasMage || myField.HasDragon || myField.HasMercenary
 	}
 
+	canBeTraded := weapon.CanBeTraded()
+
 	if action != types.PhaseTypeConstruct &&
 		action != types.PhaseTypeAttack {
 		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, false)
-		hc.CanBeTraded = true
+		hc.CanBeTraded = canBeTraded
 		return hc
 	}
 
@@ -77,7 +79,7 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 		canBeUsed = !castleConstructed && weapon.CanConstruct()
 		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, canBeUsed)
-		hc.CanBeTraded = true
+		hc.CanBeTraded = canBeTraded
 		return hc
 	}
 
@@ -94,7 +96,7 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 	hc := newHandCard(weapon.GetID(), aCardType,
 		weapon.DamageAmount(), attackableIDs, canBeUsed)
 	hc.DmgMultiplier = mults
-	hc.CanBeTraded = true
+	hc.CanBeTraded = canBeTraded
 
 	return hc
 }

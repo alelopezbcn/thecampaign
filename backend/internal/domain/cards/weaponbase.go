@@ -38,6 +38,10 @@ func (s *weaponBase) CanBeUsedWith(_ FieldChecker) bool {
 	return true
 }
 
+func (s *weaponBase) CanBeTraded() bool {
+	return true
+}
+
 func (s *weaponBase) String() string {
 	return fmt.Sprintf("%s (%d)", s.weaponType, s.damageAmount)
 }

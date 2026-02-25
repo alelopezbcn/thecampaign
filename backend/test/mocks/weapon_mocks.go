@@ -89,6 +89,20 @@ func (mr *MockWeaponMockRecorder) AddCardMovedToPileObserver(observer any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockWeapon)(nil).AddCardMovedToPileObserver), observer)
 }
 
+// CanBeTraded mocks base method.
+func (m *MockWeapon) CanBeTraded() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeTraded")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeTraded indicates an expected call of CanBeTraded.
+func (mr *MockWeaponMockRecorder) CanBeTraded() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeTraded", reflect.TypeOf((*MockWeapon)(nil).CanBeTraded))
+}
+
 // CanBeUsedWith mocks base method.
 func (m *MockWeapon) CanBeUsedWith(field cards.FieldChecker) bool {
 	m.ctrl.T.Helper()
