@@ -66,6 +66,20 @@ func (mr *MockHarpoonMockRecorder) Attack(target any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Attack", reflect.TypeOf((*MockHarpoon)(nil).Attack), target)
 }
 
+// CanBeTraded mocks base method.
+func (m *MockHarpoon) CanBeTraded() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeTraded")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeTraded indicates an expected call of CanBeTraded.
+func (mr *MockHarpoonMockRecorder) CanBeTraded() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeTraded", reflect.TypeOf((*MockHarpoon)(nil).CanBeTraded))
+}
+
 // CanBeUsedWith mocks base method.
 func (m *MockHarpoon) CanBeUsedWith(field cards.FieldChecker) bool {
 	m.ctrl.T.Helper()

@@ -16,4 +16,6 @@ type Result struct {
 	AttackWeaponID     string
 	AttackTargetID     string
 	AttackTargetPlayer string
+	AmbushEffect       types.AmbushEffect
+	AmbushAttackerName string
 }

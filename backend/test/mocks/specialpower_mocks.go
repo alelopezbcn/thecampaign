@@ -80,6 +80,20 @@ func (mr *MockSpecialPowerMockRecorder) BeAttacked(weapon any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockSpecialPower)(nil).BeAttacked), weapon)
 }
 
+// CanBeTraded mocks base method.
+func (m *MockSpecialPower) CanBeTraded() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanBeTraded")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanBeTraded indicates an expected call of CanBeTraded.
+func (mr *MockSpecialPowerMockRecorder) CanBeTraded() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanBeTraded", reflect.TypeOf((*MockSpecialPower)(nil).CanBeTraded))
+}
+
 // CanBeUsedWith mocks base method.
 func (m *MockSpecialPower) CanBeUsedWith(field cards.FieldChecker) bool {
 	m.ctrl.T.Helper()

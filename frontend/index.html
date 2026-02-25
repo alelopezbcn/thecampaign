@@ -135,7 +135,7 @@
                     </li>
                     <li class="phase-item" data-phase="buy">
                         <span class="phase-icon">💰</span>
-                        <span class="phase-name">Buy / Trade</span>
+                        <span class="phase-name">Buy / Trade / Ambush</span>
                         <span class="phase-check">✓</span>
                     </li>
                     <li class="phase-item" data-phase="construct">
@@ -349,6 +349,21 @@
             <div class="spy-notification-content">
                 <p id="spy-notification-text" class="spy-notification-text"></p>
                 <button id="spy-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
+
+        <!-- Ambush Triggered Modal -->
+        <div id="ambush-triggered-modal" class="spy-notification-modal hidden">
+            <div class="ambush-triggered-content">
+                <div class="ambush-triggered-header">&#9888; Ambush!</div>
+                <div class="ambush-triggered-body">
+                    <img src="/static/img/cards/ambush.webp" alt="Ambush" class="ambush-triggered-card-img" />
+                    <div class="ambush-triggered-info">
+                        <p id="ambush-triggered-effect" class="ambush-triggered-effect-label"></p>
+                        <p id="ambush-triggered-text" class="ambush-triggered-desc"></p>
+                    </div>
+                </div>
+                <button id="ambush-triggered-close" class="btn btn-secondary btn-small">Dismiss</button>
             </div>
         </div>
 

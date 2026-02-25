@@ -11,6 +11,10 @@ type Card interface {
 	GetCardMovedToPileObserver() CardMovedToPileObserver
 }
 
+type TradeCard interface {
+	CanBeTraded() bool
+}
+
 type CardMovedToPileObserver interface {
 	OnCardMovedToPile(card Card)
 }

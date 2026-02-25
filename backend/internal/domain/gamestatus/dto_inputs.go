@@ -18,6 +18,7 @@ type FieldInput struct {
 	HasMage      bool
 	HasDragon    bool
 	HasMercenary bool
+	HasAmbush    bool
 }
 
 // ViewerInput is a pre-extracted snapshot of the viewing player.

@@ -258,7 +258,7 @@ func (p *player) HasWarriorsInHand() bool {
 func (p *player) CanTradeCards() bool {
 	count := 0
 	for _, c := range p.hand.ShowCards() {
-		if _, ok := c.(cards.Weapon); ok {
+		if tc, ok := c.(cards.TradeCard); ok && tc.CanBeTraded() {
 			count++
 			if count >= 3 {
 				return true

@@ -22,6 +22,7 @@ const (
 	MsgFortress      MessageType = "fortress"
 	MsgResurrection  MessageType = "resurrection"
 	MsgSabotage      MessageType = "sabotage"
+	MsgPlaceAmbush   MessageType = "place_ambush"
 	MsgEndTurn       MessageType = "end_turn"
 	MsgSkipPhase    MessageType = "skip_phase"
 	MsgSwapTeam     MessageType = "swap_team"
@@ -132,6 +133,11 @@ type SabotagePayload struct {
 	TargetPlayer string `json:"target_player"`
 }
 
+// PlaceAmbushPayload for placing an ambush card in the field
+type PlaceAmbushPayload struct {
+	CardID string `json:"card_id"`
+}
+
 // GameStatePayload is sent to update clients with game state
 type GameStatePayload struct {
 	GameStatus GameStatusDTO `json:"game_status"`
@@ -163,10 +169,12 @@ type GameStatusDTO struct {
 	LastAttackWeaponID     string              `json:"last_attack_weapon_id,omitempty"`
 	LastAttackTargetID     string              `json:"last_attack_target_id,omitempty"`
 	LastAttackTargetPlayer string              `json:"last_attack_target_player,omitempty"`
-	StolenFromYouCard      []CardDTO           `json:"stolen_from_you_card,omitempty"`
-	SabotagedFromYouCard   []CardDTO           `json:"sabotaged_from_you_card,omitempty"`
-	SpyNotification        string              `json:"spy_notification,omitempty"`
-	History                []HistoryLineDTO    `json:"history"`
+	StolenFromYouCard          []CardDTO           `json:"stolen_from_you_card,omitempty"`
+	SabotagedFromYouCard       []CardDTO           `json:"sabotaged_from_you_card,omitempty"`
+	SpyNotification            string              `json:"spy_notification,omitempty"`
+	AmbushTriggered            *AmbushTriggeredDTO `json:"ambush_triggered,omitempty"`
+	CurrentPlayerAmbushInField bool                `json:"current_player_ambush_in_field"`
+	History                    []HistoryLineDTO    `json:"history"`
 	PlayersOrder           []string            `json:"players_order"`
 	NextTurnPlayer         string              `json:"next_turn_player,omitempty"`
 	GameOverMsg            string              `json:"game_over_msg,omitempty"`
@@ -174,6 +182,12 @@ type GameStatusDTO struct {
 	GameStartedAt          string              `json:"game_started_at"`
 	TurnStartedAt          string              `json:"turn_started_at"`
 	TurnTimeLimitSecs      int                 `json:"turn_time_limit_secs"`
+}
+
+// AmbushTriggeredDTO carries ambush trigger info for the attacker's notification modal
+type AmbushTriggeredDTO struct {
+	Effect        int    `json:"effect"`
+	EffectDisplay string `json:"effect_display"`
 }
 
 type OpponentStatusDTO struct {
@@ -184,6 +198,7 @@ type OpponentStatusDTO struct {
 	IsAlly         bool           `json:"is_ally"`
 	IsEliminated   bool           `json:"is_eliminated"`
 	IsDisconnected bool           `json:"is_disconnected"`
+	AmbushInField  bool           `json:"ambush_in_field"`
 }
 
 // HandCardDTO represents a card in the player's hand

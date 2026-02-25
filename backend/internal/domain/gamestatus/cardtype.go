@@ -27,6 +27,7 @@ var (
 	CardTypeBloodRain    = CardType{"BloodRain", "", "#FFA500"}     // Orange
 	CardTypeFortress     = CardType{"Fortress", "", "#8B4513"}      // Brown
 	CardTypeResurrection = CardType{"Resurrection", "", "#50C878"}  // Emerald Green
+	CardTypeAmbush       = CardType{"Ambush", "", "#2D2D2D"}        // Dark/Mysterious
 )
 
 // zeroValueCardTypes maps the card Name() to its CardType for singleton cards
@@ -38,6 +39,7 @@ var zeroValueCardTypes = map[string]CardType{
 	"Catapult": CardTypeCatapult,
 	"Fortress":     CardTypeFortress,
 	"Resurrection": CardTypeResurrection,
+	"Ambush":       CardTypeAmbush,
 }
 
 // warriorCardTypes maps each WarriorType to its CardType for serialization.

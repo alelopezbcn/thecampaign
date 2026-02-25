@@ -232,7 +232,6 @@ func TestPlayer_MoveCardToField(t *testing.T) {
 	})
 }
 
-
 func TestPlayer_CanAttack(t *testing.T) {
 	t.Run("True with sword and knight", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
@@ -524,7 +523,7 @@ func TestPlayer_HasWarriorsInHand(t *testing.T) {
 }
 
 func TestPlayer_CanTradeCards(t *testing.T) {
-	t.Run("True with 3+ weapons", func(t *testing.T) {
+	t.Run("True with 3+ tradeable weapons", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		p, _, _, _, _ := newTestPlayer(t, ctrl)
@@ -533,13 +532,15 @@ func TestPlayer_CanTradeCards(t *testing.T) {
 			w := mocks.NewMockWeapon(ctrl)
 			w.EXPECT().GetID().Return("w" + string(rune('0'+i))).AnyTimes()
 			w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+			w.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+			w.EXPECT().CanBeTraded().Return(true).AnyTimes()
 			p.TakeCards(w)
 		}
 
 		assert.True(t, p.CanTradeCards())
 	})
 
-	t.Run("False with less than 3 weapons", func(t *testing.T) {
+	t.Run("False with less than 3 tradeable weapons", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 		p, _, _, _, _ := newTestPlayer(t, ctrl)
@@ -548,13 +549,37 @@ func TestPlayer_CanTradeCards(t *testing.T) {
 			w := mocks.NewMockWeapon(ctrl)
 			w.EXPECT().GetID().Return("w" + string(rune('0'+i))).AnyTimes()
 			w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+			w.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+			w.EXPECT().CanBeTraded().Return(true).AnyTimes()
 			p.TakeCards(w)
 		}
 
 		assert.False(t, p.CanTradeCards())
 	})
-}
 
+	t.Run("False with 2 tradeable weapons and 1 special power", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		for i := 0; i < 2; i++ {
+			w := mocks.NewMockWeapon(ctrl)
+			w.EXPECT().GetID().Return("w" + string(rune('0'+i))).AnyTimes()
+			w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+			w.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+			w.EXPECT().CanBeTraded().Return(true).AnyTimes()
+			p.TakeCards(w)
+		}
+		sp := mocks.NewMockWeapon(ctrl)
+		sp.EXPECT().GetID().Return("sp1").AnyTimes()
+		sp.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+		sp.EXPECT().Type().Return(types.SpecialPowerWeaponType).AnyTimes()
+		sp.EXPECT().CanBeTraded().Return(false).AnyTimes()
+		p.TakeCards(sp)
+
+		assert.False(t, p.CanTradeCards())
+	})
+}
 
 func TestPlayer_OnCardMovedToPile(t *testing.T) {
 	ctrl := gomock.NewController(t)

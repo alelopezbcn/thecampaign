@@ -45,6 +45,7 @@ func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 			IsAlly:         opp.IsAlly,
 			IsEliminated:   opp.IsEliminated,
 			IsDisconnected: opp.IsDisconnected,
+			AmbushInField:  opp.AmbushInField,
 		}
 	}
 
@@ -72,10 +73,12 @@ func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 		LastAttackWeaponID:     status.LastAttackWeaponID,
 		LastAttackTargetID:     status.LastAttackTargetID,
 		LastAttackTargetPlayer: status.LastAttackTargetPlayer,
-		StolenFromYouCard:      convertModalCards(status.StolenFromYouCard),
-		SabotagedFromYouCard:   convertModalCards(status.SabotagedFromYouCard),
-		SpyNotification:        status.SpyNotification,
-		History:                convertHistory(status.History),
+		StolenFromYouCard:          convertModalCards(status.StolenFromYouCard),
+		SabotagedFromYouCard:       convertModalCards(status.SabotagedFromYouCard),
+		SpyNotification:            status.SpyNotification,
+		AmbushTriggered:            convertAmbushTriggered(status.AmbushTriggered),
+		CurrentPlayerAmbushInField: status.CurrentPlayerAmbushInField,
+		History:                    convertHistory(status.History),
 		PlayersOrder:           status.PlayersOrder,
 		NextTurnPlayer:         status.NextTurnPlayer,
 		GameOverMsg:            status.GameOverMgs,
@@ -83,6 +86,16 @@ func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 		GameStartedAt:          status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		TurnStartedAt:          status.TurnStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		TurnTimeLimitSecs:      status.TurnTimeLimitSecs,
+	}
+}
+
+func convertAmbushTriggered(at *gamestatus.AmbushTrigger) *AmbushTriggeredDTO {
+	if at == nil {
+		return nil
+	}
+	return &AmbushTriggeredDTO{
+		Effect:        int(at.Effect),
+		EffectDisplay: at.EffectDisplay,
 	}
 }
 

@@ -69,6 +69,10 @@ func (s *specialPower) Use(usedBy Warrior, target Warrior) error {
 
 	return nil
 }
+func (s *specialPower) CanBeTraded() bool {
+	return false
+}
+
 func (s *specialPower) Destroyed() {
 	for _, a := range s.attackedBy {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)

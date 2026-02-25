@@ -12,12 +12,15 @@ type FieldReader interface {
 	Warriors() []cards.Warrior
 	GetWarrior(cardID string) (cards.Warrior, bool)
 	HasWarriorType(t types.WarriorType) bool
+	SlotCards() []cards.Card
 }
 
 // FieldMutator — field mutation
 type FieldMutator interface {
 	AddWarriors(cards ...cards.Warrior)
 	RemoveWarrior(card cards.Warrior) bool
+	SetSlotCard(c cards.Card)
+	RemoveSlotCard(c cards.Card)
 }
 
 // Field composes read and write access
@@ -33,6 +36,7 @@ type FieldWithoutWarriorsObserver interface {
 type field struct {
 	playerName        string
 	cards             []cards.Warrior
+	slotCards         []cards.Card
 	gameEndedObserver FieldWithoutWarriorsObserver
 }
 
@@ -85,4 +89,40 @@ func (h *field) HasWarriorType(t types.WarriorType) bool {
 		}
 	}
 	return false
+}
+
+func (h *field) SlotCards() []cards.Card {
+	result := make([]cards.Card, len(h.slotCards))
+	copy(result, h.slotCards)
+	return result
+}
+
+func (h *field) SetSlotCard(c cards.Card) {
+	h.slotCards = append(h.slotCards, c)
+}
+
+func (h *field) RemoveSlotCard(c cards.Card) {
+	for i, s := range h.slotCards {
+		if s.GetID() == c.GetID() {
+			h.slotCards = append(h.slotCards[:i], h.slotCards[i+1:]...)
+			return
+		}
+	}
+}
+
+// GetFieldSlotCard returns the first slot card of type T, or the zero value and false.
+func GetFieldSlotCard[T any](f FieldReader) (T, bool) {
+	for _, c := range f.SlotCards() {
+		if card, ok := c.(T); ok {
+			return card, true
+		}
+	}
+	var zero T
+	return zero, false
+}
+
+// HasFieldSlotCard reports whether the field has a slot card of type T.
+func HasFieldSlotCard[T any](f FieldReader) bool {
+	_, ok := GetFieldSlotCard[T](f)
+	return ok
 }

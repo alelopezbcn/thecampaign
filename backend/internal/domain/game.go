@@ -558,7 +558,11 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	}
 
 	if expectedAction == types.PhaseTypeBuy {
-		if p.CanBuy() || g.turnState.CanTrade {
+		canPlaceAmbush := false
+		if _, hasAmbush := board.HasCardTypeInHand[cards.Ambush](p); hasAmbush {
+			canPlaceAmbush = !board.HasFieldSlotCard[cards.Ambush](p.Field())
+		}
+		if p.CanBuy() || g.turnState.CanTrade || canPlaceAmbush {
 			g.currentAction = types.PhaseTypeBuy
 
 			return gameStatusFn()
@@ -768,6 +772,8 @@ func (g *game) getStatus(viewer board.Player,
 		CurrentPlayerName:      g.CurrentPlayer().Name(),
 		IsPlayerWinner:         g.isPlayerWinner(viewerIdx),
 		CanMoveWarrior:         g.turnState.CanMoveWarrior,
+		AmbushEffect:           g.lastResult.AmbushEffect,
+		AmbushAttackerName:     g.lastResult.AmbushAttackerName,
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
@@ -783,6 +789,7 @@ func extractField(f board.Field) gamestatus.FieldInput {
 		HasMage:      f.HasWarriorType(types.MageWarriorType),
 		HasDragon:    f.HasWarriorType(types.DragonWarriorType),
 		HasMercenary: f.HasWarriorType(types.MercenaryWarriorType),
+		HasAmbush:    board.HasFieldSlotCard[cards.Ambush](f),
 	}
 }
 

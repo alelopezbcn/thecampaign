@@ -22,6 +22,7 @@ func (f *fakeWeapon) GetCardMovedToPileObserver() CardMovedToPileObserver { retu
 func (f *fakeWeapon) DamageAmount() int                          { return f.damage }
 func (f *fakeWeapon) Type() types.WeaponType                     { return types.SwordWeaponType }
 func (f *fakeWeapon) CanConstruct() bool                         { return false }
+func (f *fakeWeapon) CanBeTraded() bool                          { return true }
 func (f *fakeWeapon) MultiplierFactor(_ Warrior) int             { return 1 }
 func (f *fakeWeapon) CanBeUsedWith(_ FieldChecker) bool          { return true }
 func (f *fakeWeapon) String() string                             { return "fakeWeapon" }
@@ -40,6 +41,7 @@ func (f *fakeSP) GetCardMovedToPileObserver() CardMovedToPileObserver { return f
 func (f *fakeSP) DamageAmount() int                          { return specialPowerDamage }
 func (f *fakeSP) Type() types.WeaponType                     { return types.SpecialPowerWeaponType }
 func (f *fakeSP) CanConstruct() bool                         { return false }
+func (f *fakeSP) CanBeTraded() bool                          { return false }
 func (f *fakeSP) MultiplierFactor(_ Warrior) int             { return 1 }
 func (f *fakeSP) CanBeUsedWith(_ FieldChecker) bool          { return true }
 func (f *fakeSP) String() string                             { return "fakeSP" }
@@ -248,6 +250,39 @@ func TestWarriorBase_Resurrect_AlreadyFullHealth(t *testing.T) {
 	assert.Equal(t, warriorMaxHealth, w.health)
 	assert.Empty(t, w.attackedBy)
 	assert.Nil(t, w.protectedBy)
+}
+
+func TestWarriorBase_HealToMax_RestoresHealth(t *testing.T) {
+	w := &warriorBase{
+		attackableBase: &attackableBase{health: 5},
+	}
+	w.HealToMax()
+	assert.Equal(t, warriorMaxHealth, w.health)
+}
+
+func TestWarriorBase_KillByAmbush_WithProtection_DestroysProtectionOnly(t *testing.T) {
+	sp := &fakeSP{}
+	deadObs := &fakeWarriorDeadObs{}
+	w := &warriorBase{
+		attackableBase:      &attackableBase{health: 20},
+		protectedBy:         sp,
+		WarriorDeadObserver: deadObs,
+	}
+	w.KillByAmbush()
+	assert.True(t, sp.destroyedCalled, "protection should be destroyed")
+	assert.Nil(t, w.protectedBy)
+	assert.Empty(t, deadObs.called, "warrior should not die when protected")
+}
+
+func TestWarriorBase_KillByAmbush_WithoutProtection_KillsWarrior(t *testing.T) {
+	deadObs := &fakeWarriorDeadObs{}
+	w := &warriorBase{
+		attackableBase:      &attackableBase{health: 20, attackedBy: []Weapon{}},
+		WarriorDeadObserver: deadObs,
+	}
+	w.KillByAmbush()
+	assert.LessOrEqual(t, w.health, 0)
+	assert.Len(t, deadObs.called, 1, "warrior dead observer should be called")
 }
 
 func TestWarriorBase_String_Dead(t *testing.T) {

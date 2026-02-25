@@ -2,6 +2,7 @@ package gameactions
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -24,6 +25,7 @@ type attackAction struct {
 	weaponID         string
 
 	currentPlayer board.Player
+	targetPlayer  board.Player
 	target        cards.Attackable
 	weapon        cards.Weapon
 }
@@ -56,6 +58,7 @@ func (a *attackAction) Validate(g Game) error {
 
 	p := g.CurrentPlayer()
 	a.currentPlayer = p
+	a.targetPlayer = targetPlayer
 	weaponCard, ok := p.GetCardFromHand(a.weaponID)
 	if !ok {
 		return fmt.Errorf("weapon card not in hand: %s", a.weaponID)
@@ -83,6 +86,21 @@ func (a *attackAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, e
 }
 
 func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameStatus, error) {
+	// Check if the defender has an ambush in their field.
+	if ambush, ok := board.GetFieldSlotCard[cards.Ambush](a.targetPlayer.Field()); ok {
+		a.targetPlayer.Field().RemoveSlotCard(ambush)
+
+		// Discard the ambush card via its observer (set when it was in defender's hand).
+		ambush.GetCardMovedToPileObserver().OnCardMovedToPile(ambush)
+
+		result := a.applyAmbushEffect(ambush.Effect(), g)
+		statusFn := func() gamestatus.GameStatus {
+			return g.Status(a.currentPlayer)
+		}
+		return result, statusFn, nil
+	}
+
+	// Normal attack.
 	err := a.target.BeAttacked(a.weapon)
 	if err != nil {
 		result := &Result{}
@@ -110,4 +128,121 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 
 func (a *attackAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
+}
+
+// applyAmbushEffect applies the pre-determined ambush effect and returns the result.
+func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, g attackGame) *Result {
+	result := &Result{
+		Action:             types.LastActionAmbush,
+		AttackWeaponID:     a.weaponID,
+		AttackTargetID:     a.targetID,
+		AttackTargetPlayer: a.targetPlayerName,
+		AmbushEffect:       effect,
+		AmbushAttackerName: a.playerName,
+	}
+
+	switch effect {
+	case types.AmbushEffectReflectDamage:
+		// Reflected damage equals the exact amount the original target would have received.
+		w := findWarriorForWeapon(a.currentPlayer.Field(), a.weapon.Type())
+		if w != nil {
+			multiplier := 1
+			if targetWarrior, ok := a.target.(cards.Warrior); ok {
+				multiplier = a.weapon.MultiplierFactor(targetWarrior)
+			}
+			w.ReceiveDamage(a.weapon, multiplier)
+			g.AddHistory(fmt.Sprintf("%s's attack was reflected — %s takes damage",
+				a.currentPlayer.Name(), w.String()), types.CategoryAction)
+		} else {
+			g.AddHistory(fmt.Sprintf("%s's attack was reflected (no target found)",
+				a.currentPlayer.Name()), types.CategoryAction)
+		}
+		a.currentPlayer.RemoveFromHand(a.weaponID)
+
+	case types.AmbushEffectCancelAttack:
+		// Attack cancelled; weapon discarded.
+		a.currentPlayer.RemoveFromHand(a.weaponID)
+		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
+		g.AddHistory(fmt.Sprintf("%s's attack was cancelled by an ambush",
+			a.currentPlayer.Name()), types.CategoryAction)
+
+	case types.AmbushEffectStealWeapon:
+		// Weapon transferred to the defender's hand.
+		a.currentPlayer.RemoveFromHand(a.weaponID)
+		a.targetPlayer.TakeCards(a.weapon)
+		g.AddHistory(fmt.Sprintf("%s's weapon was stolen by an ambush",
+			a.currentPlayer.Name()), types.CategoryAction)
+
+	case types.AmbushEffectDrainLife:
+		// The attack is absorbed: warrior takes no damage and gains HP equal to the weapon damage.
+		// BeAttacked is skipped deliberately — calling it would risk killing the warrior (via
+		// dead()) before the heal can run, and the net behaviour is the same as absorbing the hit.
+		if warrior, ok := a.target.(cards.Warrior); ok {
+			multiplier := a.weapon.MultiplierFactor(warrior)
+			warrior.HealBy(a.weapon.DamageAmount() * multiplier)
+		}
+		a.currentPlayer.RemoveFromHand(a.weaponID)
+		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
+		g.AddHistory(fmt.Sprintf("%s's attack was drained — target gained HP",
+			a.currentPlayer.Name()), types.CategoryAction)
+
+	case types.AmbushEffectInstantKill:
+		// A random warrior in the attacker's field is instantly killed.
+		w := findAnyWarrior(a.currentPlayer.Field())
+		if w != nil {
+			w.KillByAmbush()
+			g.AddHistory(fmt.Sprintf("%s triggered an ambush — %s was instantly killed!",
+				a.currentPlayer.Name(), w.String()), types.CategoryAction)
+		} else {
+			g.AddHistory(fmt.Sprintf("%s triggered an ambush — instant kill (no warriors found)",
+				a.currentPlayer.Name()), types.CategoryAction)
+		}
+		a.currentPlayer.RemoveFromHand(a.weaponID)
+		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
+	}
+
+	return result
+}
+
+// findWarriorForWeapon finds a warrior in the field that matches the weapon type.
+// Falls back to any random warrior if no type match exists.
+func findWarriorForWeapon(f board.FieldReader, weaponType types.WeaponType) cards.Warrior {
+	warriors := f.Warriors()
+	if len(warriors) == 0 {
+		return nil
+	}
+
+	var compatible []cards.Warrior
+	for _, w := range warriors {
+		switch weaponType {
+		case types.SwordWeaponType:
+			if w.Type() == types.KnightWarriorType || w.Type() == types.DragonWarriorType || w.Type() == types.MercenaryWarriorType {
+				compatible = append(compatible, w)
+			}
+		case types.ArrowWeaponType:
+			if w.Type() == types.ArcherWarriorType || w.Type() == types.DragonWarriorType || w.Type() == types.MercenaryWarriorType {
+				compatible = append(compatible, w)
+			}
+		case types.PoisonWeaponType:
+			if w.Type() == types.MageWarriorType || w.Type() == types.DragonWarriorType || w.Type() == types.MercenaryWarriorType {
+				compatible = append(compatible, w)
+			}
+		default:
+			compatible = append(compatible, w)
+		}
+	}
+
+	if len(compatible) > 0 {
+		return compatible[rand.Intn(len(compatible))]
+	}
+	return warriors[rand.Intn(len(warriors))]
+}
+
+// findAnyWarrior returns a random warrior from the field, or nil if empty.
+func findAnyWarrior(f board.FieldReader) cards.Warrior {
+	warriors := f.Warriors()
+	if len(warriors) == 0 {
+		return nil
+	}
+	return warriors[rand.Intn(len(warriors))]
 }

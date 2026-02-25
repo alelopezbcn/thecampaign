@@ -132,6 +132,30 @@ func (mr *MockWarriorMockRecorder) Heal(powerCard any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockWarrior)(nil).Heal), powerCard)
 }
 
+// HealBy mocks base method.
+func (m *MockWarrior) HealBy(amount int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "HealBy", amount)
+}
+
+// HealBy indicates an expected call of HealBy.
+func (mr *MockWarriorMockRecorder) HealBy(amount any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealBy", reflect.TypeOf((*MockWarrior)(nil).HealBy), amount)
+}
+
+// HealToMax mocks base method.
+func (m *MockWarrior) HealToMax() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "HealToMax")
+}
+
+// HealToMax indicates an expected call of HealToMax.
+func (mr *MockWarriorMockRecorder) HealToMax() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealToMax", reflect.TypeOf((*MockWarrior)(nil).HealToMax))
+}
+
 // Health mocks base method.
 func (m *MockWarrior) Health() int {
 	m.ctrl.T.Helper()
@@ -156,18 +180,6 @@ func (m *MockWarrior) InstantKill(sp cards.SpecialPower) {
 func (mr *MockWarriorMockRecorder) InstantKill(sp any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockWarrior)(nil).InstantKill), sp)
-}
-
-// Resurrect mocks base method.
-func (m *MockWarrior) Resurrect() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Resurrect")
-}
-
-// Resurrect indicates an expected call of Resurrect.
-func (mr *MockWarriorMockRecorder) Resurrect() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resurrect", reflect.TypeOf((*MockWarrior)(nil).Resurrect))
 }
 
 // IsDamaged mocks base method.
@@ -197,6 +209,18 @@ func (m *MockWarrior) IsProtected() (bool, cards.SpecialPower) {
 func (mr *MockWarriorMockRecorder) IsProtected() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockWarrior)(nil).IsProtected))
+}
+
+// KillByAmbush mocks base method.
+func (m *MockWarrior) KillByAmbush() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "KillByAmbush")
+}
+
+// KillByAmbush indicates an expected call of KillByAmbush.
+func (mr *MockWarriorMockRecorder) KillByAmbush() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KillByAmbush", reflect.TypeOf((*MockWarrior)(nil).KillByAmbush))
 }
 
 // Name mocks base method.
@@ -241,6 +265,18 @@ func (mr *MockWarriorMockRecorder) ReceiveDamage(weapon, multiplier any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReceiveDamage", reflect.TypeOf((*MockWarrior)(nil).ReceiveDamage), weapon, multiplier)
 }
 
+// Resurrect mocks base method.
+func (m *MockWarrior) Resurrect() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Resurrect")
+}
+
+// Resurrect indicates an expected call of Resurrect.
+func (mr *MockWarriorMockRecorder) Resurrect() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resurrect", reflect.TypeOf((*MockWarrior)(nil).Resurrect))
+}
+
 // String mocks base method.
 func (m *MockWarrior) String() string {
 	m.ctrl.T.Helper()
@@ -267,4 +303,306 @@ func (m *MockWarrior) Type() types.WarriorType {
 func (mr *MockWarriorMockRecorder) Type() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockWarrior)(nil).Type))
+}
+
+// MockMercenary is a mock of Mercenary interface.
+type MockMercenary struct {
+	ctrl     *gomock.Controller
+	recorder *MockMercenaryMockRecorder
+}
+
+// MockMercenaryMockRecorder is the mock recorder for MockMercenary.
+type MockMercenaryMockRecorder struct {
+	mock *MockMercenary
+}
+
+// NewMockMercenary creates a new mock instance.
+func NewMockMercenary(ctrl *gomock.Controller) *MockMercenary {
+	mock := &MockMercenary{ctrl: ctrl}
+	mock.recorder = &MockMercenaryMockRecorder{mock}
+	return mock
+}
+
+// EXPECT returns an object that allows the caller to indicate expected use.
+func (m *MockMercenary) EXPECT() *MockMercenaryMockRecorder {
+	return m.recorder
+}
+
+// AddCardMovedToPileObserver mocks base method.
+func (m *MockMercenary) AddCardMovedToPileObserver(observer cards.CardMovedToPileObserver) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddCardMovedToPileObserver", observer)
+}
+
+// AddCardMovedToPileObserver indicates an expected call of AddCardMovedToPileObserver.
+func (mr *MockMercenaryMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockMercenary)(nil).AddCardMovedToPileObserver), observer)
+}
+
+// AddWarriorDeadObserver mocks base method.
+func (m *MockMercenary) AddWarriorDeadObserver(o cards.WarriorDeadObserver) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddWarriorDeadObserver", o)
+}
+
+// AddWarriorDeadObserver indicates an expected call of AddWarriorDeadObserver.
+func (mr *MockMercenaryMockRecorder) AddWarriorDeadObserver(o any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddWarriorDeadObserver", reflect.TypeOf((*MockMercenary)(nil).AddWarriorDeadObserver), o)
+}
+
+// AttackedBy mocks base method.
+func (m *MockMercenary) AttackedBy() []cards.Weapon {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AttackedBy")
+	ret0, _ := ret[0].([]cards.Weapon)
+	return ret0
+}
+
+// AttackedBy indicates an expected call of AttackedBy.
+func (mr *MockMercenaryMockRecorder) AttackedBy() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AttackedBy", reflect.TypeOf((*MockMercenary)(nil).AttackedBy))
+}
+
+// BeAttacked mocks base method.
+func (m *MockMercenary) BeAttacked(weapon cards.Weapon) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "BeAttacked", weapon)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// BeAttacked indicates an expected call of BeAttacked.
+func (mr *MockMercenaryMockRecorder) BeAttacked(weapon any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockMercenary)(nil).BeAttacked), weapon)
+}
+
+// GetCardMovedToPileObserver mocks base method.
+func (m *MockMercenary) GetCardMovedToPileObserver() cards.CardMovedToPileObserver {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCardMovedToPileObserver")
+	ret0, _ := ret[0].(cards.CardMovedToPileObserver)
+	return ret0
+}
+
+// GetCardMovedToPileObserver indicates an expected call of GetCardMovedToPileObserver.
+func (mr *MockMercenaryMockRecorder) GetCardMovedToPileObserver() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCardMovedToPileObserver", reflect.TypeOf((*MockMercenary)(nil).GetCardMovedToPileObserver))
+}
+
+// GetID mocks base method.
+func (m *MockMercenary) GetID() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetID")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetID indicates an expected call of GetID.
+func (mr *MockMercenaryMockRecorder) GetID() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockMercenary)(nil).GetID))
+}
+
+// Heal mocks base method.
+func (m *MockMercenary) Heal(powerCard cards.SpecialPower) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Heal", powerCard)
+}
+
+// Heal indicates an expected call of Heal.
+func (mr *MockMercenaryMockRecorder) Heal(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Heal", reflect.TypeOf((*MockMercenary)(nil).Heal), powerCard)
+}
+
+// HealBy mocks base method.
+func (m *MockMercenary) HealBy(amount int) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "HealBy", amount)
+}
+
+// HealBy indicates an expected call of HealBy.
+func (mr *MockMercenaryMockRecorder) HealBy(amount any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealBy", reflect.TypeOf((*MockMercenary)(nil).HealBy), amount)
+}
+
+// HealToMax mocks base method.
+func (m *MockMercenary) HealToMax() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "HealToMax")
+}
+
+// HealToMax indicates an expected call of HealToMax.
+func (mr *MockMercenaryMockRecorder) HealToMax() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HealToMax", reflect.TypeOf((*MockMercenary)(nil).HealToMax))
+}
+
+// Health mocks base method.
+func (m *MockMercenary) Health() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Health")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Health indicates an expected call of Health.
+func (mr *MockMercenaryMockRecorder) Health() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Health", reflect.TypeOf((*MockMercenary)(nil).Health))
+}
+
+// InstantKill mocks base method.
+func (m *MockMercenary) InstantKill(sp cards.SpecialPower) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "InstantKill", sp)
+}
+
+// InstantKill indicates an expected call of InstantKill.
+func (mr *MockMercenaryMockRecorder) InstantKill(sp any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstantKill", reflect.TypeOf((*MockMercenary)(nil).InstantKill), sp)
+}
+
+// IsDamaged mocks base method.
+func (m *MockMercenary) IsDamaged() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsDamaged")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsDamaged indicates an expected call of IsDamaged.
+func (mr *MockMercenaryMockRecorder) IsDamaged() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDamaged", reflect.TypeOf((*MockMercenary)(nil).IsDamaged))
+}
+
+// IsMercenaryCard mocks base method.
+func (m *MockMercenary) IsMercenaryCard() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsMercenaryCard")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsMercenaryCard indicates an expected call of IsMercenaryCard.
+func (mr *MockMercenaryMockRecorder) IsMercenaryCard() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsMercenaryCard", reflect.TypeOf((*MockMercenary)(nil).IsMercenaryCard))
+}
+
+// IsProtected mocks base method.
+func (m *MockMercenary) IsProtected() (bool, cards.SpecialPower) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsProtected")
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(cards.SpecialPower)
+	return ret0, ret1
+}
+
+// IsProtected indicates an expected call of IsProtected.
+func (mr *MockMercenaryMockRecorder) IsProtected() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsProtected", reflect.TypeOf((*MockMercenary)(nil).IsProtected))
+}
+
+// KillByAmbush mocks base method.
+func (m *MockMercenary) KillByAmbush() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "KillByAmbush")
+}
+
+// KillByAmbush indicates an expected call of KillByAmbush.
+func (mr *MockMercenaryMockRecorder) KillByAmbush() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KillByAmbush", reflect.TypeOf((*MockMercenary)(nil).KillByAmbush))
+}
+
+// Name mocks base method.
+func (m *MockMercenary) Name() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Name")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Name indicates an expected call of Name.
+func (mr *MockMercenaryMockRecorder) Name() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockMercenary)(nil).Name))
+}
+
+// Protect mocks base method.
+func (m *MockMercenary) Protect(powerCard cards.SpecialPower) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Protect", powerCard)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Protect indicates an expected call of Protect.
+func (mr *MockMercenaryMockRecorder) Protect(powerCard any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Protect", reflect.TypeOf((*MockMercenary)(nil).Protect), powerCard)
+}
+
+// ReceiveDamage mocks base method.
+func (m *MockMercenary) ReceiveDamage(weapon cards.Weapon, multiplier int) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ReceiveDamage", weapon, multiplier)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ReceiveDamage indicates an expected call of ReceiveDamage.
+func (mr *MockMercenaryMockRecorder) ReceiveDamage(weapon, multiplier any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReceiveDamage", reflect.TypeOf((*MockMercenary)(nil).ReceiveDamage), weapon, multiplier)
+}
+
+// Resurrect mocks base method.
+func (m *MockMercenary) Resurrect() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Resurrect")
+}
+
+// Resurrect indicates an expected call of Resurrect.
+func (mr *MockMercenaryMockRecorder) Resurrect() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Resurrect", reflect.TypeOf((*MockMercenary)(nil).Resurrect))
+}
+
+// String mocks base method.
+func (m *MockMercenary) String() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "String")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// String indicates an expected call of String.
+func (mr *MockMercenaryMockRecorder) String() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "String", reflect.TypeOf((*MockMercenary)(nil).String))
+}
+
+// Type mocks base method.
+func (m *MockMercenary) Type() types.WarriorType {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Type")
+	ret0, _ := ret[0].(types.WarriorType)
+	return ret0
+}
+
+// Type indicates an expected call of Type.
+func (mr *MockMercenaryMockRecorder) Type() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Type", reflect.TypeOf((*MockMercenary)(nil).Type))
 }

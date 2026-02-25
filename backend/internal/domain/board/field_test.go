@@ -8,6 +8,41 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestField_SetSlotCard_HasFieldSlotCard(t *testing.T) {
+	f := &field{cards: []cards.Warrior{}}
+	a := cards.NewAmbush("amb1")
+	assert.False(t, HasFieldSlotCard[cards.Ambush](f))
+
+	f.SetSlotCard(a)
+	assert.True(t, HasFieldSlotCard[cards.Ambush](f))
+}
+
+func TestField_GetFieldSlotCard_ReturnsCard(t *testing.T) {
+	f := &field{cards: []cards.Warrior{}}
+	a := cards.NewAmbush("amb1")
+	f.SetSlotCard(a)
+
+	got, ok := GetFieldSlotCard[cards.Ambush](f)
+	assert.True(t, ok)
+	assert.Equal(t, a, got)
+}
+
+func TestField_GetFieldSlotCard_WhenNone_ReturnsFalse(t *testing.T) {
+	f := &field{cards: []cards.Warrior{}}
+	_, ok := GetFieldSlotCard[cards.Ambush](f)
+	assert.False(t, ok)
+}
+
+func TestField_RemoveSlotCard(t *testing.T) {
+	f := &field{cards: []cards.Warrior{}}
+	a := cards.NewAmbush("amb1")
+	f.SetSlotCard(a)
+	assert.True(t, HasFieldSlotCard[cards.Ambush](f))
+
+	f.RemoveSlotCard(a)
+	assert.False(t, HasFieldSlotCard[cards.Ambush](f))
+}
+
 func TestHasWarriorType(t *testing.T) {
 	tests := []struct {
 		name        string

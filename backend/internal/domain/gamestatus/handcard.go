@@ -65,11 +65,13 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 		canBeUsed = myField.HasMage || myField.HasDragon || myField.HasMercenary
 	}
 
+	canBeTraded := weapon.CanBeTraded()
+
 	if action != types.PhaseTypeConstruct &&
 		action != types.PhaseTypeAttack {
 		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, false)
-		hc.CanBeTraded = true
+		hc.CanBeTraded = canBeTraded
 		return hc
 	}
 
@@ -77,7 +79,7 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 		canBeUsed = !castleConstructed && weapon.CanConstruct()
 		hc := newHandCard(weapon.GetID(), aCardType,
 			weapon.DamageAmount(), []string{}, canBeUsed)
-		hc.CanBeTraded = true
+		hc.CanBeTraded = canBeTraded
 		return hc
 	}
 
@@ -94,7 +96,7 @@ func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
 	hc := newHandCard(weapon.GetID(), aCardType,
 		weapon.DamageAmount(), attackableIDs, canBeUsed)
 	hc.DmgMultiplier = mults
-	hc.CanBeTraded = true
+	hc.CanBeTraded = canBeTraded
 
 	return hc
 }
@@ -245,6 +247,13 @@ func NewThiefHandCard(cardID string, action types.PhaseType) HandCard {
 func NewSabotageHandCard(cardID string, anyEnemyHasCards bool, action types.PhaseType) HandCard {
 	return newHandCard(cardID, CardTypeSabotage, 0, []string{},
 		anyEnemyHasCards && action == types.PhaseTypeSpySteal)
+}
+
+func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
+	if action != types.PhaseTypeBuy {
+		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)
+	}
+	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, !fieldAlreadyHasAmbush)
 }
 
 func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
