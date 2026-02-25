@@ -66,9 +66,10 @@ func (a *desertionAction) Validate(g Game) error {
 		return fmt.Errorf("warrior %s not found in %s's field", a.warriorID, a.targetPlayerName)
 	}
 
-	if warrior.Health() > cards.DesertionMaxHP {
+	hp := warrior.Health()
+	if hp > cards.DesertionMaxHP {
 		return fmt.Errorf("warrior has %d HP — only warriors with %d or fewer HP can be deserved",
-			warrior.Health(), cards.DesertionMaxHP)
+			hp, cards.DesertionMaxHP)
 	}
 
 	a.desertion = desertion
