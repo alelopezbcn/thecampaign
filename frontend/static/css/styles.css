@@ -4690,3 +4690,68 @@ body {
     border: 2px solid rgba(167, 139, 250, 0.5);
     position: relative;
 }
+
+/* Ambush Triggered Modal */
+.ambush-triggered-content {
+    background: linear-gradient(145deg, #1a1a2e 0%, #2d1b4e 100%);
+    border: 1px solid rgba(167, 139, 250, 0.5);
+    border-radius: 16px;
+    padding: 20px 28px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(167, 139, 250, 0.3), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.4s ease-out;
+    min-width: 320px;
+    max-width: 420px;
+}
+
+.ambush-triggered-header {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #e2c4ff;
+    margin-bottom: 16px;
+    letter-spacing: 0.05em;
+}
+
+.ambush-triggered-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 18px;
+    text-align: left;
+}
+
+.ambush-triggered-card-img {
+    width: 80px;
+    height: 110px;
+    border-radius: 8px;
+    object-fit: cover;
+    border: 2px solid rgba(167, 139, 250, 0.5);
+    flex-shrink: 0;
+}
+
+.ambush-triggered-info {
+    flex: 1;
+}
+
+.ambush-triggered-effect-label {
+    font-size: 1.05em;
+    font-weight: bold;
+    margin: 0 0 6px 0;
+    padding: 4px 10px;
+    border-radius: 6px;
+    display: inline-block;
+}
+
+.ambush-triggered-desc {
+    font-size: 0.85em;
+    color: #ccc;
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Per-effect colors */
+.ambush-effect-reflect   { background: rgba(239,68,68,0.2);  color: #f87171; border: 1px solid rgba(239,68,68,0.4); }
+.ambush-effect-cancel    { background: rgba(234,179,8,0.2);  color: #fbbf24; border: 1px solid rgba(234,179,8,0.4); }
+.ambush-effect-steal     { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.4); }
+.ambush-effect-drain     { background: rgba(34,197,94,0.2);  color: #4ade80; border: 1px solid rgba(34,197,94,0.4); }
+.ambush-effect-instant   { background: rgba(168,85,247,0.2); color: #c084fc; border: 1px solid rgba(168,85,247,0.4); }

@@ -174,14 +174,16 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, g attackGame
 			a.currentPlayer.Name()), types.CategoryAction)
 
 	case types.AmbushEffectDrainLife:
-		// Attack lands but target heals back by the same damage dealt (including multiplier).
+		// The attack is absorbed: warrior takes no damage and gains HP equal to the weapon damage.
+		// BeAttacked is skipped deliberately — calling it would risk killing the warrior (via
+		// dead()) before the heal can run, and the net behaviour is the same as absorbing the hit.
 		if warrior, ok := a.target.(cards.Warrior); ok {
 			multiplier := a.weapon.MultiplierFactor(warrior)
-			_ = a.target.BeAttacked(a.weapon)
 			warrior.HealBy(a.weapon.DamageAmount() * multiplier)
 		}
 		a.currentPlayer.RemoveFromHand(a.weaponID)
-		g.AddHistory(fmt.Sprintf("%s's attack was drained — target healed for the damage dealt",
+		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
+		g.AddHistory(fmt.Sprintf("%s's attack was drained — target gained HP",
 			a.currentPlayer.Name()), types.CategoryAction)
 
 	case types.AmbushEffectInstantKill:

@@ -4080,8 +4080,16 @@ const ambushEffectDescriptions = {
     'Reflect Damage':   'Your weapon damage was reflected back — your warrior took the hit instead.',
     'Attack Cancelled': 'The attack was cancelled. Your weapon was discarded.',
     'Weapon Stolen':    'Your weapon was intercepted and added to the defender\'s hand.',
-    'Drain Life':       'The warrior was hit but immediately healed for the exact damage dealt (2x if applicable).',
+    'Drain Life':       'The attack was absorbed — the warrior took no damage and gained HP equal to the weapon\'s damage.',
     'Instant Kill':     'One of your warriors was instantly killed.',
+};
+
+const ambushEffectColorClass = {
+    'Reflect Damage':   'ambush-effect-reflect',
+    'Attack Cancelled': 'ambush-effect-cancel',
+    'Weapon Stolen':    'ambush-effect-steal',
+    'Drain Life':       'ambush-effect-drain',
+    'Instant Kill':     'ambush-effect-instant',
 };
 
 function showAmbushTriggeredModal(effectDisplay) {
@@ -4089,7 +4097,10 @@ function showAmbushTriggeredModal(effectDisplay) {
     const effectEl = document.getElementById('ambush-triggered-effect');
     const textEl = document.getElementById('ambush-triggered-text');
     if (!modal) return;
-    if (effectEl) effectEl.textContent = effectDisplay;
+    if (effectEl) {
+        effectEl.textContent = effectDisplay;
+        effectEl.className = 'ambush-triggered-effect-label ' + (ambushEffectColorClass[effectDisplay] || '');
+    }
     if (textEl) textEl.textContent = ambushEffectDescriptions[effectDisplay] || '';
     modal.classList.remove('hidden');
 }

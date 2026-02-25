@@ -145,9 +145,9 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 		}
 	}
 
-	// Include ambush trigger notification for the attacker only
+	// Include ambush trigger notification for both the attacker and the defender
 	if dto.LastAction == types.LastActionAmbush && dto.AmbushAttackerName != "" &&
-		dto.Viewer.Name == dto.AmbushAttackerName {
+		(dto.Viewer.Name == dto.AmbushAttackerName || dto.Viewer.Name == dto.LastAttackTargetPlayer) {
 		gs.AmbushTriggered = &AmbushTrigger{
 			Effect:        dto.AmbushEffect,
 			EffectDisplay: dto.AmbushEffect.DisplayName(),

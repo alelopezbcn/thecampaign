@@ -354,10 +354,15 @@
 
         <!-- Ambush Triggered Modal -->
         <div id="ambush-triggered-modal" class="spy-notification-modal hidden">
-            <div class="spy-notification-content">
-                <div style="font-size:1.4em;margin-bottom:6px;">&#9888; Ambush!</div>
-                <p id="ambush-triggered-effect" class="spy-notification-text" style="font-weight:bold;margin-bottom:4px;"></p>
-                <p id="ambush-triggered-text" class="spy-notification-text" style="font-size:0.9em;color:#ccc;"></p>
+            <div class="ambush-triggered-content">
+                <div class="ambush-triggered-header">&#9888; Ambush!</div>
+                <div class="ambush-triggered-body">
+                    <img src="/static/img/cards/ambush.webp" alt="Ambush" class="ambush-triggered-card-img" />
+                    <div class="ambush-triggered-info">
+                        <p id="ambush-triggered-effect" class="ambush-triggered-effect-label"></p>
+                        <p id="ambush-triggered-text" class="ambush-triggered-desc"></p>
+                    </div>
+                </div>
                 <button id="ambush-triggered-close" class="btn btn-secondary btn-small">Dismiss</button>
             </div>
         </div>
