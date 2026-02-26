@@ -11,7 +11,7 @@ type desertionCard struct {
 	*cardBase
 }
 
-func NewDesertionCard(id string) *desertionCard {
+func NewDesertion(id string) *desertionCard {
 	return &desertionCard{
 		cardBase: newCardBase(id, "Desertion"),
 	}

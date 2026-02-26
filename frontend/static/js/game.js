@@ -108,9 +108,16 @@ function setupEventListeners() {
     // Copy link button
     document.getElementById('copy-link-btn').addEventListener('click', () => {
         const shareUrl = document.getElementById('share-url');
-        navigator.clipboard.writeText(shareUrl.value);
-        document.getElementById('copy-link-btn').textContent = 'Copied!';
-        setTimeout(() => document.getElementById('copy-link-btn').textContent = 'Copy Link', 2000);
+        const btn = document.getElementById('copy-link-btn');
+        const text = shareUrl.value;
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text);
+        } else {
+            shareUrl.select();
+            document.execCommand('copy');
+        }
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Link', 2000);
     });
 
     // Game mode selector
@@ -3733,7 +3740,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage' || type === 'desertion' || type === 'ambush') return 'special';
     return 'unknown';
 }
 
