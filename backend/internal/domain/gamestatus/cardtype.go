@@ -28,18 +28,20 @@ var (
 	CardTypeFortress     = CardType{"Fortress", "", "#8B4513"}      // Brown
 	CardTypeResurrection = CardType{"Resurrection", "", "#50C878"}  // Emerald Green
 	CardTypeAmbush       = CardType{"Ambush", "", "#2D2D2D"}        // Dark/Mysterious
+	CardTypeDesertion    = CardType{"Desertion", "", "#8B0000"}      // Dark Red/Crimson
 )
 
 // zeroValueCardTypes maps the card Name() to its CardType for singleton cards
 // that always have value 0. Add one entry here when introducing a new such card.
 var zeroValueCardTypes = map[string]CardType{
-	"Spy":      CardTypeSpy,
-	"Thief":    CardTypeThief,
-	"Sabotage": CardTypeSabotage,
-	"Catapult": CardTypeCatapult,
-	"Fortress":     CardTypeFortress,
+	"Spy":        CardTypeSpy,
+	"Thief":      CardTypeThief,
+	"Sabotage":   CardTypeSabotage,
+	"Catapult":   CardTypeCatapult,
+	"Fortress":   CardTypeFortress,
 	"Resurrection": CardTypeResurrection,
-	"Ambush":       CardTypeAmbush,
+	"Ambush":     CardTypeAmbush,
+	"Desertion":  CardTypeDesertion,
 }
 
 // warriorCardTypes maps each WarriorType to its CardType for serialization.

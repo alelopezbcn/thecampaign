@@ -18,4 +18,7 @@ type Result struct {
 	AttackTargetPlayer string
 	AmbushEffect       types.AmbushEffect
 	AmbushAttackerName string
+	DeserterWarriorID  string
+	DeserterFromPlayer string
+	DeserterWarrior    cards.Warrior
 }

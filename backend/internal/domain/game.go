@@ -548,7 +548,23 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		_, hasSpy := board.HasCardTypeInHand[cards.Spy](p)
 		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
 		_, hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
-		if hasSpy || hasThief || hasSabotage {
+
+		hasDesertion := false
+		if _, ok := board.HasCardTypeInHand[cards.Desertion](p); ok {
+			for _, e := range g.Enemies(g.currentTurn) {
+				for _, w := range e.Field().Warriors() {
+					if w.Health() <= cards.DesertionMaxHP {
+						hasDesertion = true
+						break
+					}
+				}
+				if hasDesertion {
+					break
+				}
+			}
+		}
+
+		if hasSpy || hasThief || hasSabotage || hasDesertion {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
@@ -713,6 +729,7 @@ func (g *game) getStatus(viewer board.Player,
 	enemyFields := []gamestatus.FieldInput{}
 	anyEnemyCastleAttackable := false
 	anyEnemyHasCards := false
+	anyEnemyHasWeakWarriors := false
 	for _, enemy := range g.Enemies(viewerIdx) {
 		enemyFields = append(enemyFields, extractField(enemy.Field()))
 		if enemy.Castle().CanBeAttacked() {
@@ -720,6 +737,11 @@ func (g *game) getStatus(viewer board.Player,
 		}
 		if enemy.CardsInHand() > 0 {
 			anyEnemyHasCards = true
+		}
+		for _, w := range enemy.Field().Warriors() {
+			if w.Health() <= cards.DesertionMaxHP {
+				anyEnemyHasWeakWarriors = true
+			}
 		}
 	}
 
@@ -740,40 +762,43 @@ func (g *game) getStatus(viewer board.Player,
 		AllyFields:               allyFields,
 		AnyEnemyCastleAttackable: anyEnemyCastleAttackable,
 		AnyEnemyHasCards:         anyEnemyHasCards,
+		AnyEnemyHasWeakWarriors:  anyEnemyHasWeakWarriors,
 		AllyHasCastleConstructed: allyHasCastleConstructed,
-		NewCards:               newCards,
-		ModalCards:             modalCards,
-		NextTurnPlayer:         g.nextActiveTurnPlayer(),
-		TurnPlayer:             g.CurrentPlayer().Name(),
-		CurrentAction:          g.CurrentAction(),
-		LastAction:             g.lastResult.Action,
-		GameMode:               string(g.mode),
-		IsEliminated:           g.eliminatedPlayers[viewerIdx],
-		IsDisconnected:         g.disconnectedPlayers[viewerIdx],
-		CanTrade:               g.turnState.CanTrade,
-		CemeteryCount:          g.board.Cemetery().Count(),
-		CemeteryLastDead:       g.board.Cemetery().GetLast(),
-		DiscardPileCount:       g.board.DiscardPile().Count(),
-		DiscardPileLastCard:    g.board.DiscardPile().GetLast(),
-		DeckCount:              g.board.Deck().Count(),
-		GameStartedAt:          g.gameStartedAt,
-		TurnStartedAt:          g.turnState.StartedAt,
-		History:                g.getHistory(),
-		LastMovedWarriorID:     g.lastResult.MovedWarriorID,
-		LastAttackWeaponID:     g.lastResult.AttackWeaponID,
-		LastAttackTargetID:     g.lastResult.AttackTargetID,
-		LastAttackTargetPlayer: g.lastResult.AttackTargetPlayer,
-		StolenFrom:             g.lastResult.StolenFrom,
-		StolenCard:             g.lastResult.StolenCard,
-		SabotagedFrom:          g.lastResult.SabotagedFrom,
-		SabotagedCard:          g.lastResult.SabotagedCard,
-		SpyTarget:              g.lastResult.Spy.Target,
-		SpyTargetPlayer:        g.lastResult.Spy.TargetPlayer,
-		CurrentPlayerName:      g.CurrentPlayer().Name(),
-		IsPlayerWinner:         g.isPlayerWinner(viewerIdx),
-		CanMoveWarrior:         g.turnState.CanMoveWarrior,
-		AmbushEffect:           g.lastResult.AmbushEffect,
-		AmbushAttackerName:     g.lastResult.AmbushAttackerName,
+		NewCards:                 newCards,
+		ModalCards:               modalCards,
+		NextTurnPlayer:           g.nextActiveTurnPlayer(),
+		TurnPlayer:               g.CurrentPlayer().Name(),
+		CurrentAction:            g.CurrentAction(),
+		LastAction:               g.lastResult.Action,
+		GameMode:                 string(g.mode),
+		IsEliminated:             g.eliminatedPlayers[viewerIdx],
+		IsDisconnected:           g.disconnectedPlayers[viewerIdx],
+		CanTrade:                 g.turnState.CanTrade,
+		CemeteryCount:            g.board.Cemetery().Count(),
+		CemeteryLastDead:         g.board.Cemetery().GetLast(),
+		DiscardPileCount:         g.board.DiscardPile().Count(),
+		DiscardPileLastCard:      g.board.DiscardPile().GetLast(),
+		DeckCount:                g.board.Deck().Count(),
+		GameStartedAt:            g.gameStartedAt,
+		TurnStartedAt:            g.turnState.StartedAt,
+		History:                  g.getHistory(),
+		LastMovedWarriorID:       g.lastResult.MovedWarriorID,
+		LastAttackWeaponID:       g.lastResult.AttackWeaponID,
+		LastAttackTargetID:       g.lastResult.AttackTargetID,
+		LastAttackTargetPlayer:   g.lastResult.AttackTargetPlayer,
+		StolenFrom:               g.lastResult.StolenFrom,
+		StolenCard:               g.lastResult.StolenCard,
+		SabotagedFrom:            g.lastResult.SabotagedFrom,
+		SabotagedCard:            g.lastResult.SabotagedCard,
+		SpyTarget:                g.lastResult.Spy.Target,
+		SpyTargetPlayer:          g.lastResult.Spy.TargetPlayer,
+		CurrentPlayerName:        g.CurrentPlayer().Name(),
+		IsPlayerWinner:           g.isPlayerWinner(viewerIdx),
+		CanMoveWarrior:           g.turnState.CanMoveWarrior,
+		AmbushEffect:             g.lastResult.AmbushEffect,
+		AmbushAttackerName:       g.lastResult.AmbushAttackerName,
+		DeserterFromPlayer:       g.lastResult.DeserterFromPlayer,
+		DeserterWarrior:          g.lastResult.DeserterWarrior,
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()

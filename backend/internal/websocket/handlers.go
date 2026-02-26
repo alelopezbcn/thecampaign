@@ -214,6 +214,24 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 	})
 }
 
+func (h *Hub) handleDesertion(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p DesertionPayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid desertion payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewDesertionAction(client.PlayerName, p.TargetPlayer, p.WarriorID))
+	})
+}
+
 func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 	data, err := json.Marshal(payload)
 	if err != nil {

@@ -1,24 +1,19 @@
 faltan tests de ambush en game status
+desertion popup da la posibilidad de robarle a todos, solo debe filtrar los que tienen gyerreros con menos de 6
 
-
+chequear que solo se pueda usar un ambush a la vez
+actualizar descripciones de cartas. Que cada una indique en que etapa se puede usar, y si salta etapa o no
+improve gamestatus
+testear si desertion en el ultimo warrior acaba el juego
+testear si ambush (roba arma) permite hacerse cuando el player ya tiene 7 cartas en mano
 we are missing command mocks in the make file
 
-hoy las condiciones de victoria son 2, matar a todos los guerreros o completar el castillo.
-Me gustaria agregar al menos una condicion de victoria viable con la forma del juego. Me ayudas a buscar unas 5 nuevas condiciones de victoria
 
-
-
-Deserción - Roba un guerrero enemigo y lo pones en tu campo (solo si tiene poca vida, ej: < 5 HP). Le da uso al daño parcial en vez de siempre querer matar.
 
 Veneno - va quitando 2 hp por turno
 
-
-Cartas nuevas tipo "single-use" (como Spy/Thief/Catapult)
-
 Mecánicas nuevas
 Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
-
-
 
 Ideas de sistema / reglas
 Clima / Eventos - Al inicio de cada ronda, se revela una carta de evento global: "Tormenta" (las flechas hacen -2 daño), "Sequía" (construir cuesta el doble), "Luna llena" (los Magos hacen daño x3). Agrega variabilidad entre partidas.
@@ -28,14 +23,6 @@ Terreno - Cada jugador tiene un tipo de terreno aleatorio que da un bonus pasivo
 Misiones secretas - Al inicio cada jugador recibe un objetivo secundario oculto ("mata 3 guerreros con veneno", "construye un castillo sin usar oro de valor > 3"). Completarlo da un bonus (robar 2 cartas, +5 al castillo, etc). Agrega una capa estratégica oculta.
 
 Modo draft - En vez de repartir cartas aleatorias, cada jugador elige cartas de un pool compartido al inicio. Más skill, menos suerte.
-
-De todas estas, las que creo que tienen mejor relación esfuerzo/impacto para implementar son:
-
-Muralla - Mismo patrón, counter al Catapult
-Plaga - Daño AOE agrega una dimensión nueva al combate
-Forja - Mecánica elegante que usa cartas existentes de forma nueva
-Cuáles te gustan más? Puedo diseñar la implementación de cualquiera de estas.
-
 
 
 configuracion, Cant cartas, modos de juego pantano, preset "edad de fuego" con 4 Dragones y Ballestas

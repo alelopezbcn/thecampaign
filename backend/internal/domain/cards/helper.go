@@ -53,6 +53,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewSpy("spy1"),
 		NewThief("t1"),
 		NewSabotage("sab1"),
+		NewDesertion("des1"),
 		NewCatapultCard("c1"),
 		NewCatapultCard("c2"),
 		NewFortress("fw1"),
@@ -70,6 +71,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewSpy("spy2"))
 		other = append(other, NewThief("t2"))
 		other = append(other, NewSabotage("sab2"))
+		other = append(other, NewDesertion("des2"))
 		other = append(other, NewCatapultCard("c3"))
 		other = append(other, NewCatapultCard("c4"))
 		other = append(other, NewFortress("fw2"))
@@ -101,13 +103,15 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 
 func (d *dealer) customCards() []Card {
 	return []Card{
-		NewAmbush("custom1"),
-		NewAmbush("custom2"),
-		NewAmbush("custom3"),
-		NewAmbush("custom4"),
-		NewAmbush("custom5"),
-		NewAmbush("custom6"),
-		NewAmbush("custom7"),
-		NewAmbush("custom8"),
+		NewDesertion("custom1"),
+		NewDesertion("custom2"),
+		NewDesertion("custom3"),
+		NewDesertion("custom4"),
+		NewDesertion("custom5"),
+		NewDesertion("custom6"),
+		NewDesertion("custom7"),
+		NewDesertion("custom8"),
+		NewDesertion("custom9"),
+		NewDesertion("custom10"),
 	}
 }

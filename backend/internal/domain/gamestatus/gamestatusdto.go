@@ -13,9 +13,10 @@ type GameStatusDTO struct {
 	Opponents                []OpponentInput
 	EnemyFields              []FieldInput
 	AllyFields               []FieldInput
-	AnyEnemyCastleAttackable bool
-	AnyEnemyHasCards         bool
-	AllyHasCastleConstructed bool
+	AnyEnemyCastleAttackable  bool
+	AnyEnemyHasCards          bool
+	AnyEnemyHasWeakWarriors   bool
+	AllyHasCastleConstructed  bool
 	NewCards                 []cards.Card
 	ModalCards               []cards.Card
 	NextTurnPlayer           string
@@ -51,4 +52,6 @@ type GameStatusDTO struct {
 	CanMoveWarrior           bool
 	AmbushEffect             types.AmbushEffect
 	AmbushAttackerName       string
+	DeserterFromPlayer       string
+	DeserterWarrior          cards.Warrior
 }

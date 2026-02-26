@@ -909,3 +909,68 @@ func TestNewWeaponHandCard_MercenaryEnablesAllWeapons(t *testing.T) {
 		assert.False(t, hc.CanBeUsed)
 	})
 }
+
+func TestNewDesertionHandCard(t *testing.T) {
+	tests := []struct {
+		name                    string
+		cardID                  string
+		anyEnemyHasWeakWarriors bool
+		action                  types.PhaseType
+		wantUsed                bool
+	}{
+		{
+			name:                    "Usable in SpySteal phase when enemy has weak warrior",
+			cardID:                  "DES1",
+			anyEnemyHasWeakWarriors: true,
+			action:                  types.PhaseTypeSpySteal,
+			wantUsed:                true,
+		},
+		{
+			name:                    "Not usable in SpySteal phase when no enemy has weak warrior",
+			cardID:                  "DES2",
+			anyEnemyHasWeakWarriors: false,
+			action:                  types.PhaseTypeSpySteal,
+			wantUsed:                false,
+		},
+		{
+			name:                    "Not usable in Attack phase even if enemy has weak warrior",
+			cardID:                  "DES3",
+			anyEnemyHasWeakWarriors: true,
+			action:                  types.PhaseTypeAttack,
+			wantUsed:                false,
+		},
+		{
+			name:                    "Not usable in Buy phase",
+			cardID:                  "DES4",
+			anyEnemyHasWeakWarriors: true,
+			action:                  types.PhaseTypeBuy,
+			wantUsed:                false,
+		},
+		{
+			name:                    "Not usable in Construct phase",
+			cardID:                  "DES5",
+			anyEnemyHasWeakWarriors: true,
+			action:                  types.PhaseTypeConstruct,
+			wantUsed:                false,
+		},
+		{
+			name:                    "Not usable in Draw phase",
+			cardID:                  "DES6",
+			anyEnemyHasWeakWarriors: true,
+			action:                  types.PhaseTypeDrawCard,
+			wantUsed:                false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hc := gamestatus.NewDesertionHandCard(tt.cardID, tt.anyEnemyHasWeakWarriors, tt.action)
+
+			assert.Equal(t, tt.cardID, hc.CardID)
+			assert.Equal(t, gamestatus.CardTypeDesertion, hc.CardType)
+			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
+			assert.Equal(t, 0, hc.Value)
+			assert.Empty(t, hc.CanBeUsedOnIDs)
+		})
+	}
+}

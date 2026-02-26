@@ -12,6 +12,11 @@ type AmbushTrigger struct {
 	EffectDisplay string             `json:"effect_display"`
 }
 
+type DesertionNotification struct {
+	WarriorCard Card   `json:"warrior_card"`
+	StolenBy    string `json:"stolen_by"`
+}
+
 type GameStatus struct {
 	CurrentPlayer             string               `json:"current_player"`
 	TurnPlayer                string               `json:"turn_player"`
@@ -40,6 +45,7 @@ type GameStatus struct {
 	SabotagedFromYouCard      []Card               `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification           string               `json:"spy_notification,omitempty"`
 	AmbushTriggered           *AmbushTrigger       `json:"ambush_triggered,omitempty"`
+	DesertionNotification     *DesertionNotification `json:"desertion_notification,omitempty"`
 	History                   []HistoryLine        `json:"history"`
 	PlayersOrder              []string             `json:"players_order"`
 	NextTurnPlayer            string               `json:"next_turn_player,omitempty"`
@@ -154,6 +160,15 @@ func NewGameStatus(dto GameStatusDTO) GameStatus {
 		}
 	}
 
+	// Notify the victim that one of their warriors deserted to the enemy
+	if dto.LastAction == types.LastActionDesertion && dto.DeserterFromPlayer != "" &&
+		dto.Viewer.Name == dto.DeserterFromPlayer && dto.DeserterWarrior != nil {
+		gs.DesertionNotification = &DesertionNotification{
+			WarriorCard: fromDomainCard(dto.DeserterWarrior),
+			StolenBy:    dto.CurrentPlayerName,
+		}
+	}
+
 	processHandCards(dto.Viewer, dto, &gs)
 
 	for _, warrior := range dto.Viewer.Field.Warriors {
@@ -207,6 +222,10 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 		case cards.Sabotage:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewSabotageHandCard(ct.GetID(), game.AnyEnemyHasCards, action))
+
+		case cards.Desertion:
+			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
+				NewDesertionHandCard(ct.GetID(), game.AnyEnemyHasWeakWarriors, action))
 
 		case cards.Fortress:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,

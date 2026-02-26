@@ -149,6 +149,7 @@ var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
 	MsgConstruct:   func(h *Hub, c *Client, p interface{}) { h.handleConstruct(c, p) },
 	MsgSpy:         func(h *Hub, c *Client, p interface{}) { h.handleSpy(c, p) },
 	MsgSteal:       func(h *Hub, c *Client, p interface{}) { h.handleSteal(c, p) },
+	MsgDesertion:   func(h *Hub, c *Client, p interface{}) { h.handleDesertion(c, p) },
 	MsgCatapult:    func(h *Hub, c *Client, p interface{}) { h.handleCatapult(c, p) },
 	MsgFortress:     func(h *Hub, c *Client, p interface{}) { h.handleFortress(c, p) },
 	MsgResurrection: func(h *Hub, c *Client, p interface{}) { h.handleResurrection(c, p) },

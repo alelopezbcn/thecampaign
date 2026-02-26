@@ -163,3 +163,12 @@ func TestFromDomainCards_Empty(t *testing.T) {
 	assert.Empty(t, result)
 }
 
+func TestFromDomainCard_Desertion(t *testing.T) {
+	desertion := cards.NewDesertion("DES1")
+
+	c := fromDomainCard(desertion)
+
+	assert.Equal(t, "DES1", c.CardID)
+	assert.Equal(t, CardTypeDesertion, c.CardType)
+	assert.Equal(t, 0, c.Value)
+}

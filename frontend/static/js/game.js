@@ -108,9 +108,16 @@ function setupEventListeners() {
     // Copy link button
     document.getElementById('copy-link-btn').addEventListener('click', () => {
         const shareUrl = document.getElementById('share-url');
-        navigator.clipboard.writeText(shareUrl.value);
-        document.getElementById('copy-link-btn').textContent = 'Copied!';
-        setTimeout(() => document.getElementById('copy-link-btn').textContent = 'Copy Link', 2000);
+        const btn = document.getElementById('copy-link-btn');
+        const text = shareUrl.value;
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text);
+        } else {
+            shareUrl.select();
+            document.execCommand('copy');
+        }
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy Link', 2000);
     });
 
     // Game mode selector
@@ -158,6 +165,9 @@ function setupEventListeners() {
     // Spy notification modal close
     document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
 
+    // Desertion notification modal close
+    document.getElementById('desertion-notification-close').addEventListener('click', hideDesertionNotificationModal);
+
     // Ambush triggered modal close
     document.getElementById('ambush-triggered-close').addEventListener('click', hideAmbushTriggeredModal);
     document.getElementById('ambush-triggered-modal').addEventListener('click', (e) => {
@@ -179,6 +189,7 @@ function setupEventListeners() {
         { id: 'action-confirm-modal', hide: onActionConfirmNo },
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
+        { id: 'desertion-notification-modal', hide: hideDesertionNotificationModal },
         { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
@@ -448,6 +459,12 @@ function handleGameState(payload) {
         sabotageData = prepareSabotageAnimation(previousState, payload.game_status);
     }
 
+    // Detect desertion (warrior flying from enemy field to own field)
+    let desertionData = null;
+    if (previousState) {
+        desertionData = prepareDesertionAnimation(previousState, payload.game_status);
+    }
+
     // Detect warrior move for animation (before re-render)
     let warriorMoveData = null;
     if (previousState) {
@@ -546,6 +563,9 @@ function handleGameState(payload) {
         if (sabotageData) {
             playSabotageAnimation(sabotageData);
         }
+        if (desertionData) {
+            playDesertionAnimation(desertionData);
+        }
         if (deckDrawInfo) {
             setTimeout(() => playDeckDrawAnimation(deckDrawInfo), 50);
         }
@@ -615,6 +635,12 @@ function handleGameState(payload) {
     const ambushTriggered = payload.game_status.ambush_triggered;
     if (ambushTriggered) {
         showAmbushTriggeredModal(ambushTriggered.effect_display);
+    }
+
+    // Detect desertion notification (victim only)
+    const desertionNotification = payload.game_status.desertion_notification;
+    if (desertionNotification) {
+        showDesertionNotificationModal(desertionNotification);
     }
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -881,6 +907,7 @@ function sendAction(actionType, payload = null) {
         'spy': 'spy/steal',
         'steal': 'spy/steal',
         'sabotage': 'spy/steal',
+        'desertion': 'spy/steal',
         'catapult': 'spy/steal',
         'buy': 'buy',
         'construct': 'construct',
@@ -1456,6 +1483,23 @@ function handleSpyStealPhaseHandClick(cardID, card) {
             showTargetPlayerModal('Select a player to sabotage', enemies,
                 (playerName) => sendAction('sabotage', { target_player: playerName }),
                 (opp) => `${opp.cards_in_hand} card(s) in hand`);
+        }
+    } else if (cardType === 'desertion') {
+        gameState.actionState.type = 'desertion';
+        const enemies = getEnemyOpponents();
+        if (enemies.length === 1) {
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            showDesertionModal();
+        } else {
+            showTargetPlayerModal('Select a player to steal warrior from', enemies,
+                (playerName) => {
+                    gameState.actionState.targetPlayer = playerName;
+                    showDesertionModal();
+                },
+                (opp) => {
+                    const weakCount = (opp.field || []).filter(w => w.value <= 5).length;
+                    return weakCount > 0 ? `${weakCount} weak warrior(s) (≤5 HP)` : 'No warriors ≤5 HP';
+                });
         }
     }
 }
@@ -2900,6 +2944,73 @@ function playSabotageAnimation(sabotageData) {
     setTimeout(() => ghost.remove(), 1200);
 }
 
+// ── Desertion Animation ──────────────────────────────────────────────────────
+
+// Captures the warrior card element in the enemy field before re-render.
+function prepareDesertionAnimation(previousState, newState) {
+    if (newState.last_action !== 'desertion') return null;
+    // Only animate from the attacker's perspective
+    if (newState.turn_player !== newState.current_player) return null;
+
+    const deserterID = newState.last_moved_warrior_id; // not used; search by field change
+    const prevOpponents = previousState.opponents || [];
+    const newOpponents = newState.opponents || [];
+
+    for (const prevOpp of prevOpponents) {
+        const newOpp = newOpponents.find(o => o.player_name === prevOpp.player_name);
+        if (!newOpp) continue;
+        const prevCount = (prevOpp.field || []).length;
+        const newCount = (newOpp.field || []).length;
+        if (prevCount > newCount) {
+            // The warrior left this opponent's field
+            const oppBoard = document.querySelector(`[data-opponent-name="${prevOpp.player_name}"]`);
+            if (!oppBoard) continue;
+            const fieldCards = oppBoard.querySelectorAll('.opponent-field .card');
+            if (fieldCards.length === 0) continue;
+            const lastCard = fieldCards[fieldCards.length - 1];
+            const rect = lastCard.getBoundingClientRect();
+            const clone = lastCard.cloneNode(true);
+            return { clone, rect, fromPlayer: prevOpp.player_name };
+        }
+    }
+    return null;
+}
+
+// Warrior ghost flies from the enemy field to the player's own field with a flip + glow.
+function playDesertionAnimation(data) {
+    if (!data) return;
+
+    const { clone, rect } = data;
+    const playerField = document.getElementById('player-field');
+    if (!playerField) return;
+    const targetRect = playerField.getBoundingClientRect();
+
+    const dx = (targetRect.left + targetRect.width / 2) - (rect.left + rect.width / 2);
+    const dy = (targetRect.top + targetRect.height / 2) - (rect.top + rect.height / 2);
+
+    const ghost = document.createElement('div');
+    ghost.className = 'desertion-ghost';
+    ghost.style.left = rect.left + 'px';
+    ghost.style.top = rect.top + 'px';
+    ghost.style.width = rect.width + 'px';
+    ghost.style.height = rect.height + 'px';
+    ghost.style.setProperty('--dx', dx + 'px');
+    ghost.style.setProperty('--dy', dy + 'px');
+
+    clone.style.width = '100%';
+    clone.style.height = '100%';
+    clone.style.margin = '0';
+    ghost.appendChild(clone);
+    document.body.appendChild(ghost);
+
+    // After the warrior lands, flash the player-field green
+    setTimeout(() => {
+        ghost.remove();
+        playerField.classList.add('desertion-landing-flash');
+        setTimeout(() => playerField.classList.remove('desertion-landing-flash'), 700);
+    }, 1300);
+}
+
 // Detect deck count decrease for draw animation
 function detectDeckDraw(previousState, newState) {
     if (!previousState) return null;
@@ -3629,7 +3740,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage' || type === 'desertion' || type === 'ambush') return 'special';
     return 'unknown';
 }
 
@@ -4079,6 +4190,36 @@ function hideSpyNotificationModal() {
     }
 }
 
+// Desertion Notification Modal — shown to the player whose warrior was stolen
+let desertionNotificationTimer = null;
+
+function showDesertionNotificationModal(notification) {
+    const modal = document.getElementById('desertion-notification-modal');
+    const container = document.getElementById('desertion-warrior-container');
+    const text = document.getElementById('desertion-notification-text');
+    if (!modal || !container || !text) return;
+
+    const warrior = notification.warrior_card;
+    const stolenBy = notification.stolen_by;
+    container.innerHTML = renderCardForModal(warrior);
+    const warriorName = warrior.sub_type || warrior.type || 'Warrior';
+    text.textContent = `${warriorName} (${warrior.value} HP) deserted to ${stolenBy}!`;
+
+    modal.classList.remove('hidden');
+
+    if (desertionNotificationTimer) clearTimeout(desertionNotificationTimer);
+    desertionNotificationTimer = setTimeout(() => hideDesertionNotificationModal(), 5000);
+}
+
+function hideDesertionNotificationModal() {
+    const modal = document.getElementById('desertion-notification-modal');
+    if (modal) modal.classList.add('hidden');
+    if (desertionNotificationTimer) {
+        clearTimeout(desertionNotificationTimer);
+        desertionNotificationTimer = null;
+    }
+}
+
 // Ambush placed animation — shown to all players when a player places an ambush card
 function showAmbushPlacedAnimation(gameStatus) {
     const isOwnField = gameStatus.turn_player === gameStatus.current_player;
@@ -4443,6 +4584,45 @@ function showStealModal() {
 function selectStealPosition(position) {
     gameState.pendingModalAction = 'steal';
     sendAction('steal', { target_player: gameState.actionState.targetPlayer, card_position: position });
+    hideGameModal();
+}
+
+// Desertion Modal — shows eligible warriors (≤5 HP) from the target opponent's field
+function showDesertionModal() {
+    const targetName = gameState.actionState.targetPlayer;
+    const opponent = getOpponentByName(targetName);
+    const field = (opponent?.field || []).filter(w => w.value <= 5);
+
+    if (field.length === 0) {
+        updateActionPrompt(`${targetName} has no warriors with 5 HP or less!`);
+        resetActionState();
+        return;
+    }
+
+    let content = '<div class="desertion-warrior-grid">';
+    field.forEach(warrior => {
+        const subType = warrior.sub_type || warrior.type || 'Warrior';
+        const imgKey = subType.toLowerCase();
+        const imgSrc = `/static/img/cards/${imgKey}.webp`;
+        content += `
+            <div class="desertion-warrior-option" onclick="selectDesertionWarrior('${warrior.id}')">
+                <div class="card ${imgKey} has-image" style="border-color:${warrior.color};">
+                    <div class="card-image"><img src="${imgSrc}" alt="${subType}" draggable="false" onerror="this.parentNode.style.display='none'"></div>
+                    <div class="card-info">
+                        <span class="card-name">${subType}</span>
+                        <span class="card-stat-badge warrior">HP ${warrior.value}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    showGameModal(`Desertion — ${targetName}`, 'Choose a weakened warrior to convince (≤5 HP)', content, true);
+}
+
+function selectDesertionWarrior(warriorID) {
+    sendAction('desertion', { target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
     hideGameModal();
 }
 
