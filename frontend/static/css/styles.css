@@ -1895,7 +1895,7 @@ body {
 }
 
 .card.unusable {
-    pointer-events: none;
+    cursor: default;
 }
 
 .card.unusable:hover {
