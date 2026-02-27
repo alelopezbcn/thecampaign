@@ -12,6 +12,7 @@ import (
 type harpoonGame interface {
 	GamePlayers
 	GameTurn
+	GameCards
 	GameHistory
 	GameStatusProvider
 }
@@ -91,6 +92,8 @@ func (a *harpoonAction) execute(g harpoonGame) (*Result, func() gamestatus.GameS
 		result := &Result{}
 		return result, nil, fmt.Errorf("removing harpoon from hand failed: %w", err)
 	}
+
+	g.OnCardMovedToPile(a.harpoon)
 
 	g.AddHistory(fmt.Sprintf("%s used harpoon on %s",
 		a.playerName, a.dragon.String()), types.CategoryAction)

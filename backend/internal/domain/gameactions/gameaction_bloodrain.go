@@ -13,6 +13,7 @@ import (
 type bloodRainGame interface {
 	GamePlayers
 	GameTurn
+	GameCards
 	GameHistory
 	GameStatusProvider
 }
@@ -86,6 +87,8 @@ func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.G
 		result := &Result{}
 		return result, nil, fmt.Errorf("removing blood rain from hand failed: %w", err)
 	}
+
+	g.OnCardMovedToPile(a.bloodRain)
 
 	g.AddHistory(fmt.Sprintf("%s used blood rain on %s",
 		a.playerName, a.targetPlayerName), types.CategoryAction)

@@ -1,3 +1,5 @@
+agregar cardID a todas las actions
+
 faltan tests de ambush en game status
 desertion popup da la posibilidad de robarle a todos, solo debe filtrar los que tienen gyerreros con menos de 6
 
@@ -9,7 +11,6 @@ we are missing command mocks in the make file
 
 
 
-Veneno - va quitando 2 hp por turno
 
 Mecánicas nuevas
 Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
@@ -26,6 +27,5 @@ Modo draft - En vez de repartir cartas aleatorias, cada jugador elige cartas de 
 
 configuracion, Cant cartas, modos de juego pantano, preset "edad de fuego" con 4 Dragones y Ballestas
 
-adapt to small resolutions
 persist game status
 

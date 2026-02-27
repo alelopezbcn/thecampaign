@@ -549,22 +549,22 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
 		_, hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
 
-		hasDesertion := false
+		canUseDesertion := false
 		if _, ok := board.HasCardTypeInHand[cards.Desertion](p); ok {
 			for _, e := range g.Enemies(g.currentTurn) {
 				for _, w := range e.Field().Warriors() {
 					if w.Health() <= cards.DesertionMaxHP {
-						hasDesertion = true
+						canUseDesertion = true
 						break
 					}
 				}
-				if hasDesertion {
+				if canUseDesertion {
 					break
 				}
 			}
 		}
 
-		if hasSpy || hasThief || hasSabotage || hasDesertion {
+		if hasSpy || hasThief || hasSabotage || canUseDesertion {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
