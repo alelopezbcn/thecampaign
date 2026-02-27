@@ -73,26 +73,165 @@ type CardConfigEntry struct {
 // Key is the lowercase card sub_type or type used by the frontend.
 // Adding a new card = one entry here.
 var cardConfig = map[string]CardConfigEntry{
-	"knight":       {Description: "A heavily armored warrior. Can attack with Swords. Special Power: Shield. Takes double damage from Poison.", Image: "knight.webp"},
-	"archer":       {Description: "A swift ranged fighter. Can attack with Arrows. Special Power: Instant Kill. Takes double damage from Swords.", Image: "archer.webp"},
-	"mage":         {Description: "A mystical spellcaster. Can attack with Poison. Special Power: Heal. Takes double damage from Arrows.", Image: "mage.webp"},
-	"dragon":       {Description: "A mighty beast. Can attack with any weapon. Takes equal damage from all weapons. Instant kill takes 10 DMG. Cannot use Special Powers.", Image: "dragon.webp"},
-	"mercenary":    {Description: "A neutral warrior for hire. Costs 6+ gold to recruit directly to your field. Can attack with any weapon. 15 HP. Cannot use Special Powers.", Image: "mercenary.webp"},
-	"sword":        {Description: "Deals double damage to Archers. Used by Knights and Dragons. A value-1 Sword can also construct your castle. Can be traded.", Image: "sword.webp"},
-	"arrow":        {Description: "Deals double damage to Mages. Used by Archers and Dragons. A value-1 Arrow can also construct your castle. Can be traded.", Image: "arrow.webp"},
-	"poison":       {Description: "Deals double damage to Knights. Used by Mages and Dragons. A value-1 Poison can also construct your castle. Can be traded.", Image: "poison.webp"},
-	"resource":     {Description: "Spend gold to buy cards (2 coins = 1 card). A value-1 Gold can also construct your castle.", Image: "gold.webp"},
-	"specialpower": {Description: "Knight: shields an ally warrior. Archer: instantly kills an enemy. Mage: fully heals an ally. Cannot be used by Dragons.", Image: "specialpower.webp"},
-	"harpoon":      {Description: "A powerful weapon that kills Dragons from one hit. Can only be used on Dragons.", Image: "harpoon.webp"},
-	"bloodrain":    {Description: "A devastating attack that affects all enemy warriors. Deals 4 damage to all enemy warriors.", Image: "bloodrain.webp"},
-	"spy":          {Description: "Peek at an opponent's full hand or the top 5 cards of the deck.", Image: "spy.webp"},
-	"thief":        {Description: "Steal a random card from an opponent's hand.", Image: "thief.webp"},
-	"catapult":     {Description: "Destroy one gold resource from a constructed enemy castle, reducing their castle value.", Image: "catapult.webp"},
-	"fortress":     {Description: "Fortify your castle (or an ally's) to block the next catapult attack. The wall is destroyed when hit.", Image: "fortress.webp"},
-	"resurrection": {Description: "Resurrect a random fallen warrior from the cemetery and place it on your field (or an ally's).", Image: "resurrection.webp"},
-	"sabotage":     {Description: "Destroy a random card from an opponent's hand. The card is discarded, not stolen.", Image: "sabotage.webp"},
-	"desertion":    {Description: "Convince a weakened enemy warrior (5 HP or less) to defect to your field.", Image: "desertion.webp"},
-	"ambush":       {Description: "Trap card placed face-down in your field during the buy phase. Auto-triggers when an enemy attacks with a weapon. Does NOT trigger on Special Powers (Archer instant kill, etc.). Possible effects (hidden until triggered): Reflect Damage (23%), Cancel Attack (23%), Steal Weapon (23%), Drain Life (23%), Instant Kill (8%). Only one ambush per field.", Image: "ambush.webp"},
+	"knight": {
+		Description: `𝐇𝐞𝐚𝐯𝐢𝐥𝐲 𝐚𝐫𝐦𝐨𝐫𝐞𝐝 𝐰𝐚𝐫𝐫𝐢𝐨𝐫.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be moved to field in any phase.
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack with Swords. Deals 2x damage to Archers.
+𝐒𝐩𝐞𝐜𝐢𝐚𝐥 𝐏𝐨𝐰𝐞𝐫: Protects an ally with Shield.
+𝐃𝐚𝐦𝐚𝐠𝐞 𝐓𝐚𝐤𝐞𝐧: Takes 2x damage from Mages.`,
+		Image: "knight.webp",
+	},
+	"archer": {
+		Description: `𝐀 𝐬𝐰𝐢𝐟𝐭 𝐫𝐚𝐧𝐠𝐞𝐝 𝐟𝐢𝐠𝐡𝐭𝐞𝐫.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be moved to field in any phase.
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack with Arrows. Deals 2x damage to Mages.
+𝐒𝐩𝐞𝐜𝐢𝐚𝐥 𝐏𝐨𝐰𝐞𝐫: Instant Kill.
+𝐃𝐚𝐦𝐚𝐠𝐞 𝐓𝐚𝐤𝐞𝐧: Takes 2x damage from Knights.`,
+		Image: "archer.webp",
+	},
+	"mage": {
+		Description: `𝐀 𝐦𝐲𝐬𝐭𝐢𝐜𝐚𝐥 𝐬𝐩𝐞𝐥𝐥𝐜𝐚𝐬𝐭𝐞𝐫.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be moved to field in any phase.
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack with Poison. Deals 2x damage to Knights.
+𝐒𝐩𝐞𝐜𝐢𝐚𝐥 𝐏𝐨𝐰𝐞𝐫: Heal an ally or self.
+𝐃𝐚𝐦𝐚𝐠𝐞 𝐓𝐚𝐤𝐞𝐧: Takes 2x damage from Arrows.`,
+		Image: "mage.webp",
+	},
+	"dragon": {
+		Description: `𝐀 𝐦𝐢𝐠𝐡𝐭𝐲 𝐛𝐞𝐚𝐬𝐭.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be moved to field in any phase.
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack with any weapon.
+𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Cannot use Special Powers.
+𝐃𝐚𝐦𝐚𝐠𝐞 𝐓𝐚𝐤𝐞𝐧: Takes equal damage from all weapons. Instant kill takes 10 DMG.`,
+		Image: "dragon.webp",
+	},
+	"mercenary": {
+		Description: `𝐍𝐞𝐮𝐭𝐫𝐚𝐥 𝐖𝐚𝐫𝐫𝐢𝐨𝐫 𝐟𝐨𝐫 𝐇𝐢𝐫𝐞
+𝐑𝐞𝐜𝐫𝐮𝐢𝐭𝐦𝐞𝐧𝐭 𝐂𝐨𝐬𝐭: 6+ 🪙.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be recruited directly to your field.
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack using any weapon.
+𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Cannot use Special Powers.`,
+		Image: "mercenary.webp",
+	},
+	"sword": {
+		Description: `𝐒𝐰𝐨𝐫𝐝 (𝐖𝐞𝐚𝐩𝐨𝐧)
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Deals 2x damage to Archers.
+𝐔𝐬𝐞𝐝 𝐁𝐲: Knights, Dragons, Mercenaries.
+𝐔𝐭𝐢𝐥𝐢𝐭𝐲: A value-1 Sword can construct your Castle.
+𝐓𝐫𝐚𝐝𝐞𝐚𝐛𝐥𝐞: Yes.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "sword.webp",
+	},
+	"arrow": {
+		Description: `𝐀𝐫𝐫𝐨𝐰 (𝐖𝐞𝐚𝐩𝐨𝐧)
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Deals 2x damage to Mages.
+𝐔𝐬𝐞𝐝 𝐁𝐲: Archers, Dragons, Mercenaries.
+𝐔𝐭𝐢𝐥𝐢𝐭𝐲: A value-1 Arrow can construct your Castle.
+𝐓𝐫𝐚𝐝𝐞𝐚𝐛𝐥𝐞: Yes.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "arrow.webp",
+	},
+	"poison": {
+		Description: `𝐏𝐨𝐢𝐬𝐨𝐧 (𝐖𝐞𝐚𝐩𝐨𝐧)
+𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Deals 2x damage to Knights.
+𝐔𝐬𝐞𝐝 𝐁𝐲: Mages, Dragons, Mercenaries.
+𝐔𝐭𝐢𝐥𝐢𝐭𝐲: A value-1 Poison can construct your Castle.
+𝐓𝐫𝐚𝐝𝐞𝐚𝐛𝐥𝐞: Yes.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "poison.webp",
+	},
+	"resource": {
+		Description: `𝐆𝐨𝐥𝐝 𝐑𝐞𝐬𝐨𝐮𝐫𝐜𝐞
+𝐄𝐟𝐟𝐞𝐜𝐭: Spend 2 Coins to buy 1 Card.
+𝐌𝐞𝐫𝐜𝐞𝐧𝐚𝐫𝐲: Spend 6+ Coins to recruit directly to field.
+𝐔𝐭𝐢𝐥𝐢𝐭𝐲: A value-1 Gold can construct your Castle.
+𝐏𝐡𝐚𝐬𝐞: Buy 💰 / Build 🏰`,
+		Image: "gold.webp",
+	},
+	"specialpower": {
+		Description: `𝐒𝐩𝐞𝐜𝐢𝐚𝐥 𝐏𝐨𝐰𝐞𝐫
+𝐊𝐧𝐢𝐠𝐡𝐭: Shields an ally warrior.
+𝐀𝐫𝐜𝐡𝐞𝐫: Instantly kills an enemy.
+𝐌𝐚𝐠𝐞: Fully heals an ally or self.
+𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Cannot be used by Dragons / Mercenaries.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "specialpower.webp",
+	},
+	"harpoon": {
+		Description: `𝐇𝐚𝐫𝐩𝐨𝐨𝐧
+𝐄𝐟𝐟𝐞𝐜𝐭: A powerful weapon that kills Dragons in one hit.
+𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Can ONLY be used against Dragons.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "harpoon.webp",
+	},
+	"bloodrain": {
+		Description: `𝐁𝐥𝐨𝐨𝐝 𝐑𝐚𝐢𝐧
+𝐄𝐟𝐟𝐞𝐜𝐭: A devastating area attack.
+𝐃𝐚𝐦𝐚𝐠𝐞: Deals 4 damage to ALL enemy warriors.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "bloodrain.webp",
+	},
+	"spy": {
+		Description: `𝐒𝐩𝐲
+𝐄𝐟𝐟𝐞𝐜𝐭: Peek at an opponent's full hand OR the top 5 cards of the deck.
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+		Image: "spy.webp",
+	},
+	"thief": {
+		Description: `𝐓𝐡𝐢𝐞𝐟
+𝐄𝐟𝐟𝐞𝐜𝐭: Steal a random card from an opponent's hand.
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+		Image: "thief.webp",
+	},
+	"catapult": {
+		Description: `𝐂𝐚𝐭𝐚𝐩𝐮𝐥𝐭
+𝐄𝐟𝐟𝐞𝐜𝐭: Destroy 1 Gold resource from an enemy Castle.
+𝐈𝐦𝐩𝐚𝐜𝐭: Reduces their total Castle value.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "catapult.webp",
+	},
+	"fortress": {
+		Description: `𝐅𝐨𝐫𝐭𝐫𝐞𝐬𝐬
+𝐄𝐟𝐟𝐞𝐜𝐭: Fortify a Castle to block the next Catapult attack.
+𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: The wall is destroyed after one hit.
+𝐏𝐡𝐚𝐬𝐞: Build 🏰`,
+		Image: "fortress.webp",
+	},
+	"resurrection": {
+		Description: `𝐑𝐞𝐬𝐮𝐫𝐫𝐞𝐜𝐭𝐢𝐨𝐧
+𝐄𝐟𝐟𝐞𝐜𝐭: Return a random warrior from the Cemetery to the field.
+𝐓𝐚𝐫𝐠𝐞𝐭: Can be used on your field or an ally's.
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
+		Image: "resurrection.webp",
+	},
+	"sabotage": {
+		Description: `𝐒𝐚𝐛𝐨𝐭𝐚𝐠𝐞
+𝐄𝐟𝐟𝐞𝐜𝐭: Destroy a random card from an opponent's hand.
+𝐍𝐨𝐭𝐞: The card is discarded, not stolen.
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+		Image: "sabotage.webp",
+	},
+	"desertion": {
+		Description: `𝐃𝐞𝐬𝐞𝐫𝐭𝐢𝐨𝐧
+𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to defect.
+𝐂𝐨𝐧𝐝𝐢𝐭𝐢𝐨𝐧: Target must have 5 HP or less.
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+		Image: "desertion.webp",
+	},
+	"ambush": {
+		Description: `𝐀𝐦𝐛𝐮𝐬𝐡
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Placed face-down. Triggers on weapon attacks.
+𝐍𝐨𝐭𝐞: Does NOT trigger on Special Powers.
+𝐏𝐨𝐬𝐬𝐢𝐛𝐥𝐞 𝐄𝐟𝐟𝐞𝐜𝐭𝐬:
+• Reflect Damage (23%)
+• Cancel Attack (23%)
+• Steal Weapon (23%)
+• Drain Life (23%)
+• Instant Kill (8%)
+𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Only one Ambush per field.
+𝐏𝐡𝐚𝐬𝐞: Buy / Trade / Ambush 💰`,
+		Image: "ambush.webp",
+	},
 }
 
 // handleCardConfig serves card display metadata (descriptions and images).

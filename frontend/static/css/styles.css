@@ -2166,7 +2166,7 @@ body {
     border-radius: 6px;
     font-size: 0.76rem;
     line-height: 1.45;
-    white-space: normal;
+    white-space: pre-wrap;
     width: 210px;
     z-index: 1000;
     pointer-events: none;
