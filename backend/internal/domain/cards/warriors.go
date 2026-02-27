@@ -27,13 +27,15 @@ type knight struct {
 }
 
 func NewKnight(id string) *knight {
-	return &knight{
+	k := &knight{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Knight"),
 			newAttackableBase(warriorMaxHealth),
 			types.KnightWarriorType,
 		),
 	}
+	k.setSelf(k)
+	return k
 }
 func (k *knight) BeAttacked(w Weapon) error {
 	if w == nil {
@@ -50,13 +52,15 @@ type archer struct {
 }
 
 func NewArcher(id string) *archer {
-	return &archer{
+	a := &archer{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Archer"),
 			newAttackableBase(warriorMaxHealth),
 			types.ArcherWarriorType,
 		),
 	}
+	a.setSelf(a)
+	return a
 }
 func (a *archer) BeAttacked(w Weapon) error {
 	if w == nil {
@@ -73,13 +77,15 @@ type mage struct {
 }
 
 func NewMage(id string) *mage {
-	return &mage{
+	m := &mage{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mage"),
 			newAttackableBase(warriorMaxHealth),
 			types.MageWarriorType,
 		),
 	}
+	m.setSelf(m)
+	return m
 }
 func (m *mage) BeAttacked(w Weapon) error {
 	if w == nil {
@@ -98,13 +104,15 @@ type dragon struct {
 }
 
 func NewDragon(id string) *dragon {
-	return &dragon{
+	d := &dragon{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Dragon"),
 			newAttackableBase(dragonMaxHealth),
 			types.DragonWarriorType,
 		),
 	}
+	d.setSelf(d)
+	return d
 }
 func (d *dragon) BeAttacked(w Weapon) error {
 	if w == nil {
@@ -136,13 +144,15 @@ type mercenary struct {
 }
 
 func NewMercenary(id string) *mercenary {
-	return &mercenary{
+	m := &mercenary{
 		warriorBase: newWarriorBase(
 			newCardBase(id, "Mercenary"),
 			newAttackableBase(mercenaryMaxHealth),
 			types.MercenaryWarriorType,
 		),
 	}
+	m.setSelf(m)
+	return m
 }
 
 func (m *mercenary) IsMercenaryCard() bool { return true }

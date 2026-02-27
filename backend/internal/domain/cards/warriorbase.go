@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	warriorMaxHealth    = 20
-	dragonMaxHealth     = 20
-	mercenaryMaxHealth  = 15
+	warriorMaxHealth   = 20
+	dragonMaxHealth    = 20
+	mercenaryMaxHealth = 15
 )
 
 type warriorBase struct {
@@ -20,6 +20,7 @@ type warriorBase struct {
 	protectedBy         SpecialPower
 	warriorType         types.WarriorType
 	WarriorDeadObserver WarriorDeadObserver
+	self                Warrior // concrete outer type, preserved through cemetery/resurrection
 }
 
 func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
@@ -76,6 +77,7 @@ func (w *warriorBase) Heal(sp SpecialPower) {
 	}
 	w.attackedBy = []Weapon{}
 }
+
 // HealToMax restores the warrior to full health without requiring a SpecialPower card.
 // Used by the Ambush Drain Life effect. Mercenary overrides this.
 func (w *warriorBase) HealToMax() {
@@ -116,6 +118,13 @@ func (w *warriorBase) String() string {
 func (w *warriorBase) AddWarriorDeadObserver(o WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
+
+// setSelf stores a reference to the concrete warrior type that embeds this base.
+// Must be called in each concrete constructor so that the cemetery/resurrection
+// cycle preserves the concrete type when OnWarriorDead is called.
+func (w *warriorBase) setSelf(self Warrior) {
+	w.self = self
+}
 func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
@@ -134,5 +143,7 @@ func (w *warriorBase) dead() {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
 	w.attackedBy = []Weapon{}
-	w.WarriorDeadObserver.OnWarriorDead(w)
+	// Use w.self so the cemetery stores the concrete type (*knight, *archer, etc.)
+	// rather than *warriorBase, preserving BeAttacked dispatch after resurrection.
+	w.WarriorDeadObserver.OnWarriorDead(w.self)
 }
