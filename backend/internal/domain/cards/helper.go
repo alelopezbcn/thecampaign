@@ -19,12 +19,9 @@ func (d *dealer) WarriorsCards(playerCount int) (warriors []Card) {
 	totalWarriors := 15
 	warriorsPerType := 5
 
-	if playerCount > 2 && playerCount <= 4 {
+	if playerCount > 3 {
 		totalWarriors = 21
 		warriorsPerType = 7
-	} else if playerCount > 4 {
-		totalWarriors = 27
-		warriorsPerType = 9
 	}
 
 	warriors = make([]Card, 0, totalWarriors)
@@ -61,7 +58,6 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		NewBloodRain("br1"),
 		NewResurrection("res1"),
 		NewAmbush("amb1"),
-		NewAmbush("amb2"),
 	}
 
 	if playerCount > 3 {
@@ -73,21 +69,25 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewSabotage("sab2"))
 		// other = append(other, NewDesertion("des2"))
 		other = append(other, NewCatapultCard("c3"))
-		other = append(other, NewCatapultCard("c4"))
 		other = append(other, NewFortress("fw2"))
 		other = append(other, NewHarpoon("ha2"))
 		other = append(other, NewBloodRain("br2"))
 		other = append(other, NewResurrection("res2"))
-		other = append(other, NewAmbush("amb3"))
-		other = append(other, NewAmbush("amb4"))
+		other = append(other, NewAmbush("amb2"))
 	}
 
 	for i := 1; i < 10; i++ {
+		if i == 1 {
+			other = append(other, NewGold(fmt.Sprintf("gcas%d", i), i))
+			other = append(other, NewSword(fmt.Sprintf("ecas%d", i), i))
+			other = append(other, NewArrow(fmt.Sprintf("fcas%d", i), i))
+			other = append(other, NewPoison(fmt.Sprintf("pcas%d", i), i))
+		}
 		other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
 		other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
 		other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
 		other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
-		if i == 5 || i == 7 {
+		if i == 5 || i == 7 || i == 9 {
 			other = append(other, NewGold(fmt.Sprintf("gr%d", i), i))
 		}
 		if playerCount > 3 {

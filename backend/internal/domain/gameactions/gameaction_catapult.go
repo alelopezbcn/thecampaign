@@ -79,6 +79,12 @@ func (a *catapultAction) execute(g catapultGame) (*Result, func() gamestatus.Gam
 	if a.targetPlayer.Castle().IsProtected() {
 		fortressCard := a.targetPlayer.Castle().ConsumeProtection()
 		g.OnCardMovedToPile(fortressCard)
+
+		if _, err := p.RemoveFromHand(a.catapult.GetID()); err != nil {
+			return &Result{}, nil, fmt.Errorf("removing catapult from hand failed: %w", err)
+		}
+		g.OnCardMovedToPile(a.catapult)
+
 		g.AddHistory(fmt.Sprintf("%s's castle wall blocked %s's catapult attack",
 			a.targetPlayer.Name(), p.Name()),
 			types.CategoryAction)
@@ -96,6 +102,11 @@ func (a *catapultAction) execute(g catapultGame) (*Result, func() gamestatus.Gam
 	}
 
 	g.OnCardMovedToPile(stolenGold)
+
+	if _, err := p.RemoveFromHand(a.catapult.GetID()); err != nil {
+		return &Result{}, nil, fmt.Errorf("removing catapult from hand failed: %w", err)
+	}
+	g.OnCardMovedToPile(a.catapult)
 
 	g.AddHistory(fmt.Sprintf("%s removed %d gold from %s's castle",
 		p.Name(), stolenGold.Value(), a.targetPlayer.Name()),

@@ -54,9 +54,17 @@ func (a *bloodRainAction) Validate(g Game) error {
 	p := g.CurrentPlayer()
 	a.currentPlayer = p
 
-	bloodRain, ok := board.HasCardTypeInHand[cards.BloodRain](p)
+	// Look up the specific blood rain card by the ID provided by the client.
+	// This avoids the mismatch that occurs when HasCardTypeInHand returns a
+	// different card than the one the client intended (possible in FFA5 where
+	// both BR1 and BR2 are in the deck and a player can hold either).
+	c, ok := p.GetCardFromHand(a.weaponID)
 	if !ok {
 		return fmt.Errorf("player does not have a blood rain card to use")
+	}
+	bloodRain, ok := c.(cards.BloodRain)
+	if !ok {
+		return fmt.Errorf("card %s is not a blood rain card", a.weaponID)
 	}
 
 	a.bloodRain = bloodRain
@@ -74,7 +82,7 @@ func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.G
 		return result, nil, fmt.Errorf("blood rain action failed: %w", err)
 	}
 
-	if _, err := a.currentPlayer.RemoveFromHand(a.weaponID); err != nil {
+	if _, err := a.currentPlayer.RemoveFromHand(a.bloodRain.GetID()); err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("removing blood rain from hand failed: %w", err)
 	}

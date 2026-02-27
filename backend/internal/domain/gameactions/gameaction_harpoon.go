@@ -3,7 +3,6 @@ package gameactions
 import (
 	"fmt"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -60,9 +59,15 @@ func (a *harpoonAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	harpoon, ok := board.HasCardTypeInHand[cards.Harpoon](p)
+	// Look up the specific harpoon card by the ID provided by the client.
+	// This avoids the mismatch possible in FFA5 where both HA1 and HA2 exist.
+	harpoonCard, ok := p.GetCardFromHand(a.weaponID)
 	if !ok {
 		return fmt.Errorf("player does not have a harpoon to use")
+	}
+	harpoon, ok := harpoonCard.(cards.Harpoon)
+	if !ok {
+		return fmt.Errorf("card %s is not a harpoon", a.weaponID)
 	}
 
 	a.harpoon = harpoon
@@ -82,7 +87,7 @@ func (a *harpoonAction) execute(g harpoonGame) (*Result, func() gamestatus.GameS
 		return result, nil, fmt.Errorf("harpoon action failed: %w", err)
 	}
 
-	if _, err := p.RemoveFromHand(a.weaponID); err != nil {
+	if _, err := p.RemoveFromHand(a.harpoon.GetID()); err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("removing harpoon from hand failed: %w", err)
 	}
