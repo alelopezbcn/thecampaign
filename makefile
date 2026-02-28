@@ -45,3 +45,12 @@ docker-tag-push:
 	docker build -t thecampaign:$(TAG) .
 	docker tag thecampaign:$(TAG) alelopezcop/thecampaign:$(TAG)
 	docker push alelopezcop/thecampaign:$(TAG)
+
+test:
+	cd backend && go test -mod=vendor -cover ./...
+
+test-verbose:
+	cd backend && go test -mod=vendor -cover -v ./...
+
+tidy:
+	cd backend && go mod tidy
