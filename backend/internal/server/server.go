@@ -213,7 +213,7 @@ var cardConfig = map[string]CardConfigEntry{
 	},
 	"desertion": {
 		Description: `𝐃𝐞𝐬𝐞𝐫𝐭𝐢𝐨𝐧
-𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to defect.
+𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to desert.
 𝐂𝐨𝐧𝐝𝐢𝐭𝐢𝐨𝐧: Target must have 5 HP or less.
 𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
 		Image: "desertion.webp",
