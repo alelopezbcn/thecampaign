@@ -12,8 +12,8 @@ body {
     min-height: 100vh;
     overflow-x: hidden;
 
-    font-size: 0.8rem; /* Reduces base text size */
-    zoom: 0.8;        /* Scales the entire layout in most browsers */
+    font-size: 0.9rem; /* Reduces base text size */
+    zoom: 0.9;        /* Scales the entire layout in most browsers */
 }
 
 /* Screen Management */
