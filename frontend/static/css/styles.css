@@ -2749,6 +2749,10 @@ body {
 }
 
 /* Game Over Modal */
+#gameover-modal {
+    z-index: 99999;
+}
+
 .gameover-modal-content {
     background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
     border: 3px solid;
