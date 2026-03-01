@@ -1,5 +1,4 @@
 Fixes:
-- Popup de game end debe estar por encima de cualquier z-index
 
 Code improvements:
 - agregar cardID a todas las actions
