@@ -76,13 +76,14 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		other = append(other, NewAmbush("amb2"))
 	}
 
+	if playerCount > 4 {
+		other = append(other, NewGold(fmt.Sprintf("gcas%d", 1), 1))
+		other = append(other, NewSword(fmt.Sprintf("ecas%d", 1), 1))
+		other = append(other, NewArrow(fmt.Sprintf("fcas%d", 1), 1))
+		other = append(other, NewPoison(fmt.Sprintf("pcas%d", 1), 1))
+	}
+
 	for i := 1; i < 10; i++ {
-		if i == 1 {
-			other = append(other, NewGold(fmt.Sprintf("gcas%d", i), i))
-			other = append(other, NewSword(fmt.Sprintf("ecas%d", i), i))
-			other = append(other, NewArrow(fmt.Sprintf("fcas%d", i), i))
-			other = append(other, NewPoison(fmt.Sprintf("pcas%d", i), i))
-		}
 		other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
 		other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
 		other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))

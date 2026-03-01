@@ -16,7 +16,10 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-const turnTimeLimit = 120 * time.Second
+const (
+	turnTimeLimit           = 120 * time.Second
+	waitingRoomCleanupDelay = 60 * time.Second
+)
 
 type HubGame interface {
 	ExecuteAction(action gameactions.GameAction) (gamestatus.GameStatus, error)
@@ -45,6 +48,7 @@ type GameRoom struct {
 	mutex           sync.RWMutex
 	turnTimer       *time.Timer
 	turnTimerStop   chan struct{}
+	cleanupTimer    *time.Timer
 }
 
 // Hub maintains active clients and game rooms
@@ -107,8 +111,11 @@ func (h *Hub) Run() {
 							delete(room.Players, client.PlayerName)
 							delete(room.TeamAssignments, client.PlayerName)
 							if len(room.Players) == 0 {
-								delete(h.gameRooms, client.GameID)
-								log.Printf("Game room %s removed (empty)", client.GameID)
+								gameIDToCleanup := client.GameID
+								room.cleanupTimer = time.AfterFunc(waitingRoomCleanupDelay, func() {
+									h.cleanupEmptyRoom(gameIDToCleanup)
+								})
+								log.Printf("Game room %s empty, scheduled cleanup in %v", client.GameID, waitingRoomCleanupDelay)
 							}
 						}
 						room.mutex.Unlock()
@@ -136,30 +143,30 @@ func (h *Hub) Run() {
 // messageHandlers maps each MessageType to its handler function.
 // Adding a new message type requires one entry here — no switch needed.
 var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
-	MsgJoinGame:    func(h *Hub, c *Client, p interface{}) { h.handleJoinGame(c, p) },
-	MsgDrawCard:    func(h *Hub, c *Client, _ interface{}) { h.handleDrawCard(c) },
-	MsgAttack:      func(h *Hub, c *Client, p interface{}) { h.handleAttack(c, p) },
+	MsgJoinGame:     func(h *Hub, c *Client, p interface{}) { h.handleJoinGame(c, p) },
+	MsgDrawCard:     func(h *Hub, c *Client, _ interface{}) { h.handleDrawCard(c) },
+	MsgAttack:       func(h *Hub, c *Client, p interface{}) { h.handleAttack(c, p) },
 	MsgSpecialPower: func(h *Hub, c *Client, p interface{}) { h.handleSpecialPower(c, p) },
-	MsgHarpoon:     func(h *Hub, c *Client, p interface{}) { h.handleHarpoon(c, p) },
-	MsgBloodRain:   func(h *Hub, c *Client, p interface{}) { h.handleBloodRain(c, p) },
-	MsgMoveWarrior: func(h *Hub, c *Client, p interface{}) { h.handleMoveWarrior(c, p) },
-	MsgTrade:       func(h *Hub, c *Client, p interface{}) { h.handleTrade(c, p) },
-	MsgBuy:             func(h *Hub, c *Client, p interface{}) { h.handleBuy(c, p) },
-	MsgBuyMercenary:    func(h *Hub, c *Client, p interface{}) { h.handleBuyMercenary(c, p) },
-	MsgConstruct:   func(h *Hub, c *Client, p interface{}) { h.handleConstruct(c, p) },
-	MsgSpy:         func(h *Hub, c *Client, p interface{}) { h.handleSpy(c, p) },
-	MsgSteal:       func(h *Hub, c *Client, p interface{}) { h.handleSteal(c, p) },
-	MsgDesertion:   func(h *Hub, c *Client, p interface{}) { h.handleDesertion(c, p) },
-	MsgCatapult:    func(h *Hub, c *Client, p interface{}) { h.handleCatapult(c, p) },
+	MsgHarpoon:      func(h *Hub, c *Client, p interface{}) { h.handleHarpoon(c, p) },
+	MsgBloodRain:    func(h *Hub, c *Client, p interface{}) { h.handleBloodRain(c, p) },
+	MsgMoveWarrior:  func(h *Hub, c *Client, p interface{}) { h.handleMoveWarrior(c, p) },
+	MsgTrade:        func(h *Hub, c *Client, p interface{}) { h.handleTrade(c, p) },
+	MsgBuy:          func(h *Hub, c *Client, p interface{}) { h.handleBuy(c, p) },
+	MsgBuyMercenary: func(h *Hub, c *Client, p interface{}) { h.handleBuyMercenary(c, p) },
+	MsgConstruct:    func(h *Hub, c *Client, p interface{}) { h.handleConstruct(c, p) },
+	MsgSpy:          func(h *Hub, c *Client, p interface{}) { h.handleSpy(c, p) },
+	MsgSteal:        func(h *Hub, c *Client, p interface{}) { h.handleSteal(c, p) },
+	MsgDesertion:    func(h *Hub, c *Client, p interface{}) { h.handleDesertion(c, p) },
+	MsgCatapult:     func(h *Hub, c *Client, p interface{}) { h.handleCatapult(c, p) },
 	MsgFortress:     func(h *Hub, c *Client, p interface{}) { h.handleFortress(c, p) },
 	MsgResurrection: func(h *Hub, c *Client, p interface{}) { h.handleResurrection(c, p) },
 	MsgSabotage:     func(h *Hub, c *Client, p interface{}) { h.handleSabotage(c, p) },
 	MsgPlaceAmbush:  func(h *Hub, c *Client, p interface{}) { h.handlePlaceAmbush(c, p) },
 	MsgEndTurn:      func(h *Hub, c *Client, _ interface{}) { h.handleEndTurn(c) },
-	MsgSkipPhase:   func(h *Hub, c *Client, _ interface{}) { h.handleSkipPhase(c) },
-	MsgSwapTeam:    func(h *Hub, c *Client, _ interface{}) { h.handleSwapTeam(c) },
-	MsgStartGame:   func(h *Hub, c *Client, _ interface{}) { h.handleStartGame(c) },
-	MsgRestartGame: func(h *Hub, c *Client, _ interface{}) { h.handleRestartGame(c) },
+	MsgSkipPhase:    func(h *Hub, c *Client, _ interface{}) { h.handleSkipPhase(c) },
+	MsgSwapTeam:     func(h *Hub, c *Client, _ interface{}) { h.handleSwapTeam(c) },
+	MsgStartGame:    func(h *Hub, c *Client, _ interface{}) { h.handleStartGame(c) },
+	MsgRestartGame:  func(h *Hub, c *Client, _ interface{}) { h.handleRestartGame(c) },
 }
 
 // processMessage processes incoming messages from clients
@@ -254,6 +261,12 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 	h.mutex.Unlock()
 
 	room.mutex.Lock()
+
+	// Cancel any pending cleanup timer now that someone is joining
+	if room.cleanupTimer != nil {
+		room.cleanupTimer.Stop()
+		room.cleanupTimer = nil
+	}
 
 	// Reconnection: player name already exists in this game (includes nil = disconnected)
 	if oldClient, exists := room.Players[playerName]; exists {
@@ -900,5 +913,36 @@ func (h *Hub) executeGameAction(client *Client, action func(HubGame) (gamestatus
 
 	if status.GameOverMgs != "" {
 		h.stopTurnTimer(client.GameID)
+	}
+}
+
+// cleanupEmptyRoom deletes a waiting room if it is still empty when the cleanup timer fires.
+// Runs in a separate goroutine via time.AfterFunc.
+func (h *Hub) cleanupEmptyRoom(gameID string) {
+	h.mutex.Lock()
+	room, exists := h.gameRooms[gameID]
+	if !exists {
+		h.mutex.Unlock()
+		return
+	}
+	h.mutex.Unlock()
+
+	room.mutex.RLock()
+	empty := len(room.Players) == 0 && room.Game == nil
+	room.mutex.RUnlock()
+
+	if empty {
+		h.mutex.Lock()
+		// Re-check under h.mutex to avoid a race with a concurrent join
+		if r, ok := h.gameRooms[gameID]; ok {
+			r.mutex.RLock()
+			stillEmpty := len(r.Players) == 0 && r.Game == nil
+			r.mutex.RUnlock()
+			if stillEmpty {
+				delete(h.gameRooms, gameID)
+				log.Printf("Game room %s removed (empty after cleanup delay)", gameID)
+			}
+		}
+		h.mutex.Unlock()
 	}
 }
