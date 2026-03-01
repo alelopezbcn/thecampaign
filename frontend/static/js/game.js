@@ -4651,24 +4651,27 @@ function showSpyOptionsModal() {
 }
 
 function selectSpyOption(option) {
-    hideGameModal();
+    const cardId = gameState.actionState.weaponId;
 
     if (option === 1) {
         // Reveal deck - no target player needed
         gameState.pendingModalAction = 'spy_deck';
         const enemies = getEnemyOpponents();
         // Backend requires a target_player even for deck spy; use first enemy
-        sendAction('spy', { card_id: gameState.actionState.weaponId, target_player: enemies[0]?.player_name || '', option: option });
+        sendAction('spy', { card_id: cardId, target_player: enemies[0]?.player_name || '', option: option });
+        hideGameModal();
     } else {
         // Reveal hand - need to select target player
         const enemies = getEnemyOpponents();
         if (enemies.length === 1) {
             gameState.pendingModalAction = 'spy_hand';
-            sendAction('spy', { card_id: gameState.actionState.weaponId, target_player: enemies[0].player_name, option: option });
+            sendAction('spy', { card_id: cardId, target_player: enemies[0].player_name, option: option });
+            hideGameModal();
         } else {
+            hideGameModal();
             showTargetPlayerModal('Whose hand do you want to reveal?', enemies, (playerName) => {
                 gameState.pendingModalAction = 'spy_hand';
-                sendAction('spy', { card_id: gameState.actionState.weaponId, target_player: playerName, option: option });
+                sendAction('spy', { card_id: cardId, target_player: playerName, option: option });
             }, (opp) => `${opp.cards_in_hand} cards in hand`);
         }
     }
