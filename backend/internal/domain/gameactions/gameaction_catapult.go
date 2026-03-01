@@ -29,17 +29,19 @@ type catapultAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
+	cardID           string
 
 	catapult     cards.Catapult
 	targetPlayer catapultTargetPlayer
 	weapon       cards.Weapon
 }
 
-func NewCatapultAction(playerName, targetPlayerName string, cardPosition int) *catapultAction {
+func NewCatapultAction(playerName, targetPlayerName string, cardPosition int, cardID string) *catapultAction {
 	return &catapultAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		cardPosition:     cardPosition,
+		cardID:           cardID,
 	}
 }
 
@@ -52,9 +54,13 @@ func (a *catapultAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	catapult, ok := board.HasCardTypeInHand[cards.Catapult](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return errors.New("player does not have a catapult to use")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	catapult, ok := raw.(cards.Catapult)
+	if !ok {
+		return errors.New("card is not a catapult")
 	}
 
 	var err error

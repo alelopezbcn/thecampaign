@@ -292,13 +292,11 @@ func (p *player) OnWarriorDead(warrior cards.Warrior) {
 	p.warriorMovedToCemeteryObserver.OnWarriorMovedToCemetery(warrior)
 }
 
-func HasCardTypeInHand[T any](p PlayerHand) (T, bool) {
+func HasCardTypeInHand[T any](p PlayerHand) bool {
 	for _, c := range p.Hand().ShowCards() {
-		if card, ok := c.(T); ok {
-			return card, true
+		if _, ok := c.(T); ok {
+			return true
 		}
 	}
-
-	var zero T
-	return zero, false
+	return false
 }

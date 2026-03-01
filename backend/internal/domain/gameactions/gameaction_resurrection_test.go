@@ -21,7 +21,6 @@ func validateResurrectionOwnField(
 	mockGame := mocks.NewMockGame(ctrl)
 	mockPlayer := mocks.NewMockPlayer(ctrl)
 	mockResurrection := mocks.NewMockResurrection(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 	mockBoard := mocks.NewMockBoard(ctrl)
 	mockCemetery := mocks.NewMockCemetery(ctrl)
 
@@ -30,11 +29,10 @@ func validateResurrectionOwnField(
 	mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 	mockCemetery.EXPECT().Count().Return(1)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-	mockPlayer.EXPECT().Hand().Return(mockHand)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockResurrection})
+	mockPlayer.EXPECT().GetCardFromHand("resurrection-id").Return(mockResurrection, true)
 	mockGame.EXPECT().GetPlayer("Player1").Return(mockPlayer)
 
-	action := gameactions.NewResurrectionAction("Player1", "")
+	action := gameactions.NewResurrectionAction("Player1", "", "resurrection-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validateResurrectionOwnField: unexpected error: %v", err)
 	}
@@ -50,7 +48,6 @@ func validateResurrectionAllyField(
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
 	mockResurrection := mocks.NewMockResurrection(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 	mockBoard := mocks.NewMockBoard(ctrl)
 	mockCemetery := mocks.NewMockCemetery(ctrl)
 
@@ -59,14 +56,13 @@ func validateResurrectionAllyField(
 	mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 	mockCemetery.EXPECT().Count().Return(1)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-	mockPlayer1.EXPECT().Hand().Return(mockHand)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockResurrection})
+	mockPlayer1.EXPECT().GetCardFromHand("resurrection-id").Return(mockResurrection, true)
 	mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
 	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
 	mockGame.EXPECT().PlayerIndex("Player2").Return(1)
 	mockGame.EXPECT().SameTeam(0, 1).Return(true)
 
-	action := gameactions.NewResurrectionAction("Player1", "Player2")
+	action := gameactions.NewResurrectionAction("Player1", "Player2", "resurrection-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validateResurrectionAllyField: unexpected error: %v", err)
 	}
@@ -74,7 +70,7 @@ func validateResurrectionAllyField(
 }
 
 func TestResurrectionAction_PlayerName(t *testing.T) {
-	action := gameactions.NewResurrectionAction("Player1", "")
+	action := gameactions.NewResurrectionAction("Player1", "", "resurrection-id")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
@@ -86,7 +82,7 @@ func TestResurrectionAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeDrawCard).Times(2)
 
-		action := gameactions.NewResurrectionAction("Player1", "")
+		action := gameactions.NewResurrectionAction("Player1", "", "resurrection-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -106,20 +102,19 @@ func TestResurrectionAction_Validate(t *testing.T) {
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().Count().Return(0)
 
-		action := gameactions.NewResurrectionAction("Player1", "")
+		action := gameactions.NewResurrectionAction("Player1", "", "resurrection-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "no warriors in the cemetery to resurrect")
 	})
 
-	t.Run("Error when player has no resurrection card", func(t *testing.T) {
+	t.Run("Error when card not found in hand", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 		mockBoard := mocks.NewMockBoard(ctrl)
 		mockCemetery := mocks.NewMockCemetery(ctrl)
 
@@ -128,14 +123,37 @@ func TestResurrectionAction_Validate(t *testing.T) {
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().Count().Return(1)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockPlayer.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer.EXPECT().GetCardFromHand("resurrection-id").Return(nil, false)
 
-		action := gameactions.NewResurrectionAction("Player1", "")
+		action := gameactions.NewResurrectionAction("Player1", "", "resurrection-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a resurrection card")
+		assert.Contains(t, err.Error(), "not found in hand")
+	})
+
+	t.Run("Error when card found but wrong type", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer := mocks.NewMockPlayer(ctrl)
+		mockBoard := mocks.NewMockBoard(ctrl)
+		mockCemetery := mocks.NewMockCemetery(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().Board().Return(mockBoard)
+		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
+		mockCemetery.EXPECT().Count().Return(1)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockPlayer.EXPECT().GetCardFromHand("resurrection-id").Return(mockCard, true)
+
+		action := gameactions.NewResurrectionAction("Player1", "", "resurrection-id")
+		err := action.Validate(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not a resurrection card")
 	})
 
 	t.Run("Error when target player not found", func(t *testing.T) {
@@ -144,7 +162,6 @@ func TestResurrectionAction_Validate(t *testing.T) {
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 		mockBoard := mocks.NewMockBoard(ctrl)
 		mockCemetery := mocks.NewMockCemetery(ctrl)
 		mockResurrection := mocks.NewMockResurrection(ctrl)
@@ -154,11 +171,10 @@ func TestResurrectionAction_Validate(t *testing.T) {
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().Count().Return(1)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockPlayer.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{mockResurrection})
+		mockPlayer.EXPECT().GetCardFromHand("resurrection-id").Return(mockResurrection, true)
 		mockGame.EXPECT().GetPlayer("Unknown").Return(nil)
 
-		action := gameactions.NewResurrectionAction("Player1", "Unknown")
+		action := gameactions.NewResurrectionAction("Player1", "Unknown", "resurrection-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -172,7 +188,6 @@ func TestResurrectionAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 		mockBoard := mocks.NewMockBoard(ctrl)
 		mockCemetery := mocks.NewMockCemetery(ctrl)
 		mockResurrection := mocks.NewMockResurrection(ctrl)
@@ -182,14 +197,13 @@ func TestResurrectionAction_Validate(t *testing.T) {
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().Count().Return(1)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{mockResurrection})
+		mockPlayer1.EXPECT().GetCardFromHand("resurrection-id").Return(mockResurrection, true)
 		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
 		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
 		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
 		mockGame.EXPECT().SameTeam(0, 1).Return(false)
 
-		action := gameactions.NewResurrectionAction("Player1", "Player2")
+		action := gameactions.NewResurrectionAction("Player1", "Player2", "resurrection-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)

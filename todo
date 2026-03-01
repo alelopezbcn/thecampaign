@@ -1,7 +1,7 @@
 Fixes:
 
 Code improvements:
-- agregar cardID a todas las actions
+- hacer mas pequeños los view ports cuando se juega FFA5, y los de los enemigos en 2v2
 - faltan tests de ambush en game status
 - improve gamestatus
 - we are missing command mocks in the make file

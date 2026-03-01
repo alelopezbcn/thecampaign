@@ -103,40 +103,47 @@ type ConstructPayload struct {
 
 // SpyPayload for spy action
 type SpyPayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player"`
 	Option       int    `json:"option"`
 }
 
 // StealPayload for steal action
 type StealPayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player"`
 	CardPosition int    `json:"card_position"`
 }
 
 // DesertionPayload for desertion action
 type DesertionPayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player"`
 	WarriorID    string `json:"warrior_id"`
 }
 
 // CatapultPayload for catapult action
 type CatapultPayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player"`
 	CardPosition int    `json:"card_position"`
 }
 
 // FortressPayload for placing a fortress on a castle
 type FortressPayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // ResurrectionPayload for using a resurrection card
 type ResurrectionPayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player,omitempty"`
 }
 
 // SabotagePayload for sabotage action
 type SabotagePayload struct {
+	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player"`
 }
 

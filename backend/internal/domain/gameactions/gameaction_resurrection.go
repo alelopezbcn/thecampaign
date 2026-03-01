@@ -29,16 +29,18 @@ type resurrectionTargetPlayer interface {
 type resurrectionAction struct {
 	playerName       string
 	targetPlayerName string // empty = own field
+	cardID           string
 
 	resurrectionCard cards.Resurrection
 	targetPlayer     resurrectionTargetPlayer
 	currentPhase     types.PhaseType
 }
 
-func NewResurrectionAction(playerName, targetPlayerName string) *resurrectionAction {
+func NewResurrectionAction(playerName, targetPlayerName, cardID string) *resurrectionAction {
 	return &resurrectionAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
+		cardID:           cardID,
 	}
 }
 
@@ -54,9 +56,13 @@ func (a *resurrectionAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	resCard, ok := board.HasCardTypeInHand[cards.Resurrection](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return errors.New("player does not have a resurrection card")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	resCard, ok := raw.(cards.Resurrection)
+	if !ok {
+		return errors.New("card is not a resurrection card")
 	}
 
 	targetName := a.targetPlayerName

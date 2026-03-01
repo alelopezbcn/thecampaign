@@ -14,7 +14,7 @@ import (
 )
 
 // validateSabotageAction calls Validate on a new sabotage action and returns key mocks.
-// player1 has mockSabotage in hand; player2 has mockTargetCard in hand.
+// player1 has mockSabotage (looked up by "sabotage-id"); player2 has mockTargetCard in hand.
 func validateSabotageAction(t *testing.T, ctrl *gomock.Controller) (
 	gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockHand, *mocks.MockCard, *mocks.MockSabotage,
 ) {
@@ -22,20 +22,18 @@ func validateSabotageAction(t *testing.T, ctrl *gomock.Controller) (
 	mockGame := mocks.NewMockGame(ctrl)
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-	mockHand1 := mocks.NewMockHand(ctrl)
 	mockHand2 := mocks.NewMockHand(ctrl)
 	mockTargetCard := mocks.NewMockCard(ctrl)
 	mockSabotage := mocks.NewMockSabotage(ctrl)
 
 	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-	mockPlayer1.EXPECT().Hand().Return(mockHand1)
-	mockHand1.EXPECT().ShowCards().Return([]cards.Card{mockSabotage})
+	mockPlayer1.EXPECT().GetCardFromHand("sabotage-id").Return(mockSabotage, true)
 	mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 	mockPlayer2.EXPECT().Hand().Return(mockHand2)
 	mockHand2.EXPECT().ShowCards().Return([]cards.Card{mockTargetCard})
 
-	action := gameactions.NewSabotageAction("Player1", "Player2")
+	action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validate failed: %v", err)
 	}
@@ -43,12 +41,12 @@ func validateSabotageAction(t *testing.T, ctrl *gomock.Controller) (
 }
 
 func TestSabotageAction_PlayerName(t *testing.T) {
-	action := gameactions.NewSabotageAction("Player1", "Player2")
+	action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestSabotageAction_NextPhase(t *testing.T) {
-	action := gameactions.NewSabotageAction("Player1", "Player2")
+	action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 	assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 }
 
@@ -60,31 +58,48 @@ func TestSabotageAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy).Times(2)
 
-		action := gameactions.NewSabotageAction("Player1", "Player2")
+		action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use sabotage in the")
 	})
 
-	t.Run("Error when player has no sabotage card", func(t *testing.T) {
+	t.Run("Error when card not found in hand", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer1.EXPECT().GetCardFromHand("sabotage-id").Return(nil, false)
 
-		action := gameactions.NewSabotageAction("Player1", "Player2")
+		action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a sabotage card")
+		assert.Contains(t, err.Error(), "not found in hand")
+	})
+
+	t.Run("Error when card found but wrong type", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().GetCardFromHand("sabotage-id").Return(mockCard, true)
+
+		action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
+		err := action.Validate(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not a sabotage card")
 	})
 
 	t.Run("Error when target player hand is empty", func(t *testing.T) {
@@ -94,19 +109,17 @@ func TestSabotageAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockHand1 := mocks.NewMockHand(ctrl)
 		mockHand2 := mocks.NewMockHand(ctrl)
 		mockSabotage := mocks.NewMockSabotage(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand1)
-		mockHand1.EXPECT().ShowCards().Return([]cards.Card{mockSabotage})
+		mockPlayer1.EXPECT().GetCardFromHand("sabotage-id").Return(mockSabotage, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 		mockPlayer2.EXPECT().Hand().Return(mockHand2)
 		mockHand2.EXPECT().ShowCards().Return([]cards.Card{})
 
-		action := gameactions.NewSabotageAction("Player1", "Player2")
+		action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -120,20 +133,18 @@ func TestSabotageAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockHand1 := mocks.NewMockHand(ctrl)
 		mockHand2 := mocks.NewMockHand(ctrl)
 		mockSabotage := mocks.NewMockSabotage(ctrl)
 		mockCard := mocks.NewMockCard(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand1)
-		mockHand1.EXPECT().ShowCards().Return([]cards.Card{mockSabotage})
+		mockPlayer1.EXPECT().GetCardFromHand("sabotage-id").Return(mockSabotage, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 		mockPlayer2.EXPECT().Hand().Return(mockHand2)
 		mockHand2.EXPECT().ShowCards().Return([]cards.Card{mockCard})
 
-		action := gameactions.NewSabotageAction("Player1", "Player2")
+		action := gameactions.NewSabotageAction("Player1", "Player2", "sabotage-id")
 		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)

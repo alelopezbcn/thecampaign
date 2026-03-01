@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -24,15 +23,17 @@ type spyAction struct {
 	playerName       string
 	targetPlayerName string
 	option           int
+	cardID           string
 
 	spy cards.Spy
 }
 
-func NewSpyAction(playerName, targetPlayerName string, option int) *spyAction {
+func NewSpyAction(playerName, targetPlayerName string, option int, cardID string) *spyAction {
 	return &spyAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		option:           option,
+		cardID:           cardID,
 	}
 }
 
@@ -44,9 +45,13 @@ func (a *spyAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	spy, ok := board.HasCardTypeInHand[cards.Spy](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return fmt.Errorf("player does not have a spy to use")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	spy, ok := raw.(cards.Spy)
+	if !ok {
+		return fmt.Errorf("card %s is not a spy card", a.cardID)
 	}
 
 	a.spy = spy

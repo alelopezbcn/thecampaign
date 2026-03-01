@@ -28,16 +28,18 @@ type sabotageTargetPlayer interface {
 type sabotageAction struct {
 	playerName       string
 	targetPlayerName string
+	cardID           string
 
 	targetPlayer          sabotageTargetPlayer
 	sabotageCard          cards.Sabotage
 	targetPlayerHandCards []cards.Card
 }
 
-func NewSabotageAction(playerName, targetPlayerName string) *sabotageAction {
+func NewSabotageAction(playerName, targetPlayerName, cardID string) *sabotageAction {
 	return &sabotageAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
+		cardID:           cardID,
 	}
 }
 
@@ -49,9 +51,13 @@ func (a *sabotageAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	sabCard, ok := board.HasCardTypeInHand[cards.Sabotage](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return fmt.Errorf("player does not have a sabotage card to use")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	sabCard, ok := raw.(cards.Sabotage)
+	if !ok {
+		return fmt.Errorf("card %s is not a sabotage card", a.cardID)
 	}
 
 	var err error

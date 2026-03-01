@@ -28,17 +28,19 @@ type desertionAction struct {
 	playerName       string
 	targetPlayerName string
 	warriorID        string
+	cardID           string
 
 	targetPlayer desertionTargetPlayer
 	desertion    cards.Desertion
 	warrior      cards.Warrior
 }
 
-func NewDesertionAction(playerName, targetPlayerName, warriorID string) *desertionAction {
+func NewDesertionAction(playerName, targetPlayerName, warriorID, cardID string) *desertionAction {
 	return &desertionAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		warriorID:        warriorID,
+		cardID:           cardID,
 	}
 }
 
@@ -50,9 +52,13 @@ func (a *desertionAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	desertion, ok := board.HasCardTypeInHand[cards.Desertion](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return fmt.Errorf("player does not have a desertion card to use")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	desertion, ok := raw.(cards.Desertion)
+	if !ok {
+		return fmt.Errorf("card %s is not a desertion card", a.cardID)
 	}
 
 	var err error

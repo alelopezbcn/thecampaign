@@ -29,17 +29,19 @@ type stealAction struct {
 	playerName       string
 	targetPlayerName string
 	cardPosition     int
+	cardID           string
 
 	targetPlayer          stealTargetPlayer
 	thief                 cards.Thief
 	targetPlayerHandCards []cards.Card
 }
 
-func NewStealAction(playerName, targetPlayerName string, cardPosition int) *stealAction {
+func NewStealAction(playerName, targetPlayerName string, cardPosition int, cardID string) *stealAction {
 	return &stealAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		cardPosition:     cardPosition,
+		cardID:           cardID,
 	}
 }
 
@@ -51,9 +53,13 @@ func (a *stealAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	thief, ok := board.HasCardTypeInHand[cards.Thief](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return fmt.Errorf("player does not have a thief to use")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	thief, ok := raw.(cards.Thief)
+	if !ok {
+		return fmt.Errorf("card %s is not a thief card", a.cardID)
 	}
 
 	var err error
