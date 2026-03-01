@@ -4,7 +4,8 @@ Code improvements:
 - agregar cardID a todas las actions
 - faltan tests de ambush en game status
 - improve gamestatus
-we are missing command mocks in the make file
+- we are missing command mocks in the make file
+- PR pipeline to make test, format code
 
 Mecánicas nuevas:
 Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
