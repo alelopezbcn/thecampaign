@@ -1,5 +1,5 @@
 Fixes:
-- testear si ambush (roba arma) permite hacerse cuando el player ya tiene 7 cartas en mano
+- Popup de game end debe estar por encima de cualquier z-index
 
 Code improvements:
 - agregar cardID a todas las actions

@@ -167,9 +167,9 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, g attackGame
 			a.currentPlayer.Name()), types.CategoryAction)
 
 	case types.AmbushEffectStealWeapon:
-		// Weapon transferred to the defender's hand.
+		// Weapon transferred to the defender's hand (bypasses hand limit — forced effect).
 		a.currentPlayer.RemoveFromHand(a.weaponID)
-		a.targetPlayer.TakeCards(a.weapon)
+		a.targetPlayer.ForceAddCard(a.weapon)
 		g.AddHistory(fmt.Sprintf("%s's weapon was stolen by an ambush",
 			a.currentPlayer.Name()), types.CategoryAction)
 
