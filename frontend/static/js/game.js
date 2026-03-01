@@ -1486,7 +1486,12 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         }
     } else if (cardType === 'desertion') {
         gameState.actionState.type = 'desertion';
-        const enemies = getEnemyOpponents();
+        const enemies = getEnemyOpponents().filter(opp => (opp.field || []).some(w => w.value <= 5));
+        if (enemies.length === 0) {
+            updateActionPrompt('No enemies have warriors with 5 HP or less!');
+            resetActionState();
+            return;
+        }
         if (enemies.length === 1) {
             gameState.actionState.targetPlayer = enemies[0].player_name;
             showDesertionModal();

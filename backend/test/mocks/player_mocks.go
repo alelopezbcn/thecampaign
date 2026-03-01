@@ -119,6 +119,18 @@ func (mr *MockPlayerHandMockRecorder) CardsInHand() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CardsInHand", reflect.TypeOf((*MockPlayerHand)(nil).CardsInHand))
 }
 
+// ForceAddCard mocks base method.
+func (m *MockPlayerHand) ForceAddCard(card cards.Card) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ForceAddCard", card)
+}
+
+// ForceAddCard indicates an expected call of ForceAddCard.
+func (mr *MockPlayerHandMockRecorder) ForceAddCard(card any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForceAddCard", reflect.TypeOf((*MockPlayerHand)(nil).ForceAddCard), card)
+}
+
 // GetCardFromHand mocks base method.
 func (m *MockPlayerHand) GetCardFromHand(cardID string) (cards.Card, bool) {
 	m.ctrl.T.Helper()
@@ -542,6 +554,18 @@ func (m *MockPlayer) Field() board.Field {
 func (mr *MockPlayerMockRecorder) Field() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Field", reflect.TypeOf((*MockPlayer)(nil).Field))
+}
+
+// ForceAddCard mocks base method.
+func (m *MockPlayer) ForceAddCard(card cards.Card) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ForceAddCard", card)
+}
+
+// ForceAddCard indicates an expected call of ForceAddCard.
+func (mr *MockPlayerMockRecorder) ForceAddCard(card any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ForceAddCard", reflect.TypeOf((*MockPlayer)(nil).ForceAddCard), card)
 }
 
 // GetCardFromField mocks base method.

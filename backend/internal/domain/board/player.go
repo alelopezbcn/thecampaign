@@ -19,6 +19,7 @@ type PlayerHand interface {
 	CardsInHand() int
 	CanTakeCards(count int) bool
 	TakeCards(cards ...cards.Card) bool
+	ForceAddCard(card cards.Card)
 	RemoveFromHand(cardIDs ...string) ([]cards.Card, error)
 	GetCardFromHand(cardID string) (cards.Card, bool)
 }
@@ -95,6 +96,14 @@ func (p *player) Idx() int {
 
 func (p *player) CanTakeCards(count int) bool {
 	return p.hand.CanAddCards(count)
+}
+
+func (p *player) ForceAddCard(card cards.Card) {
+	card.AddCardMovedToPileObserver(p)
+	if w, ok := card.(cards.Warrior); ok {
+		w.AddWarriorDeadObserver(p)
+	}
+	p.hand.ForceAddCard(card)
 }
 
 func (p *player) TakeCards(cardsTaken ...cards.Card) bool {

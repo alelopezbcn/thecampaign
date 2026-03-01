@@ -1,30 +1,16 @@
-agregar cardID a todas las actions
+Fixes:
 
-faltan tests de ambush en game status
-desertion popup da la posibilidad de robarle a todos, solo debe filtrar los que tienen gyerreros con menos de 6
-
-improve gamestatus
-testear si desertion en el ultimo warrior acaba el juego
-testear si ambush (roba arma) permite hacerse cuando el player ya tiene 7 cartas en mano
+Code improvements:
+- agregar cardID a todas las actions
+- faltan tests de ambush en game status
+- improve gamestatus
 we are missing command mocks in the make file
 
-
-
-
-Mecánicas nuevas
+Mecánicas nuevas:
 Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
 
-Ideas de sistema / reglas
 Clima / Eventos - Al inicio de cada ronda, se revela una carta de evento global: "Tormenta" (las flechas hacen -2 daño), "Sequía" (construir cuesta el doble), "Luna llena" (los Magos hacen daño x3). Agrega variabilidad entre partidas.
 
-Terreno - Cada jugador tiene un tipo de terreno aleatorio que da un bonus pasivo. Montaña: +2 HP a guerreros. Bosque: los Archers tienen 2x contra todos. Pantano: venenos cuestan 1 menos para construir.
-
-Misiones secretas - Al inicio cada jugador recibe un objetivo secundario oculto ("mata 3 guerreros con veneno", "construye un castillo sin usar oro de valor > 3"). Completarlo da un bonus (robar 2 cartas, +5 al castillo, etc). Agrega una capa estratégica oculta.
-
-Modo draft - En vez de repartir cartas aleatorias, cada jugador elige cartas de un pool compartido al inicio. Más skill, menos suerte.
-
-
-configuracion, Cant cartas, modos de juego pantano, preset "edad de fuego" con 4 Dragones y Ballestas
-
-persist game status
-
+Deseable:
+- configuracion, Cant cartas, modos de juego pantano, preset "edad de fuego" con 4 Dragones y Ballestas
+- persist game status

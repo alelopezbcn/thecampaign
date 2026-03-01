@@ -22,6 +22,7 @@ type HandReader interface {
 // HandMutator — hand mutation
 type HandMutator interface {
 	AddCards(cards ...cards.Card) error
+	ForceAddCard(card cards.Card)
 	RemoveCard(card cards.Card) bool
 }
 
@@ -63,6 +64,12 @@ func (h *hand) GetCard(cardID string) (cards.Card, bool) {
 	}
 
 	return nil, false
+}
+
+// ForceAddCard adds a card to the hand ignoring the hand limit.
+// Use only for forced game effects (e.g. Ambush steal weapon).
+func (h *hand) ForceAddCard(card cards.Card) {
+	h.cards = append(h.cards, card)
 }
 
 func (h *hand) RemoveCard(card cards.Card) bool {
