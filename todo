@@ -1,6 +1,4 @@
 Fixes:
-- desertion popup da la posibilidad de robarle a todos, solo debe filtrar los que tienen gyerreros con menos de 6
-- testear si desertion en el ultimo warrior acaba el juego
 - testear si ambush (roba arma) permite hacerse cuando el player ya tiene 7 cartas en mano
 
 Code improvements:
