@@ -3,7 +3,6 @@ package gameactions_test
 import (
 	"testing"
 
-	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -20,19 +19,17 @@ func validateFortressOwnCastle(t *testing.T, ctrl *gomock.Controller) (
 	mockGame := mocks.NewMockGame(ctrl)
 	mockPlayer := mocks.NewMockPlayer(ctrl)
 	mockFortress := mocks.NewMockFortress(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 	mockCastle := mocks.NewMockCastle(ctrl)
 
 	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-	mockPlayer.EXPECT().Hand().Return(mockHand)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockFortress})
+	mockPlayer.EXPECT().GetCardFromHand("fortress-id").Return(mockFortress, true)
 	mockGame.EXPECT().GetPlayer("Player1").Return(mockPlayer)
 	mockPlayer.EXPECT().Castle().Return(mockCastle).Times(2)
 	mockCastle.EXPECT().IsConstructed().Return(true)
 	mockCastle.EXPECT().IsProtected().Return(false)
 
-	action := gameactions.NewFortressAction("Player1", "")
+	action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validateFortressOwnCastle: unexpected error: %v", err)
 	}
@@ -48,13 +45,11 @@ func validateFortressAllyCastle(t *testing.T, ctrl *gomock.Controller) (
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
 	mockFortress := mocks.NewMockFortress(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 	mockCastle := mocks.NewMockCastle(ctrl)
 
 	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-	mockPlayer1.EXPECT().Hand().Return(mockHand)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockFortress})
+	mockPlayer1.EXPECT().GetCardFromHand("fortress-id").Return(mockFortress, true)
 	mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
 	mockGame.EXPECT().PlayerIndex("Player1").Return(0)
 	mockGame.EXPECT().PlayerIndex("Player2").Return(1)
@@ -63,7 +58,7 @@ func validateFortressAllyCastle(t *testing.T, ctrl *gomock.Controller) (
 	mockCastle.EXPECT().IsConstructed().Return(true)
 	mockCastle.EXPECT().IsProtected().Return(false)
 
-	action := gameactions.NewFortressAction("Player1", "Player2")
+	action := gameactions.NewFortressAction("Player1", "Player2", "fortress-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validateFortressAllyCastle: unexpected error: %v", err)
 	}
@@ -71,12 +66,12 @@ func validateFortressAllyCastle(t *testing.T, ctrl *gomock.Controller) (
 }
 
 func TestFortressAction_PlayerName(t *testing.T) {
-	action := gameactions.NewFortressAction("Player1", "")
+	action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestFortressAction_NextPhase(t *testing.T) {
-	action := gameactions.NewFortressAction("Player1", "")
+	action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 	assert.Equal(t, types.PhaseTypeEndTurn, action.NextPhase())
 }
 
@@ -88,31 +83,48 @@ func TestFortressAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack).Times(2)
 
-		action := gameactions.NewFortressAction("Player1", "")
+		action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use fortress in the")
 	})
 
-	t.Run("Error when player has no fortress", func(t *testing.T) {
+	t.Run("Error when card not found in hand", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockPlayer.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer.EXPECT().GetCardFromHand("fortress-id").Return(nil, false)
 
-		action := gameactions.NewFortressAction("Player1", "")
+		action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a fortress to use")
+		assert.Contains(t, err.Error(), "not found in hand")
+	})
+
+	t.Run("Error when card found but wrong type", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer := mocks.NewMockPlayer(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockPlayer.EXPECT().GetCardFromHand("fortress-id").Return(mockCard, true)
+
+		action := gameactions.NewFortressAction("Player1", "", "fortress-id")
+		err := action.Validate(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not a fortress")
 	})
 
 	t.Run("Error when target castle is not constructed", func(t *testing.T) {
@@ -122,18 +134,16 @@ func TestFortressAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
 		mockFortress := mocks.NewMockFortress(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockPlayer.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{mockFortress})
+		mockPlayer.EXPECT().GetCardFromHand("fortress-id").Return(mockFortress, true)
 		mockGame.EXPECT().GetPlayer("Player1").Return(mockPlayer)
 		mockPlayer.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().IsConstructed().Return(false)
 
-		action := gameactions.NewFortressAction("Player1", "")
+		action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -147,19 +157,17 @@ func TestFortressAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
 		mockFortress := mocks.NewMockFortress(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockPlayer.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{mockFortress})
+		mockPlayer.EXPECT().GetCardFromHand("fortress-id").Return(mockFortress, true)
 		mockGame.EXPECT().GetPlayer("Player1").Return(mockPlayer)
 		mockPlayer.EXPECT().Castle().Return(mockCastle).Times(2)
 		mockCastle.EXPECT().IsConstructed().Return(true)
 		mockCastle.EXPECT().IsProtected().Return(true)
 
-		action := gameactions.NewFortressAction("Player1", "")
+		action := gameactions.NewFortressAction("Player1", "", "fortress-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -174,18 +182,16 @@ func TestFortressAction_Validate(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockFortress := mocks.NewMockFortress(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeConstruct)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{mockFortress})
+		mockPlayer1.EXPECT().GetCardFromHand("fortress-id").Return(mockFortress, true)
 		mockGame.EXPECT().GetPlayer("Player2").Return(mockPlayer2)
 		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
 		mockGame.EXPECT().PlayerIndex("Player2").Return(1)
 		mockGame.EXPECT().SameTeam(0, 1).Return(false)
 
-		action := gameactions.NewFortressAction("Player1", "Player2")
+		action := gameactions.NewFortressAction("Player1", "Player2", "fortress-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)

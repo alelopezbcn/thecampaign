@@ -30,7 +30,8 @@
       "Bash(gh pr create:*)",
       "Bash(git commit:*)",
       "Bash(powershell.exe -File:*)",
-      "Bash(make mocks)"
+      "Bash(make mocks)",
+      "Bash(echo \"Exit: $?\")"
     ]
   }
 }

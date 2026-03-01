@@ -384,7 +384,7 @@ func TestAttackAction_Execute_AmbushStealWeapon(t *testing.T) {
 
 	mockPlayer1.EXPECT().Name().Return("Player1")
 	mockPlayer1.EXPECT().RemoveFromHand("weaponID").Return([]cards.Card{mockWeapon}, nil)
-	mockPlayer2.EXPECT().TakeCards(mockWeapon)
+	mockPlayer2.EXPECT().ForceAddCard(mockWeapon)
 	mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
 
 	result, _, err := action.Execute(mockGame)

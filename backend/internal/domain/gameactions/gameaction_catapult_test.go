@@ -13,8 +13,7 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// validateCatapultAction runs Validate with a hand containing mockCatapult and returns
-// the action and mocks ready for Execute tests.
+// validateCatapultAction runs Validate with mockCatapult looked up by "catapult-id".
 func validateCatapultAction(
 	t *testing.T, ctrl *gomock.Controller,
 	targetPlayerName string, cardPosition int,
@@ -25,15 +24,13 @@ func validateCatapultAction(
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
 	mockCatapult := mocks.NewMockCatapult(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 
 	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-	mockPlayer1.EXPECT().Hand().Return(mockHand)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockCatapult})
+	mockPlayer1.EXPECT().GetCardFromHand("catapult-id").Return(mockCatapult, true)
 	mockGame.EXPECT().GetTargetPlayer("Player1", targetPlayerName).Return(mockPlayer2, nil)
 
-	action := gameactions.NewCatapultAction("Player1", targetPlayerName, cardPosition)
+	action := gameactions.NewCatapultAction("Player1", targetPlayerName, cardPosition, "catapult-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validateCatapultAction: unexpected error: %v", err)
 	}
@@ -41,12 +38,12 @@ func validateCatapultAction(
 }
 
 func TestCatapultAction_PlayerName(t *testing.T) {
-	action := gameactions.NewCatapultAction("Player1", "Player2", 0)
+	action := gameactions.NewCatapultAction("Player1", "Player2", 0, "catapult-id")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestCatapultAction_NextPhase(t *testing.T) {
-	action := gameactions.NewCatapultAction("Player1", "Player2", 0)
+	action := gameactions.NewCatapultAction("Player1", "Player2", 0, "catapult-id")
 	assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
 }
 
@@ -58,31 +55,48 @@ func TestCatapultAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy).Times(2)
 
-		action := gameactions.NewCatapultAction("Player1", "Player2", 0)
+		action := gameactions.NewCatapultAction("Player1", "Player2", 0, "catapult-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use catapult in the")
 	})
 
-	t.Run("Error when player has no catapult", func(t *testing.T) {
+	t.Run("Error when card not found in hand", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer1.EXPECT().GetCardFromHand("catapult-id").Return(nil, false)
 
-		action := gameactions.NewCatapultAction("Player1", "Player2", 0)
+		action := gameactions.NewCatapultAction("Player1", "Player2", 0, "catapult-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a catapult to use")
+		assert.Contains(t, err.Error(), "not found in hand")
+	})
+
+	t.Run("Error when card found but wrong type", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockCard := mocks.NewMockCard(ctrl)
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().GetCardFromHand("catapult-id").Return(mockCard, true)
+
+		action := gameactions.NewCatapultAction("Player1", "Player2", 0, "catapult-id")
+		err := action.Validate(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "not a catapult")
 	})
 
 	t.Run("Success validates and stores catapult and target player", func(t *testing.T) {

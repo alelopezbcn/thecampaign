@@ -14,20 +14,18 @@ import (
 )
 
 // validateSpyActionSetup calls Validate on a new spy action and returns the action and mocks.
-// mockSpy is in player1's hand, so a.spy is populated after Validate.
+// mockSpy is in player1's hand (looked up by "spy-id"), so a.spy is populated after Validate.
 func validateSpyActionSetup(t *testing.T, ctrl *gomock.Controller, option int) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockSpy) {
 	t.Helper()
 	mockGame := mocks.NewMockGame(ctrl)
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 	mockSpy := mocks.NewMockSpy(ctrl)
 
 	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-	mockPlayer1.EXPECT().Hand().Return(mockHand)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockSpy})
+	mockPlayer1.EXPECT().GetCardFromHand("spy-id").Return(mockSpy, true)
 
-	action := gameactions.NewSpyAction("Player1", "Player2", option)
+	action := gameactions.NewSpyAction("Player1", "Player2", option, "spy-id")
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validate failed: %v", err)
 	}
@@ -35,12 +33,12 @@ func validateSpyActionSetup(t *testing.T, ctrl *gomock.Controller, option int) (
 }
 
 func TestSpyAction_PlayerName(t *testing.T) {
-	action := gameactions.NewSpyAction("Player1", "Player2", 1)
+	action := gameactions.NewSpyAction("Player1", "Player2", 1, "spy-id")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
 func TestSpyAction_NextPhase(t *testing.T) {
-	action := gameactions.NewSpyAction("Player1", "Player2", 1)
+	action := gameactions.NewSpyAction("Player1", "Player2", 1, "spy-id")
 	assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 }
 
@@ -52,31 +50,48 @@ func TestSpyAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack).Times(2)
 
-		action := gameactions.NewSpyAction("Player1", "Player2", 1)
+		action := gameactions.NewSpyAction("Player1", "Player2", 1, "spy-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "cannot use spy in the")
 	})
 
-	t.Run("Error when player has no spy", func(t *testing.T) {
+	t.Run("Error when card not found in hand", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer1.EXPECT().GetCardFromHand("spy-id").Return(nil, false)
 
-		action := gameactions.NewSpyAction("Player1", "Player2", 1)
+		action := gameactions.NewSpyAction("Player1", "Player2", 1, "spy-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "player does not have a spy")
+		assert.Contains(t, err.Error(), "not found in hand")
+	})
+
+	t.Run("Error when card found but wrong type", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockGame := mocks.NewMockGame(ctrl)
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockCard := mocks.NewMockCard(ctrl) // not a Spy
+
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockPlayer1.EXPECT().GetCardFromHand("spy-id").Return(mockCard, true)
+
+		action := gameactions.NewSpyAction("Player1", "Player2", 1, "spy-id")
+		err := action.Validate(mockGame)
+
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "is not a spy card")
 	})
 
 	t.Run("Success when player has spy", func(t *testing.T) {
@@ -85,15 +100,13 @@ func TestSpyAction_Validate(t *testing.T) {
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 		mockSpy := mocks.NewMockSpy(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().Hand().Return(mockHand)
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{mockSpy})
+		mockPlayer1.EXPECT().GetCardFromHand("spy-id").Return(mockSpy, true)
 
-		action := gameactions.NewSpyAction("Player1", "Player2", 1)
+		action := gameactions.NewSpyAction("Player1", "Player2", 1, "spy-id")
 		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
@@ -110,7 +123,7 @@ func TestSpyAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 
-		action := gameactions.NewSpyAction("Player1", "Player2", 3)
+		action := gameactions.NewSpyAction("Player1", "Player2", 3, "spy-id")
 		result, _, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
@@ -133,8 +146,8 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Deck().Return(mockDeck)
 		mockDeck.EXPECT().Reveal(5).Return([]cards.Card{})
-		mockSpy.EXPECT().GetID().Return("SPY1")
-		mockPlayer1.EXPECT().RemoveFromHand("SPY1").Return(nil, errors.New("not found"))
+		mockSpy.EXPECT().GetID().Return("spy-id")
+		mockPlayer1.EXPECT().RemoveFromHand("spy-id").Return(nil, errors.New("not found"))
 
 		result, _, err := action.Execute(mockGame)
 
@@ -161,8 +174,8 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Deck().Return(mockDeck)
 		mockDeck.EXPECT().Reveal(5).Return(revealedCards)
-		mockSpy.EXPECT().GetID().Return("SPY1")
-		mockPlayer1.EXPECT().RemoveFromHand("SPY1").Return([]cards.Card{mockSpy}, nil)
+		mockSpy.EXPECT().GetID().Return("spy-id")
+		mockPlayer1.EXPECT().RemoveFromHand("spy-id").Return([]cards.Card{mockSpy}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockSpy)
 		mockGame.EXPECT().StatusWithModal(mockPlayer1, revealedCards).Return(expectedStatus)
 
@@ -194,8 +207,8 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
 		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
 		mockEnemyHand.EXPECT().ShowCards().Return(enemyCards)
-		mockSpy.EXPECT().GetID().Return("SPY1")
-		mockPlayer1.EXPECT().RemoveFromHand("SPY1").Return([]cards.Card{mockSpy}, nil)
+		mockSpy.EXPECT().GetID().Return("spy-id")
+		mockPlayer1.EXPECT().RemoveFromHand("spy-id").Return([]cards.Card{mockSpy}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockSpy)
 		mockGame.EXPECT().StatusWithModal(mockPlayer1, enemyCards).Return(expectedStatus)
 
@@ -227,8 +240,8 @@ func TestSpyAction_Execute(t *testing.T) {
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Deck().Return(mockDeck)
 		mockDeck.EXPECT().Reveal(5).Return([]cards.Card{})
-		mockSpy.EXPECT().GetID().Return("SPY1")
-		mockPlayer1.EXPECT().RemoveFromHand("SPY1").Return([]cards.Card{mockSpy}, nil)
+		mockSpy.EXPECT().GetID().Return("spy-id")
+		mockPlayer1.EXPECT().RemoveFromHand("spy-id").Return([]cards.Card{mockSpy}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockSpy)
 
 		_, statusFn, err := action.Execute(mockGame)
@@ -258,8 +271,8 @@ func TestSpyAction_Execute(t *testing.T) {
 		})
 		mockPlayer2.EXPECT().Hand().Return(mockEnemyHand)
 		mockEnemyHand.EXPECT().ShowCards().Return([]cards.Card{})
-		mockSpy.EXPECT().GetID().Return("SPY1")
-		mockPlayer1.EXPECT().RemoveFromHand("SPY1").Return([]cards.Card{mockSpy}, nil)
+		mockSpy.EXPECT().GetID().Return("spy-id")
+		mockPlayer1.EXPECT().RemoveFromHand("spy-id").Return([]cards.Card{mockSpy}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockSpy)
 
 		_, statusFn, err := action.Execute(mockGame)

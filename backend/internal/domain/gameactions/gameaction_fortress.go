@@ -27,15 +27,17 @@ type fortressTargetPlayer interface {
 type fortressAction struct {
 	playerName       string
 	targetPlayerName string // empty = own castle
+	cardID           string
 
 	targetPlayer fortressTargetPlayer
 	fortressCard cards.Fortress
 }
 
-func NewFortressAction(playerName, targetPlayerName string) *fortressAction {
+func NewFortressAction(playerName, targetPlayerName, cardID string) *fortressAction {
 	return &fortressAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
+		cardID:           cardID,
 	}
 }
 
@@ -47,9 +49,13 @@ func (a *fortressAction) Validate(g Game) error {
 	}
 
 	p := g.CurrentPlayer()
-	fortress, ok := board.HasCardTypeInHand[cards.Fortress](p)
+	raw, ok := p.GetCardFromHand(a.cardID)
 	if !ok {
-		return errors.New("player does not have a fortress to use")
+		return fmt.Errorf("card %s not found in hand", a.cardID)
+	}
+	fortress, ok := raw.(cards.Fortress)
+	if !ok {
+		return errors.New("card is not a fortress")
 	}
 
 	targetName := a.targetPlayerName

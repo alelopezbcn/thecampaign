@@ -1478,10 +1478,10 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         gameState.pendingModalAction = 'sabotage';
         const enemies = getEnemyOpponents();
         if (enemies.length === 1) {
-            sendAction('sabotage', { target_player: enemies[0].player_name });
+            sendAction('sabotage', { card_id: gameState.actionState.weaponId, target_player: enemies[0].player_name });
         } else {
             showTargetPlayerModal('Select a player to sabotage', enemies,
-                (playerName) => sendAction('sabotage', { target_player: playerName }),
+                (playerName) => sendAction('sabotage', { card_id: gameState.actionState.weaponId, target_player: playerName }),
                 (opp) => `${opp.cards_in_hand} card(s) in hand`);
         }
     } else if (cardType === 'desertion') {
@@ -1678,7 +1678,7 @@ function showFortressConfirmModal(card, targetPlayer) {
         cardsHtml: cardsHtml,
         description: `Place a fortress wall on ${castleLabel} to block the next catapult attack`,
         onConfirm: () => {
-            const payload = {};
+            const payload = { card_id: card.id };
             if (targetPlayer) payload.target_player = targetPlayer;
             sendAction('fortress', payload);
             resetActionState();
@@ -1735,7 +1735,7 @@ function showResurrectionConfirmModal(cardID, card, targetPlayer) {
         cardsHtml: cardsHtml,
         description: `Bring a random fallen warrior back from the cemetery to ${fieldLabel}`,
         onConfirm: () => {
-            const payload = {};
+            const payload = { card_id: cardID };
             if (targetPlayer) payload.target_player = targetPlayer;
             sendAction('resurrection', payload);
             resetActionState();
@@ -4588,7 +4588,7 @@ function showStealModal() {
 
 function selectStealPosition(position) {
     gameState.pendingModalAction = 'steal';
-    sendAction('steal', { target_player: gameState.actionState.targetPlayer, card_position: position });
+    sendAction('steal', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, card_position: position });
     hideGameModal();
 }
 
@@ -4627,7 +4627,7 @@ function showDesertionModal() {
 }
 
 function selectDesertionWarrior(warriorID) {
-    sendAction('desertion', { target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
+    sendAction('desertion', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
     hideGameModal();
 }
 
@@ -4651,24 +4651,27 @@ function showSpyOptionsModal() {
 }
 
 function selectSpyOption(option) {
-    hideGameModal();
+    const cardId = gameState.actionState.weaponId;
 
     if (option === 1) {
         // Reveal deck - no target player needed
         gameState.pendingModalAction = 'spy_deck';
         const enemies = getEnemyOpponents();
         // Backend requires a target_player even for deck spy; use first enemy
-        sendAction('spy', { target_player: enemies[0]?.player_name || '', option: option });
+        sendAction('spy', { card_id: cardId, target_player: enemies[0]?.player_name || '', option: option });
+        hideGameModal();
     } else {
         // Reveal hand - need to select target player
         const enemies = getEnemyOpponents();
         if (enemies.length === 1) {
             gameState.pendingModalAction = 'spy_hand';
-            sendAction('spy', { target_player: enemies[0].player_name, option: option });
+            sendAction('spy', { card_id: cardId, target_player: enemies[0].player_name, option: option });
+            hideGameModal();
         } else {
+            hideGameModal();
             showTargetPlayerModal('Whose hand do you want to reveal?', enemies, (playerName) => {
                 gameState.pendingModalAction = 'spy_hand';
-                sendAction('spy', { target_player: playerName, option: option });
+                sendAction('spy', { card_id: cardId, target_player: playerName, option: option });
             }, (opp) => `${opp.cards_in_hand} cards in hand`);
         }
     }
@@ -4720,12 +4723,12 @@ function showCatapultModal() {
 }
 
 function selectCatapultPosition(position) {
-    sendAction('catapult', { target_player: gameState.actionState.targetPlayer, card_position: position });
+    sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, card_position: position });
     hideGameModal();
 }
 
 function confirmCatapultFortress(targetName) {
-    sendAction('catapult', { target_player: targetName, card_position: 1 });
+    sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: targetName, card_position: 1 });
     hideGameModal();
 }
 

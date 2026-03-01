@@ -500,8 +500,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		// Check if player can attack with weapons OR catapult
 		canAttackWithCatapult := false
 
-		_, ok := board.HasCardTypeInHand[cards.Catapult](p)
-		if ok {
+		if ok := board.HasCardTypeInHand[cards.Catapult](p); ok {
 			for _, e := range g.Enemies(g.currentTurn) {
 				if e.Castle().CanBeAttacked() {
 					canAttackWithCatapult = true
@@ -511,7 +510,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		}
 
 		canAttackWithBloodRain := false
-		if _, ok := board.HasCardTypeInHand[cards.BloodRain](p); ok {
+		if board.HasCardTypeInHand[cards.BloodRain](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				if len(e.Field().Warriors()) > 0 {
 					canAttackWithBloodRain = true
@@ -521,7 +520,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		}
 
 		canAttackWithHarpoon := false
-		if _, ok := board.HasCardTypeInHand[cards.Harpoon](p); ok {
+		if board.HasCardTypeInHand[cards.Harpoon](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				for _, w := range e.Field().Warriors() {
 					if w.Type() == types.DragonWarriorType {
@@ -545,12 +544,12 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	}
 
 	if expectedAction == types.PhaseTypeSpySteal {
-		_, hasSpy := board.HasCardTypeInHand[cards.Spy](p)
-		_, hasThief := board.HasCardTypeInHand[cards.Thief](p)
-		_, hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
+		hasSpy := board.HasCardTypeInHand[cards.Spy](p)
+		hasThief := board.HasCardTypeInHand[cards.Thief](p)
+		hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
 
 		canUseDesertion := false
-		if _, ok := board.HasCardTypeInHand[cards.Desertion](p); ok {
+		if board.HasCardTypeInHand[cards.Desertion](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				for _, w := range e.Field().Warriors() {
 					if w.Health() <= cards.DesertionMaxHP {
@@ -575,7 +574,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 
 	if expectedAction == types.PhaseTypeBuy {
 		canPlaceAmbush := false
-		if _, hasAmbush := board.HasCardTypeInHand[cards.Ambush](p); hasAmbush {
+		if board.HasCardTypeInHand[cards.Ambush](p) {
 			canPlaceAmbush = !board.HasFieldSlotCard[cards.Ambush](p.Field())
 		}
 		if p.CanBuy() || g.turnState.CanTrade || canPlaceAmbush {
@@ -605,7 +604,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		}
 		if !canConstruct {
 			// Check if player has a Fortress card and a valid target castle
-			if _, hasFortress := board.HasCardTypeInHand[cards.Fortress](p); hasFortress {
+			if board.HasCardTypeInHand[cards.Fortress](p) {
 				if p.Castle().IsConstructed() && !p.Castle().IsProtected() {
 					canConstruct = true
 				}

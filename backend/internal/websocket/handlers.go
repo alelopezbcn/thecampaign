@@ -192,7 +192,7 @@ func (h *Hub) handleSpy(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewSpyAction(client.PlayerName, p.TargetPlayer, p.Option))
+		return g.ExecuteAction(gameactions.NewSpyAction(client.PlayerName, p.TargetPlayer, p.Option, p.CardID))
 	})
 }
 
@@ -210,7 +210,7 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewStealAction(client.PlayerName, p.TargetPlayer, p.CardPosition))
+		return g.ExecuteAction(gameactions.NewStealAction(client.PlayerName, p.TargetPlayer, p.CardPosition, p.CardID))
 	})
 }
 
@@ -228,7 +228,7 @@ func (h *Hub) handleDesertion(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewDesertionAction(client.PlayerName, p.TargetPlayer, p.WarriorID))
+		return g.ExecuteAction(gameactions.NewDesertionAction(client.PlayerName, p.TargetPlayer, p.WarriorID, p.CardID))
 	})
 }
 
@@ -246,7 +246,7 @@ func (h *Hub) handleCatapult(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewCatapultAction(client.PlayerName, p.TargetPlayer, p.CardPosition))
+		return g.ExecuteAction(gameactions.NewCatapultAction(client.PlayerName, p.TargetPlayer, p.CardPosition, p.CardID))
 	})
 }
 
@@ -264,7 +264,7 @@ func (h *Hub) handleFortress(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewFortressAction(client.PlayerName, p.TargetPlayer))
+		return g.ExecuteAction(gameactions.NewFortressAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 
@@ -282,7 +282,7 @@ func (h *Hub) handleResurrection(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewResurrectionAction(client.PlayerName, p.TargetPlayer))
+		return g.ExecuteAction(gameactions.NewResurrectionAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 
@@ -300,7 +300,7 @@ func (h *Hub) handleSabotage(client *Client, payload interface{}) {
 	}
 
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewSabotageAction(client.PlayerName, p.TargetPlayer))
+		return g.ExecuteAction(gameactions.NewSabotageAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 
