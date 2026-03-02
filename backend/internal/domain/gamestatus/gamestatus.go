@@ -2,6 +2,7 @@ package gamestatus
 
 import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameevents"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
@@ -57,6 +58,11 @@ type GameStatus struct {
 	GameStartedAt              string                 `json:"game_started_at"`
 	TurnStartedAt              string                 `json:"turn_started_at"`
 	TurnTimeLimitSecs          int                    `json:"turn_time_limit_secs"`
+	CurrentEvent               string                 `json:"current_event"`
+	CurrentEventDisplay        string                 `json:"current_event_display"`
+	CurrentEventDescription    string                 `json:"current_event_description"`
+	CurrentEventWeaponModifier int                    `json:"current_event_weapon_modifier,omitempty"`
+	CurrentEventExcludedWeapon string                 `json:"current_event_excluded_weapon,omitempty"`
 }
 
 type OpponentStatus struct {
@@ -110,6 +116,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 		gs.ModalCards = append(gs.ModalCards, fromDomainCard(c))
 	}
 
+	applyEventInfo(in, &gs)
 	applyMoveWarriorAnimation(in, &gs)
 	applyAttackAnimation(in, &gs)
 	applyBloodRainAnimation(in, &gs)
@@ -134,6 +141,18 @@ func NewGameStatus(in BuildInput) GameStatus {
 	}
 
 	return gs
+}
+
+func applyEventInfo(in BuildInput, gs *GameStatus) {
+	handler := gameevents.NewHandler(in.CurrentEvent)
+	name, desc := handler.Display()
+	gs.CurrentEvent = string(in.CurrentEvent.Type)
+	gs.CurrentEventDisplay = name
+	gs.CurrentEventDescription = desc
+	if in.CurrentEvent.Type == types.EventTypeCurse {
+		gs.CurrentEventWeaponModifier = in.CurrentEvent.CurseModifier
+		gs.CurrentEventExcludedWeapon = string(in.CurrentEvent.CurseExcludedWeapon)
+	}
 }
 
 func applyMoveWarriorAnimation(in BuildInput, gs *GameStatus) {

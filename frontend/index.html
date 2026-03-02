@@ -217,6 +217,14 @@
             <!-- Divider -->
             <div class="battlefield-divider"></div>
 
+            <!-- Event Banner (inline, below main board) -->
+            <div id="event-banner" class="event-banner" data-event="">
+                <span class="event-banner-label">EVENT</span>
+                <span class="event-banner-name">Calm</span>
+                <span class="event-banner-sep">&#8212;</span>
+                <span class="event-banner-desc">No special effects this round</span>
+            </div>
+
             <!-- Player Board -->
             <div class="board player-board">
                 <div class="player-area">
@@ -475,6 +483,16 @@
                 <div class="settings-modal-footer">
                     <button id="settings-apply-btn" class="btn btn-primary btn-small">Apply</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Event Turn Modal (shown to active player at turn start when event is active) -->
+        <div id="event-turn-modal" class="event-turn-modal hidden">
+            <div id="event-turn-modal-content" class="event-turn-modal-content" data-event="">
+                <div class="event-turn-modal-header">Active Event</div>
+                <div id="event-turn-modal-name" class="event-turn-modal-name"></div>
+                <div id="event-turn-modal-desc" class="event-turn-modal-desc"></div>
+                <button id="event-turn-modal-close" class="btn btn-secondary btn-small">OK</button>
             </div>
         </div>
 

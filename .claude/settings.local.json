@@ -31,7 +31,8 @@
       "Bash(git commit:*)",
       "Bash(powershell.exe -File:*)",
       "Bash(make mocks)",
-      "Bash(echo \"Exit: $?\")"
+      "Bash(echo \"Exit: $?\")",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

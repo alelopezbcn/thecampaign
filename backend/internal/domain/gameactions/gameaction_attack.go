@@ -18,6 +18,27 @@ type attackGame interface {
 	GameStatusProvider
 }
 
+// curseModifiedWeapon wraps a Weapon and overrides DamageAmount with the Curse-adjusted value.
+type curseModifiedWeapon struct {
+	cards.Weapon
+	effectiveDamage int
+}
+
+func (w *curseModifiedWeapon) DamageAmount() int { return w.effectiveDamage }
+
+// applyWeaponModifier returns the weapon unchanged when mod is 0,
+// otherwise returns a wrapper with the Curse-adjusted damage (minimum 0).
+func applyWeaponModifier(weapon cards.Weapon, mod int) cards.Weapon {
+	if mod == 0 {
+		return weapon
+	}
+	effective := weapon.DamageAmount() + mod
+	if effective < 0 {
+		effective = 0
+	}
+	return &curseModifiedWeapon{Weapon: weapon, effectiveDamage: effective}
+}
+
 type attackAction struct {
 	playerName       string
 	targetPlayerName string
@@ -86,6 +107,11 @@ func (a *attackAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, e
 }
 
 func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameStatus, error) {
+	// Apply Curse event modifier to weapon damage (cached to avoid repeated Type() calls).
+	weaponType := a.weapon.Type()
+	weaponMod := g.EventHandler().WeaponDamageModifier(weaponType)
+	effectiveWeapon := applyWeaponModifier(a.weapon, weaponMod)
+
 	// Check if the defender has an ambush in their field.
 	if ambush, ok := board.GetFieldSlotCard[cards.Ambush](a.targetPlayer.Field()); ok {
 		a.targetPlayer.Field().RemoveSlotCard(ambush)
@@ -93,7 +119,7 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		// Discard the ambush card via its observer (set when it was in defender's hand).
 		ambush.GetCardMovedToPileObserver().OnCardMovedToPile(ambush)
 
-		result := a.applyAmbushEffect(ambush.Effect(), g)
+		result := a.applyAmbushEffect(ambush.Effect(), effectiveWeapon, weaponType, g)
 		statusFn := func() gamestatus.GameStatus {
 			return g.Status(a.currentPlayer)
 		}
@@ -101,7 +127,7 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 	}
 
 	// Normal attack.
-	err := a.target.BeAttacked(a.weapon)
+	err := a.target.BeAttacked(effectiveWeapon)
 	if err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("attack action failed: %w", err)
@@ -131,7 +157,8 @@ func (a *attackAction) NextPhase() types.PhaseType {
 }
 
 // applyAmbushEffect applies the pre-determined ambush effect and returns the result.
-func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, g attackGame) *Result {
+// effectiveWeapon carries the Curse-adjusted damage; weaponType is cached to avoid extra Type() calls.
+func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWeapon cards.Weapon, weaponType types.WeaponType, g attackGame) *Result {
 	result := &Result{
 		Action:             types.LastActionAmbush,
 		AttackWeaponID:     a.weaponID,
@@ -144,13 +171,13 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, g attackGame
 	switch effect {
 	case types.AmbushEffectReflectDamage:
 		// Reflected damage equals the exact amount the original target would have received.
-		w := findWarriorForWeapon(a.currentPlayer.Field(), a.weapon.Type())
+		w := findWarriorForWeapon(a.currentPlayer.Field(), weaponType)
 		if w != nil {
 			multiplier := 1
 			if targetWarrior, ok := a.target.(cards.Warrior); ok {
-				multiplier = a.weapon.MultiplierFactor(targetWarrior)
+				multiplier = effectiveWeapon.MultiplierFactor(targetWarrior)
 			}
-			w.ReceiveDamage(a.weapon, multiplier)
+			w.ReceiveDamage(effectiveWeapon, multiplier)
 			g.AddHistory(fmt.Sprintf("%s's attack was reflected — %s takes damage",
 				a.currentPlayer.Name(), w.String()), types.CategoryAction)
 		} else {
@@ -178,8 +205,8 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, g attackGame
 		// BeAttacked is skipped deliberately — calling it would risk killing the warrior (via
 		// dead()) before the heal can run, and the net behaviour is the same as absorbing the hit.
 		if warrior, ok := a.target.(cards.Warrior); ok {
-			multiplier := a.weapon.MultiplierFactor(warrior)
-			warrior.HealBy(a.weapon.DamageAmount() * multiplier)
+			multiplier := effectiveWeapon.MultiplierFactor(warrior)
+			warrior.HealBy(effectiveWeapon.DamageAmount() * multiplier)
 		}
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)

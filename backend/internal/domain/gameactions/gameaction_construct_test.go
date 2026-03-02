@@ -151,6 +151,7 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent()) // mod=0 → no wrapper
 		mockPlayer1.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(errors.New("invalid card"))
 
@@ -170,6 +171,7 @@ func TestConstructAction_Execute(t *testing.T) {
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockPlayer1.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(nil)
 		mockPlayer1.EXPECT().Name().Return("Player1")
@@ -195,6 +197,7 @@ func TestConstructAction_Execute(t *testing.T) {
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(nil)
 		mockPlayer1.EXPECT().Name().Return("Player1")
@@ -220,6 +223,7 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(errors.New("castle full"))
 
@@ -238,6 +242,7 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockPlayer1.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(nil)
 		mockPlayer1.EXPECT().Name().Return("Player1")
@@ -265,6 +270,7 @@ func TestConstructAction_Execute(t *testing.T) {
 		mockCastle := mocks.NewMockCastle(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockPlayer2.EXPECT().Castle().Return(mockCastle)
 		mockCastle.EXPECT().Construct(mockResource).Return(nil)
 		mockPlayer1.EXPECT().Name().Return("Player1")
@@ -282,5 +288,115 @@ func TestConstructAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, statusFn)
 		assert.Contains(t, capturedMsg, "Player2's castle")
+	})
+}
+
+func TestConstructAction_Execute_Harvest(t *testing.T) {
+	t.Run("Harvest boosts resource value — Construct receives wrapper when castle is built", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockResource := validateConstructOwnCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(harvestEvent(3)) // +3 value modifier
+		mockPlayer1.EXPECT().Castle().Return(mockCastle)
+		// Castle is already built → wrapper applied → Construct receives harvestModifiedResource
+		mockCastle.EXPECT().IsConstructed().Return(true)
+		mockResource.EXPECT().Value().Return(2) // 2 + 3 = 5 effective
+		mockCastle.EXPECT().Construct(gomock.Any()).Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionConstruct, result.Action)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+
+	t.Run("Harvest negative modifier — effective value clamped to 1 minimum", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockResource := validateConstructOwnCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(harvestEvent(-4)) // -4 modifier
+		mockPlayer1.EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().IsConstructed().Return(true)
+		mockResource.EXPECT().Value().Return(2) // 2 + (-4) = -2 → clamped to 1
+		// Construct still called with a wrapper (effective value = 1)
+		mockCastle.EXPECT().Construct(gomock.Any()).Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
+		mockGame.EXPECT().Status(mockPlayer1).Return(gamestatus.GameStatus{})
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionConstruct, result.Action)
+		statusFn()
+	})
+
+	t.Run("Harvest skipped during initial castle construction", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockResource := validateConstructOwnCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(harvestEvent(3))
+		mockPlayer1.EXPECT().Castle().Return(mockCastle)
+		// Castle NOT yet built → modifier skipped → original card passed
+		mockCastle.EXPECT().IsConstructed().Return(false)
+		mockCastle.EXPECT().Construct(mockResource).Return(nil) // original, not wrapped
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
+		mockGame.EXPECT().Status(mockPlayer1).Return(gamestatus.GameStatus{})
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionConstruct, result.Action)
+		statusFn()
+	})
+
+	t.Run("Harvest applied to ally castle construction", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockResource := validateConstructAllyCastle(t, ctrl)
+		mockCastle := mocks.NewMockCastle(ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(harvestEvent(2))
+		mockPlayer2.EXPECT().Castle().Return(mockCastle)
+		mockCastle.EXPECT().IsConstructed().Return(true)
+		mockResource.EXPECT().Value().Return(3) // 3 + 2 = 5 effective
+		mockCastle.EXPECT().Construct(gomock.Any()).Return(nil)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockResource.EXPECT().GetID().Return("G1")
+		mockPlayer1.EXPECT().RemoveFromHand("G1").Return(nil, nil)
+		mockGame.EXPECT().Status(mockPlayer1).Return(gamestatus.GameStatus{})
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionConstruct, result.Action)
+		statusFn()
 	})
 }

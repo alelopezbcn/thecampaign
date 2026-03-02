@@ -314,6 +314,12 @@ function setupEventListeners() {
         if (e.target === e.currentTarget) hideAmbushTriggeredModal();
     });
 
+    // Event turn modal close
+    document.getElementById('event-turn-modal-close').addEventListener('click', hideEventTurnModal);
+    document.getElementById('event-turn-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) hideEventTurnModal();
+    });
+
     // Game over
     document.getElementById('new-game-btn').addEventListener('click', () => location.reload());
 
@@ -837,6 +843,20 @@ function handleGameState(payload) {
     const errorMsg = payload.game_status.error_msg;
     if (errorMsg && errorMsg.length > 0) {
         showErrorToast(errorMsg);
+    }
+
+    // Event banner (always update)
+    renderEventBanner(payload.game_status);
+
+    // Event change toast for non-active players when the round event changes
+    const prevEvent = previousState?.current_event;
+    if (prevEvent !== undefined && prevEvent !== payload.game_status.current_event && !isNowYourTurn) {
+        showEventChangeToast(payload.game_status);
+    }
+
+    // Event turn modal for active player at turn start (only when an event is active)
+    if (!wasYourTurn && isNowYourTurn && payload.game_status.current_event) {
+        showEventTurnModal(payload.game_status);
     }
 }
 
@@ -1459,6 +1479,16 @@ function showBloodRainConfirmModal(weapon, targetOpponent) {
     });
 }
 
+// Returns the flat Curse damage modifier for the given weapon, or 0 if not affected.
+function getCurseWeaponModifier(weapon) {
+    const gs = gameState.currentState;
+    if (!gs || gs.current_event !== 'curse' || !gs.current_event_weapon_modifier) return 0;
+    const subType = weapon?.sub_type || '';
+    if (subType === gs.current_event_excluded_weapon) return 0;
+    if (!['Sword', 'Arrow', 'Poison'].includes(subType)) return 0;
+    return gs.current_event_weapon_modifier;
+}
+
 function showAttackConfirmModal(weapon, target) {
     const weaponName = getCardName(weapon);
     const weaponDmg = weapon?.value || 0;
@@ -1466,8 +1496,11 @@ function showAttackConfirmModal(weapon, target) {
     const targetHp = target?.value || 0;
     const targetId = target?.id;
     const multiplier = weapon?.dmg_mult?.[targetId] || 1;
-    const effectiveDmg = weaponDmg * multiplier;
     const hasDoubleDamage = multiplier > 1;
+
+    const curseModifier = getCurseWeaponModifier(weapon);
+    const effectiveWeaponDmg = Math.max(0, weaponDmg + curseModifier);
+    const effectiveDmg = effectiveWeaponDmg * multiplier;
 
     const isProtected = target?.protected_by && target.protected_by.id;
     const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
@@ -1478,8 +1511,13 @@ function showAttackConfirmModal(weapon, target) {
 
     let description;
     let dmgLabel;
-    if (hasDoubleDamage) {
+    const curseSign = curseModifier > 0 ? '+' : '';
+    if (hasDoubleDamage && curseModifier !== 0) {
+        dmgLabel = `${weaponName} (${weaponDmg}${curseSign}${curseModifier}=${effectiveWeaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
+    } else if (hasDoubleDamage) {
         dmgLabel = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
+    } else if (curseModifier !== 0) {
+        dmgLabel = `${weaponName} (${weaponDmg}${curseSign}${curseModifier} = ${effectiveWeaponDmg} DMG)`;
     } else {
         dmgLabel = `${weaponName} (${weaponDmg} DMG)`;
     }
@@ -4299,6 +4337,93 @@ function hideTurnTransitionModal() {
         clearTimeout(turnTransitionTimer);
         turnTransitionTimer = null;
     }
+}
+
+// ===================== Event Banner + Notifications =====================
+
+// Wraps modifier numbers in the event description with colored spans.
+// Positive values → green, negative values → red.
+function formatEventDesc(desc, eventType) {
+    // Escape HTML entities first to prevent XSS
+    let html = desc
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+    if (eventType === 'curse' || eventType === 'harvest') {
+        // These descriptions use explicit +/- signs (e.g. "-2" or "+3")
+        html = html.replace(/([+-]\d+)/g, (match) => {
+            const cls = match[0] === '+' ? 'event-num-positive' : 'event-num-negative';
+            return '<span class="' + cls + '">' + match + '</span>';
+        });
+    } else if (eventType === 'plague') {
+        // Format: "lose N HP" → red, "gain N HP" → green
+        html = html.replace(/\b(gain|lose)\s+(\d+)/g, (match, verb, num) => {
+            const cls = verb === 'gain' ? 'event-num-positive' : 'event-num-negative';
+            return verb + ' <span class="' + cls + '">' + num + '</span>';
+        });
+    } else if (eventType === 'abundance') {
+        // Bare digit → always positive/green
+        html = html.replace(/\b(\d+)\b/g, (match) => '<span class="event-num-positive">' + match + '</span>');
+    }
+
+    return html;
+}
+
+function renderEventBanner(gs) {
+    const banner = document.getElementById('event-banner');
+    if (!banner) return;
+    const eventType = gs.current_event || '';
+    banner.dataset.event = eventType;
+    banner.querySelector('.event-banner-name').textContent = gs.current_event_display || 'Calm';
+    const desc = gs.current_event_description || 'No special effects this round';
+    banner.querySelector('.event-banner-desc').innerHTML = formatEventDesc(desc, eventType);
+}
+
+// Event Turn Modal (shown to active player when their turn starts and an event is active)
+let eventTurnModalTimer = null;
+
+function showEventTurnModal(gs) {
+    const modal = document.getElementById('event-turn-modal');
+    if (!modal) return;
+    const content = document.getElementById('event-turn-modal-content');
+    content.dataset.event = gs.current_event || '';
+    const eventType = gs.current_event || '';
+    document.getElementById('event-turn-modal-name').textContent = gs.current_event_display || '';
+    const modalDesc = gs.current_event_description || '';
+    document.getElementById('event-turn-modal-desc').innerHTML = formatEventDesc(modalDesc, eventType);
+    modal.classList.remove('hidden');
+    if (eventTurnModalTimer) clearTimeout(eventTurnModalTimer);
+    eventTurnModalTimer = setTimeout(() => hideEventTurnModal(), 5000);
+}
+
+function hideEventTurnModal() {
+    const modal = document.getElementById('event-turn-modal');
+    if (modal) modal.classList.add('hidden');
+    if (eventTurnModalTimer) { clearTimeout(eventTurnModalTimer); eventTurnModalTimer = null; }
+}
+
+// Event Change Toast (shown to non-active players when the round event changes)
+function showEventChangeToast(gs) {
+    const container = document.getElementById('error-toast-container');
+    if (!container) return;
+    const name = gs.current_event_display || 'Calm';
+    const desc = gs.current_event_description || 'No special effects this round';
+    const toast = document.createElement('div');
+    toast.className = 'error-toast event-change-toast';
+    toast.dataset.event = gs.current_event || '';
+    toast.innerHTML =
+        '<span class="error-toast-icon">&#9670;</span>' +
+        '<div class="error-toast-content">' +
+            '<div class="error-toast-title">New Round &#8212; ' + name + '</div>' +
+            '<div class="error-toast-message">' + desc + '</div>' +
+        '</div>' +
+        '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
+    container.appendChild(toast);
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
 }
 
 // Stolen Card Notification Modal

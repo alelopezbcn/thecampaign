@@ -1,11 +1,12 @@
 Fixes:
-
+flickering cards
 
 Code improvements:
-
-
-Mecánicas nuevas:
-Clima / Eventos - Al inicio de cada ronda, se revela una carta de evento global: "Tormenta" (las flechas hacen -2 daño), "Sequía" (construir cuesta el doble), "Luna llena" (los Magos hacen daño x3). Agrega variabilidad entre partidas.
+- pedir un code review a Jean
+- get the most from Claude
+wealthy mode with catapults
+7-8-9 gold card multiplayer in game settings
+si en 1v1 uno se desconecta, deberia haber un timer de x tiep antes de marcar el juego como terminado
 
 
 Deseable:

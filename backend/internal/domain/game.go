@@ -31,6 +31,7 @@ type game struct {
 	currentAction       types.PhaseType
 	turnState           types.TurnState
 	currentEvent        types.ActiveEvent
+	eventBag            []types.EventType
 	history             []types.HistoryLine
 	historyTracker      int
 	lastResult          gameactions.Result
@@ -84,7 +85,15 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, cas
 }
 
 func (g *game) drawRandomEvent() types.ActiveEvent {
-	eventType := types.AllEventTypes[rand.Intn(len(types.AllEventTypes))]
+	if len(g.eventBag) == 0 {
+		g.eventBag = make([]types.EventType, len(types.AllEventTypes))
+		copy(g.eventBag, types.AllEventTypes)
+		rand.Shuffle(len(g.eventBag), func(i, j int) {
+			g.eventBag[i], g.eventBag[j] = g.eventBag[j], g.eventBag[i]
+		})
+	}
+	eventType := g.eventBag[0]
+	g.eventBag = g.eventBag[1:]
 	event := types.ActiveEvent{Type: eventType}
 
 	switch eventType {
@@ -850,6 +859,7 @@ func (g *game) getStatus(viewer board.Player,
 		AmbushAttackerName:       g.lastResult.AmbushAttackerName,
 		DeserterFromPlayer:       g.lastResult.DeserterFromPlayer,
 		DeserterWarrior:          g.lastResult.DeserterWarrior,
+		CurrentEvent:             g.currentEvent,
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
