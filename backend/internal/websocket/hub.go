@@ -42,6 +42,7 @@ type GameRoom struct {
 	ID              string
 	GameMode        types.GameMode
 	MaxPlayers      int
+	Config          GameConfig
 	Game            HubGame
 	Players         map[string]*Client // playerName -> client
 	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
@@ -238,10 +239,20 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 				break
 			}
 		}
+		cfg := joinPayload.GameConfig
+		if cfg.Warriors == 0 && cfg.CastleGoal == 0 {
+			cfg = defaultGameConfig()
+		} else if cfg.ConstructionCards == 0 {
+			cfg.ConstructionCards = 1
+		}
+		if cfg.CastleGoal == 0 {
+			cfg.CastleGoal = defaultCastleGoal
+		}
 		room = &GameRoom{
 			ID:              gameID,
 			GameMode:        gameMode,
 			MaxPlayers:      maxPlayersForMode(gameMode),
+			Config:          cfg,
 			Players:         make(map[string]*Client),
 			TeamAssignments: make(map[string]int),
 		}
@@ -417,7 +428,23 @@ func (h *Hub) handleStartGame(client *Client) {
 		}
 	}
 
-	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer())
+	deckCfg := cards.DeckConfig{
+		Warriors:          room.Config.Warriors,
+		Dragons:           room.Config.Dragons,
+		Harpoons:          room.Config.Harpoons,
+		SpecialPowers:     room.Config.SpecialPowers,
+		Spies:             room.Config.Spies,
+		Thieves:           room.Config.Thieves,
+		Sabotages:         room.Config.Sabotages,
+		Catapults:         room.Config.Catapults,
+		Fortresses:        room.Config.Fortresses,
+		Ambushes:          room.Config.Ambushes,
+		BloodRains:        room.Config.BloodRains,
+		Resurrections:     room.Config.Resurrections,
+		Desertions:        room.Config.Desertions,
+		ConstructionCards: room.Config.ConstructionCards,
+	}
+	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(deckCfg), room.Config.CastleGoal)
 	if err != nil {
 		room.mutex.Unlock()
 		log.Printf("Error creating game: %v", err)
@@ -502,7 +529,23 @@ func (h *Hub) handleRestartGame(client *Client) {
 		}
 	}
 
-	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer())
+	deckCfg := cards.DeckConfig{
+		Warriors:          room.Config.Warriors,
+		Dragons:           room.Config.Dragons,
+		Harpoons:          room.Config.Harpoons,
+		SpecialPowers:     room.Config.SpecialPowers,
+		Spies:             room.Config.Spies,
+		Thieves:           room.Config.Thieves,
+		Sabotages:         room.Config.Sabotages,
+		Catapults:         room.Config.Catapults,
+		Fortresses:        room.Config.Fortresses,
+		Ambushes:          room.Config.Ambushes,
+		BloodRains:        room.Config.BloodRains,
+		Resurrections:     room.Config.Resurrections,
+		Desertions:        room.Config.Desertions,
+		ConstructionCards: room.Config.ConstructionCards,
+	}
+	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(deckCfg), room.Config.CastleGoal)
 	if err != nil {
 		room.mutex.Unlock()
 		log.Printf("Error restarting game: %v", err)

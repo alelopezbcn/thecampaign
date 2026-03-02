@@ -41,7 +41,10 @@
                             </div>
                         </div>
                     </div>
-                    <button id="create-btn" class="btn btn-primary">Create Game</button>
+                    <div class="create-btn-row">
+                        <button id="create-btn" class="btn btn-primary">Create Game</button>
+                        <button id="show-settings-link" class="btn btn-primary btn-icon-only" title="Game Settings">&#9881;</button>
+                    </div>
                     <p class="lobby-switch-link">
                         Have a game code? <a href="#" id="show-join-link">Join an existing game</a>
                     </p>
@@ -378,6 +381,99 @@
                     </div>
                 </div>
                 <button id="desertion-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
+
+        <!-- Game Settings Modal -->
+        <div id="game-settings-modal" class="modal hidden">
+            <div class="settings-modal-content">
+                <div class="settings-modal-header">
+                    <h2>Game Settings</h2>
+                    <button id="settings-close-btn" class="settings-close-btn">&times;</button>
+                </div>
+
+                <div class="settings-preset-row">
+                    <label for="settings-preset">Preset</label>
+                    <select id="settings-preset" class="settings-select"></select>
+                </div>
+
+                <div class="settings-columns">
+                    <!-- Left column -->
+                    <div class="settings-col">
+                        <div class="settings-section-title">Warriors</div>
+                        <div class="settings-row">
+                            <label>Knights / Archers / Mages (each)</label>
+                            <input type="number" id="cfg-warriors" class="settings-input" min="0" max="20">
+                        </div>
+                        <div class="settings-row">
+                            <label>Dragons</label>
+                            <input type="number" id="cfg-dragons" class="settings-input" min="0" max="10">
+                        </div>
+
+                        <div class="settings-section-title">Construction &amp; Victory</div>
+                        <div class="settings-row">
+                            <label>Construction cards (copies per value 1–9)</label>
+                            <input type="number" id="cfg-construction-cards" class="settings-input" min="1" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Castle Goal</label>
+                            <input type="number" id="cfg-castle-goal" class="settings-input" min="5" max="100">
+                        </div>
+                    </div>
+
+                    <!-- Right column -->
+                    <div class="settings-col">
+                        <div class="settings-section-title">Special Cards</div>
+                        <div class="settings-row">
+                            <label>Special Powers</label>
+                            <input type="number" id="cfg-special-powers" class="settings-input" min="0" max="20">
+                        </div>
+                        <div class="settings-row">
+                            <label>Harpoons</label>
+                            <input type="number" id="cfg-harpoons" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Spies</label>
+                            <input type="number" id="cfg-spies" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Thieves</label>
+                            <input type="number" id="cfg-thieves" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Sabotages</label>
+                            <input type="number" id="cfg-sabotages" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Catapults</label>
+                            <input type="number" id="cfg-catapults" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Fortresses</label>
+                            <input type="number" id="cfg-fortresses" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Ambushes</label>
+                            <input type="number" id="cfg-ambushes" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Blood Rains</label>
+                            <input type="number" id="cfg-blood-rains" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Resurrections</label>
+                            <input type="number" id="cfg-resurrections" class="settings-input" min="0" max="10">
+                        </div>
+                        <div class="settings-row">
+                            <label>Desertions</label>
+                            <input type="number" id="cfg-desertions" class="settings-input" min="0" max="10">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-modal-footer">
+                    <button id="settings-apply-btn" class="btn btn-primary btn-small">Apply</button>
+                </div>
             </div>
         </div>
 

@@ -13,10 +13,7 @@ import (
 	"github.com/google/uuid"
 )
 
-const (
-	maxCastleResourcesFFA = 25
-	maxCastleResources2v2 = 30
-)
+const defaultCastleGoal = 25
 
 type Games []game
 
@@ -38,10 +35,14 @@ type game struct {
 	gameStartedAt       time.Time
 }
 
-func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
+func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, castleGoal int,
 ) (*game, error) {
 	if err := validatePlayers(len(playerNames), mode); err != nil {
 		return nil, err
+	}
+
+	if castleGoal <= 0 {
+		castleGoal = defaultCastleGoal
 	}
 
 	now := time.Now()
@@ -57,9 +58,8 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer,
 		turnState:           types.TurnState{StartedAt: now},
 	}
 
-	castleResourcesToWin := maxCastleResourcesFFA
+	castleResourcesToWin := castleGoal
 	if mode == types.GameMode2v2 {
-		castleResourcesToWin = maxCastleResources2v2
 		g.teams = map[int][]int{
 			1: {0, 2}, // Team 1: Player 1 and Player 3
 			2: {1, 3}, // Team 2: Player 2 and Player 4
