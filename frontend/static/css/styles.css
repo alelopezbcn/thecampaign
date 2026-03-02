@@ -1005,6 +1005,24 @@ body {
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 
+/* 2v2: enemy boards 30% smaller, ally stays full size */
+.opponents-container[data-count="3"] .opponent-board:not(.ally) {
+    zoom: 0.7;
+}
+
+/* FFA5: all opponent boards 30% smaller */
+.opponents-container[data-count="4"] .opponent-board {
+    zoom: 0.7;
+}
+
+/* Compensate name/title size on scaled-down boards */
+.opponents-container[data-count="3"] .opponent-board:not(.ally) .opponent-name,
+.opponents-container[data-count="3"] .opponent-board:not(.ally) h4,
+.opponents-container[data-count="4"] .opponent-board .opponent-name,
+.opponents-container[data-count="4"] .opponent-board h4 {
+    font-size: 1.25em;
+}
+
 .opponent-board {
     background: linear-gradient(180deg, rgba(255, 80, 80, 0.06) 0%, rgba(255, 80, 80, 0.02) 100%);
     border: 1px solid rgba(255, 80, 80, 0.15);
