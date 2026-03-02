@@ -9,7 +9,7 @@ type HandCard struct {
 	Card
 	CanBeUsedOnIDs []string       `json:"use_on"`
 	CanBeUsed      bool           `json:"can_be_used"`
-	DmgMultiplier  map[string]int `json:"dmg_mult"`
+	DmgMultiplier  map[string]int `json:"dmg_mult,omitempty"`
 	CanBeTraded    bool           `json:"can_be_traded"`
 }
 
@@ -17,11 +17,7 @@ func newHandCard(cardID string, cardType CardType, value int,
 	canBeUsedOnIDs []string, canBeUsed bool,
 ) HandCard {
 	return HandCard{
-		Card: Card{
-			CardID:   cardID,
-			CardType: cardType,
-			Value:    value,
-		},
+		Card:           newCard(cardID, cardType, value),
 		CanBeUsedOnIDs: canBeUsedOnIDs,
 		CanBeUsed:      canBeUsed,
 	}

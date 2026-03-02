@@ -3,8 +3,8 @@ package gamestatus
 import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 
 type Cemetery struct {
-	Corps    int  `json:"corps"`
-	LastCorp Card `json:"last_corp"`
+	Corps    int   `json:"corps"`
+	LastCorp *Card `json:"last_corp,omitempty"`
 }
 
 func NewCemetery(corps int, lastCorp cards.Warrior) Cemetery {
@@ -12,8 +12,8 @@ func NewCemetery(corps int, lastCorp cards.Warrior) Cemetery {
 		Corps: corps,
 	}
 	if lastCorp != nil {
-		c.LastCorp = fromDomainCard(lastCorp)
+		card := fromDomainCard(lastCorp)
+		c.LastCorp = &card
 	}
-
 	return c
 }

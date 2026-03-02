@@ -1,13 +1,13 @@
 package gamestatus
 
 import (
-	"time"
-
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
 const turnTimeLimitSecs = 120
+
+const timeFormat = "2006-01-02T15:04:05Z"
 
 type AmbushTrigger struct {
 	Effect        types.AmbushEffect `json:"effect"`
@@ -37,8 +37,8 @@ type GameStatus struct {
 	GameMode                   string                 `json:"game_mode"`
 	Cemetery                   Cemetery               `json:"cemetery"`
 	DiscardPile                DiscardPile            `json:"discard_pile"`
-	CardsInDeck                int                    `json:"deck"`
-	ModalCards                 []Card                 `json:"modal_cards"`
+	CardsInDeck                int                    `json:"cards_in_deck"`
+	ModalCards                 []Card                 `json:"modal_cards,omitempty"`
 	LastMovedWarriorID         string                 `json:"last_moved_warrior_id,omitempty"`
 	LastAttackWeaponID         string                 `json:"last_attack_weapon_id,omitempty"`
 	LastAttackTargetID         string                 `json:"last_attack_target_id,omitempty"`
@@ -51,22 +51,22 @@ type GameStatus struct {
 	History                    []HistoryLine          `json:"history"`
 	PlayersOrder               []string               `json:"players_order"`
 	NextTurnPlayer             string                 `json:"next_turn_player,omitempty"`
-	GameOverMsg                string                 `json:"game_over_msg"`
+	GameOverMsg                string                 `json:"game_over_msg,omitempty"`
 	IsWinner                   bool                   `json:"is_winner"`
-	GameStartedAt              time.Time              `json:"game_started_at"`
-	TurnStartedAt              time.Time              `json:"turn_started_at"`
+	GameStartedAt              string                 `json:"game_started_at"`
+	TurnStartedAt              string                 `json:"turn_started_at"`
 	TurnTimeLimitSecs          int                    `json:"turn_time_limit_secs"`
 }
 
 type OpponentStatus struct {
-	PlayerName     string
-	Field          []FieldCard
-	Castle         Castle
-	CardsInHand    int
-	IsAlly         bool
-	IsEliminated   bool
-	IsDisconnected bool
-	AmbushInField  bool
+	PlayerName     string      `json:"player_name"`
+	Field          []FieldCard `json:"field"`
+	Castle         Castle      `json:"castle"`
+	CardsInHand    int         `json:"cards_in_hand"`
+	IsAlly         bool        `json:"is_ally"`
+	IsEliminated   bool        `json:"is_eliminated"`
+	IsDisconnected bool        `json:"is_disconnected"`
+	AmbushInField  bool        `json:"ambush_in_field"`
 }
 
 func NewGameStatus(in BuildInput) GameStatus {
@@ -92,8 +92,8 @@ func NewGameStatus(in BuildInput) GameStatus {
 		CardsInDeck:         in.DeckCount,
 		History:             []HistoryLine{},
 		PlayersOrder:        playersOrder,
-		GameStartedAt:       in.GameStartedAt,
-		TurnStartedAt:       in.TurnStartedAt,
+		GameStartedAt:       in.GameStartedAt.UTC().Format(timeFormat),
+		TurnStartedAt:       in.TurnStartedAt.UTC().Format(timeFormat),
 		TurnTimeLimitSecs:   turnTimeLimitSecs,
 	}
 

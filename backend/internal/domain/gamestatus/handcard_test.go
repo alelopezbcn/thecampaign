@@ -36,8 +36,8 @@ func TestNewWarriorHandCard(t *testing.T) {
 
 			hc := gamestatus.NewWarriorHandCard(warrior)
 
-			assert.Equal(t, "W1", hc.CardID)
-			assert.Equal(t, tt.wantType, hc.CardType)
+			assert.Equal(t, "W1", hc.ID)
+			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, 20, hc.Value)
 			assert.True(t, hc.CanBeUsed)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -60,8 +60,8 @@ func TestNewWeaponHandCard(t *testing.T) {
 
 		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeBuy)
 
-		assert.Equal(t, "S1", hc.CardID)
-		assert.Equal(t, gamestatus.CardTypeSword, hc.CardType)
+		assert.Equal(t, "S1", hc.ID)
+		assert.Equal(t, gamestatus.CardTypeSword, hc.CardType())
 		assert.Equal(t, 7, hc.Value)
 		assert.False(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
@@ -81,8 +81,8 @@ func TestNewWeaponHandCard(t *testing.T) {
 
 		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeSpySteal)
 
-		assert.Equal(t, "A1", hc.CardID)
-		assert.Equal(t, gamestatus.CardTypeArrow, hc.CardType)
+		assert.Equal(t, "A1", hc.ID)
+		assert.Equal(t, gamestatus.CardTypeArrow, hc.CardType())
 		assert.False(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
 	})
@@ -101,7 +101,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 
 		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeBuy)
 
-		assert.Equal(t, gamestatus.CardTypePoison, hc.CardType)
+		assert.Equal(t, gamestatus.CardTypePoison, hc.CardType())
 	})
 
 	t.Run("Weapon can construct when CanConstruct and in Construct phase", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestNewWeaponHandCard(t *testing.T) {
 
 		hc := gamestatus.NewWeaponHandCard(weapon, myField, []gamestatus.FieldInput{{}}, false, types.PhaseTypeConstruct)
 
-		assert.Equal(t, "P1", hc.CardID)
+		assert.Equal(t, "P1", hc.ID)
 		assert.True(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
 	})
@@ -233,8 +233,8 @@ func TestNewResourceHandCard(t *testing.T) {
 
 		hc := gamestatus.NewResourceHandCard(resource, false, false, true, types.PhaseTypeAttack)
 
-		assert.Equal(t, "G1", hc.CardID)
-		assert.Equal(t, gamestatus.CardTypeResource, hc.CardType)
+		assert.Equal(t, "G1", hc.ID)
+		assert.Equal(t, gamestatus.CardTypeResource, hc.CardType())
 		assert.Equal(t, 5, hc.Value)
 		assert.False(t, hc.CanBeUsed)
 	})
@@ -249,7 +249,7 @@ func TestNewResourceHandCard(t *testing.T) {
 
 		hc := gamestatus.NewResourceHandCard(resource, false, false, true, types.PhaseTypeBuy)
 
-		assert.Equal(t, "G1", hc.CardID)
+		assert.Equal(t, "G1", hc.ID)
 		assert.True(t, hc.CanBeUsed)
 	})
 
@@ -328,8 +328,8 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			gamestatus.FieldInput{}, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
 			types.PhaseTypeBuy)
 
-		assert.Equal(t, "SP1", hc.CardID)
-		assert.Equal(t, gamestatus.CardTypeSpecialPower, hc.CardType)
+		assert.Equal(t, "SP1", hc.ID)
+		assert.Equal(t, gamestatus.CardTypeSpecialPower, hc.CardType())
 		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
@@ -657,8 +657,8 @@ func TestNewSpyHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewSpyHandCard(tt.cardID, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, tt.wantType, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -708,8 +708,8 @@ func TestNewThiefHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewThiefHandCard(tt.cardID, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, tt.wantType, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -764,8 +764,8 @@ func TestNewSabotageHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewSabotageHandCard(tt.cardID, tt.anyEnemyHasCards, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, tt.wantType, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -822,8 +822,8 @@ func TestNewFortressHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewFortressHandCard(tt.cardID, tt.castleConstructed, tt.allyCastleConstructed, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, gamestatus.CardTypeFortress, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, gamestatus.CardTypeFortress, hc.CardType())
 			assert.Equal(t, 0, hc.Value)
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -880,8 +880,8 @@ func TestNewResurrectionHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewResurrectionHandCard(tt.cardID, tt.cemeteryCount, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, gamestatus.CardTypeResurrection, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, gamestatus.CardTypeResurrection, hc.CardType())
 			assert.Equal(t, 0, hc.Value)
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -944,8 +944,8 @@ func TestNewCatapultHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewCatapultHandCard(tt.cardID, tt.canBeUsed, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, tt.wantType, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -1030,8 +1030,8 @@ func TestNewHarpoonHandCard(t *testing.T) {
 	t.Run("Not usable outside Attack phase", func(t *testing.T) {
 		hc := gamestatus.NewHarpoonHandCard("H1", []gamestatus.FieldInput{}, types.PhaseTypeBuy)
 
-		assert.Equal(t, "H1", hc.CardID)
-		assert.Equal(t, gamestatus.CardTypeHarpoon, hc.CardType)
+		assert.Equal(t, "H1", hc.ID)
+		assert.Equal(t, gamestatus.CardTypeHarpoon, hc.CardType())
 		assert.False(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -1083,8 +1083,8 @@ func TestNewBloodRainHandCard(t *testing.T) {
 	t.Run("Not usable outside Attack phase", func(t *testing.T) {
 		hc := gamestatus.NewBloodRainHandCard("BR1", []gamestatus.FieldInput{}, types.PhaseTypeBuy)
 
-		assert.Equal(t, "BR1", hc.CardID)
-		assert.Equal(t, gamestatus.CardTypeBloodRain, hc.CardType)
+		assert.Equal(t, "BR1", hc.ID)
+		assert.Equal(t, gamestatus.CardTypeBloodRain, hc.CardType())
 		assert.False(t, hc.CanBeUsed)
 		assert.True(t, hc.CanBeTraded)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -1169,8 +1169,8 @@ func TestNewAmbushHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewAmbushHandCard(tt.cardID, tt.fieldAlreadyHasAmbush, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, gamestatus.CardTypeAmbush, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, gamestatus.CardTypeAmbush, hc.CardType())
 			assert.Equal(t, 0, hc.Value)
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Empty(t, hc.CanBeUsedOnIDs)
@@ -1234,8 +1234,8 @@ func TestNewDesertionHandCard(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hc := gamestatus.NewDesertionHandCard(tt.cardID, tt.anyEnemyHasWeakWarriors, tt.action)
 
-			assert.Equal(t, tt.cardID, hc.CardID)
-			assert.Equal(t, gamestatus.CardTypeDesertion, hc.CardType)
+			assert.Equal(t, tt.cardID, hc.ID)
+			assert.Equal(t, gamestatus.CardTypeDesertion, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)

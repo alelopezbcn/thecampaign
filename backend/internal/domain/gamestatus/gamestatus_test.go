@@ -36,8 +36,8 @@ func TestNewGameStatus_DesertionNotification_SetForVictim(t *testing.T) {
 
 	assert.NotNil(t, gs.DesertionNotification, "victim should receive a DesertionNotification")
 	assert.Equal(t, "Player1", gs.DesertionNotification.StolenBy)
-	assert.Equal(t, "K1", gs.DesertionNotification.WarriorCard.CardID)
-	assert.Equal(t, gamestatus.CardTypeKnight, gs.DesertionNotification.WarriorCard.CardType)
+	assert.Equal(t, "K1", gs.DesertionNotification.WarriorCard.ID)
+	assert.Equal(t, gamestatus.CardTypeKnight, gs.DesertionNotification.WarriorCard.CardType())
 }
 
 func TestNewGameStatus_DesertionNotification_NilForAttacker(t *testing.T) {
@@ -256,7 +256,7 @@ func TestNewGameStatus_StolenFromYouCard_SetForVictim(t *testing.T) {
 	gs := gamestatus.NewGameStatus(dto)
 
 	assert.Len(t, gs.StolenFromYouCard, 1)
-	assert.Equal(t, "K1", gs.StolenFromYouCard[0].CardID)
+	assert.Equal(t, "K1", gs.StolenFromYouCard[0].ID)
 }
 
 func TestNewGameStatus_StolenFromYouCard_NilForAttacker(t *testing.T) {
@@ -318,7 +318,7 @@ func TestNewGameStatus_SabotagedFromYouCard_SetForVictim(t *testing.T) {
 	gs := gamestatus.NewGameStatus(dto)
 
 	assert.Len(t, gs.SabotagedFromYouCard, 1)
-	assert.Equal(t, "S1", gs.SabotagedFromYouCard[0].CardID)
+	assert.Equal(t, "S1", gs.SabotagedFromYouCard[0].ID)
 }
 
 func TestNewGameStatus_SabotagedFromYouCard_NilForAttacker(t *testing.T) {
@@ -556,8 +556,8 @@ func TestNewGameStatus_ModalCards_Converted(t *testing.T) {
 	gs := gamestatus.NewGameStatus(dto)
 
 	assert.Len(t, gs.ModalCards, 1)
-	assert.Equal(t, "K1", gs.ModalCards[0].CardID)
-	assert.Equal(t, gamestatus.CardTypeKnight, gs.ModalCards[0].CardType)
+	assert.Equal(t, "K1", gs.ModalCards[0].ID)
+	assert.Equal(t, gamestatus.CardTypeKnight, gs.ModalCards[0].CardType())
 }
 
 func TestNewGameStatus_ModalCards_NilWhenNone(t *testing.T) {
@@ -607,8 +607,8 @@ func TestNewGameStatus_CurrentPlayerField_PopulatedFromViewerWarriors(t *testing
 	gs := gamestatus.NewGameStatus(dto)
 
 	assert.Len(t, gs.CurrentPlayerField, 1)
-	assert.Equal(t, "K1", gs.CurrentPlayerField[0].CardID)
-	assert.Equal(t, gamestatus.CardTypeKnight, gs.CurrentPlayerField[0].CardType)
+	assert.Equal(t, "K1", gs.CurrentPlayerField[0].ID)
+	assert.Equal(t, gamestatus.CardTypeKnight, gs.CurrentPlayerField[0].CardType())
 }
 
 func TestNewGameStatus_CurrentPlayerField_EmptyWhenNoWarriors(t *testing.T) {
@@ -695,6 +695,6 @@ func TestNewGameStatus_OpponentStatus_FieldWarriorsConverted(t *testing.T) {
 
 	assert.Len(t, gs.Opponents, 1)
 	assert.Len(t, gs.Opponents[0].Field, 1)
-	assert.Equal(t, "A1", gs.Opponents[0].Field[0].CardID)
-	assert.Equal(t, gamestatus.CardTypeArcher, gs.Opponents[0].Field[0].CardType)
+	assert.Equal(t, "A1", gs.Opponents[0].Field[0].ID)
+	assert.Equal(t, gamestatus.CardTypeArcher, gs.Opponents[0].Field[0].CardType())
 }

@@ -17,7 +17,7 @@ func TestNewDiscardPile_Empty(t *testing.T) {
 	d := gamestatus.NewDiscardPile(0, nil)
 
 	assert.Equal(t, 0, d.Cards)
-	assert.Equal(t, gamestatus.Card{}, d.LastCard)
+	assert.Nil(t, d.LastCard)
 }
 
 func TestNewDiscardPile_WithWeaponCard(t *testing.T) {
@@ -32,8 +32,8 @@ func TestNewDiscardPile_WithWeaponCard(t *testing.T) {
 	d := gamestatus.NewDiscardPile(5, lastCard)
 
 	assert.Equal(t, 5, d.Cards)
-	assert.Equal(t, "S1", d.LastCard.CardID)
-	assert.Equal(t, gamestatus.CardTypeSword, d.LastCard.CardType)
+	assert.Equal(t, "S1", d.LastCard.ID)
+	assert.Equal(t, gamestatus.CardTypeSword, d.LastCard.CardType())
 	assert.Equal(t, 7, d.LastCard.Value)
 }
 
@@ -48,7 +48,7 @@ func TestNewDiscardPile_WithResourceCard(t *testing.T) {
 	d := gamestatus.NewDiscardPile(2, lastCard)
 
 	assert.Equal(t, 2, d.Cards)
-	assert.Equal(t, "G1", d.LastCard.CardID)
-	assert.Equal(t, gamestatus.CardTypeResource, d.LastCard.CardType)
+	assert.Equal(t, "G1", d.LastCard.ID)
+	assert.Equal(t, gamestatus.CardTypeResource, d.LastCard.CardType())
 	assert.Equal(t, 3, d.LastCard.Value)
 }

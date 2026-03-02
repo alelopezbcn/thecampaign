@@ -7,8 +7,8 @@ import (
 
 type FieldCard struct {
 	Card
-	AttackedBy  []Card `json:"attacked_by"`
-	ProtectedBy Card   `json:"protected_by"`
+	AttackedBy  []Card `json:"attacked_by,omitempty"`
+	ProtectedBy *Card  `json:"protected_by,omitempty"`
 }
 
 func NewFieldCard(warrior cards.Warrior) FieldCard {
@@ -42,9 +42,10 @@ func NewFieldCard(warrior cards.Warrior) FieldCard {
 			weaponCardType, attacker.DamageAmount()))
 	}
 
-	var protectedByCard Card
+	var protectedByCard *Card
 	if ok, shield := warrior.IsProtected(); ok {
-		protectedByCard = newCard(shield.GetID(), CardTypeSpecialPower, shield.Health())
+		c := newCard(shield.GetID(), CardTypeSpecialPower, shield.Health())
+		protectedByCard = &c
 	}
 
 	return FieldCard{
