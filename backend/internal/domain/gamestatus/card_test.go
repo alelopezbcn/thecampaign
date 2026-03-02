@@ -25,8 +25,8 @@ func TestFromDomainCard_Warrior(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := fromDomainCard(tt.card)
 
-			assert.Equal(t, "W1", c.CardID)
-			assert.Equal(t, tt.wantType, c.CardType)
+			assert.Equal(t, "W1", c.ID)
+			assert.Equal(t, tt.wantType, c.CardType())
 			assert.Equal(t, tt.wantValue, c.Value)
 		})
 	}
@@ -49,8 +49,8 @@ func TestFromDomainCard_Weapon(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := fromDomainCard(tt.card)
 
-			assert.Equal(t, "WP1", c.CardID)
-			assert.Equal(t, tt.wantType, c.CardType)
+			assert.Equal(t, "WP1", c.ID)
+			assert.Equal(t, tt.wantType, c.CardType())
 			assert.Equal(t, tt.wantValue, c.Value)
 		})
 	}
@@ -61,8 +61,8 @@ func TestFromDomainCard_Resource(t *testing.T) {
 
 	c := fromDomainCard(resource)
 
-	assert.Equal(t, "G1", c.CardID)
-	assert.Equal(t, CardTypeResource, c.CardType)
+	assert.Equal(t, "G1", c.ID)
+	assert.Equal(t, CardTypeResource, c.CardType())
 	assert.Equal(t, 5, c.Value)
 }
 
@@ -71,8 +71,8 @@ func TestFromDomainCard_Spy(t *testing.T) {
 
 	c := fromDomainCard(spy)
 
-	assert.Equal(t, "SPY1", c.CardID)
-	assert.Equal(t, CardTypeSpy, c.CardType)
+	assert.Equal(t, "SPY1", c.ID)
+	assert.Equal(t, CardTypeSpy, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -81,8 +81,8 @@ func TestFromDomainCard_Thief(t *testing.T) {
 
 	c := fromDomainCard(thief)
 
-	assert.Equal(t, "THIEF1", c.CardID)
-	assert.Equal(t, CardTypeThief, c.CardType)
+	assert.Equal(t, "THIEF1", c.ID)
+	assert.Equal(t, CardTypeThief, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -91,8 +91,8 @@ func TestFromDomainCard_Catapult(t *testing.T) {
 
 	c := fromDomainCard(catapult)
 
-	assert.Equal(t, "CAT1", c.CardID)
-	assert.Equal(t, CardTypeCatapult, c.CardType)
+	assert.Equal(t, "CAT1", c.ID)
+	assert.Equal(t, CardTypeCatapult, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -101,8 +101,8 @@ func TestFromDomainCard_Fortress(t *testing.T) {
 
 	c := fromDomainCard(fortress)
 
-	assert.Equal(t, "FW1", c.CardID)
-	assert.Equal(t, CardTypeFortress, c.CardType)
+	assert.Equal(t, "FW1", c.ID)
+	assert.Equal(t, CardTypeFortress, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -111,8 +111,8 @@ func TestFromDomainCard_Harpoon(t *testing.T) {
 
 	c := fromDomainCard(harpoon)
 
-	assert.Equal(t, "H1", c.CardID)
-	assert.Equal(t, CardTypeHarpoon, c.CardType)
+	assert.Equal(t, "H1", c.ID)
+	assert.Equal(t, CardTypeHarpoon, c.CardType())
 	assert.Equal(t, 20, c.Value) // harpoonDamage = 20; Harpoon is a Weapon, not default
 }
 
@@ -121,8 +121,8 @@ func TestFromDomainCard_BloodRain(t *testing.T) {
 
 	c := fromDomainCard(bloodRain)
 
-	assert.Equal(t, "BR1", c.CardID)
-	assert.Equal(t, CardTypeBloodRain, c.CardType)
+	assert.Equal(t, "BR1", c.ID)
+	assert.Equal(t, CardTypeBloodRain, c.CardType())
 	assert.Equal(t, 4, c.Value) // bloodRainDamage = 4; BloodRain is a Weapon, not default
 }
 
@@ -131,8 +131,8 @@ func TestFromDomainCard_Resurrection(t *testing.T) {
 
 	c := fromDomainCard(resurrection)
 
-	assert.Equal(t, "RES1", c.CardID)
-	assert.Equal(t, CardTypeResurrection, c.CardType)
+	assert.Equal(t, "RES1", c.ID)
+	assert.Equal(t, CardTypeResurrection, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -141,8 +141,8 @@ func TestFromDomainCard_Sabotage(t *testing.T) {
 
 	c := fromDomainCard(sabotage)
 
-	assert.Equal(t, "SAB1", c.CardID)
-	assert.Equal(t, CardTypeSabotage, c.CardType)
+	assert.Equal(t, "SAB1", c.ID)
+	assert.Equal(t, CardTypeSabotage, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -153,10 +153,10 @@ func TestFromDomainCards(t *testing.T) {
 	result := fromDomainCards([]cards.Card{warrior, resource})
 
 	assert.Len(t, result, 2)
-	assert.Equal(t, "K1", result[0].CardID)
-	assert.Equal(t, CardTypeKnight, result[0].CardType)
-	assert.Equal(t, "G1", result[1].CardID)
-	assert.Equal(t, CardTypeResource, result[1].CardType)
+	assert.Equal(t, "K1", result[0].ID)
+	assert.Equal(t, CardTypeKnight, result[0].CardType())
+	assert.Equal(t, "G1", result[1].ID)
+	assert.Equal(t, CardTypeResource, result[1].CardType())
 }
 
 func TestFromDomainCards_Empty(t *testing.T) {
@@ -170,8 +170,8 @@ func TestFromDomainCard_Desertion(t *testing.T) {
 
 	c := fromDomainCard(desertion)
 
-	assert.Equal(t, "DES1", c.CardID)
-	assert.Equal(t, CardTypeDesertion, c.CardType)
+	assert.Equal(t, "DES1", c.ID)
+	assert.Equal(t, CardTypeDesertion, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 
@@ -180,7 +180,7 @@ func TestFromDomainCard_Ambush(t *testing.T) {
 
 	c := fromDomainCard(ambush)
 
-	assert.Equal(t, "AMB1", c.CardID)
-	assert.Equal(t, CardTypeAmbush, c.CardType)
+	assert.Equal(t, "AMB1", c.ID)
+	assert.Equal(t, CardTypeAmbush, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }

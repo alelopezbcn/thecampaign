@@ -720,7 +720,7 @@ func (h *Hub) sendReconnectState(gameID, playerName string) {
 	})
 
 	client.SendMessage(MsgGameState, GameStatePayload{
-		GameStatus: ConvertGameStatus(status),
+		GameStatus: status,
 		IsYourTurn: isCurrentPlayer,
 	})
 
@@ -762,7 +762,7 @@ func (h *Hub) sendGameStateToAll(gameID string, currentPlayerStatus gamestatus.G
 		}
 
 		client.SendMessage(MsgGameState, GameStatePayload{
-			GameStatus: ConvertGameStatus(status),
+			GameStatus: status,
 			IsYourTurn: isCurrentPlayer,
 		})
 	}
@@ -954,7 +954,7 @@ func (h *Hub) executeGameAction(client *Client, action func(HubGame) (gamestatus
 
 	h.sendGameStateToAll(client.GameID, status)
 
-	if status.GameOverMgs != "" {
+	if status.GameOverMsg != "" {
 		h.stopTurnTimer(client.GameID)
 	}
 }

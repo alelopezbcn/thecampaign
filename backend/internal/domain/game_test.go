@@ -760,6 +760,27 @@ func TestGame_getTargetPlayer(t *testing.T) {
 		assert.Contains(t, err.Error(), "cannot attack eliminated player")
 	})
 
+	t.Run("Error when targeting disconnected player", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &game{
+			board:               &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
+			mode:                types.GameModeFFA3,
+			eliminatedPlayers:   make(map[int]bool),
+			disconnectedPlayers: map[int]bool{1: true},
+		}
+
+		_, err := g.GetTargetPlayer("Player1", "Player2")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot attack disconnected player")
+	})
+
 	t.Run("Success targeting valid enemy", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()

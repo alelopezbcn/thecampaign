@@ -3,17 +3,17 @@ package gamestatus
 import "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 
 type DiscardPile struct {
-	Cards    int  `json:"cards"`
-	LastCard Card `json:"last_card"`
+	Cards    int   `json:"cards"`
+	LastCard *Card `json:"last_card,omitempty"`
 }
 
-func NewDiscardPile(cards int, lastCard cards.Card) DiscardPile {
+func NewDiscardPile(count int, lastCard cards.Card) DiscardPile {
 	d := DiscardPile{
-		Cards: cards,
+		Cards: count,
 	}
 	if lastCard != nil {
-		d.LastCard = fromDomainCard(lastCard)
+		card := fromDomainCard(lastCard)
+		d.LastCard = &card
 	}
-
 	return d
 }

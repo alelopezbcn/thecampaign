@@ -5,49 +5,58 @@ import (
 )
 
 type Card struct {
-	CardID   string   `json:"card_id"`
-	CardType CardType `json:"card_type"`
-	Value    int      `json:"value"`
+	ID      string `json:"id"`
+	Type    string `json:"type"`
+	SubType string `json:"sub_type,omitempty"`
+	Color   string `json:"color"`
+	Value   int    `json:"value,omitempty"`
 }
 
-func newCard(cardID string, cardType CardType, value int) Card {
+func newCard(id string, ct CardType, value int) Card {
 	return Card{
-		CardID:   cardID,
-		CardType: cardType,
-		Value:    value,
+		ID:      id,
+		Type:    ct.Name,
+		SubType: ct.SubName,
+		Color:   ct.Color,
+		Value:   value,
 	}
+}
+
+// CardType reconstructs the CardType from a Card's flattened fields.
+// Primarily used in tests and comparisons.
+func (c Card) CardType() CardType {
+	return CardType{Name: c.Type, SubName: c.SubType, Color: c.Color}
 }
 
 func fromDomainCards(dcs []cards.Card) []Card {
-	cards := []Card{}
+	result := []Card{}
 	for _, v := range dcs {
-		cards = append(cards, fromDomainCard(v))
+		result = append(result, fromDomainCard(v))
 	}
-
-	return cards
+	return result
 }
 
 func fromDomainCard(dc cards.Card) Card {
 	cardID := dc.GetID()
-	var aCardType CardType
+	var ct CardType
 	var value int
 
 	switch c := dc.(type) {
 	case cards.Warrior:
-		aCardType = warriorCardTypes[c.Type()]
+		ct = warriorCardTypes[c.Type()]
 		value = c.Health()
 
 	case cards.Weapon:
-		aCardType = weaponCardTypes[c.Type()]
+		ct = weaponCardTypes[c.Type()]
 		value = c.DamageAmount()
 
 	case cards.Resource:
-		aCardType = CardTypeResource
+		ct = CardTypeResource
 		value = c.Value()
 
 	default:
-		aCardType = zeroValueCardTypes[dc.Name()]
+		ct = zeroValueCardTypes[dc.Name()]
 	}
 
-	return newCard(cardID, aCardType, value)
+	return newCard(cardID, ct, value)
 }

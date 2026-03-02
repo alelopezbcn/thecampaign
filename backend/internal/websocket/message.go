@@ -1,5 +1,7 @@
 package websocket
 
+import "github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
+
 // MessageType defines the type of WebSocket message
 type MessageType string
 
@@ -197,94 +199,8 @@ type PlaceAmbushPayload struct {
 
 // GameStatePayload is sent to update clients with game state
 type GameStatePayload struct {
-	GameStatus GameStatusDTO `json:"game_status"`
-	IsYourTurn bool          `json:"is_your_turn"`
-}
-
-// GameStatusDTO is the JSON-friendly game status
-type GameStatusDTO struct {
-	CurrentPlayer  string   `json:"current_player"`
-	TurnPlayer     string   `json:"turn_player"`
-	CurrentAction  string   `json:"current_action"`
-	LastAction     string   `json:"last_action,omitempty"`
-	NewCards       []string `json:"new_cards"`
-	CanMoveWarrior bool     `json:"can_move_warrior"`
-	CanTrade       bool     `json:"can_trade"`
-
-	CurrentPlayerHand          []HandCardDTO             `json:"current_player_hand"`
-	CurrentPlayerField         []FieldCardDTO            `json:"current_player_field"`
-	CurrentPlayerCastle        CastleDTO                 `json:"current_player_castle"`
-	IsEliminated               bool                      `json:"is_eliminated"`
-	IsDisconnected             bool                      `json:"is_disconnected"`
-	Opponents                  []OpponentStatusDTO       `json:"opponents"`
-	GameMode                   string                    `json:"game_mode"`
-	Cemetery                   CemeteryDTO               `json:"cemetery"`
-	DiscardPile                DiscardPileDTO            `json:"discard_pile"`
-	CardsInDeck                int                       `json:"cards_in_deck"`
-	ModalCards                 []CardDTO                 `json:"modal_cards,omitempty"`
-	LastMovedWarriorID         string                    `json:"last_moved_warrior_id,omitempty"`
-	LastAttackWeaponID         string                    `json:"last_attack_weapon_id,omitempty"`
-	LastAttackTargetID         string                    `json:"last_attack_target_id,omitempty"`
-	LastAttackTargetPlayer     string                    `json:"last_attack_target_player,omitempty"`
-	StolenFromYouCard          []CardDTO                 `json:"stolen_from_you_card,omitempty"`
-	SabotagedFromYouCard       []CardDTO                 `json:"sabotaged_from_you_card,omitempty"`
-	SpyNotification            string                    `json:"spy_notification,omitempty"`
-	AmbushTriggered            *AmbushTriggeredDTO       `json:"ambush_triggered,omitempty"`
-	DesertionNotification      *DesertionNotificationDTO `json:"desertion_notification,omitempty"`
-	CurrentPlayerAmbushInField bool                      `json:"current_player_ambush_in_field"`
-	History                    []HistoryLineDTO          `json:"history"`
-	PlayersOrder               []string                  `json:"players_order"`
-	NextTurnPlayer             string                    `json:"next_turn_player,omitempty"`
-	GameOverMsg                string                    `json:"game_over_msg,omitempty"`
-	IsWinner                   bool                      `json:"is_winner"`
-	GameStartedAt              string                    `json:"game_started_at"`
-	TurnStartedAt              string                    `json:"turn_started_at"`
-	TurnTimeLimitSecs          int                       `json:"turn_time_limit_secs"`
-}
-
-// AmbushTriggeredDTO carries ambush trigger info for the attacker's notification modal
-type AmbushTriggeredDTO struct {
-	Effect        int    `json:"effect"`
-	EffectDisplay string `json:"effect_display"`
-}
-
-// DesertionNotificationDTO carries info about a deserted warrior for the victim
-type DesertionNotificationDTO struct {
-	WarriorCard CardDTO `json:"warrior_card"`
-	StolenBy    string  `json:"stolen_by"`
-}
-
-type OpponentStatusDTO struct {
-	PlayerName     string         `json:"player_name"`
-	Field          []FieldCardDTO `json:"field"`
-	Castle         CastleDTO      `json:"castle"`
-	CardsInHand    int            `json:"cards_in_hand"`
-	IsAlly         bool           `json:"is_ally"`
-	IsEliminated   bool           `json:"is_eliminated"`
-	IsDisconnected bool           `json:"is_disconnected"`
-	AmbushInField  bool           `json:"ambush_in_field"`
-}
-
-// HandCardDTO represents a card in the player's hand
-type HandCardDTO struct {
-	CardDTO
-	CanBeUsedOnIDs []string       `json:"use_on"`
-	CanBeUsed      bool           `json:"can_be_used"`
-	DmgMultiplier  map[string]int `json:"dmg_mult,omitempty"`
-	CanBeTraded    bool           `json:"can_be_traded"`
-}
-
-// FieldCardDTO represents a card on the battlefield
-type FieldCardDTO struct {
-	CardDTO
-	AttackedBy  []CardDTO `json:"attacked_by,omitempty"`
-	ProtectedBy *CardDTO  `json:"protected_by,omitempty"`
-}
-
-// HistoryLineDTO represents a line in the game history with color for UI display
-type HistoryLineDTO struct {
-	Msg   string `json:"msg"`
-	Color string `json:"color"`
+	GameStatus gamestatus.GameStatus `json:"game_status"`
+	IsYourTurn bool                  `json:"is_your_turn"`
 }
 
 // ErrorPayload for error messages

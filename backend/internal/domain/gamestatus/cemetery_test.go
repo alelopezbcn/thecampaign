@@ -17,7 +17,7 @@ func TestNewCemetery_Empty(t *testing.T) {
 	c := gamestatus.NewCemetery(0, nil)
 
 	assert.Equal(t, 0, c.Corps)
-	assert.Equal(t, gamestatus.Card{}, c.LastCorp)
+	assert.Nil(t, c.LastCorp)
 }
 
 func TestNewCemetery_WithCorps(t *testing.T) {
@@ -32,7 +32,7 @@ func TestNewCemetery_WithCorps(t *testing.T) {
 	c := gamestatus.NewCemetery(3, lastWarrior)
 
 	assert.Equal(t, 3, c.Corps)
-	assert.Equal(t, "K1", c.LastCorp.CardID)
-	assert.Equal(t, gamestatus.CardTypeKnight, c.LastCorp.CardType)
+	assert.Equal(t, "K1", c.LastCorp.ID)
+	assert.Equal(t, gamestatus.CardTypeKnight, c.LastCorp.CardType())
 	assert.Equal(t, 0, c.LastCorp.Value)
 }

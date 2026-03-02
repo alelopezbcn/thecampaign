@@ -9,7 +9,7 @@ type HandCard struct {
 	Card
 	CanBeUsedOnIDs []string       `json:"use_on"`
 	CanBeUsed      bool           `json:"can_be_used"`
-	DmgMultiplier  map[string]int `json:"dmg_mult"`
+	DmgMultiplier  map[string]int `json:"dmg_mult,omitempty"`
 	CanBeTraded    bool           `json:"can_be_traded"`
 }
 
@@ -17,11 +17,7 @@ func newHandCard(cardID string, cardType CardType, value int,
 	canBeUsedOnIDs []string, canBeUsed bool,
 ) HandCard {
 	return HandCard{
-		Card: Card{
-			CardID:   cardID,
-			CardType: cardType,
-			Value:    value,
-		},
+		Card:           newCard(cardID, cardType, value),
 		CanBeUsedOnIDs: canBeUsedOnIDs,
 		CanBeUsed:      canBeUsed,
 	}
@@ -287,14 +283,14 @@ func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 // specialWeaponHandCardBuilders maps each special WeaponType to its HandCard builder.
 // Standard weapons (Sword/Arrow/Poison) fall through to NewWeaponHandCard.
 // Adding a new special weapon = one entry here.
-var specialWeaponHandCardBuilders = map[types.WeaponType]func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard{
-	types.SpecialPowerWeaponType: func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard {
+var specialWeaponHandCardBuilders = map[types.WeaponType]func(id string, viewer ViewerInput, game BuildInput, action types.PhaseType) HandCard{
+	types.SpecialPowerWeaponType: func(id string, viewer ViewerInput, game BuildInput, action types.PhaseType) HandCard {
 		return NewSpecialPowerHandCard(id, viewer.Field, game.AllyFields, game.EnemyFields, action)
 	},
-	types.HarpoonWeaponType: func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard {
+	types.HarpoonWeaponType: func(id string, viewer ViewerInput, game BuildInput, action types.PhaseType) HandCard {
 		return NewHarpoonHandCard(id, game.EnemyFields, action)
 	},
-	types.BloodRainWeaponType: func(id string, viewer ViewerInput, game GameStatusDTO, action types.PhaseType) HandCard {
+	types.BloodRainWeaponType: func(id string, viewer ViewerInput, game BuildInput, action types.PhaseType) HandCard {
 		return NewBloodRainHandCard(id, game.EnemyFields, action)
 	},
 }

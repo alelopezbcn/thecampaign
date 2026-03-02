@@ -7,7 +7,7 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-type GameStatusDTO struct {
+type BuildInput struct {
 	Viewer                   ViewerInput
 	PlayersNames             []string
 	Opponents                []OpponentInput
