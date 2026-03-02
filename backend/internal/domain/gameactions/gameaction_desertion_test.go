@@ -246,13 +246,10 @@ func TestDesertionAction_Execute(t *testing.T) {
 		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion :=
 			validateDesertionAction(t, ctrl)
 
-		mockField1 := mocks.NewMockField(ctrl)
-
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().RemoveWarrior(mockWarrior).Return(true)
-		mockPlayer1.EXPECT().Field().Return(mockField1)
-		mockField1.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer1.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockDesertion.EXPECT().GetID().Return("DES1")
 		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return(nil, errors.New("card not found"))
 
@@ -271,14 +268,12 @@ func TestDesertionAction_Execute(t *testing.T) {
 		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion :=
 			validateDesertionAction(t, ctrl)
 
-		mockField1 := mocks.NewMockField(ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().RemoveWarrior(mockWarrior).Return(true)
-		mockPlayer1.EXPECT().Field().Return(mockField1)
-		mockField1.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer1.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockDesertion.EXPECT().GetID().Return("DES1")
 		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockDesertion}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockDesertion)
@@ -307,13 +302,10 @@ func TestDesertionAction_Execute(t *testing.T) {
 		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion :=
 			validateDesertionAction(t, ctrl)
 
-		mockField1 := mocks.NewMockField(ctrl)
-
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().RemoveWarrior(mockWarrior).Return(true)
-		mockPlayer1.EXPECT().Field().Return(mockField1)
-		mockField1.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer1.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockDesertion.EXPECT().GetID().Return("DES1")
 		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockDesertion}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockDesertion)

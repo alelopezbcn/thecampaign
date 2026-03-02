@@ -226,13 +226,11 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		defer ctrl.Finish()
 
 		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior := validateMoveAllyField(t, ctrl)
-		mockField := mocks.NewMockField(ctrl)
 		mockHand := mocks.NewMockHand(ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer2.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer2.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockWarrior).Return(true)
 		mockPlayer1.EXPECT().Name().Return("Player1")
@@ -304,12 +302,10 @@ func TestMoveWarriorAction_Execute(t *testing.T) {
 		defer ctrl.Finish()
 
 		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior := validateMoveAllyField(t, ctrl)
-		mockField := mocks.NewMockField(ctrl)
 		mockHand := mocks.NewMockHand(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer2.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer2.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockPlayer1.EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().RemoveCard(mockWarrior).Return(true)
 		mockPlayer1.EXPECT().Name().Return("Player1")

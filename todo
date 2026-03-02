@@ -1,13 +1,12 @@
 Fixes:
-test desertion
 
 
 Code improvements:
 
-Mecánicas nuevas:
-Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tipo para crear una de daño sumado (ej: Sword 3 + Sword 4 = Sword 7). Agrega decisiones interesantes sobre cuándo usar armas débiles vs guardarlas para forjar.
 
+Mecánicas nuevas:
 Clima / Eventos - Al inicio de cada ronda, se revela una carta de evento global: "Tormenta" (las flechas hacen -2 daño), "Sequía" (construir cuesta el doble), "Luna llena" (los Magos hacen daño x3). Agrega variabilidad entre partidas.
+
 
 Deseable:
 - persist game status

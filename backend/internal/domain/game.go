@@ -106,6 +106,14 @@ func (g *game) SetCanTrade(value bool) {
 	g.turnState.CanTrade = value
 }
 
+func (g *game) SetHasForged(value bool) {
+	g.turnState.HasForged = value
+}
+
+func (g *game) SetCanForge(value bool) {
+	g.turnState.CanForge = value
+}
+
 // AutoMoveWarriorToField moves a warrior to the field during game setup (no turn validation)
 func (g *game) AutoMoveWarriorsToField(playerName string) error {
 	p := g.GetPlayer(playerName)
@@ -499,6 +507,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	p := g.CurrentPlayer()
 	g.turnState.CanMoveWarrior = !g.turnState.HasMovedWarrior && p.HasWarriorsInHand()
 	g.turnState.CanTrade = !g.turnState.HasTraded && p.CanTradeCards()
+	g.turnState.CanForge = !g.turnState.HasForged && p.CanForgeWeapons()
 
 	if expectedAction == types.PhaseTypeAttack {
 		// Check if player can attack with weapons OR catapult
@@ -777,6 +786,7 @@ func (g *game) getStatus(viewer board.Player,
 		IsEliminated:             g.eliminatedPlayers[viewerIdx],
 		IsDisconnected:           g.disconnectedPlayers[viewerIdx],
 		CanTrade:                 g.turnState.CanTrade,
+		CanForge:                 g.turnState.CanForge,
 		CemeteryCount:            g.board.Cemetery().Count(),
 		CemeteryLastDead:         g.board.Cemetery().GetLast(),
 		DiscardPileCount:         g.board.DiscardPile().Count(),

@@ -123,6 +123,7 @@ func TestGame_ExecuteAction(t *testing.T) {
 		// nextAction expectations for PhaseTypeAttack
 		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
 		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanForgeWeapons().Return(false)
 		// HasCardTypeInHand[Catapult/BloodRain/Harpoon] each call Hand().ShowCards()
 		mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
 		mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()
@@ -164,6 +165,7 @@ func TestGame_ExecuteAction(t *testing.T) {
 		// nextAction: no attack, no spy/steal, no buy -> skips to construct
 		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
 		mockPlayer1.EXPECT().CanTradeCards().Return(false)
+		mockPlayer1.EXPECT().CanForgeWeapons().Return(false)
 		// HasCardTypeInHand[Catapult/BloodRain/Harpoon/Spy/Thief] each call Hand().ShowCards()
 		mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
 		mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()

@@ -27,6 +27,7 @@ type BuildInput struct {
 	IsEliminated             bool
 	IsDisconnected           bool
 	CanTrade                 bool
+	CanForge                 bool
 	CemeteryCount            int
 	CemeteryLastDead         cards.Warrior
 	DiscardPileCount         int

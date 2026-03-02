@@ -97,7 +97,7 @@ func (a *desertionAction) execute(g desertionGame) (*Result, func() gamestatus.G
 		return result, nil, fmt.Errorf("failed to remove warrior %s from %s's field",
 			a.warriorID, a.targetPlayerName)
 	}
-	p.Field().AddWarriors(a.warrior)
+	p.PlaceWarriorOnField(a.warrior)
 
 	// Discard the Desertion card.
 	discarded, err := p.RemoveFromHand(a.desertion.GetID())

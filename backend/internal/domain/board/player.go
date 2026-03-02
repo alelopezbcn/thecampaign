@@ -30,6 +30,7 @@ type PlayerField interface {
 	GetCardFromField(cardID string) (cards.Card, bool)
 	MoveCardToField(cardID string) error
 	HasWarriorsInHand() bool
+	PlaceWarriorOnField(w cards.Warrior)
 }
 
 // PlayerCastle — castle and economy
@@ -44,6 +45,7 @@ type PlayerCastle interface {
 type PlayerCombat interface {
 	CanAttack() bool
 	CanTradeCards() bool
+	CanForgeWeapons() bool
 }
 
 // Player composes all roles
@@ -178,6 +180,14 @@ func (p *player) MoveCardToField(cardID string) error {
 	return nil
 }
 
+// PlaceWarriorOnField adds a warrior to this player's field and registers this player
+// as the warrior's death observer. Must be used whenever a warrior is placed on a
+// field that is not its original owner's (desertion, ally move, resurrection).
+func (p *player) PlaceWarriorOnField(w cards.Warrior) {
+	w.AddWarriorDeadObserver(p)
+	p.field.AddWarriors(w)
+}
+
 func (p *player) CanAttack() bool {
 	for _, c := range p.hand.ShowCards() {
 		if w, ok := c.(cards.Weapon); ok {
@@ -271,6 +281,24 @@ func (p *player) CanTradeCards() bool {
 			count++
 			if count >= 3 {
 				return true
+			}
+		}
+	}
+	return false
+}
+
+func (p *player) CanForgeWeapons() bool {
+	forgeable := []types.WeaponType{types.SwordWeaponType, types.ArrowWeaponType, types.PoisonWeaponType}
+	counts := make(map[types.WeaponType]int, len(forgeable))
+	for _, c := range p.hand.ShowCards() {
+		if w, ok := c.(cards.Weapon); ok {
+			for _, ft := range forgeable {
+				if w.Type() == ft {
+					counts[ft]++
+					if counts[ft] >= 2 {
+						return true
+					}
+				}
 			}
 		}
 	}

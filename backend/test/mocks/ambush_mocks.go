@@ -52,6 +52,20 @@ func (mr *MockAmbushMockRecorder) AddCardMovedToPileObserver(observer any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockAmbush)(nil).AddCardMovedToPileObserver), observer)
 }
 
+// Effect mocks base method.
+func (m *MockAmbush) Effect() types.AmbushEffect {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Effect")
+	ret0, _ := ret[0].(types.AmbushEffect)
+	return ret0
+}
+
+// Effect indicates an expected call of Effect.
+func (mr *MockAmbushMockRecorder) Effect() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Effect", reflect.TypeOf((*MockAmbush)(nil).Effect))
+}
+
 // GetCardMovedToPileObserver mocks base method.
 func (m *MockAmbush) GetCardMovedToPileObserver() cards.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
@@ -92,18 +106,4 @@ func (m *MockAmbush) Name() string {
 func (mr *MockAmbushMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockAmbush)(nil).Name))
-}
-
-// Effect mocks base method.
-func (m *MockAmbush) Effect() types.AmbushEffect {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Effect")
-	ret0, _ := ret[0].(types.AmbushEffect)
-	return ret0
-}
-
-// Effect indicates an expected call of Effect.
-func (mr *MockAmbushMockRecorder) Effect() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Effect", reflect.TypeOf((*MockAmbush)(nil).Effect))
 }

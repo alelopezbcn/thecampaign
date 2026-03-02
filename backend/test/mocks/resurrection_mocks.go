@@ -79,6 +79,20 @@ func (mr *MockResurrectionMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockResurrection)(nil).GetID))
 }
 
+// IsResurrectionCard mocks base method.
+func (m *MockResurrection) IsResurrectionCard() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsResurrectionCard")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsResurrectionCard indicates an expected call of IsResurrectionCard.
+func (mr *MockResurrectionMockRecorder) IsResurrectionCard() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsResurrectionCard", reflect.TypeOf((*MockResurrection)(nil).IsResurrectionCard))
+}
+
 // Name mocks base method.
 func (m *MockResurrection) Name() string {
 	m.ctrl.T.Helper()
@@ -92,6 +106,3 @@ func (mr *MockResurrectionMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockResurrection)(nil).Name))
 }
-
-// IsResurrectionCard mocks base method.
-func (m *MockResurrection) IsResurrectionCard() bool { return true }

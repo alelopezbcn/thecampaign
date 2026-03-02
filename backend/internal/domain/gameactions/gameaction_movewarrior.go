@@ -92,7 +92,7 @@ func (a *moveWarriorAction) execute(g moveWarriorGame) (*Result, func() gamestat
 
 	if a.targetPlayer != nil {
 		// Ally field move
-		a.targetPlayer.Field().AddWarriors(a.warrior)
+		a.targetPlayer.PlaceWarriorOnField(a.warrior)
 		p.Hand().RemoveCard(a.warrior)
 
 		g.AddHistory(fmt.Sprintf("%s moved warrior to %s's field", p.Name(),

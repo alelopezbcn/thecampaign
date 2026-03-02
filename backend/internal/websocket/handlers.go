@@ -142,6 +142,24 @@ func (h *Hub) handleBuy(client *Client, payload interface{}) {
 	})
 }
 
+func (h *Hub) handleForge(client *Client, payload interface{}) {
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return
+	}
+
+	var p ForgePayload
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError("Invalid forge payload")
+		return
+	}
+
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewForgeAction(client.PlayerName, p.CardID1, p.CardID2))
+	})
+}
+
 func (h *Hub) handleBuyMercenary(client *Client, payload interface{}) {
 	data, err := json.Marshal(payload)
 	if err != nil {
