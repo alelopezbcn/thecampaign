@@ -954,7 +954,7 @@ func (h *Hub) executeGameAction(client *Client, action func(HubGame) (gamestatus
 
 	h.sendGameStateToAll(client.GameID, status)
 
-	if status.GameOverMgs != "" {
+	if status.GameOverMsg != "" {
 		h.stopTurnTimer(client.GameID)
 	}
 }

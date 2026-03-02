@@ -82,7 +82,7 @@ func ConvertGameStatus(status gamestatus.GameStatus) GameStatusDTO {
 		History:                    convertHistory(status.History),
 		PlayersOrder:               status.PlayersOrder,
 		NextTurnPlayer:             status.NextTurnPlayer,
-		GameOverMsg:                status.GameOverMgs,
+		GameOverMsg:                status.GameOverMsg,
 		IsWinner:                   status.IsWinner,
 		GameStartedAt:              status.GameStartedAt.UTC().Format("2006-01-02T15:04:05Z"),
 		TurnStartedAt:              status.TurnStartedAt.UTC().Format("2006-01-02T15:04:05Z"),

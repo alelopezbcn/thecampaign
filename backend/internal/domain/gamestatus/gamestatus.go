@@ -7,6 +7,8 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
+const turnTimeLimitSecs = 120
+
 type AmbushTrigger struct {
 	Effect        types.AmbushEffect `json:"effect"`
 	EffectDisplay string             `json:"effect_display"`
@@ -49,7 +51,7 @@ type GameStatus struct {
 	History                    []HistoryLine          `json:"history"`
 	PlayersOrder               []string               `json:"players_order"`
 	NextTurnPlayer             string                 `json:"next_turn_player,omitempty"`
-	GameOverMgs                string                 `json:"game_over_msg"`
+	GameOverMsg                string                 `json:"game_over_msg"`
 	IsWinner                   bool                   `json:"is_winner"`
 	GameStartedAt              time.Time              `json:"game_started_at"`
 	TurnStartedAt              time.Time              `json:"turn_started_at"`
@@ -67,126 +69,137 @@ type OpponentStatus struct {
 	AmbushInField  bool
 }
 
-func NewGameStatus(dto GameStatusDTO) GameStatus {
-	playersOrder := make([]string, len(dto.PlayersNames))
-	copy(playersOrder, dto.PlayersNames)
+func NewGameStatus(in BuildInput) GameStatus {
+	playersOrder := make([]string, len(in.PlayersNames))
+	copy(playersOrder, in.PlayersNames)
 
 	gs := GameStatus{
-		CurrentPlayer:       dto.Viewer.Name,
-		NextTurnPlayer:      dto.NextTurnPlayer,
-		TurnPlayer:          dto.TurnPlayer,
-		CurrentAction:       string(dto.CurrentAction),
-		LastAction:          dto.LastAction,
-		GameMode:            dto.GameMode,
+		CurrentPlayer:       in.Viewer.Name,
+		NextTurnPlayer:      in.NextTurnPlayer,
+		TurnPlayer:          in.TurnPlayer,
+		CurrentAction:       string(in.CurrentAction),
+		LastAction:          in.LastAction,
+		GameMode:            in.GameMode,
 		NewCards:            []string{},
 		CurrentPlayerHand:   []HandCard{},
 		CurrentPlayerField:  []FieldCard{},
-		CurrentPlayerCastle: NewCastle(dto.Viewer.Castle),
-		IsEliminated:        dto.IsEliminated,
-		IsDisconnected:      dto.IsDisconnected,
-		CanTrade:            dto.CanTrade,
-		Cemetery:            NewCemetery(dto.CemeteryCount, dto.CemeteryLastDead),
-		DiscardPile:         NewDiscardPile(dto.DiscardPileCount, dto.DiscardPileLastCard),
-		CardsInDeck:         dto.DeckCount,
+		CurrentPlayerCastle: NewCastle(in.Viewer.Castle),
+		IsEliminated:        in.IsEliminated,
+		IsDisconnected:      in.IsDisconnected,
+		CanTrade:            in.CanTrade,
+		Cemetery:            NewCemetery(in.CemeteryCount, in.CemeteryLastDead),
+		DiscardPile:         NewDiscardPile(in.DiscardPileCount, in.DiscardPileLastCard),
+		CardsInDeck:         in.DeckCount,
 		History:             []HistoryLine{},
 		PlayersOrder:        playersOrder,
-		GameStartedAt:       dto.GameStartedAt,
-		TurnStartedAt:       dto.TurnStartedAt,
-		TurnTimeLimitSecs:   120,
+		GameStartedAt:       in.GameStartedAt,
+		TurnStartedAt:       in.TurnStartedAt,
+		TurnTimeLimitSecs:   turnTimeLimitSecs,
 	}
 
-	for _, line := range dto.History {
-		gs.History = append(gs.History, NewHistoryLine(
-			line.Msg, line.Category))
+	for _, line := range in.History {
+		gs.History = append(gs.History, NewHistoryLine(line.Msg, line.Category))
 	}
 
-	if len(dto.NewCards) > 0 {
-		for _, c := range dto.NewCards {
-			gs.NewCards = append(gs.NewCards, c.GetID())
-		}
+	for _, c := range in.NewCards {
+		gs.NewCards = append(gs.NewCards, c.GetID())
 	}
-	if len(dto.ModalCards) > 0 {
-		for _, c := range dto.ModalCards {
-			gs.ModalCards = append(gs.ModalCards, fromDomainCard(c))
-		}
+	for _, c := range in.ModalCards {
+		gs.ModalCards = append(gs.ModalCards, fromDomainCard(c))
 	}
 
-	// Include last moved warrior ID for animation (only on the move action itself)
-	if dto.LastAction == types.LastActionMoveWarrior && dto.LastMovedWarriorID != "" {
-		gs.LastMovedWarriorID = dto.LastMovedWarriorID
-	}
+	applyMoveWarriorAnimation(in, &gs)
+	applyAttackAnimation(in, &gs)
+	applyBloodRainAnimation(in, &gs)
+	applyStealNotification(in, &gs)
+	applySabotageNotification(in, &gs)
+	applySpyNotification(in, &gs)
+	applyAmbushNotification(in, &gs)
+	applyDesertionNotification(in, &gs)
 
-	// Include attack animation info (only on the attack action itself)
-	if (dto.LastAction == types.LastActionAttack || dto.LastAction == types.LastActionHarpoon) && dto.LastAttackWeaponID != "" {
-		gs.LastAttackWeaponID = dto.LastAttackWeaponID
-		gs.LastAttackTargetID = dto.LastAttackTargetID
-		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer
-	}
+	processHandCards(in.Viewer, in, &gs)
 
-	// Include blood rain animation info (target player only, AoE attack)
-	if dto.LastAction == types.LastActionBloodRain && dto.LastAttackTargetPlayer != "" {
-		gs.LastAttackTargetPlayer = dto.LastAttackTargetPlayer
-	}
-
-	// Include stolen card info for the victim (only on the steal action itself)
-	if dto.LastAction == types.LastActionSteal && dto.StolenFrom != "" &&
-		dto.StolenCard != nil && dto.Viewer.Name == dto.StolenFrom {
-		gs.StolenFromYouCard = fromDomainCards([]cards.Card{dto.StolenCard})
-	}
-
-	// Include sabotaged card info for the victim (only on the sabotage action itself)
-	if dto.LastAction == types.LastActionSabotage && dto.SabotagedFrom != "" &&
-		dto.SabotagedCard != nil && dto.Viewer.Name == dto.SabotagedFrom {
-		gs.SabotagedFromYouCard = fromDomainCards([]cards.Card{dto.SabotagedCard})
-	}
-
-	// Include spy notification for all players except the spy
-	if dto.SpyTarget != "" && dto.LastAction == types.LastActionSpy &&
-		dto.Viewer.Name != dto.CurrentPlayerName {
-		spyPlayer := dto.CurrentPlayerName
-		if dto.SpyTarget == types.SpyTargetDeck {
-			gs.SpyNotification = spyPlayer + " spied on the deck"
-		} else {
-			gs.SpyNotification = spyPlayer + " spied on " + dto.SpyTargetPlayer + "'s hand"
-		}
-	}
-
-	// Include ambush trigger notification for both the attacker and the defender
-	if dto.LastAction == types.LastActionAmbush && dto.AmbushAttackerName != "" &&
-		(dto.Viewer.Name == dto.AmbushAttackerName || dto.Viewer.Name == dto.LastAttackTargetPlayer) {
-		gs.AmbushTriggered = &AmbushTrigger{
-			Effect:        dto.AmbushEffect,
-			EffectDisplay: dto.AmbushEffect.DisplayName(),
-		}
-	}
-
-	// Notify the victim that one of their warriors deserted to the enemy
-	if dto.LastAction == types.LastActionDesertion && dto.DeserterFromPlayer != "" &&
-		dto.Viewer.Name == dto.DeserterFromPlayer && dto.DeserterWarrior != nil {
-		gs.DesertionNotification = &DesertionNotification{
-			WarriorCard: fromDomainCard(dto.DeserterWarrior),
-			StolenBy:    dto.CurrentPlayerName,
-		}
-	}
-
-	processHandCards(dto.Viewer, dto, &gs)
-
-	for _, warrior := range dto.Viewer.Field.Warriors {
+	for _, warrior := range in.Viewer.Field.Warriors {
 		gs.CurrentPlayerField = append(gs.CurrentPlayerField, NewFieldCard(warrior))
 	}
-	gs.CurrentPlayerAmbushInField = dto.Viewer.Field.HasAmbush
+	gs.CurrentPlayerAmbushInField = in.Viewer.Field.HasAmbush
 
-	processOpponents(dto, &gs)
+	processOpponents(in, &gs)
 
-	if dto.IsGameOver {
-		gs.GameOverMgs = "Game over! The winner is " + dto.Winner
-		gs.IsWinner = dto.IsPlayerWinner
+	if in.IsGameOver {
+		gs.GameOverMsg = "Game over! The winner is " + in.Winner
+		gs.IsWinner = in.IsPlayerWinner
 	}
 
 	return gs
 }
 
-func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
+func applyMoveWarriorAnimation(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionMoveWarrior && in.LastMovedWarriorID != "" {
+		gs.LastMovedWarriorID = in.LastMovedWarriorID
+	}
+}
+
+func applyAttackAnimation(in BuildInput, gs *GameStatus) {
+	if (in.LastAction == types.LastActionAttack || in.LastAction == types.LastActionHarpoon) && in.LastAttackWeaponID != "" {
+		gs.LastAttackWeaponID = in.LastAttackWeaponID
+		gs.LastAttackTargetID = in.LastAttackTargetID
+		gs.LastAttackTargetPlayer = in.LastAttackTargetPlayer
+	}
+}
+
+func applyBloodRainAnimation(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionBloodRain && in.LastAttackTargetPlayer != "" {
+		gs.LastAttackTargetPlayer = in.LastAttackTargetPlayer
+	}
+}
+
+func applyStealNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionSteal && in.StolenFrom != "" &&
+		in.StolenCard != nil && in.Viewer.Name == in.StolenFrom {
+		gs.StolenFromYouCard = fromDomainCards([]cards.Card{in.StolenCard})
+	}
+}
+
+func applySabotageNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionSabotage && in.SabotagedFrom != "" &&
+		in.SabotagedCard != nil && in.Viewer.Name == in.SabotagedFrom {
+		gs.SabotagedFromYouCard = fromDomainCards([]cards.Card{in.SabotagedCard})
+	}
+}
+
+func applySpyNotification(in BuildInput, gs *GameStatus) {
+	if in.SpyTarget == "" || in.LastAction != types.LastActionSpy || in.Viewer.Name == in.CurrentPlayerName {
+		return
+	}
+	if in.SpyTarget == types.SpyTargetDeck {
+		gs.SpyNotification = in.CurrentPlayerName + " spied on the deck"
+	} else {
+		gs.SpyNotification = in.CurrentPlayerName + " spied on " + in.SpyTargetPlayer + "'s hand"
+	}
+}
+
+func applyAmbushNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionAmbush && in.AmbushAttackerName != "" &&
+		(in.Viewer.Name == in.AmbushAttackerName || in.Viewer.Name == in.LastAttackTargetPlayer) {
+		gs.AmbushTriggered = &AmbushTrigger{
+			Effect:        in.AmbushEffect,
+			EffectDisplay: in.AmbushEffect.DisplayName(),
+		}
+	}
+}
+
+func applyDesertionNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionDesertion && in.DeserterFromPlayer != "" &&
+		in.Viewer.Name == in.DeserterFromPlayer && in.DeserterWarrior != nil {
+		gs.DesertionNotification = &DesertionNotification{
+			WarriorCard: fromDomainCard(in.DeserterWarrior),
+			StolenBy:    in.CurrentPlayerName,
+		}
+	}
+}
+
+func processHandCards(viewer ViewerInput, game BuildInput, gs *GameStatus) {
 	action := game.CurrentAction
 	canMove := game.CanMoveWarrior
 
@@ -248,7 +261,7 @@ func processHandCards(viewer ViewerInput, game GameStatusDTO, gs *GameStatus) {
 	}
 }
 
-func processOpponents(game GameStatusDTO, gs *GameStatus) {
+func processOpponents(game BuildInput, gs *GameStatus) {
 	for _, opp := range game.Opponents {
 		o := OpponentStatus{
 			PlayerName:     opp.Name,

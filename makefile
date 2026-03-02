@@ -9,13 +9,16 @@ mocks:
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/board.go -destination ./test/mocks/board_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/board/player.go -destination ./test/mocks/player_mocks.go
 # cards package
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/ambush.go -destination ./test/mocks/ambush_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/attackablebase.go -destination ./test/mocks/attackable_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/bloodrain.go -destination ./test/mocks/bloodrain_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/cardbase.go -destination ./test/mocks/card_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/catapult.go -destination ./test/mocks/catapult_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/harpoon.go -destination ./test/mocks/harpoon_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/helper.go -destination ./test/mocks/dealer_mocks.go
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/fortress.go -destination ./test/mocks/fortress_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/resources.go -destination ./test/mocks/resource_mocks.go
+	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/resurrection.go -destination ./test/mocks/resurrection_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/specialpower.go -destination ./test/mocks/specialpower_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/spy.go -destination ./test/mocks/spy_mocks.go
 	cd backend && go run go.uber.org/mock/mockgen@v0.4.0 -package mocks -source ./internal/domain/cards/thief.go -destination ./test/mocks/thief_mocks.go

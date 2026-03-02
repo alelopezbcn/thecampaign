@@ -9,10 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// minimalDTO returns a GameStatusDTO with the bare minimum required to call NewGameStatus
+// minimalDTO returns a BuildInput with the bare minimum required to call NewGameStatus
 // without panicking. Callers are expected to override fields as needed.
-func minimalDTO(viewerName string) gamestatus.GameStatusDTO {
-	return gamestatus.GameStatusDTO{
+func minimalDTO(viewerName string) gamestatus.BuildInput {
+	return gamestatus.BuildInput{
 		Viewer:       gamestatus.ViewerInput{Name: viewerName},
 		PlayersNames: []string{viewerName},
 		TurnPlayer:   viewerName,
@@ -502,7 +502,7 @@ func TestNewGameStatus_GameOver_WinnerSeesWinMessage(t *testing.T) {
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Equal(t, "Game over! The winner is Player1", gs.GameOverMgs)
+	assert.Equal(t, "Game over! The winner is Player1", gs.GameOverMsg)
 	assert.True(t, gs.IsWinner)
 }
 
@@ -514,7 +514,7 @@ func TestNewGameStatus_GameOver_LoserSeesWinMessage(t *testing.T) {
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Equal(t, "Game over! The winner is Player1", gs.GameOverMgs)
+	assert.Equal(t, "Game over! The winner is Player1", gs.GameOverMsg)
 	assert.False(t, gs.IsWinner)
 }
 
@@ -524,7 +524,7 @@ func TestNewGameStatus_GameOver_EmptyWhenNotOver(t *testing.T) {
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Empty(t, gs.GameOverMgs)
+	assert.Empty(t, gs.GameOverMsg)
 	assert.False(t, gs.IsWinner)
 }
 

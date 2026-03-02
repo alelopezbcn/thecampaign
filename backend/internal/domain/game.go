@@ -753,7 +753,7 @@ func (g *game) getStatus(viewer board.Player,
 		}
 	}
 
-	gameStatusDTO := gamestatus.GameStatusDTO{
+	gameStatusDTO := gamestatus.BuildInput{
 		Viewer:                   viewerInput,
 		PlayersNames:             playersNames,
 		Opponents:                opponents,
