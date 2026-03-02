@@ -848,14 +848,14 @@ function handleGameState(payload) {
     // Event banner (always update)
     renderEventBanner(payload.game_status);
 
-    // Event change toast for non-active players when the round event changes
+    // Event change toast for all players when the round event changes
     const prevEvent = previousState?.current_event;
-    if (prevEvent !== undefined && prevEvent !== payload.game_status.current_event && !isNowYourTurn) {
+    if (prevEvent !== undefined && prevEvent !== payload.game_status.current_event) {
         showEventChangeToast(payload.game_status);
     }
 
-    // Event turn modal for active player at turn start (only when an event is active)
-    if (!wasYourTurn && isNowYourTurn && payload.game_status.current_event) {
+    // Event turn modal for active player at turn start
+    if (!wasYourTurn && isNowYourTurn) {
         showEventTurnModal(payload.game_status);
     }
 }
