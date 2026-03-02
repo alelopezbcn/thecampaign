@@ -101,7 +101,7 @@ func (a *resurrectionAction) execute(g resurrectionGame) (*Result, func() gamest
 	}
 
 	warrior.Resurrect()
-	a.targetPlayer.Field().AddWarriors(warrior)
+	a.targetPlayer.PlaceWarriorOnField(warrior)
 
 	removed, err := p.RemoveFromHand(a.resurrectionCard.GetID())
 	if err != nil {

@@ -277,6 +277,18 @@ func (mr *MockPlayerFieldMockRecorder) MoveCardToField(cardID any) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCardToField", reflect.TypeOf((*MockPlayerField)(nil).MoveCardToField), cardID)
 }
 
+// PlaceWarriorOnField mocks base method.
+func (m *MockPlayerField) PlaceWarriorOnField(w cards.Warrior) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PlaceWarriorOnField", w)
+}
+
+// PlaceWarriorOnField indicates an expected call of PlaceWarriorOnField.
+func (mr *MockPlayerFieldMockRecorder) PlaceWarriorOnField(w any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlaceWarriorOnField", reflect.TypeOf((*MockPlayerField)(nil).PlaceWarriorOnField), w)
+}
+
 // MockPlayerCastle is a mock of PlayerCastle interface.
 type MockPlayerCastle struct {
 	ctrl     *gomock.Controller
@@ -393,6 +405,20 @@ func (mr *MockPlayerCombatMockRecorder) CanAttack() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanAttack", reflect.TypeOf((*MockPlayerCombat)(nil).CanAttack))
 }
 
+// CanForgeWeapons mocks base method.
+func (m *MockPlayerCombat) CanForgeWeapons() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanForgeWeapons")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanForgeWeapons indicates an expected call of CanForgeWeapons.
+func (mr *MockPlayerCombatMockRecorder) CanForgeWeapons() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanForgeWeapons", reflect.TypeOf((*MockPlayerCombat)(nil).CanForgeWeapons))
+}
+
 // CanTradeCards mocks base method.
 func (m *MockPlayerCombat) CanTradeCards() bool {
 	m.ctrl.T.Helper()
@@ -484,6 +510,20 @@ func (m *MockPlayer) CanConstruct() bool {
 func (mr *MockPlayerMockRecorder) CanConstruct() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanConstruct", reflect.TypeOf((*MockPlayer)(nil).CanConstruct))
+}
+
+// CanForgeWeapons mocks base method.
+func (m *MockPlayer) CanForgeWeapons() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanForgeWeapons")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanForgeWeapons indicates an expected call of CanForgeWeapons.
+func (mr *MockPlayerMockRecorder) CanForgeWeapons() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanForgeWeapons", reflect.TypeOf((*MockPlayer)(nil).CanForgeWeapons))
 }
 
 // CanTakeCards mocks base method.
@@ -652,6 +692,18 @@ func (m *MockPlayer) MoveCardToField(cardID string) error {
 func (mr *MockPlayerMockRecorder) MoveCardToField(cardID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCardToField", reflect.TypeOf((*MockPlayer)(nil).MoveCardToField), cardID)
+}
+
+// PlaceWarriorOnField mocks base method.
+func (m *MockPlayer) PlaceWarriorOnField(w cards.Warrior) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PlaceWarriorOnField", w)
+}
+
+// PlaceWarriorOnField indicates an expected call of PlaceWarriorOnField.
+func (mr *MockPlayerMockRecorder) PlaceWarriorOnField(w any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlaceWarriorOnField", reflect.TypeOf((*MockPlayer)(nil).PlaceWarriorOnField), w)
 }
 
 // Name mocks base method.

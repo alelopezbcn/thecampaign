@@ -31,6 +31,8 @@ type GameTurnFlags interface {
 	SetHasTraded(value bool)
 	SetCanMoveWarrior(value bool)
 	SetCanTrade(value bool)
+	SetHasForged(value bool)
+	SetCanForge(value bool)
 }
 
 // GameStatusProvider — state snapshots

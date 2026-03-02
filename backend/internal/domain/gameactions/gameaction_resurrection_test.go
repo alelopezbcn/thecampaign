@@ -253,15 +253,13 @@ func TestResurrectionAction_Execute(t *testing.T) {
 
 		action, mockGame, mockPlayer, mockResurrection, mockBoard, mockCemetery := validateResurrectionOwnField(t, ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockField := mocks.NewMockField(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
 		mockWarrior.EXPECT().Resurrect()
-		mockPlayer.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockResurrection.EXPECT().GetID().Return("res1")
 		mockPlayer.EXPECT().RemoveFromHand("res1").Return(nil, errors.New("card not found"))
 
@@ -279,7 +277,6 @@ func TestResurrectionAction_Execute(t *testing.T) {
 
 		action, mockGame, mockPlayer, mockResurrection, mockBoard, mockCemetery := validateResurrectionOwnField(t, ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockField := mocks.NewMockField(ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
@@ -287,8 +284,7 @@ func TestResurrectionAction_Execute(t *testing.T) {
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
 		mockWarrior.EXPECT().Resurrect()
-		mockPlayer.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockResurrection.EXPECT().GetID().Return("res1")
 		mockPlayer.EXPECT().RemoveFromHand("res1").Return([]cards.Card{mockResurrection}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockResurrection)
@@ -311,7 +307,6 @@ func TestResurrectionAction_Execute(t *testing.T) {
 
 		action, mockGame, mockPlayer1, mockPlayer2, mockResurrection, mockBoard, mockCemetery := validateResurrectionAllyField(t, ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockField := mocks.NewMockField(ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
@@ -319,8 +314,7 @@ func TestResurrectionAction_Execute(t *testing.T) {
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
 		mockWarrior.EXPECT().Resurrect()
-		mockPlayer2.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer2.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockResurrection.EXPECT().GetID().Return("res1")
 		mockPlayer1.EXPECT().RemoveFromHand("res1").Return([]cards.Card{mockResurrection}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockResurrection)
@@ -344,15 +338,13 @@ func TestResurrectionAction_Execute(t *testing.T) {
 
 		action, mockGame, mockPlayer, mockResurrection, mockBoard, mockCemetery := validateResurrectionOwnField(t, ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockField := mocks.NewMockField(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
 		mockWarrior.EXPECT().Resurrect()
-		mockPlayer.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockResurrection.EXPECT().GetID().Return("res1")
 		mockPlayer.EXPECT().RemoveFromHand("res1").Return([]cards.Card{mockResurrection}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockResurrection)
@@ -373,15 +365,13 @@ func TestResurrectionAction_Execute(t *testing.T) {
 
 		action, mockGame, mockPlayer, mockResurrection, mockBoard, mockCemetery := validateResurrectionOwnField(t, ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockField := mocks.NewMockField(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
 		mockWarrior.EXPECT().Resurrect()
-		mockPlayer.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockResurrection.EXPECT().GetID().Return("res1")
 		mockPlayer.EXPECT().RemoveFromHand("res1").Return([]cards.Card{mockResurrection}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockResurrection)
@@ -407,15 +397,13 @@ func TestResurrectionAction_Execute(t *testing.T) {
 
 		action, mockGame, mockPlayer1, mockPlayer2, mockResurrection, mockBoard, mockCemetery := validateResurrectionAllyField(t, ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
-		mockField := mocks.NewMockField(ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().Board().Return(mockBoard)
 		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
 		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
 		mockWarrior.EXPECT().Resurrect()
-		mockPlayer2.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().AddWarriors(mockWarrior)
+		mockPlayer2.EXPECT().PlaceWarriorOnField(mockWarrior)
 		mockResurrection.EXPECT().GetID().Return("res1")
 		mockPlayer1.EXPECT().RemoveFromHand("res1").Return([]cards.Card{mockResurrection}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockResurrection)

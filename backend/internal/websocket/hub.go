@@ -153,6 +153,7 @@ var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
 	MsgMoveWarrior:  func(h *Hub, c *Client, p interface{}) { h.handleMoveWarrior(c, p) },
 	MsgTrade:        func(h *Hub, c *Client, p interface{}) { h.handleTrade(c, p) },
 	MsgBuy:          func(h *Hub, c *Client, p interface{}) { h.handleBuy(c, p) },
+	MsgForge:        func(h *Hub, c *Client, p interface{}) { h.handleForge(c, p) },
 	MsgBuyMercenary: func(h *Hub, c *Client, p interface{}) { h.handleBuyMercenary(c, p) },
 	MsgConstruct:    func(h *Hub, c *Client, p interface{}) { h.handleConstruct(c, p) },
 	MsgSpy:          func(h *Hub, c *Client, p interface{}) { h.handleSpy(c, p) },

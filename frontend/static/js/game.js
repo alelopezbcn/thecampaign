@@ -271,6 +271,7 @@ function setupEventListeners() {
     // Game screen actions - only 4 buttons
     document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
     document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
+    document.getElementById('forge-btn').addEventListener('click', () => startForgeMode());
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
     document.getElementById('endturn-popup-btn').addEventListener('click', () => {
@@ -798,6 +799,8 @@ function handleGameState(payload) {
                 showBoughtCardsModal(acquiredCards);
             } else if (gameState.pendingAction === 'trade') {
                 showTradedCardsModal(acquiredCards);
+            } else if (gameState.pendingAction === 'forge') {
+                showForgeResultModal(acquiredCards);
             }
         }
         gameState.pendingAction = null; // Clear after handling
@@ -1165,6 +1168,12 @@ function handleCardClick(cardID, cardType, context, card = null) {
         } else {
             updateActionPrompt(`Selected ${gameState.selectedCards.length}/3 cards for trade`);
         }
+        return;
+    }
+
+    // Handle forge action
+    if (action === 'forge' && context === 'player-hand') {
+        handleForgeCardClick(cardID, card);
         return;
     }
 
@@ -3570,6 +3579,15 @@ function createCardElement(card, context) {
                 div.classList.add('usable');
             }
         }
+        // During forge action, only forgeable weapons are usable
+        else if (currentAction === 'forge') {
+            const forgeableTypes = ['Sword', 'Arrow', 'Poison'];
+            if (cardType !== 'weapon' || !forgeableTypes.includes(card.sub_type)) {
+                div.classList.add('unusable');
+            } else {
+                div.classList.add('usable');
+            }
+        }
         // Warriors are only usable during move_warrior action
         else if (cardType === 'warrior') {
             div.classList.add('unusable');
@@ -3998,6 +4016,9 @@ function updateActionButtons() {
 
     // Trade - enabled if can_trade is true (from backend)
     document.getElementById('trade-btn').disabled = !status.can_trade;
+
+    // Forge - enabled if can_forge is true (from backend)
+    document.getElementById('forge-btn').disabled = !status.can_forge;
 
     // Skip Phase and End Turn - always enabled during your turn
     document.getElementById('skip-phase-btn').disabled = false;
@@ -4884,6 +4905,82 @@ function showBoughtCardsModal(cards) {
 // Traded Cards Modal
 function showTradedCardsModal(cards) {
     showCardsModal(cards, 'Card Received!', 'You traded 3 cards for this');
+}
+
+// Forge Result Modal
+function showForgeResultModal(cards) {
+    showCardsModal(cards, 'Weapons Forged!', 'Your weapons have been combined');
+}
+
+// Forge Mode — enter weapon selection for forging
+function startForgeMode() {
+    resetActionState();
+    gameState.currentAction = 'forge';
+    gameState.selectedCards = [];
+    updateActionPrompt('Select 2 weapons of the same type to forge (0/2)');
+    showConfirmButtons();
+    renderGameBoard(gameState.currentState);
+}
+
+// Handle card click during forge mode
+function handleForgeCardClick(cardID, card) {
+    const selected = gameState.selectedCards;
+
+    // Deselect if already selected
+    if (selected.includes(cardID)) {
+        selected.splice(selected.indexOf(cardID), 1);
+        const el = document.querySelector(`[data-card-id="${cardID}"]`);
+        if (el) el.classList.remove('selected');
+        updateActionPrompt(`Select 2 weapons of the same type to forge (${selected.length}/2)`);
+        return;
+    }
+
+    // Validate same sub_type when 1 already selected
+    if (selected.length === 1) {
+        const firstCard = findCardById(selected[0]);
+        if (!firstCard || firstCard.sub_type !== card.sub_type) {
+            updateActionPrompt('Both weapons must be the same type. Try again (1/2)');
+            return;
+        }
+    }
+
+    selected.push(cardID);
+    const el = document.querySelector(`[data-card-id="${cardID}"]`);
+    if (el) el.classList.add('selected');
+
+    if (selected.length === 2) {
+        showForgeConfirmModal(selected[0], selected[1]);
+    } else {
+        updateActionPrompt('Select 2 weapons of the same type to forge (1/2)');
+    }
+}
+
+// Forge confirmation modal
+function showForgeConfirmModal(id1, id2) {
+    const card1 = findCardById(id1);
+    const card2 = findCardById(id2);
+    if (!card1 || !card2) return;
+
+    const dmg1 = card1.value || 0;
+    const dmg2 = card2.value || 0;
+    const total = dmg1 + dmg2;
+
+    let cardsHtml = renderCardForModal(card1);
+    cardsHtml += '<div class="modal-plus">+</div>';
+    cardsHtml += renderCardForModal(card2);
+    cardsHtml += renderArrow();
+    cardsHtml += renderCardForModal({...card1, value: total});
+
+    showActionConfirmModal({
+        title: 'Forge Weapons',
+        cardsHtml: cardsHtml,
+        description: `Combine into a ${card1.sub_type || card1.type} ${total}`,
+        onConfirm: () => {
+            gameState.pendingAction = 'forge';
+            sendAction('forge', { card_id_1: id1, card_id_2: id2 });
+            resetActionState();
+        }
+    });
 }
 
 // Normalize card from gamestatus.Card format to UI format

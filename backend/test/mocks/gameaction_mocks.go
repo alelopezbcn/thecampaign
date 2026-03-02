@@ -209,6 +209,18 @@ func (mr *MockGameMockRecorder) SameTeam(i, j any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SameTeam", reflect.TypeOf((*MockGame)(nil).SameTeam), i, j)
 }
 
+// SetCanForge mocks base method.
+func (m *MockGame) SetCanForge(value bool) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetCanForge", value)
+}
+
+// SetCanForge indicates an expected call of SetCanForge.
+func (mr *MockGameMockRecorder) SetCanForge(value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCanForge", reflect.TypeOf((*MockGame)(nil).SetCanForge), value)
+}
+
 // SetCanMoveWarrior mocks base method.
 func (m *MockGame) SetCanMoveWarrior(value bool) {
 	m.ctrl.T.Helper()
@@ -231,6 +243,18 @@ func (m *MockGame) SetCanTrade(value bool) {
 func (mr *MockGameMockRecorder) SetCanTrade(value any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetCanTrade", reflect.TypeOf((*MockGame)(nil).SetCanTrade), value)
+}
+
+// SetHasForged mocks base method.
+func (m *MockGame) SetHasForged(value bool) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetHasForged", value)
+}
+
+// SetHasForged indicates an expected call of SetHasForged.
+func (mr *MockGameMockRecorder) SetHasForged(value any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetHasForged", reflect.TypeOf((*MockGame)(nil).SetHasForged), value)
 }
 
 // SetHasMovedWarrior mocks base method.

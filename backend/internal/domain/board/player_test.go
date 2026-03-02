@@ -581,6 +581,104 @@ func TestPlayer_CanTradeCards(t *testing.T) {
 	})
 }
 
+func TestPlayer_CanForgeWeapons(t *testing.T) {
+	t.Run("False with no weapons in hand", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		assert.False(t, p.CanForgeWeapons())
+	})
+
+	t.Run("False with only 1 sword in hand", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		w := mocks.NewMockWeapon(ctrl)
+		w.EXPECT().GetID().Return("w1").AnyTimes()
+		w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+		w.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+		p.TakeCards(w)
+
+		assert.False(t, p.CanForgeWeapons())
+	})
+
+	t.Run("True with 2 swords in hand", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		for i := 0; i < 2; i++ {
+			w := mocks.NewMockWeapon(ctrl)
+			w.EXPECT().GetID().Return("w" + string(rune('0'+i))).AnyTimes()
+			w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+			w.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+			p.TakeCards(w)
+		}
+
+		assert.True(t, p.CanForgeWeapons())
+	})
+
+	t.Run("False with 1 sword and 1 arrow (different types)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		sword := mocks.NewMockWeapon(ctrl)
+		sword.EXPECT().GetID().Return("w1").AnyTimes()
+		sword.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+		sword.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+		p.TakeCards(sword)
+
+		arrow := mocks.NewMockWeapon(ctrl)
+		arrow.EXPECT().GetID().Return("w2").AnyTimes()
+		arrow.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+		arrow.EXPECT().Type().Return(types.ArrowWeaponType).AnyTimes()
+		p.TakeCards(arrow)
+
+		assert.False(t, p.CanForgeWeapons())
+	})
+
+	t.Run("True with 2 arrows and 1 sword", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		sword := mocks.NewMockWeapon(ctrl)
+		sword.EXPECT().GetID().Return("w1").AnyTimes()
+		sword.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+		sword.EXPECT().Type().Return(types.SwordWeaponType).AnyTimes()
+		p.TakeCards(sword)
+
+		for i := 0; i < 2; i++ {
+			w := mocks.NewMockWeapon(ctrl)
+			w.EXPECT().GetID().Return("a" + string(rune('0'+i))).AnyTimes()
+			w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+			w.EXPECT().Type().Return(types.ArrowWeaponType).AnyTimes()
+			p.TakeCards(w)
+		}
+
+		assert.True(t, p.CanForgeWeapons())
+	})
+
+	t.Run("False with 2 harpoons (non-forgeable type)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		p, _, _, _, _ := newTestPlayer(t, ctrl)
+
+		for i := 0; i < 2; i++ {
+			w := mocks.NewMockWeapon(ctrl)
+			w.EXPECT().GetID().Return("h" + string(rune('0'+i))).AnyTimes()
+			w.EXPECT().AddCardMovedToPileObserver(gomock.Any()).AnyTimes()
+			w.EXPECT().Type().Return(types.HarpoonWeaponType).AnyTimes()
+			p.TakeCards(w)
+		}
+
+		assert.False(t, p.CanForgeWeapons())
+	})
+}
+
 func TestPlayer_OnCardMovedToPile(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()

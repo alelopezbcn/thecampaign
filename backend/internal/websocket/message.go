@@ -16,6 +16,7 @@ const (
 	MsgMoveWarrior  MessageType = "move_warrior"
 	MsgTrade        MessageType = "trade"
 	MsgBuy          MessageType = "buy"
+	MsgForge        MessageType = "forge"
 	MsgBuyMercenary MessageType = "buy_mercenary"
 	MsgConstruct    MessageType = "construct"
 	MsgSpy          MessageType = "spy"
@@ -133,6 +134,12 @@ type TradePayload struct {
 // BuyPayload for buying cards
 type BuyPayload struct {
 	CardID string `json:"card_id"`
+}
+
+// ForgePayload for forging two weapons into one
+type ForgePayload struct {
+	CardID1 string `json:"card_id_1"`
+	CardID2 string `json:"card_id_2"`
 }
 
 // BuyMercenaryPayload for hiring a mercenary directly

@@ -27,6 +27,7 @@ type GameStatus struct {
 	NewCards                   []string               `json:"new_cards"`
 	CanMoveWarrior             bool                   `json:"can_move_warrior"`
 	CanTrade                   bool                   `json:"can_trade"`
+	CanForge                   bool                   `json:"can_forge"`
 	CurrentPlayerHand          []HandCard             `json:"current_player_hand"`
 	CurrentPlayerField         []FieldCard            `json:"current_player_field"`
 	CurrentPlayerCastle        Castle                 `json:"current_player_castle"`
@@ -87,6 +88,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 		IsEliminated:        in.IsEliminated,
 		IsDisconnected:      in.IsDisconnected,
 		CanTrade:            in.CanTrade,
+		CanForge:            in.CanForge,
 		Cemetery:            NewCemetery(in.CemeteryCount, in.CemeteryLastDead),
 		DiscardPile:         NewDiscardPile(in.DiscardPileCount, in.DiscardPileLastCard),
 		CardsInDeck:         in.DeckCount,

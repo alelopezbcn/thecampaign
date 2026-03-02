@@ -79,6 +79,20 @@ func (mr *MockFortressMockRecorder) GetID() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetID", reflect.TypeOf((*MockFortress)(nil).GetID))
 }
 
+// IsFortressCard mocks base method.
+func (m *MockFortress) IsFortressCard() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsFortressCard")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsFortressCard indicates an expected call of IsFortressCard.
+func (mr *MockFortressMockRecorder) IsFortressCard() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsFortressCard", reflect.TypeOf((*MockFortress)(nil).IsFortressCard))
+}
+
 // Name mocks base method.
 func (m *MockFortress) Name() string {
 	m.ctrl.T.Helper()
@@ -92,6 +106,3 @@ func (mr *MockFortressMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockFortress)(nil).Name))
 }
-
-// IsFortressCard mocks base method.
-func (m *MockFortress) IsFortressCard() bool { return true }

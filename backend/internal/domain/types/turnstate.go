@@ -7,5 +7,7 @@ type TurnState struct {
 	HasMovedWarrior bool
 	CanTrade        bool
 	HasTraded       bool
+	CanForge        bool
+	HasForged       bool
 	StartedAt       time.Time
 }
