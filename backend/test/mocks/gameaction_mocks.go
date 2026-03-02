@@ -15,6 +15,7 @@ import (
 	board "github.com/alelopezbcn/thecampaign/internal/domain/board"
 	cards "github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	gameactions "github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
+	gameevents "github.com/alelopezbcn/thecampaign/internal/domain/gameevents"
 	gamestatus "github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
@@ -138,6 +139,20 @@ func (m *MockGame) Enemies(playerIdx int) []board.Player {
 func (mr *MockGameMockRecorder) Enemies(playerIdx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Enemies", reflect.TypeOf((*MockGame)(nil).Enemies), playerIdx)
+}
+
+// EventHandler mocks base method.
+func (m *MockGame) EventHandler() gameevents.EventHandler {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EventHandler")
+	ret0, _ := ret[0].(gameevents.EventHandler)
+	return ret0
+}
+
+// EventHandler indicates an expected call of EventHandler.
+func (mr *MockGameMockRecorder) EventHandler() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventHandler", reflect.TypeOf((*MockGame)(nil).EventHandler))
 }
 
 // GetPlayer mocks base method.
