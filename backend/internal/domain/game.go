@@ -454,6 +454,10 @@ func (g *game) GetTargetPlayer(playerName string, targetPlayerName string) (
 		return nil, errors.New("cannot attack eliminated player")
 	}
 
+	if g.disconnectedPlayers[tIdx] {
+		return nil, errors.New("cannot attack disconnected player")
+	}
+
 	return targetPlayer, nil
 }
 
