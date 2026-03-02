@@ -13,10 +13,10 @@ type GameStatusDTO struct {
 	Opponents                []OpponentInput
 	EnemyFields              []FieldInput
 	AllyFields               []FieldInput
-	AnyEnemyCastleAttackable  bool
-	AnyEnemyHasCards          bool
-	AnyEnemyHasWeakWarriors   bool
-	AllyHasCastleConstructed  bool
+	AnyEnemyCastleAttackable bool
+	AnyEnemyHasCards         bool
+	AnyEnemyHasWeakWarriors  bool
+	AllyHasCastleConstructed bool
 	NewCards                 []cards.Card
 	ModalCards               []cards.Card
 	NextTurnPlayer           string

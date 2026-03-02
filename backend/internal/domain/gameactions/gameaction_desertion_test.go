@@ -22,8 +22,8 @@ func validateDesertionAction(
 	*mocks.MockGame,
 	*mocks.MockPlayer, // player1 – current player
 	*mocks.MockPlayer, // player2 – target player
-	*mocks.MockField,  // player2's field
-	*mocks.MockWarrior,   // the weak warrior on player2's field
+	*mocks.MockField, // player2's field
+	*mocks.MockWarrior, // the weak warrior on player2's field
 	*mocks.MockDesertion, // the desertion card in player1's hand
 ) {
 	t.Helper()

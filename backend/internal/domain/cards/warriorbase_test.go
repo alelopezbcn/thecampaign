@@ -15,17 +15,17 @@ type fakeWeapon struct {
 	observer CardMovedToPileObserver
 }
 
-func (f *fakeWeapon) GetID() string                              { return f.id }
-func (f *fakeWeapon) Name() string                               { return "fakeWeapon" }
+func (f *fakeWeapon) GetID() string                                        { return f.id }
+func (f *fakeWeapon) Name() string                                         { return "fakeWeapon" }
 func (f *fakeWeapon) AddCardMovedToPileObserver(o CardMovedToPileObserver) { f.observer = o }
-func (f *fakeWeapon) GetCardMovedToPileObserver() CardMovedToPileObserver { return f.observer }
-func (f *fakeWeapon) DamageAmount() int                          { return f.damage }
-func (f *fakeWeapon) Type() types.WeaponType                     { return types.SwordWeaponType }
-func (f *fakeWeapon) CanConstruct() bool                         { return false }
-func (f *fakeWeapon) CanBeTraded() bool                          { return true }
-func (f *fakeWeapon) MultiplierFactor(_ Warrior) int             { return 1 }
-func (f *fakeWeapon) CanBeUsedWith(_ FieldChecker) bool          { return true }
-func (f *fakeWeapon) String() string                             { return "fakeWeapon" }
+func (f *fakeWeapon) GetCardMovedToPileObserver() CardMovedToPileObserver  { return f.observer }
+func (f *fakeWeapon) DamageAmount() int                                    { return f.damage }
+func (f *fakeWeapon) Type() types.WeaponType                               { return types.SwordWeaponType }
+func (f *fakeWeapon) CanConstruct() bool                                   { return false }
+func (f *fakeWeapon) CanBeTraded() bool                                    { return true }
+func (f *fakeWeapon) MultiplierFactor(_ Warrior) int                       { return 1 }
+func (f *fakeWeapon) CanBeUsedWith(_ FieldChecker) bool                    { return true }
+func (f *fakeWeapon) String() string                                       { return "fakeWeapon" }
 
 type fakeSP struct {
 	id              string
@@ -34,20 +34,20 @@ type fakeSP struct {
 	receiveDamageFn func(Weapon, int) bool
 }
 
-func (f *fakeSP) GetID() string                              { return f.id }
-func (f *fakeSP) Name() string                               { return "fakeSP" }
+func (f *fakeSP) GetID() string                                        { return f.id }
+func (f *fakeSP) Name() string                                         { return "fakeSP" }
 func (f *fakeSP) AddCardMovedToPileObserver(o CardMovedToPileObserver) { f.observer = o }
-func (f *fakeSP) GetCardMovedToPileObserver() CardMovedToPileObserver { return f.observer }
-func (f *fakeSP) DamageAmount() int                          { return specialPowerDamage }
-func (f *fakeSP) Type() types.WeaponType                     { return types.SpecialPowerWeaponType }
-func (f *fakeSP) CanConstruct() bool                         { return false }
-func (f *fakeSP) CanBeTraded() bool                          { return false }
-func (f *fakeSP) MultiplierFactor(_ Warrior) int             { return 1 }
-func (f *fakeSP) CanBeUsedWith(_ FieldChecker) bool          { return true }
-func (f *fakeSP) String() string                             { return "fakeSP" }
-func (f *fakeSP) BeAttacked(_ Weapon) error                  { return nil }
-func (f *fakeSP) AttackedBy() []Weapon                       { return nil }
-func (f *fakeSP) Health() int                                { return specialPowerMaxHealth }
+func (f *fakeSP) GetCardMovedToPileObserver() CardMovedToPileObserver  { return f.observer }
+func (f *fakeSP) DamageAmount() int                                    { return specialPowerDamage }
+func (f *fakeSP) Type() types.WeaponType                               { return types.SpecialPowerWeaponType }
+func (f *fakeSP) CanConstruct() bool                                   { return false }
+func (f *fakeSP) CanBeTraded() bool                                    { return false }
+func (f *fakeSP) MultiplierFactor(_ Warrior) int                       { return 1 }
+func (f *fakeSP) CanBeUsedWith(_ FieldChecker) bool                    { return true }
+func (f *fakeSP) String() string                                       { return "fakeSP" }
+func (f *fakeSP) BeAttacked(_ Weapon) error                            { return nil }
+func (f *fakeSP) AttackedBy() []Weapon                                 { return nil }
+func (f *fakeSP) Health() int                                          { return specialPowerMaxHealth }
 func (f *fakeSP) ReceiveDamage(w Weapon, m int) bool {
 	if f.receiveDamageFn != nil {
 		return f.receiveDamageFn(w, m)

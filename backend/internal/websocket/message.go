@@ -13,18 +13,18 @@ const (
 	MsgBloodRain    MessageType = "blood_rain"
 	MsgMoveWarrior  MessageType = "move_warrior"
 	MsgTrade        MessageType = "trade"
-	MsgBuy             MessageType = "buy"
-	MsgBuyMercenary    MessageType = "buy_mercenary"
+	MsgBuy          MessageType = "buy"
+	MsgBuyMercenary MessageType = "buy_mercenary"
 	MsgConstruct    MessageType = "construct"
 	MsgSpy          MessageType = "spy"
 	MsgSteal        MessageType = "steal"
 	MsgDesertion    MessageType = "desertion"
 	MsgCatapult     MessageType = "catapult"
-	MsgFortress      MessageType = "fortress"
-	MsgResurrection  MessageType = "resurrection"
-	MsgSabotage      MessageType = "sabotage"
-	MsgPlaceAmbush   MessageType = "place_ambush"
-	MsgEndTurn       MessageType = "end_turn"
+	MsgFortress     MessageType = "fortress"
+	MsgResurrection MessageType = "resurrection"
+	MsgSabotage     MessageType = "sabotage"
+	MsgPlaceAmbush  MessageType = "place_ambush"
+	MsgEndTurn      MessageType = "end_turn"
 	MsgSkipPhase    MessageType = "skip_phase"
 	MsgSwapTeam     MessageType = "swap_team"
 	MsgStartGame    MessageType = "start_game"
@@ -211,35 +211,35 @@ type GameStatusDTO struct {
 	CanMoveWarrior bool     `json:"can_move_warrior"`
 	CanTrade       bool     `json:"can_trade"`
 
-	CurrentPlayerHand      []HandCardDTO       `json:"current_player_hand"`
-	CurrentPlayerField     []FieldCardDTO      `json:"current_player_field"`
-	CurrentPlayerCastle    CastleDTO           `json:"current_player_castle"`
-	IsEliminated           bool                `json:"is_eliminated"`
-	IsDisconnected         bool                `json:"is_disconnected"`
-	Opponents              []OpponentStatusDTO `json:"opponents"`
-	GameMode               string              `json:"game_mode"`
-	Cemetery               CemeteryDTO         `json:"cemetery"`
-	DiscardPile            DiscardPileDTO      `json:"discard_pile"`
-	CardsInDeck            int                 `json:"cards_in_deck"`
-	ModalCards             []CardDTO           `json:"modal_cards,omitempty"`
-	LastMovedWarriorID     string              `json:"last_moved_warrior_id,omitempty"`
-	LastAttackWeaponID     string              `json:"last_attack_weapon_id,omitempty"`
-	LastAttackTargetID     string              `json:"last_attack_target_id,omitempty"`
-	LastAttackTargetPlayer string              `json:"last_attack_target_player,omitempty"`
-	StolenFromYouCard          []CardDTO           `json:"stolen_from_you_card,omitempty"`
-	SabotagedFromYouCard       []CardDTO           `json:"sabotaged_from_you_card,omitempty"`
-	SpyNotification            string              `json:"spy_notification,omitempty"`
-	AmbushTriggered            *AmbushTriggeredDTO `json:"ambush_triggered,omitempty"`
+	CurrentPlayerHand          []HandCardDTO             `json:"current_player_hand"`
+	CurrentPlayerField         []FieldCardDTO            `json:"current_player_field"`
+	CurrentPlayerCastle        CastleDTO                 `json:"current_player_castle"`
+	IsEliminated               bool                      `json:"is_eliminated"`
+	IsDisconnected             bool                      `json:"is_disconnected"`
+	Opponents                  []OpponentStatusDTO       `json:"opponents"`
+	GameMode                   string                    `json:"game_mode"`
+	Cemetery                   CemeteryDTO               `json:"cemetery"`
+	DiscardPile                DiscardPileDTO            `json:"discard_pile"`
+	CardsInDeck                int                       `json:"cards_in_deck"`
+	ModalCards                 []CardDTO                 `json:"modal_cards,omitempty"`
+	LastMovedWarriorID         string                    `json:"last_moved_warrior_id,omitempty"`
+	LastAttackWeaponID         string                    `json:"last_attack_weapon_id,omitempty"`
+	LastAttackTargetID         string                    `json:"last_attack_target_id,omitempty"`
+	LastAttackTargetPlayer     string                    `json:"last_attack_target_player,omitempty"`
+	StolenFromYouCard          []CardDTO                 `json:"stolen_from_you_card,omitempty"`
+	SabotagedFromYouCard       []CardDTO                 `json:"sabotaged_from_you_card,omitempty"`
+	SpyNotification            string                    `json:"spy_notification,omitempty"`
+	AmbushTriggered            *AmbushTriggeredDTO       `json:"ambush_triggered,omitempty"`
 	DesertionNotification      *DesertionNotificationDTO `json:"desertion_notification,omitempty"`
-	CurrentPlayerAmbushInField bool                `json:"current_player_ambush_in_field"`
-	History                    []HistoryLineDTO    `json:"history"`
-	PlayersOrder           []string            `json:"players_order"`
-	NextTurnPlayer         string              `json:"next_turn_player,omitempty"`
-	GameOverMsg            string              `json:"game_over_msg,omitempty"`
-	IsWinner               bool                `json:"is_winner"`
-	GameStartedAt          string              `json:"game_started_at"`
-	TurnStartedAt          string              `json:"turn_started_at"`
-	TurnTimeLimitSecs      int                 `json:"turn_time_limit_secs"`
+	CurrentPlayerAmbushInField bool                      `json:"current_player_ambush_in_field"`
+	History                    []HistoryLineDTO          `json:"history"`
+	PlayersOrder               []string                  `json:"players_order"`
+	NextTurnPlayer             string                    `json:"next_turn_player,omitempty"`
+	GameOverMsg                string                    `json:"game_over_msg,omitempty"`
+	IsWinner                   bool                      `json:"is_winner"`
+	GameStartedAt              string                    `json:"game_started_at"`
+	TurnStartedAt              string                    `json:"turn_started_at"`
+	TurnTimeLimitSecs          int                       `json:"turn_time_limit_secs"`
 }
 
 // AmbushTriggeredDTO carries ambush trigger info for the attacker's notification modal
