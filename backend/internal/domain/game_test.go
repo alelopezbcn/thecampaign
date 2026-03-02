@@ -987,6 +987,32 @@ func TestGame_addToHistory(t *testing.T) {
 	})
 }
 
+// minDeckConfig returns a DeckConfig with just enough cards for a game to start.
+func minDeckConfig() cards.DeckConfig {
+	return cards.DeckConfig{Warriors: 2, ConstructionCards: 1}
+}
+
+func TestNewGame_CastleGoal_ZeroFallsBackToDefault(t *testing.T) {
+	dealer := cards.NewDealer(minDeckConfig())
+	g, err := NewGame([]string{"Alice", "Bob"}, types.GameMode1v1, dealer, 0)
+	assert.NoError(t, err)
+	assert.NotNil(t, g)
+}
+
+func TestNewGame_CastleGoal_NegativeFallsBackToDefault(t *testing.T) {
+	dealer := cards.NewDealer(minDeckConfig())
+	g, err := NewGame([]string{"Alice", "Bob"}, types.GameMode1v1, dealer, -5)
+	assert.NoError(t, err)
+	assert.NotNil(t, g)
+}
+
+func TestNewGame_CastleGoal_CustomGoalIsAccepted(t *testing.T) {
+	dealer := cards.NewDealer(minDeckConfig())
+	g, err := NewGame([]string{"Alice", "Bob"}, types.GameMode1v1, dealer, 15)
+	assert.NoError(t, err)
+	assert.NotNil(t, g)
+}
+
 func TestGame_validatePlayers(t *testing.T) {
 	t.Run("1v1 requires 2 players", func(t *testing.T) {
 		assert.NoError(t, validatePlayers(2, types.GameMode1v1))

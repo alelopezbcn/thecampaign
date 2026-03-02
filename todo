@@ -1,7 +1,7 @@
 Fixes:
+test desertion
 
 Code improvements:
-- hacer mas pequeños los view ports cuando se juega FFA5, y los de los enemigos en 2v2
 - faltan tests de ambush en game status
 - improve gamestatus
 - we are missing command mocks in the make file
@@ -13,5 +13,4 @@ Forja (Forge) - Durante la fase de compra, puedes combinar 2 armas del mismo tip
 Clima / Eventos - Al inicio de cada ronda, se revela una carta de evento global: "Tormenta" (las flechas hacen -2 daño), "Sequía" (construir cuesta el doble), "Luna llena" (los Magos hacen daño x3). Agrega variabilidad entre partidas.
 
 Deseable:
-- configuracion, Cant cartas, modos de juego pantano, preset "edad de fuego" con 4 Dragones y Ballestas
 - persist game status

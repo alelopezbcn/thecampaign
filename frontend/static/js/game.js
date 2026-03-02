@@ -7,6 +7,25 @@ let pendingAnimationsCallback = null; // Deferred animations waiting for modal c
 let endTurnCountdownTimer = null;
 const END_TURN_COUNTDOWN_SECS = 3;
 const MAX_RECONNECT_ATTEMPTS = 20;
+const DEFAULT_CASTLE_GOAL = 25;
+const DEFAULT_GAME_CONFIG = {
+    warriors: 5,
+    dragons: 1,
+    harpoons: 1,
+    special_powers: 4,
+    spies: 1,
+    thieves: 1,
+    sabotages: 1,
+    catapults: 1,
+    fortresses: 1,
+    ambushes: 1,
+    blood_rains: 2,
+    resurrections: 1,
+    desertions: 1,
+    construction_cards: 1,
+    castle_goal: DEFAULT_CASTLE_GOAL
+};
+
 let gameState = {
     playerName: '',
     gameID: '',
@@ -24,6 +43,7 @@ let gameState = {
     maxPlayers: 2, // Max players for current game mode
     teamAssignments: {}, // playerName -> teamNumber (1 or 2), 2v2 only
     isCreator: false, // Whether this player created the room
+    gameConfig: { ...DEFAULT_GAME_CONFIG }, // Game configuration (only used by creator)
     // Action state for multi-step actions
     actionState: {
         type: null,       // 'move_warrior', 'trade', 'attack', 'specialpower', 'catapult'
@@ -46,6 +66,7 @@ const screens = {
 document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     checkUrlParams();
+    loadPresets();
     fetch('/api/version')
         .then(r => r.json())
         .then(data => {
@@ -58,6 +79,89 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => { cardConfig = data; })
         .catch(() => {});
 });
+
+// --- Game Settings / Presets ---
+
+let presetsData = [];
+
+function loadPresets() {
+    fetch('/static/presets.json')
+        .then(r => r.json())
+        .then(data => {
+            presetsData = data.presets || [];
+            const select = document.getElementById('settings-preset');
+            if (!select) return;
+            select.innerHTML = '';
+            presetsData.forEach((p, i) => {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = p.name;
+                select.appendChild(opt);
+            });
+            const customOpt = document.createElement('option');
+            customOpt.value = 'custom';
+            customOpt.textContent = 'Custom';
+            select.appendChild(customOpt);
+            // Apply first preset as default
+            if (presetsData.length > 0) {
+                applyPreset(presetsData[0].config);
+            }
+        })
+        .catch(() => {
+            // Fallback: fill inputs with DEFAULT_GAME_CONFIG
+            applyPreset(DEFAULT_GAME_CONFIG);
+        });
+}
+
+function applyPreset(config) {
+    const fields = {
+        'cfg-warriors':            'warriors',
+        'cfg-dragons':             'dragons',
+        'cfg-harpoons':            'harpoons',
+        'cfg-special-powers':      'special_powers',
+        'cfg-spies':               'spies',
+        'cfg-thieves':             'thieves',
+        'cfg-sabotages':           'sabotages',
+        'cfg-catapults':           'catapults',
+        'cfg-fortresses':          'fortresses',
+        'cfg-ambushes':            'ambushes',
+        'cfg-blood-rains':         'blood_rains',
+        'cfg-resurrections':       'resurrections',
+        'cfg-desertions':          'desertions',
+        'cfg-construction-cards':  'construction_cards',
+        'cfg-castle-goal':         'castle_goal'
+    };
+    for (const [id, key] of Object.entries(fields)) {
+        const el = document.getElementById(id);
+        if (el && config[key] !== undefined) el.value = config[key];
+    }
+    gameState.gameConfig = { ...config };
+}
+
+function readConfigFromInputs() {
+    return {
+        warriors:           parseInt(document.getElementById('cfg-warriors').value) || 5,
+        dragons:            parseInt(document.getElementById('cfg-dragons').value) || 0,
+        harpoons:           parseInt(document.getElementById('cfg-harpoons').value) || 0,
+        special_powers:     parseInt(document.getElementById('cfg-special-powers').value) || 0,
+        spies:              parseInt(document.getElementById('cfg-spies').value) || 0,
+        thieves:            parseInt(document.getElementById('cfg-thieves').value) || 0,
+        sabotages:          parseInt(document.getElementById('cfg-sabotages').value) || 0,
+        catapults:          parseInt(document.getElementById('cfg-catapults').value) || 0,
+        fortresses:         parseInt(document.getElementById('cfg-fortresses').value) || 0,
+        ambushes:           parseInt(document.getElementById('cfg-ambushes').value) || 0,
+        blood_rains:        parseInt(document.getElementById('cfg-blood-rains').value) || 0,
+        resurrections:      parseInt(document.getElementById('cfg-resurrections').value) || 0,
+        desertions:         parseInt(document.getElementById('cfg-desertions').value) || 0,
+        construction_cards: parseInt(document.getElementById('cfg-construction-cards').value) || 1,
+        castle_goal:        parseInt(document.getElementById('cfg-castle-goal').value) || DEFAULT_CASTLE_GOAL
+    };
+}
+
+function markConfigCustom() {
+    const select = document.getElementById('settings-preset');
+    if (select) select.value = 'custom';
+}
 
 function checkUrlParams() {
     const params = new URLSearchParams(window.location.search);
@@ -91,6 +195,41 @@ function setupEventListeners() {
     document.getElementById('join-url-btn').addEventListener('click', joinGameByUrl);
     document.getElementById('url-player-name').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') joinGameByUrl();
+    });
+
+    // Settings modal open/close
+    document.getElementById('show-settings-link').addEventListener('click', () => {
+        document.getElementById('game-settings-modal').classList.remove('hidden');
+    });
+    document.getElementById('settings-close-btn').addEventListener('click', () => {
+        document.getElementById('game-settings-modal').classList.add('hidden');
+    });
+    document.getElementById('settings-apply-btn').addEventListener('click', () => {
+        document.getElementById('game-settings-modal').classList.add('hidden');
+    });
+    document.getElementById('game-settings-modal').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('game-settings-modal')) {
+            document.getElementById('game-settings-modal').classList.add('hidden');
+        }
+    });
+
+    // Preset dropdown change
+    document.getElementById('settings-preset').addEventListener('change', (e) => {
+        const idx = parseInt(e.target.value);
+        if (!isNaN(idx) && presetsData[idx]) {
+            applyPreset(presetsData[idx].config);
+        }
+    });
+
+    // Mark as custom when any input is manually changed
+    const cfgInputIds = [
+        'cfg-warriors', 'cfg-dragons', 'cfg-harpoons', 'cfg-special-powers',
+        'cfg-spies', 'cfg-thieves', 'cfg-sabotages', 'cfg-catapults',
+        'cfg-fortresses', 'cfg-ambushes', 'cfg-blood-rains', 'cfg-resurrections',
+        'cfg-desertions', 'cfg-construction-cards', 'cfg-castle-goal'
+    ];
+    cfgInputIds.forEach(id => {
+        document.getElementById(id).addEventListener('input', markConfigCustom);
     });
 
     // Toggle between create/join sections
@@ -275,11 +414,15 @@ function connectWebSocket() {
 
         // Send join_game for both create (empty gameID) and join/reconnect flows
         if (gameState.playerName) {
-            sendMessage('join_game', {
+            const joinPayload = {
                 player_name: gameState.playerName,
                 game_id: gameState.gameID,
                 game_mode: gameState.gameMode
-            });
+            };
+            if (gameState.isCreator) {
+                joinPayload.game_config = gameState.gameConfig;
+            }
+            sendMessage('join_game', joinPayload);
         }
     };
 
@@ -861,6 +1004,7 @@ function createGame() {
     gameState.waitingPlayers = [];
     gameState.teamAssignments = {};
     gameState.maxPlayers = { '1v1': 2, '2v2': 4, 'ffa3': 3, 'ffa5': 5 }[gameState.gameMode] || 2;
+    gameState.gameConfig = readConfigFromInputs();
     connectWebSocket();
 }
 

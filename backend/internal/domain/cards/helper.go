@@ -4,86 +4,92 @@ import (
 	"fmt"
 )
 
+// DeckConfig controls how many of each card type are added to the deck.
+type DeckConfig struct {
+	Warriors          int // copies per warrior type (Knight, Archer, Mage)
+	Dragons           int
+	Harpoons          int
+	SpecialPowers     int
+	Spies             int
+	Thieves           int
+	Sabotages         int
+	Catapults         int
+	Fortresses        int
+	Ambushes          int
+	BloodRains        int
+	Resurrections     int
+	Desertions        int
+	ConstructionCards int // copies per value (1-9) for Gold, Sword, Arrow, Poison
+}
+
 type Dealer interface {
 	WarriorsCards(playerCount int) (warriors []Card)
 	OtherCards(playerCount int) (other []Card)
 }
 
-type dealer struct{}
-
-func NewDealer() *dealer {
-	return &dealer{}
+type dealer struct {
+	cfg DeckConfig
 }
 
-func (d *dealer) WarriorsCards(playerCount int) (warriors []Card) {
-	totalWarriors := 15
-	warriorsPerType := 5
+func NewDealer(cfg DeckConfig) *dealer {
+	return &dealer{cfg: cfg}
+}
 
-	if playerCount > 3 {
-		totalWarriors = 21
-		warriorsPerType = 7
+func (d *dealer) WarriorsCards(_ int) (warriors []Card) {
+	warriors = make([]Card, 0, d.cfg.Warriors*3)
+	for i := 1; i <= d.cfg.Warriors; i++ {
+		warriors = append(warriors, NewKnight(fmt.Sprintf("k%d", i)))
+		warriors = append(warriors, NewArcher(fmt.Sprintf("a%d", i)))
+		warriors = append(warriors, NewMage(fmt.Sprintf("m%d", i)))
 	}
-
-	warriors = make([]Card, 0, totalWarriors)
-
-	for i := 1; i <= warriorsPerType; i++ {
-		k := NewKnight(fmt.Sprintf("k%d", i))
-		warriors = append(warriors, k)
-
-		a := NewArcher(fmt.Sprintf("a%d", i))
-		warriors = append(warriors, a)
-
-		m := NewMage(fmt.Sprintf("m%d", i))
-		warriors = append(warriors, m)
-	}
-
 	return warriors
 }
 
-func (d *dealer) OtherCards(playerCount int) (other []Card) {
-	other = []Card{
-		NewDragon("dr1"),
-		NewSpecialPower("s1"),
-		NewSpecialPower("s2"),
-		NewSpecialPower("s3"),
-		NewSpecialPower("s4"),
-		NewSpy("spy1"),
-		NewThief("t1"),
-		NewSabotage("sab1"),
-		// NewDesertion("des1"),
-		NewCatapultCard("c1"),
-		NewCatapultCard("c2"),
-		NewFortress("fw1"),
-		NewHarpoon("ha1"),
-		NewBloodRain("br1"),
-		NewResurrection("res1"),
-		NewAmbush("amb1"),
+func (d *dealer) OtherCards(_ int) (other []Card) {
+	for i := 0; i < d.cfg.Dragons; i++ {
+		other = append(other, NewDragon(fmt.Sprintf("dr%d", i+1)))
+	}
+	for i := 0; i < d.cfg.SpecialPowers; i++ {
+		other = append(other, NewSpecialPower(fmt.Sprintf("s%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Spies; i++ {
+		other = append(other, NewSpy(fmt.Sprintf("spy%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Thieves; i++ {
+		other = append(other, NewThief(fmt.Sprintf("t%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Sabotages; i++ {
+		other = append(other, NewSabotage(fmt.Sprintf("sab%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Desertions; i++ {
+		other = append(other, NewDesertion(fmt.Sprintf("des%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Catapults; i++ {
+		other = append(other, NewCatapultCard(fmt.Sprintf("c%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Fortresses; i++ {
+		other = append(other, NewFortress(fmt.Sprintf("fw%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Harpoons; i++ {
+		other = append(other, NewHarpoon(fmt.Sprintf("ha%d", i+1)))
+	}
+	for i := 0; i < d.cfg.BloodRains; i++ {
+		other = append(other, NewBloodRain(fmt.Sprintf("br%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Resurrections; i++ {
+		other = append(other, NewResurrection(fmt.Sprintf("res%d", i+1)))
+	}
+	for i := 0; i < d.cfg.Ambushes; i++ {
+		other = append(other, NewAmbush(fmt.Sprintf("amb%d", i+1)))
 	}
 
-	if playerCount > 3 {
-		other = append(other, NewDragon("dr2"))
-		other = append(other, NewSpecialPower("s5"))
-		other = append(other, NewSpecialPower("s6"))
-		other = append(other, NewSpy("spy2"))
-		other = append(other, NewThief("t2"))
-		other = append(other, NewSabotage("sab2"))
-		// other = append(other, NewDesertion("des2"))
-		other = append(other, NewCatapultCard("c3"))
-		other = append(other, NewFortress("fw2"))
-		other = append(other, NewHarpoon("ha2"))
-		other = append(other, NewBloodRain("br2"))
-		other = append(other, NewResurrection("res2"))
-		other = append(other, NewAmbush("amb2"))
+	for i := 1; i <= d.cfg.ConstructionCards; i++ {
+		other = append(other, NewSword(fmt.Sprintf("econ%d", i), 1))
+		other = append(other, NewArrow(fmt.Sprintf("acon%d", i), 1))
+		other = append(other, NewPoison(fmt.Sprintf("pcon%d", i), 1))
+		other = append(other, NewGold(fmt.Sprintf("gcon%d", i), 1))
 	}
-
-	if playerCount > 4 {
-		other = append(other, NewGold(fmt.Sprintf("gcas%d", 1), 1))
-		other = append(other, NewSword(fmt.Sprintf("ecas%d", 1), 1))
-		other = append(other, NewArrow(fmt.Sprintf("fcas%d", 1), 1))
-		other = append(other, NewPoison(fmt.Sprintf("pcas%d", 1), 1))
-	}
-
-	for i := 1; i < 10; i++ {
+	for i := 2; i < 10; i++ {
 		other = append(other, NewSword(fmt.Sprintf("e%d", i), i))
 		other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
 		other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
@@ -91,28 +97,7 @@ func (d *dealer) OtherCards(playerCount int) (other []Card) {
 		if i == 5 || i == 7 || i == 9 {
 			other = append(other, NewGold(fmt.Sprintf("gr%d", i), i))
 		}
-		if playerCount > 3 {
-			other = append(other, NewSword(fmt.Sprintf("er%d", i), i))
-			other = append(other, NewArrow(fmt.Sprintf("fr%d", i), i))
-			other = append(other, NewPoison(fmt.Sprintf("pr%d", i), i))
-			other = append(other, NewGold(fmt.Sprintf("grr%d", i), i))
-		}
 	}
 
-	return append(other, d.customCards()...)
-}
-
-func (d *dealer) customCards() []Card {
-	return []Card{
-		// NewDesertion("custom1"),
-		// NewDesertion("custom2"),
-		// NewDesertion("custom3"),
-		// NewDesertion("custom4"),
-		// NewDesertion("custom5"),
-		// NewDesertion("custom6"),
-		// NewDesertion("custom7"),
-		// NewDesertion("custom8"),
-		// NewDesertion("custom9"),
-		// NewDesertion("custom10"),
-	}
+	return other
 }
