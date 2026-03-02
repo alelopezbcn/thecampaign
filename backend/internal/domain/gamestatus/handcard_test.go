@@ -490,6 +490,122 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 		assert.True(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
+
+	t.Run("Knight can protect ally unprotected non-dragon warrior", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		allyWarrior := mocks.NewMockWarrior(ctrl)
+		allyWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
+		allyWarrior.EXPECT().IsProtected().Return(false, nil)
+		allyWarrior.EXPECT().GetID().Return("AA1")
+
+		myField := gamestatus.FieldInput{HasKnight: true}
+		allyField := gamestatus.FieldInput{Warriors: []cards.Warrior{allyWarrior}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+		assert.Equal(t, []string{"AA1"}, hc.CanBeUsedOnIDs)
+	})
+
+	t.Run("Knight cannot protect ally dragon", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		allyDragon := mocks.NewMockWarrior(ctrl)
+		allyDragon.EXPECT().Type().Return(types.DragonWarriorType)
+		allyDragon.EXPECT().IsProtected().Return(false, nil)
+
+		myField := gamestatus.FieldInput{HasKnight: true}
+		allyField := gamestatus.FieldInput{Warriors: []cards.Warrior{allyDragon}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+		assert.Empty(t, hc.CanBeUsedOnIDs)
+	})
+
+	t.Run("Knight cannot protect already protected ally warrior", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		existingSP := mocks.NewMockSpecialPower(ctrl)
+		allyWarrior := mocks.NewMockWarrior(ctrl)
+		allyWarrior.EXPECT().Type().Return(types.KnightWarriorType)
+		allyWarrior.EXPECT().IsProtected().Return(true, existingSP)
+
+		myField := gamestatus.FieldInput{HasKnight: true}
+		allyField := gamestatus.FieldInput{Warriors: []cards.Warrior{allyWarrior}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+		assert.Empty(t, hc.CanBeUsedOnIDs)
+	})
+
+	t.Run("Mage can heal damaged ally non-dragon warrior", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		allyWarrior := mocks.NewMockWarrior(ctrl)
+		allyWarrior.EXPECT().Type().Return(types.KnightWarriorType)
+		allyWarrior.EXPECT().IsDamaged().Return(true)
+		allyWarrior.EXPECT().GetID().Return("AK1")
+
+		myField := gamestatus.FieldInput{HasMage: true}
+		allyField := gamestatus.FieldInput{Warriors: []cards.Warrior{allyWarrior}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+		assert.Equal(t, []string{"AK1"}, hc.CanBeUsedOnIDs)
+	})
+
+	t.Run("Mage cannot heal undamaged ally warrior", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		allyWarrior := mocks.NewMockWarrior(ctrl)
+		allyWarrior.EXPECT().Type().Return(types.ArcherWarriorType)
+		allyWarrior.EXPECT().IsDamaged().Return(false)
+
+		myField := gamestatus.FieldInput{HasMage: true}
+		allyField := gamestatus.FieldInput{Warriors: []cards.Warrior{allyWarrior}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+		assert.Empty(t, hc.CanBeUsedOnIDs)
+	})
+
+	t.Run("Mage cannot heal ally dragon", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		allyDragon := mocks.NewMockWarrior(ctrl)
+		allyDragon.EXPECT().Type().Return(types.DragonWarriorType)
+
+		myField := gamestatus.FieldInput{HasMage: true}
+		allyField := gamestatus.FieldInput{Warriors: []cards.Warrior{allyDragon}}
+
+		hc := gamestatus.NewSpecialPowerHandCard("SP1",
+			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
+			types.PhaseTypeAttack)
+
+		assert.True(t, hc.CanBeUsed)
+		assert.Empty(t, hc.CanBeUsedOnIDs)
+	})
 }
 
 func TestNewSpyHandCard(t *testing.T) {

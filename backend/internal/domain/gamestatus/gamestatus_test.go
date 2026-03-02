@@ -618,3 +618,83 @@ func TestNewGameStatus_CurrentPlayerField_EmptyWhenNoWarriors(t *testing.T) {
 
 	assert.Empty(t, gs.CurrentPlayerField)
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Opponent metadata tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewGameStatus_OpponentStatus_Metadata(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name:           "Player2",
+			CardsInHand:    4,
+			IsAlly:         true,
+			IsEliminated:   false,
+			IsDisconnected: false,
+		},
+		{
+			Name:           "Player3",
+			CardsInHand:    0,
+			IsAlly:         false,
+			IsEliminated:   true,
+			IsDisconnected: true,
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Len(t, gs.Opponents, 2)
+
+	assert.Equal(t, "Player2", gs.Opponents[0].PlayerName)
+	assert.Equal(t, 4, gs.Opponents[0].CardsInHand)
+	assert.True(t, gs.Opponents[0].IsAlly)
+	assert.False(t, gs.Opponents[0].IsEliminated)
+	assert.False(t, gs.Opponents[0].IsDisconnected)
+
+	assert.Equal(t, "Player3", gs.Opponents[1].PlayerName)
+	assert.Equal(t, 0, gs.Opponents[1].CardsInHand)
+	assert.False(t, gs.Opponents[1].IsAlly)
+	assert.True(t, gs.Opponents[1].IsEliminated)
+	assert.True(t, gs.Opponents[1].IsDisconnected)
+}
+
+func TestNewGameStatus_OpponentStatus_Castle(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name: "Player2",
+			Castle: gamestatus.CastleInput{
+				IsConstructed:      true,
+				IsProtected:        true,
+				ResourceCardsCount: 3,
+				Value:              12,
+			},
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Len(t, gs.Opponents, 1)
+	assert.True(t, gs.Opponents[0].Castle.IsConstructed)
+	assert.True(t, gs.Opponents[0].Castle.IsProtected)
+	assert.Equal(t, 3, gs.Opponents[0].Castle.ResourceCards)
+	assert.Equal(t, 12, gs.Opponents[0].Castle.Value)
+}
+
+func TestNewGameStatus_OpponentStatus_FieldWarriorsConverted(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name:  "Player2",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{cards.NewArcher("A1")}},
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Len(t, gs.Opponents, 1)
+	assert.Len(t, gs.Opponents[0].Field, 1)
+	assert.Equal(t, "A1", gs.Opponents[0].Field[0].CardID)
+	assert.Equal(t, gamestatus.CardTypeArcher, gs.Opponents[0].Field[0].CardType)
+}
