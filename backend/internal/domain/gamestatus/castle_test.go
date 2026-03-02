@@ -30,3 +30,17 @@ func TestNewCastle_Empty(t *testing.T) {
 	assert.Equal(t, 0, c.ResourceCards)
 	assert.Equal(t, 0, c.Value)
 }
+
+func TestNewCastle_IsProtected(t *testing.T) {
+	t.Run("True when input is protected", func(t *testing.T) {
+		c := NewCastle(CastleInput{IsProtected: true})
+
+		assert.True(t, c.IsProtected)
+	})
+
+	t.Run("False when input is not protected", func(t *testing.T) {
+		c := NewCastle(CastleInput{IsProtected: false})
+
+		assert.False(t, c.IsProtected)
+	})
+}

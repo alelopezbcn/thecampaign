@@ -54,3 +54,6 @@ test-verbose:
 
 tidy:
 	cd backend && go mod tidy
+
+fmt:
+	cd backend && go fmt ./...

@@ -2,7 +2,6 @@ Fixes:
 test desertion
 
 Code improvements:
-- faltan tests de ambush en game status
 - improve gamestatus
 - we are missing command mocks in the make file
 - PR pipeline to make test, format code

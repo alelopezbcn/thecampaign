@@ -9,14 +9,16 @@ import (
 
 func TestFromDomainCard_Warrior(t *testing.T) {
 	tests := []struct {
-		name     string
-		card     cards.Card
-		wantType CardType
+		name      string
+		card      cards.Card
+		wantType  CardType
+		wantValue int
 	}{
-		{"Knight", cards.NewKnight("W1"), CardTypeKnight},
-		{"Archer", cards.NewArcher("W1"), CardTypeArcher},
-		{"Mage", cards.NewMage("W1"), CardTypeMage},
-		{"Dragon", cards.NewDragon("W1"), CardTypeDragon},
+		{"Knight", cards.NewKnight("W1"), CardTypeKnight, 20},
+		{"Archer", cards.NewArcher("W1"), CardTypeArcher, 20},
+		{"Mage", cards.NewMage("W1"), CardTypeMage, 20},
+		{"Dragon", cards.NewDragon("W1"), CardTypeDragon, 20},
+		{"Mercenary", cards.NewMercenary("W1"), CardTypeMercenary, 15},
 	}
 
 	for _, tt := range tests {
@@ -25,7 +27,7 @@ func TestFromDomainCard_Warrior(t *testing.T) {
 
 			assert.Equal(t, "W1", c.CardID)
 			assert.Equal(t, tt.wantType, c.CardType)
-			assert.Equal(t, 20, c.Value) // warriorMaxHealth / dragonMaxHealth = 20
+			assert.Equal(t, tt.wantValue, c.Value)
 		})
 	}
 }
@@ -170,5 +172,15 @@ func TestFromDomainCard_Desertion(t *testing.T) {
 
 	assert.Equal(t, "DES1", c.CardID)
 	assert.Equal(t, CardTypeDesertion, c.CardType)
+	assert.Equal(t, 0, c.Value)
+}
+
+func TestFromDomainCard_Ambush(t *testing.T) {
+	ambush := cards.NewAmbush("AMB1")
+
+	c := fromDomainCard(ambush)
+
+	assert.Equal(t, "AMB1", c.CardID)
+	assert.Equal(t, CardTypeAmbush, c.CardType)
 	assert.Equal(t, 0, c.Value)
 }

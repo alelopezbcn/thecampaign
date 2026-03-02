@@ -146,7 +146,7 @@ func TestBuyMercenaryAction_Execute(t *testing.T) {
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockResource.EXPECT().GetID().Return("gold-6")
 		mockPlayer.EXPECT().RemoveFromHand("gold-6").Return(nil, nil)
-		mockPlayer.EXPECT().TakeCards(gomock.Any()).Return(true) // mercenary (any ID)
+		mockPlayer.EXPECT().TakeCards(gomock.Any()).Return(true)      // mercenary (any ID)
 		mockPlayer.EXPECT().MoveCardToField(gomock.Any()).Return(nil) // mercenary ID (UUID)
 		mockGame.EXPECT().OnCardMovedToPile(mockResource)
 		mockPlayer.EXPECT().Name().Return("Player1").AnyTimes()

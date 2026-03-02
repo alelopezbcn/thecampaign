@@ -22,7 +22,7 @@ type testBoardImpl struct {
 	deck        board.Deck
 }
 
-func (b *testBoardImpl) Deck() board.Deck              { return b.deck }
+func (b *testBoardImpl) Deck() board.Deck               { return b.deck }
 func (b *testBoardImpl) DiscardPile() board.DiscardPile { return b.discardPile }
 func (b *testBoardImpl) Cemetery() board.Cemetery       { return b.cemetery }
 func (b *testBoardImpl) Players() []board.Player        { return b.players }
