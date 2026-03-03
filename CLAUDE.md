@@ -6,6 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 TheCampaign is a real-time multiplayer turn-based card game. Go backend with WebSocket communication, vanilla JavaScript frontend. Supports 1v1, 2v2, FFA3, and FFA5 game modes.
 
+## Code Style
+
+After modifying any `.go` file, run `gofmt -w <file>` on it before moving on.
+
 ## Commands
 
 ```bash

@@ -1815,6 +1815,37 @@ body {
     }
 }
 
+/* Selected user warrior for special power - gold/amber glow, more prominent */
+#player-field .card.selected-user,
+.opponent-field .card.selected-user {
+    border-color: #ffb300 !important;
+    box-shadow: 0 0 28px rgba(255, 179, 0, 0.9), 0 0 55px rgba(255, 179, 0, 0.55), inset 0 0 14px rgba(255, 179, 0, 0.2) !important;
+    animation: selectedUserGlow 1.1s ease-in-out infinite !important;
+    transform: translateY(-7px) scale(1.05) !important;
+    z-index: 6;
+}
+
+@keyframes selectedUserGlow {
+    0%, 100% {
+        box-shadow: 0 0 28px rgba(255, 179, 0, 0.9), 0 0 55px rgba(255, 179, 0, 0.55), inset 0 0 14px rgba(255, 179, 0, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(255, 179, 0, 1.0), 0 0 75px rgba(255, 179, 0, 0.75), inset 0 0 20px rgba(255, 179, 0, 0.3);
+    }
+}
+
+/* Dim warriors that are not valid targets once target-selection mode is active */
+.targeting-mode .card:not(.valid-target):not(.selected-user) {
+    opacity: 0.38;
+    filter: grayscale(40%);
+    cursor: not-allowed !important;
+}
+
+.targeting-mode .card:not(.valid-target):not(.selected-user):hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
 /* Floating damage numbers - positioned above the card */
 .floating-damage {
     position: absolute;
