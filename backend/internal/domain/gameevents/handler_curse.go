@@ -13,8 +13,8 @@ type curseHandler struct {
 	modifier       int
 }
 
-func (h *curseHandler) ExtraDrawCards() int            { return 0 }
-func (h *curseHandler) ConstructionValueModifier() int { return 0 }
+func (h *curseHandler) ExtraDrawCards() int             { return 0 }
+func (h *curseHandler) ConstructionValueModifier() int  { return 0 }
 func (h *curseHandler) TurnStartWarriorHPModifier() int { return 0 }
 
 func (h *curseHandler) WeaponDamageModifier(weaponType types.WeaponType) int {

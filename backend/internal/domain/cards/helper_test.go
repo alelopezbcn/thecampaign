@@ -97,6 +97,22 @@ func TestDealer_OtherCards_ConstructionCards_TwoCopiesOfValueOne(t *testing.T) {
 	assert.Equal(t, 10, countType[*poison](other), "poisons")
 }
 
+// --- OtherCards — high value gold ---
+
+func TestDealer_OtherCards_HighValueGoldCards_ZeroAddsNoExtras(t *testing.T) {
+	d := NewDealer(DeckConfig{ConstructionCards: 1, HighValueGoldCards: 0})
+	other := d.OtherCards(0)
+	// same as default: 1 (gcon1) + 8 (g2-g9) + 3 (gr5, gr7, gr9) = 12
+	assert.Equal(t, 12, countType[*gold](other))
+}
+
+func TestDealer_OtherCards_HighValueGoldCards_AddsExtraGold789(t *testing.T) {
+	d := NewDealer(DeckConfig{ConstructionCards: 1, HighValueGoldCards: 2})
+	other := d.OtherCards(0)
+	// base 12 + 2 extra each for values 7, 8, 9 = 12 + 6 = 18
+	assert.Equal(t, 18, countType[*gold](other))
+}
+
 // --- Desertion edge cases ---
 
 func TestDealer_OtherCards_Desertions_ZeroWhenNotConfigured(t *testing.T) {

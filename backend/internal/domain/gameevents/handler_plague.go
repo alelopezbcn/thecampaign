@@ -12,10 +12,10 @@ type plagueHandler struct {
 	modifier int // [-3,+3] excl. 0
 }
 
-func (h *plagueHandler) ExtraDrawCards() int                          { return 0 }
-func (h *plagueHandler) WeaponDamageModifier(_ types.WeaponType) int  { return 0 }
-func (h *plagueHandler) ConstructionValueModifier() int               { return 0 }
-func (h *plagueHandler) TurnStartWarriorHPModifier() int              { return h.modifier }
+func (h *plagueHandler) ExtraDrawCards() int                         { return 0 }
+func (h *plagueHandler) WeaponDamageModifier(_ types.WeaponType) int { return 0 }
+func (h *plagueHandler) ConstructionValueModifier() int              { return 0 }
+func (h *plagueHandler) TurnStartWarriorHPModifier() int             { return h.modifier }
 
 func (h *plagueHandler) Display() (string, string) {
 	if h.modifier > 0 {

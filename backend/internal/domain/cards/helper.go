@@ -6,20 +6,21 @@ import (
 
 // DeckConfig controls how many of each card type are added to the deck.
 type DeckConfig struct {
-	Warriors          int // copies per warrior type (Knight, Archer, Mage)
-	Dragons           int
-	Harpoons          int
-	SpecialPowers     int
-	Spies             int
-	Thieves           int
-	Sabotages         int
-	Catapults         int
-	Fortresses        int
-	Ambushes          int
-	BloodRains        int
-	Resurrections     int
-	Desertions        int
-	ConstructionCards int // copies per value (1-9) for Gold, Sword, Arrow, Poison
+	Warriors           int // copies per warrior type (Knight, Archer, Mage)
+	Dragons            int
+	Harpoons           int
+	SpecialPowers      int
+	Spies              int
+	Thieves            int
+	Sabotages          int
+	Catapults          int
+	Fortresses         int
+	Ambushes           int
+	BloodRains         int
+	Resurrections      int
+	Desertions         int
+	ConstructionCards  int // copies per value (1-9) for Gold, Sword, Arrow, Poison
+	HighValueGoldCards int // extra copies of gold 7, 8, and 9 added on top of defaults
 }
 
 type Dealer interface {
@@ -96,6 +97,11 @@ func (d *dealer) OtherCards(_ int) (other []Card) {
 		other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
 		if i == 5 || i == 7 || i == 9 {
 			other = append(other, NewGold(fmt.Sprintf("gr%d", i), i))
+		}
+		if i == 7 || i == 8 || i == 9 {
+			for j := 0; j < d.cfg.HighValueGoldCards; j++ {
+				other = append(other, NewGold(fmt.Sprintf("g%d_x%d", i, j+1), i))
+			}
 		}
 	}
 

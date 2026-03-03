@@ -19,6 +19,7 @@ import (
 const (
 	turnTimeLimit           = 120 * time.Second
 	waitingRoomCleanupDelay = 60 * time.Second
+	disconnectGracePeriod   = 60 * time.Second
 )
 
 type HubGame interface {
@@ -27,6 +28,7 @@ type HubGame interface {
 	GetPlayer(name string) board.Player
 	ReconnectPlayer(name string)
 	DisconnectPlayer(playerName string) error
+	FinalizeDisconnection(playerName string)
 	IsGameOver() (bool, string)
 	Status(viewer board.Player, newCards ...cards.Card) gamestatus.GameStatus
 }
@@ -39,17 +41,18 @@ type ClientMessage struct {
 
 // GameRoom represents a game room with players
 type GameRoom struct {
-	ID              string
-	GameMode        types.GameMode
-	MaxPlayers      int
-	Config          GameConfig
-	Game            HubGame
-	Players         map[string]*Client // playerName -> client
-	TeamAssignments map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
-	mutex           sync.RWMutex
-	turnTimer       *time.Timer
-	turnTimerStop   chan struct{}
-	cleanupTimer    *time.Timer
+	ID               string
+	GameMode         types.GameMode
+	MaxPlayers       int
+	Config           GameConfig
+	Game             HubGame
+	Players          map[string]*Client // playerName -> client
+	TeamAssignments  map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
+	mutex            sync.RWMutex
+	turnTimer        *time.Timer
+	turnTimerStop    chan struct{}
+	cleanupTimer     *time.Timer
+	disconnectTimers map[string]*time.Timer // playerName -> reconnect grace period timer
 }
 
 // Hub maintains active clients and game rooms
@@ -285,6 +288,14 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		room.Players[playerName] = client
 		gameInProgress := room.Game != nil
 
+		// Cancel any pending disconnect grace period timer.
+		if room.disconnectTimers != nil {
+			if t, ok := room.disconnectTimers[playerName]; ok {
+				t.Stop()
+				delete(room.disconnectTimers, playerName)
+			}
+		}
+
 		// Close old client connection if still active
 		if oldClient != nil {
 			h.mutex.Lock()
@@ -430,20 +441,21 @@ func (h *Hub) handleStartGame(client *Client) {
 	}
 
 	deckCfg := cards.DeckConfig{
-		Warriors:          room.Config.Warriors,
-		Dragons:           room.Config.Dragons,
-		Harpoons:          room.Config.Harpoons,
-		SpecialPowers:     room.Config.SpecialPowers,
-		Spies:             room.Config.Spies,
-		Thieves:           room.Config.Thieves,
-		Sabotages:         room.Config.Sabotages,
-		Catapults:         room.Config.Catapults,
-		Fortresses:        room.Config.Fortresses,
-		Ambushes:          room.Config.Ambushes,
-		BloodRains:        room.Config.BloodRains,
-		Resurrections:     room.Config.Resurrections,
-		Desertions:        room.Config.Desertions,
-		ConstructionCards: room.Config.ConstructionCards,
+		Warriors:           room.Config.Warriors,
+		Dragons:            room.Config.Dragons,
+		Harpoons:           room.Config.Harpoons,
+		SpecialPowers:      room.Config.SpecialPowers,
+		Spies:              room.Config.Spies,
+		Thieves:            room.Config.Thieves,
+		Sabotages:          room.Config.Sabotages,
+		Catapults:          room.Config.Catapults,
+		Fortresses:         room.Config.Fortresses,
+		Ambushes:           room.Config.Ambushes,
+		BloodRains:         room.Config.BloodRains,
+		Resurrections:      room.Config.Resurrections,
+		Desertions:         room.Config.Desertions,
+		ConstructionCards:  room.Config.ConstructionCards,
+		HighValueGoldCards: room.Config.HighValueGoldCards,
 	}
 	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(deckCfg), room.Config.CastleGoal)
 	if err != nil {
@@ -531,20 +543,21 @@ func (h *Hub) handleRestartGame(client *Client) {
 	}
 
 	deckCfg := cards.DeckConfig{
-		Warriors:          room.Config.Warriors,
-		Dragons:           room.Config.Dragons,
-		Harpoons:          room.Config.Harpoons,
-		SpecialPowers:     room.Config.SpecialPowers,
-		Spies:             room.Config.Spies,
-		Thieves:           room.Config.Thieves,
-		Sabotages:         room.Config.Sabotages,
-		Catapults:         room.Config.Catapults,
-		Fortresses:        room.Config.Fortresses,
-		Ambushes:          room.Config.Ambushes,
-		BloodRains:        room.Config.BloodRains,
-		Resurrections:     room.Config.Resurrections,
-		Desertions:        room.Config.Desertions,
-		ConstructionCards: room.Config.ConstructionCards,
+		Warriors:           room.Config.Warriors,
+		Dragons:            room.Config.Dragons,
+		Harpoons:           room.Config.Harpoons,
+		SpecialPowers:      room.Config.SpecialPowers,
+		Spies:              room.Config.Spies,
+		Thieves:            room.Config.Thieves,
+		Sabotages:          room.Config.Sabotages,
+		Catapults:          room.Config.Catapults,
+		Fortresses:         room.Config.Fortresses,
+		Ambushes:           room.Config.Ambushes,
+		BloodRains:         room.Config.BloodRains,
+		Resurrections:      room.Config.Resurrections,
+		Desertions:         room.Config.Desertions,
+		ConstructionCards:  room.Config.ConstructionCards,
+		HighValueGoldCards: room.Config.HighValueGoldCards,
 	}
 	game, err := domain.NewGame(playerNames, room.GameMode, cards.NewDealer(deckCfg), room.Config.CastleGoal)
 	if err != nil {
@@ -790,7 +803,9 @@ func (h *Hub) broadcastToGame(gameID string, msgType MessageType, payload interf
 }
 
 // handlePlayerDisconnection handles a player disconnecting from an active game.
-// Marks them as disconnected, advances turn if needed, and broadcasts state.
+// Marks them as disconnected and starts a grace period timer. If they reconnect within
+// the grace period the game continues unaffected; otherwise FinalizeDisconnection runs
+// win-condition checks and may end the game.
 func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 	h.mutex.RLock()
 	room, exists := h.gameRooms[gameID]
@@ -809,10 +824,8 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 	wasTheirTurn := room.Game.CurrentPlayer().Name() == playerName
 
 	err := room.Game.DisconnectPlayer(playerName)
-	gameOver, _ := room.Game.IsGameOver()
-	room.mutex.Unlock()
-
 	if err != nil {
+		room.mutex.Unlock()
 		log.Printf("Error disconnecting player %s: %v", playerName, err)
 		h.broadcastToGame(gameID, MsgError, ErrorPayload{
 			Message: playerName + " disconnected",
@@ -820,21 +833,63 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 		return
 	}
 
+	// Start grace period: player has disconnectGracePeriod to reconnect before win conditions are checked.
+	if room.disconnectTimers == nil {
+		room.disconnectTimers = make(map[string]*time.Timer)
+	}
+	if t, ok := room.disconnectTimers[playerName]; ok {
+		t.Stop()
+	}
+	room.disconnectTimers[playerName] = time.AfterFunc(disconnectGracePeriod, func() {
+		h.finalizePlayerDisconnection(gameID, playerName)
+	})
+	room.mutex.Unlock()
+
 	h.broadcastToGame(gameID, MsgError, ErrorPayload{
 		Message: playerName + " disconnected",
 	})
-
-	if gameOver {
-		h.broadcastGameStateToAll(gameID)
-		h.stopTurnTimer(gameID)
-		return
-	}
 
 	if wasTheirTurn {
 		h.autoDrawAndBroadcast(gameID)
 		h.startTurnTimer(gameID)
 	} else {
 		h.broadcastGameStateToAll(gameID)
+	}
+}
+
+// finalizePlayerDisconnection runs after the reconnection grace period expires.
+// It checks win conditions and ends the game if the disconnected player's absence causes one.
+func (h *Hub) finalizePlayerDisconnection(gameID, playerName string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
+
+	if !exists || room.Game == nil {
+		return
+	}
+
+	room.mutex.Lock()
+	// If the timer entry was removed (player reconnected), bail out.
+	if _, ok := room.disconnectTimers[playerName]; !ok {
+		room.mutex.Unlock()
+		return
+	}
+	delete(room.disconnectTimers, playerName)
+
+	if over, _ := room.Game.IsGameOver(); over {
+		room.mutex.Unlock()
+		return
+	}
+
+	room.Game.FinalizeDisconnection(playerName)
+	gameOver, _ := room.Game.IsGameOver()
+	room.mutex.Unlock()
+
+	log.Printf("Disconnect grace period expired for %s in game %s (gameOver=%v)", playerName, gameID, gameOver)
+
+	if gameOver {
+		h.broadcastGameStateToAll(gameID)
+		h.stopTurnTimer(gameID)
 	}
 }
 

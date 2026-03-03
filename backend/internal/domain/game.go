@@ -282,8 +282,9 @@ func (g *game) OnFieldWithoutWarriors(playerName string) {
 	}
 }
 
-// DisconnectPlayer marks a player as disconnected, removing them from turn rotation.
+// DisconnectPlayer marks a player as disconnected and removes them from turn rotation.
 // If it's their turn, switches to the next player. State is preserved for reconnection.
+// Win conditions are NOT checked here — call FinalizeDisconnection after the grace period.
 func (g *game) DisconnectPlayer(playerName string) error {
 	playerIdx := g.PlayerIndex(playerName)
 	if playerIdx == -1 {
@@ -298,14 +299,27 @@ func (g *game) DisconnectPlayer(playerName string) error {
 	g.disconnectedPlayers[playerIdx] = true
 	g.AddHistory(playerName+" disconnected", types.CategoryElimination)
 
-	// Check win conditions
+	if wasTheirTurn {
+		g.SwitchTurn()
+	}
+
+	return nil
+}
+
+// FinalizeDisconnection checks win conditions for a disconnected player once the
+// reconnection grace period has expired. No-op if the player reconnected or the game is already over.
+func (g *game) FinalizeDisconnection(playerName string) {
+	playerIdx := g.PlayerIndex(playerName)
+	if playerIdx == -1 || !g.disconnectedPlayers[playerIdx] || g.winState.GameOver {
+		return
+	}
+
 	isOut := func(i int) bool {
 		return g.eliminatedPlayers[i] || g.disconnectedPlayers[i]
 	}
 
 	switch g.mode {
 	case types.GameMode2v2:
-		// Check if all members of any team are out
 		for _, members := range g.teams {
 			allOut := true
 			for _, idx := range members {
@@ -315,7 +329,6 @@ func (g *game) DisconnectPlayer(playerName string) error {
 				}
 			}
 			if allOut {
-				// Opposing team wins
 				for _, idx := range members {
 					for j, p := range g.board.Players() {
 						if j != idx && !isOut(j) && !g.SameTeam(idx, j) {
@@ -350,12 +363,6 @@ func (g *game) DisconnectPlayer(playerName string) error {
 			g.winState.WinnerIdx = -1
 		}
 	}
-
-	if wasTheirTurn && !g.winState.GameOver {
-		g.SwitchTurn()
-	}
-
-	return nil
 }
 
 // ReconnectPlayer restores a disconnected player back into turn rotation.

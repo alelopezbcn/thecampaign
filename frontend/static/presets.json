@@ -17,6 +17,7 @@
         "resurrections": 1,
         "desertions": 1,
         "construction_cards": 1,
+        "high_value_gold_cards": 0,
         "castle_goal": 25
       }
     },
@@ -37,7 +38,29 @@
         "resurrections": 1,
         "desertions": 0,
         "construction_cards": 1,
+        "high_value_gold_cards": 0,
         "castle_goal": 15
+      }
+    },
+    {
+      "name": "Wealthy",
+      "config": {
+        "warriors": 5,
+        "dragons": 1,
+        "harpoons": 2,
+        "special_powers": 4,
+        "spies": 1,
+        "thieves": 1,
+        "sabotages": 1,
+        "catapults": 4,
+        "fortresses": 1,
+        "ambushes": 1,
+        "blood_rains": 2,
+        "resurrections": 1,
+        "desertions": 1,
+        "construction_cards": 1,
+        "high_value_gold_cards": 3,
+        "castle_goal": 40
       }
     }
   ]

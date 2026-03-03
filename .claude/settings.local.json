@@ -32,7 +32,8 @@
       "Bash(powershell.exe -File:*)",
       "Bash(make mocks)",
       "Bash(echo \"Exit: $?\")",
-      "Bash(echo \"EXIT: $?\")"
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(wc -l /c/temp/projects/TheCampaign/backend/internal/domain/gameactions/*.go)"
     ]
   }
 }

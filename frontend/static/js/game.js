@@ -23,6 +23,7 @@ const DEFAULT_GAME_CONFIG = {
     resurrections: 1,
     desertions: 1,
     construction_cards: 1,
+    high_value_gold_cards: 0,
     castle_goal: DEFAULT_CASTLE_GOAL
 };
 
@@ -129,6 +130,7 @@ function applyPreset(config) {
         'cfg-resurrections':       'resurrections',
         'cfg-desertions':          'desertions',
         'cfg-construction-cards':  'construction_cards',
+        'cfg-high-value-gold':     'high_value_gold_cards',
         'cfg-castle-goal':         'castle_goal'
     };
     for (const [id, key] of Object.entries(fields)) {
@@ -153,8 +155,9 @@ function readConfigFromInputs() {
         blood_rains:        parseInt(document.getElementById('cfg-blood-rains').value) || 0,
         resurrections:      parseInt(document.getElementById('cfg-resurrections').value) || 0,
         desertions:         parseInt(document.getElementById('cfg-desertions').value) || 0,
-        construction_cards: parseInt(document.getElementById('cfg-construction-cards').value) || 1,
-        castle_goal:        parseInt(document.getElementById('cfg-castle-goal').value) || DEFAULT_CASTLE_GOAL
+        construction_cards:    parseInt(document.getElementById('cfg-construction-cards').value) || 1,
+        high_value_gold_cards: parseInt(document.getElementById('cfg-high-value-gold').value) || 0,
+        castle_goal:           parseInt(document.getElementById('cfg-castle-goal').value) || DEFAULT_CASTLE_GOAL
     };
 }
 

@@ -11,10 +11,10 @@ type harvestHandler struct {
 	modifier int // [-4,+4] excl. 0
 }
 
-func (h *harvestHandler) ExtraDrawCards() int                          { return 0 }
-func (h *harvestHandler) WeaponDamageModifier(_ types.WeaponType) int  { return 0 }
-func (h *harvestHandler) TurnStartWarriorHPModifier() int              { return 0 }
-func (h *harvestHandler) ConstructionValueModifier() int               { return h.modifier }
+func (h *harvestHandler) ExtraDrawCards() int                         { return 0 }
+func (h *harvestHandler) WeaponDamageModifier(_ types.WeaponType) int { return 0 }
+func (h *harvestHandler) TurnStartWarriorHPModifier() int             { return 0 }
+func (h *harvestHandler) ConstructionValueModifier() int              { return h.modifier }
 
 func (h *harvestHandler) Display() (string, string) {
 	sign := "+"
