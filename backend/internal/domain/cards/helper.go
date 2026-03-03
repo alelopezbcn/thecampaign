@@ -19,7 +19,7 @@ type DeckConfig struct {
 	BloodRains         int
 	Resurrections      int
 	Desertions         int
-	ConstructionCards  int // copies per value (1-9) for Gold, Sword, Arrow, Poison
+	ConstructionCards  int
 	HighValueGoldCards int // extra copies of gold 7, 8, and 9 added on top of defaults
 }
 
@@ -95,7 +95,7 @@ func (d *dealer) OtherCards(_ int) (other []Card) {
 		other = append(other, NewArrow(fmt.Sprintf("f%d", i), i))
 		other = append(other, NewPoison(fmt.Sprintf("p%d", i), i))
 		other = append(other, NewGold(fmt.Sprintf("g%d", i), i))
-		if i == 5 || i == 7 || i == 9 {
+		if i == 5 || i == 7 {
 			other = append(other, NewGold(fmt.Sprintf("gr%d", i), i))
 		}
 		if i == 7 || i == 8 || i == 9 {

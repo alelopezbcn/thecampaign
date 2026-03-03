@@ -78,8 +78,8 @@ func TestDealer_OtherCards_ConstructionCards_OneCopyOfValueOne(t *testing.T) {
 	other := d.OtherCards(0)
 
 	// 1 value-1 card + 8 fixed cards for values 2-9 = 9 each
-	// gold also gets 3 extra copies at values 5, 7, 9 = 12 total
-	assert.Equal(t, 12, countType[*gold](other), "gold")
+	// gold also gets 2 extra copies at values 5, 7 = 11 total
+	assert.Equal(t, 11, countType[*gold](other), "gold")
 	assert.Equal(t, 9, countType[*sword](other), "swords")
 	assert.Equal(t, 9, countType[*arrow](other), "arrows")
 	assert.Equal(t, 9, countType[*poison](other), "poisons")
@@ -90,8 +90,8 @@ func TestDealer_OtherCards_ConstructionCards_TwoCopiesOfValueOne(t *testing.T) {
 	other := d.OtherCards(0)
 
 	// 2 value-1 cards + 8 fixed cards for values 2-9 = 10 each
-	// gold also gets 3 extra copies at values 5, 7, 9 = 13 total
-	assert.Equal(t, 13, countType[*gold](other), "gold")
+	// gold also gets 2 extra copies at values 5, 7 = 12 total
+	assert.Equal(t, 12, countType[*gold](other), "gold")
 	assert.Equal(t, 10, countType[*sword](other), "swords")
 	assert.Equal(t, 10, countType[*arrow](other), "arrows")
 	assert.Equal(t, 10, countType[*poison](other), "poisons")
@@ -102,15 +102,15 @@ func TestDealer_OtherCards_ConstructionCards_TwoCopiesOfValueOne(t *testing.T) {
 func TestDealer_OtherCards_HighValueGoldCards_ZeroAddsNoExtras(t *testing.T) {
 	d := NewDealer(DeckConfig{ConstructionCards: 1, HighValueGoldCards: 0})
 	other := d.OtherCards(0)
-	// same as default: 1 (gcon1) + 8 (g2-g9) + 3 (gr5, gr7, gr9) = 12
-	assert.Equal(t, 12, countType[*gold](other))
+	// same as default: 1 (gcon1) + 8 (g2-g9) + 2 (gr5, gr7) = 11
+	assert.Equal(t, 11, countType[*gold](other))
 }
 
 func TestDealer_OtherCards_HighValueGoldCards_AddsExtraGold789(t *testing.T) {
 	d := NewDealer(DeckConfig{ConstructionCards: 1, HighValueGoldCards: 2})
 	other := d.OtherCards(0)
-	// base 12 + 2 extra each for values 7, 8, 9 = 12 + 6 = 18
-	assert.Equal(t, 18, countType[*gold](other))
+	// base 11 + 2 extra each for values 7, 8, 9 = 11 + 6 = 17
+	assert.Equal(t, 17, countType[*gold](other))
 }
 
 // --- Desertion edge cases ---
@@ -137,8 +137,8 @@ func TestDealer_OtherCards_ConstructionCards_ZeroSkipsValueOne(t *testing.T) {
 	other := d.OtherCards(0)
 
 	// 0 value-1 cards + 8 fixed cards for values 2-9 = 8 each
-	// gold also gets 3 extra copies at values 5, 7, 9 = 11 total
-	assert.Equal(t, 11, countType[*gold](other), "gold")
+	// gold also gets 2 extra copies at values 5, 7 = 10 total
+	assert.Equal(t, 10, countType[*gold](other), "gold")
 	assert.Equal(t, 8, countType[*sword](other), "swords")
 	assert.Equal(t, 8, countType[*arrow](other), "arrows")
 	assert.Equal(t, 8, countType[*poison](other), "poisons")

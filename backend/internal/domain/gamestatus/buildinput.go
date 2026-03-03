@@ -1,3 +1,4 @@
+// Package gamestatus contains the input struct for building the game status.
 package gamestatus
 
 import (
