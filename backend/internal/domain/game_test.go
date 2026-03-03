@@ -1065,3 +1065,47 @@ func TestGame_validatePlayers(t *testing.T) {
 		assert.Contains(t, err.Error(), "invalid game mode")
 	})
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// drawRandomEvent tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestDrawRandomEvent_NeverReturnsZeroModifierForParameterizedEvents(t *testing.T) {
+	g := &game{}
+	const iterations = 500
+
+	for i := 0; i < iterations; i++ {
+		event := g.drawRandomEvent()
+		switch event.Type {
+		case types.EventTypeCurse:
+			assert.NotEqual(t, 0, event.CurseModifier, "Curse modifier must not be zero")
+			found := false
+			for _, w := range types.CurseWeapons {
+				if event.CurseExcludedWeapon == w {
+					found = true
+					break
+				}
+			}
+			assert.True(t, found, "CurseExcludedWeapon must be a valid curse weapon, got %q", event.CurseExcludedWeapon)
+		case types.EventTypeHarvest:
+			assert.NotEqual(t, 0, event.HarvestModifier, "Harvest modifier must not be zero")
+		case types.EventTypePlague:
+			assert.NotEqual(t, 0, event.PlagueModifier, "Plague modifier must not be zero")
+		case types.EventTypeAbundance, types.EventTypeNone:
+			// No modifier fields — nothing to assert
+		}
+	}
+}
+
+func TestDrawRandomEvent_ReturnedTypeIsAlwaysValid(t *testing.T) {
+	g := &game{}
+	valid := make(map[types.EventType]bool)
+	for _, et := range types.AllEventTypes {
+		valid[et] = true
+	}
+
+	for i := 0; i < 200; i++ {
+		event := g.drawRandomEvent()
+		assert.True(t, valid[event.Type], "unexpected event type %q", event.Type)
+	}
+}

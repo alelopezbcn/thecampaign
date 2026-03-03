@@ -24,6 +24,32 @@ type constructTargetPlayer interface {
 	board.PlayerCastle
 }
 
+// harvestModifiedResource wraps a Resource and overrides Value with the Harvest-adjusted amount.
+type harvestModifiedResource struct {
+	cards.Resource
+	effectiveValue int
+}
+
+func (r *harvestModifiedResource) Value() int { return r.effectiveValue }
+
+// applyHarvestModifier returns card unchanged when mod is 0 or the castle is not yet built
+// (initial construction validates the raw card value). Otherwise wraps the resource so that
+// its effective contribution to the castle total reflects the Harvest modifier (minimum 1).
+func applyHarvestModifier(card cards.Card, mod int, castle board.CastleReader) cards.Card {
+	if mod == 0 {
+		return card
+	}
+	res, ok := card.(cards.Resource)
+	if !ok || !castle.IsConstructed() {
+		return card
+	}
+	effective := res.Value() + mod
+	if effective < 1 {
+		effective = 1
+	}
+	return &harvestModifiedResource{Resource: res, effectiveValue: effective}
+}
+
 type constructAction struct {
 	playerName       string
 	cardID           string
@@ -82,9 +108,13 @@ func (a *constructAction) execute(g constructGame) (*Result, func() gamestatus.G
 	p := g.CurrentPlayer()
 	result := &Result{}
 
+	mod := g.EventHandler().ConstructionValueModifier()
+
 	if a.targetPlayer != nil {
 		// Ally castle construction
-		if err := a.targetPlayer.Castle().Construct(a.resourceCard); err != nil {
+		targetCastle := a.targetPlayer.Castle()
+		card := applyHarvestModifier(a.resourceCard, mod, targetCastle)
+		if err := targetCastle.Construct(card); err != nil {
 			return result, nil, fmt.Errorf("constructing on ally castle failed: %w", err)
 		}
 
@@ -92,7 +122,9 @@ func (a *constructAction) execute(g constructGame) (*Result, func() gamestatus.G
 			a.targetPlayer.Name()), types.CategoryAction)
 	} else {
 		// Own castle construction
-		if err := p.Castle().Construct(a.resourceCard); err != nil {
+		myCastle := p.Castle()
+		card := applyHarvestModifier(a.resourceCard, mod, myCastle)
+		if err := myCastle.Construct(card); err != nil {
 			return result, nil, fmt.Errorf("constructing castle failed: %w", err)
 		}
 

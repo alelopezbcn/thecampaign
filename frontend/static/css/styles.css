@@ -5161,3 +5161,168 @@ body {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     text-align: right;
 }
+
+/* ===================== Event Banner ===================== */
+.event-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    background: rgba(20, 20, 35, 0.95);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 8px;
+    padding: 8px 18px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    font-size: 1em;
+    white-space: nowrap;
+    pointer-events: none;
+    margin: 6px 0;
+}
+
+.event-banner-label {
+    font-size: 0.7em;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.event-banner-name {
+    font-weight: 700;
+    font-size: 1.05em;
+    color: #e0e0e0;
+    flex-shrink: 0;
+}
+
+.event-banner-sep {
+    color: #555;
+    flex-shrink: 0;
+}
+
+.event-banner-desc {
+    color: #aaa;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.event-num-positive {
+    color: #2ed573;
+    font-weight: 700;
+    font-size: 1.15em;
+}
+
+.event-num-negative {
+    color: #e74c3c;
+    font-weight: 700;
+    font-size: 1.15em;
+}
+
+/* Banner colors per event type */
+.event-banner[data-event="curse"] {
+    border-color: rgba(231, 76, 60, 0.5);
+    box-shadow: 0 2px 10px rgba(231, 76, 60, 0.2);
+}
+.event-banner[data-event="curse"] .event-banner-name { color: #e74c3c; }
+
+.event-banner[data-event="harvest"] {
+    border-color: rgba(241, 196, 15, 0.5);
+    box-shadow: 0 2px 10px rgba(241, 196, 15, 0.15);
+}
+.event-banner[data-event="harvest"] .event-banner-name { color: #f1c40f; }
+
+.event-banner[data-event="plague"] {
+    border-color: rgba(155, 89, 182, 0.5);
+    box-shadow: 0 2px 10px rgba(155, 89, 182, 0.2);
+}
+.event-banner[data-event="plague"] .event-banner-name { color: #9b59b6; }
+
+.event-banner[data-event="abundance"] {
+    border-color: rgba(46, 213, 115, 0.5);
+    box-shadow: 0 2px 10px rgba(46, 213, 115, 0.15);
+}
+.event-banner[data-event="abundance"] .event-banner-name { color: #2ed573; }
+
+/* ===================== Event Turn Modal ===================== */
+.event-turn-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+}
+
+.event-turn-modal.hidden {
+    display: none !important;
+}
+
+.event-turn-modal-content {
+    background: rgba(20, 20, 35, 0.98);
+    border: 2px solid rgba(102, 126, 234, 0.4);
+    border-radius: 16px;
+    padding: 32px 44px;
+    text-align: center;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.event-turn-modal-header {
+    font-size: 0.7em;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+}
+
+.event-turn-modal-name {
+    font-size: 2em;
+    font-weight: 700;
+    color: #e0e0e0;
+    margin-bottom: 14px;
+}
+
+.event-turn-modal-desc {
+    color: #aaa;
+    font-size: 0.95em;
+    margin-bottom: 22px;
+    line-height: 1.5;
+}
+
+/* Modal colors per event type */
+.event-turn-modal-content[data-event="curse"] { border-color: rgba(231, 76, 60, 0.6); }
+.event-turn-modal-content[data-event="curse"] .event-turn-modal-name { color: #e74c3c; }
+
+.event-turn-modal-content[data-event="harvest"] { border-color: rgba(241, 196, 15, 0.6); }
+.event-turn-modal-content[data-event="harvest"] .event-turn-modal-name { color: #f1c40f; }
+
+.event-turn-modal-content[data-event="plague"] { border-color: rgba(155, 89, 182, 0.6); }
+.event-turn-modal-content[data-event="plague"] .event-turn-modal-name { color: #9b59b6; }
+
+.event-turn-modal-content[data-event="abundance"] { border-color: rgba(46, 213, 115, 0.6); }
+.event-turn-modal-content[data-event="abundance"] .event-turn-modal-name { color: #2ed573; }
+
+/* ===================== Event Change Toast ===================== */
+.event-change-toast {
+    background: linear-gradient(135deg, #2c3e50 0%, #3d5166 100%) !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+.event-change-toast[data-event="curse"] {
+    background: linear-gradient(135deg, #7b1a1a 0%, #c0392b 100%) !important;
+    box-shadow: 0 4px 20px rgba(192, 57, 43, 0.4) !important;
+}
+.event-change-toast[data-event="harvest"] {
+    background: linear-gradient(135deg, #5c4800 0%, #b8860b 100%) !important;
+    box-shadow: 0 4px 20px rgba(184, 134, 11, 0.3) !important;
+}
+.event-change-toast[data-event="plague"] {
+    background: linear-gradient(135deg, #4a1060 0%, #8e44ad 100%) !important;
+    box-shadow: 0 4px 20px rgba(142, 68, 173, 0.4) !important;
+}
+.event-change-toast[data-event="abundance"] {
+    background: linear-gradient(135deg, #0a4a1c 0%, #1a8c3c 100%) !important;
+    box-shadow: 0 4px 20px rgba(26, 140, 60, 0.3) !important;
+}

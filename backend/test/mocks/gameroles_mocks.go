@@ -14,6 +14,7 @@ import (
 
 	board "github.com/alelopezbcn/thecampaign/internal/domain/board"
 	cards "github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	gameevents "github.com/alelopezbcn/thecampaign/internal/domain/gameevents"
 	gamestatus "github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	types "github.com/alelopezbcn/thecampaign/internal/domain/types"
 	gomock "go.uber.org/mock/gomock"
@@ -176,6 +177,20 @@ func (m *MockGameTurn) CurrentAction() types.PhaseType {
 func (mr *MockGameTurnMockRecorder) CurrentAction() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentAction", reflect.TypeOf((*MockGameTurn)(nil).CurrentAction))
+}
+
+// EventHandler mocks base method.
+func (m *MockGameTurn) EventHandler() gameevents.EventHandler {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EventHandler")
+	ret0, _ := ret[0].(gameevents.EventHandler)
+	return ret0
+}
+
+// EventHandler indicates an expected call of EventHandler.
+func (mr *MockGameTurnMockRecorder) EventHandler() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EventHandler", reflect.TypeOf((*MockGameTurn)(nil).EventHandler))
 }
 
 // SwitchTurn mocks base method.

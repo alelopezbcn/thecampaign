@@ -34,12 +34,14 @@ const (
 	MsgRestartGame  MessageType = "restart_game"
 
 	// Server to Client messages
-	MsgGameState        MessageType = "game_state"
-	MsgError            MessageType = "error"
-	MsgGameStarted      MessageType = "game_started"
-	MsgWaitingForPlayer MessageType = "waiting_for_player"
-	MsgPlayerJoined     MessageType = "player_joined"
-	MsgGameEnded        MessageType = "game_ended"
+	MsgGameState          MessageType = "game_state"
+	MsgError              MessageType = "error"
+	MsgGameStarted        MessageType = "game_started"
+	MsgWaitingForPlayer   MessageType = "waiting_for_player"
+	MsgPlayerJoined       MessageType = "player_joined"
+	MsgGameEnded          MessageType = "game_ended"
+	MsgPlayerDisconnected MessageType = "player_disconnected"
+	MsgPlayerReconnected  MessageType = "player_reconnected"
 )
 
 // Message is the base WebSocket message structure
@@ -52,41 +54,43 @@ const defaultCastleGoal = 25
 
 // GameConfig holds the card counts and victory condition chosen by the room creator.
 type GameConfig struct {
-	Warriors          int `json:"warriors"`
-	Dragons           int `json:"dragons"`
-	Harpoons          int `json:"harpoons"`
-	SpecialPowers     int `json:"special_powers"`
-	Spies             int `json:"spies"`
-	Thieves           int `json:"thieves"`
-	Sabotages         int `json:"sabotages"`
-	Catapults         int `json:"catapults"`
-	Fortresses        int `json:"fortresses"`
-	Ambushes          int `json:"ambushes"`
-	BloodRains        int `json:"blood_rains"`
-	Resurrections     int `json:"resurrections"`
-	Desertions        int `json:"desertions"`
-	ConstructionCards int `json:"construction_cards"` // copies per value 1-9 for gold/sword/arrow/poison
-	CastleGoal        int `json:"castle_goal"`
+	Warriors           int `json:"warriors"`
+	Dragons            int `json:"dragons"`
+	Harpoons           int `json:"harpoons"`
+	SpecialPowers      int `json:"special_powers"`
+	Spies              int `json:"spies"`
+	Thieves            int `json:"thieves"`
+	Sabotages          int `json:"sabotages"`
+	Catapults          int `json:"catapults"`
+	Fortresses         int `json:"fortresses"`
+	Ambushes           int `json:"ambushes"`
+	BloodRains         int `json:"blood_rains"`
+	Resurrections      int `json:"resurrections"`
+	Desertions         int `json:"desertions"`
+	ConstructionCards  int `json:"construction_cards"`    // copies per value 1-9 for gold/sword/arrow/poison
+	HighValueGoldCards int `json:"high_value_gold_cards"` // extra copies of gold 7, 8, and 9
+	CastleGoal         int `json:"castle_goal"`
 }
 
 // defaultGameConfig returns the default configuration when none is provided.
 func defaultGameConfig() GameConfig {
 	return GameConfig{
-		Warriors:          5,
-		Dragons:           1,
-		Harpoons:          1,
-		SpecialPowers:     4,
-		Spies:             1,
-		Thieves:           1,
-		Sabotages:         1,
-		Catapults:         1,
-		Fortresses:        1,
-		Ambushes:          1,
-		BloodRains:        2,
-		Resurrections:     1,
-		Desertions:        1,
-		ConstructionCards: 1,
-		CastleGoal:        defaultCastleGoal,
+		Warriors:           5,
+		Dragons:            1,
+		Harpoons:           1,
+		SpecialPowers:      4,
+		Spies:              1,
+		Thieves:            1,
+		Sabotages:          1,
+		Catapults:          1,
+		Fortresses:         1,
+		Ambushes:           1,
+		BloodRains:         2,
+		Resurrections:      1,
+		Desertions:         1,
+		ConstructionCards:  1,
+		HighValueGoldCards: 0,
+		CastleGoal:         defaultCastleGoal,
 	}
 }
 
@@ -213,6 +217,17 @@ type GameStatePayload struct {
 // ErrorPayload for error messages
 type ErrorPayload struct {
 	Message string `json:"message"`
+}
+
+// PlayerDisconnectedPayload notifies clients that a player disconnected and the grace period has started.
+type PlayerDisconnectedPayload struct {
+	PlayerName      string `json:"player_name"`
+	GracePeriodSecs int    `json:"grace_period_secs"`
+}
+
+// PlayerReconnectedPayload notifies clients that a player reconnected within the grace period.
+type PlayerReconnectedPayload struct {
+	PlayerName string `json:"player_name"`
 }
 
 // GameStartedPayload when game starts

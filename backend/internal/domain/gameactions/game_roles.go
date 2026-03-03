@@ -3,6 +3,7 @@ package gameactions
 import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameevents"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
@@ -23,6 +24,7 @@ type GameTurn interface {
 	CurrentAction() types.PhaseType
 	TurnState() types.TurnState
 	SwitchTurn()
+	EventHandler() gameevents.EventHandler
 }
 
 // GameTurnFlags — mutable turn flags

@@ -55,4 +55,5 @@ type BuildInput struct {
 	AmbushAttackerName       string
 	DeserterFromPlayer       string
 	DeserterWarrior          cards.Warrior
+	CurrentEvent             types.ActiveEvent
 }

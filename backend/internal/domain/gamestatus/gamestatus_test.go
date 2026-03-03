@@ -698,3 +698,127 @@ func TestNewGameStatus_OpponentStatus_FieldWarriorsConverted(t *testing.T) {
 	assert.Equal(t, "A1", gs.Opponents[0].Field[0].ID)
 	assert.Equal(t, gamestatus.CardTypeArcher, gs.Opponents[0].Field[0].CardType())
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CurrentEvent / CurrentEventDisplay / CurrentEventDescription tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewGameStatus_EventInfo_Calm(t *testing.T) {
+	dto := minimalDTO("Player1") // zero-value ActiveEvent → Calm
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, "", gs.CurrentEvent)
+	assert.Equal(t, "Calm", gs.CurrentEventDisplay)
+	assert.NotEmpty(t, gs.CurrentEventDescription)
+}
+
+func TestNewGameStatus_EventInfo_Curse(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.CurrentEvent = types.ActiveEvent{
+		Type:                types.EventTypeCurse,
+		CurseExcludedWeapon: types.SwordWeaponType,
+		CurseModifier:       -2,
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, "curse", gs.CurrentEvent)
+	assert.Equal(t, "Curse", gs.CurrentEventDisplay)
+	assert.NotEmpty(t, gs.CurrentEventDescription)
+}
+
+func TestNewGameStatus_EventInfo_Harvest(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.CurrentEvent = types.ActiveEvent{
+		Type:            types.EventTypeHarvest,
+		HarvestModifier: 3,
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, "harvest", gs.CurrentEvent)
+	assert.Equal(t, "Harvest", gs.CurrentEventDisplay)
+	assert.NotEmpty(t, gs.CurrentEventDescription)
+}
+
+func TestNewGameStatus_EventInfo_Plague(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.CurrentEvent = types.ActiveEvent{
+		Type:           types.EventTypePlague,
+		PlagueModifier: -1,
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, "plague", gs.CurrentEvent)
+	assert.Equal(t, "Plague", gs.CurrentEventDisplay)
+	assert.NotEmpty(t, gs.CurrentEventDescription)
+}
+
+func TestNewGameStatus_EventInfo_Abundance(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.CurrentEvent = types.ActiveEvent{Type: types.EventTypeAbundance}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, "abundance", gs.CurrentEvent)
+	assert.Equal(t, "Abundance", gs.CurrentEventDisplay)
+	assert.NotEmpty(t, gs.CurrentEventDescription)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CurrentEventWeaponModifier / CurrentEventExcludedWeapon tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewGameStatus_CurseFields_SetForCurseEvent(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.CurrentEvent = types.ActiveEvent{
+		Type:                types.EventTypeCurse,
+		CurseExcludedWeapon: types.ArrowWeaponType,
+		CurseModifier:       -3,
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, -3, gs.CurrentEventWeaponModifier)
+	assert.Equal(t, string(types.ArrowWeaponType), gs.CurrentEventExcludedWeapon)
+}
+
+func TestNewGameStatus_CurseFields_PositiveModifierSet(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.CurrentEvent = types.ActiveEvent{
+		Type:                types.EventTypeCurse,
+		CurseExcludedWeapon: types.PoisonWeaponType,
+		CurseModifier:       2,
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, 2, gs.CurrentEventWeaponModifier)
+	assert.Equal(t, string(types.PoisonWeaponType), gs.CurrentEventExcludedWeapon)
+}
+
+func TestNewGameStatus_CurseFields_ZeroForNonCurseEvents(t *testing.T) {
+	tests := []struct {
+		name  string
+		event types.ActiveEvent
+	}{
+		{"calm", types.ActiveEvent{}},
+		{"harvest", types.ActiveEvent{Type: types.EventTypeHarvest, HarvestModifier: 2}},
+		{"plague", types.ActiveEvent{Type: types.EventTypePlague, PlagueModifier: -1}},
+		{"abundance", types.ActiveEvent{Type: types.EventTypeAbundance}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dto := minimalDTO("Player1")
+			dto.CurrentEvent = tt.event
+
+			gs := gamestatus.NewGameStatus(dto)
+
+			assert.Zero(t, gs.CurrentEventWeaponModifier, "weapon modifier should be 0 for non-curse event")
+			assert.Empty(t, gs.CurrentEventExcludedWeapon, "excluded weapon should be empty for non-curse event")
+		})
+	}
+}

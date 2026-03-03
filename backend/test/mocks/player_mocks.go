@@ -694,18 +694,6 @@ func (mr *MockPlayerMockRecorder) MoveCardToField(cardID any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "MoveCardToField", reflect.TypeOf((*MockPlayer)(nil).MoveCardToField), cardID)
 }
 
-// PlaceWarriorOnField mocks base method.
-func (m *MockPlayer) PlaceWarriorOnField(w cards.Warrior) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "PlaceWarriorOnField", w)
-}
-
-// PlaceWarriorOnField indicates an expected call of PlaceWarriorOnField.
-func (mr *MockPlayerMockRecorder) PlaceWarriorOnField(w any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlaceWarriorOnField", reflect.TypeOf((*MockPlayer)(nil).PlaceWarriorOnField), w)
-}
-
 // Name mocks base method.
 func (m *MockPlayer) Name() string {
 	m.ctrl.T.Helper()
@@ -718,6 +706,18 @@ func (m *MockPlayer) Name() string {
 func (mr *MockPlayerMockRecorder) Name() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Name", reflect.TypeOf((*MockPlayer)(nil).Name))
+}
+
+// PlaceWarriorOnField mocks base method.
+func (m *MockPlayer) PlaceWarriorOnField(w cards.Warrior) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "PlaceWarriorOnField", w)
+}
+
+// PlaceWarriorOnField indicates an expected call of PlaceWarriorOnField.
+func (mr *MockPlayerMockRecorder) PlaceWarriorOnField(w any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PlaceWarriorOnField", reflect.TypeOf((*MockPlayer)(nil).PlaceWarriorOnField), w)
 }
 
 // RemoveFromHand mocks base method.

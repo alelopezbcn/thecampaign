@@ -3,11 +3,13 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameevents"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 	"github.com/google/uuid"
@@ -28,6 +30,8 @@ type game struct {
 	currentTurn         int
 	currentAction       types.PhaseType
 	turnState           types.TurnState
+	currentEvent        types.ActiveEvent
+	eventBag            []types.EventType
 	history             []types.HistoryLine
 	historyTracker      int
 	lastResult          gameactions.Result
@@ -75,7 +79,42 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, cas
 
 	g.board.Deck().Deal(g.board.Players())
 
+	g.currentEvent = g.drawRandomEvent()
+
 	return g, nil
+}
+
+func (g *game) drawRandomEvent() types.ActiveEvent {
+	if len(g.eventBag) == 0 {
+		g.eventBag = make([]types.EventType, len(types.AllEventTypes))
+		copy(g.eventBag, types.AllEventTypes)
+		rand.Shuffle(len(g.eventBag), func(i, j int) {
+			g.eventBag[i], g.eventBag[j] = g.eventBag[j], g.eventBag[i]
+		})
+	}
+	eventType := g.eventBag[0]
+	g.eventBag = g.eventBag[1:]
+	event := types.ActiveEvent{Type: eventType}
+
+	switch eventType {
+	case types.EventTypeCurse:
+		excluded := types.CurseWeapons[rand.Intn(len(types.CurseWeapons))]
+		event.CurseExcludedWeapon = excluded
+		modifiers := []int{-3, -2, -1, 1, 2, 3}
+		event.CurseModifier = modifiers[rand.Intn(len(modifiers))]
+	case types.EventTypeHarvest:
+		modifiers := []int{-4, -3, -2, -1, 1, 2, 3, 4}
+		event.HarvestModifier = modifiers[rand.Intn(len(modifiers))]
+	case types.EventTypePlague:
+		modifiers := []int{-3, -2, -1, 1, 2, 3}
+		event.PlagueModifier = modifiers[rand.Intn(len(modifiers))]
+	}
+
+	return event
+}
+
+func (g *game) EventHandler() gameevents.EventHandler {
+	return gameevents.NewHandler(g.currentEvent)
 }
 
 func (g *game) CurrentAction() types.PhaseType {
@@ -243,8 +282,9 @@ func (g *game) OnFieldWithoutWarriors(playerName string) {
 	}
 }
 
-// DisconnectPlayer marks a player as disconnected, removing them from turn rotation.
+// DisconnectPlayer marks a player as disconnected and removes them from turn rotation.
 // If it's their turn, switches to the next player. State is preserved for reconnection.
+// Win conditions are NOT checked here — call FinalizeDisconnection after the grace period.
 func (g *game) DisconnectPlayer(playerName string) error {
 	playerIdx := g.PlayerIndex(playerName)
 	if playerIdx == -1 {
@@ -259,14 +299,27 @@ func (g *game) DisconnectPlayer(playerName string) error {
 	g.disconnectedPlayers[playerIdx] = true
 	g.AddHistory(playerName+" disconnected", types.CategoryElimination)
 
-	// Check win conditions
+	if wasTheirTurn {
+		g.SwitchTurn()
+	}
+
+	return nil
+}
+
+// FinalizeDisconnection checks win conditions for a disconnected player once the
+// reconnection grace period has expired. No-op if the player reconnected or the game is already over.
+func (g *game) FinalizeDisconnection(playerName string) {
+	playerIdx := g.PlayerIndex(playerName)
+	if playerIdx == -1 || !g.disconnectedPlayers[playerIdx] || g.winState.GameOver {
+		return
+	}
+
 	isOut := func(i int) bool {
 		return g.eliminatedPlayers[i] || g.disconnectedPlayers[i]
 	}
 
 	switch g.mode {
 	case types.GameMode2v2:
-		// Check if all members of any team are out
 		for _, members := range g.teams {
 			allOut := true
 			for _, idx := range members {
@@ -276,7 +329,6 @@ func (g *game) DisconnectPlayer(playerName string) error {
 				}
 			}
 			if allOut {
-				// Opposing team wins
 				for _, idx := range members {
 					for j, p := range g.board.Players() {
 						if j != idx && !isOut(j) && !g.SameTeam(idx, j) {
@@ -311,12 +363,6 @@ func (g *game) DisconnectPlayer(playerName string) error {
 			g.winState.WinnerIdx = -1
 		}
 	}
-
-	if wasTheirTurn && !g.winState.GameOver {
-		g.SwitchTurn()
-	}
-
-	return nil
 }
 
 // ReconnectPlayer restores a disconnected player back into turn rotation.
@@ -489,6 +535,7 @@ func (g *game) DrawCards(p board.Player, count int) (cards []cards.Card, err err
 }
 
 func (g *game) SwitchTurn() {
+	oldTurn := g.currentTurn
 	g.turnState = types.TurnState{StartedAt: time.Now()}
 	g.lastResult = gameactions.Result{}
 	g.currentAction = types.PhaseTypeDrawCard
@@ -498,6 +545,13 @@ func (g *game) SwitchTurn() {
 		if !g.eliminatedPlayers[g.currentTurn] && !g.disconnectedPlayers[g.currentTurn] {
 			break
 		}
+	}
+
+	// New round: currentTurn wrapped back (new index ≤ previous index)
+	if g.currentTurn <= oldTurn {
+		g.currentEvent = g.drawRandomEvent()
+		name, _ := gameevents.NewHandler(g.currentEvent).Display()
+		g.AddHistory(fmt.Sprintf("New round — Event: %s", name), types.CategoryInfo)
 	}
 }
 
@@ -812,6 +866,7 @@ func (g *game) getStatus(viewer board.Player,
 		AmbushAttackerName:       g.lastResult.AmbushAttackerName,
 		DeserterFromPlayer:       g.lastResult.DeserterFromPlayer,
 		DeserterWarrior:          g.lastResult.DeserterWarrior,
+		CurrentEvent:             g.currentEvent,
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
