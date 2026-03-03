@@ -34,14 +34,14 @@ const (
 	MsgRestartGame  MessageType = "restart_game"
 
 	// Server to Client messages
-	MsgGameState           MessageType = "game_state"
-	MsgError               MessageType = "error"
-	MsgGameStarted         MessageType = "game_started"
-	MsgWaitingForPlayer    MessageType = "waiting_for_player"
-	MsgPlayerJoined        MessageType = "player_joined"
-	MsgGameEnded           MessageType = "game_ended"
-	MsgPlayerDisconnected  MessageType = "player_disconnected"
-	MsgPlayerReconnected   MessageType = "player_reconnected"
+	MsgGameState          MessageType = "game_state"
+	MsgError              MessageType = "error"
+	MsgGameStarted        MessageType = "game_started"
+	MsgWaitingForPlayer   MessageType = "waiting_for_player"
+	MsgPlayerJoined       MessageType = "player_joined"
+	MsgGameEnded          MessageType = "game_ended"
+	MsgPlayerDisconnected MessageType = "player_disconnected"
+	MsgPlayerReconnected  MessageType = "player_reconnected"
 )
 
 // Message is the base WebSocket message structure
