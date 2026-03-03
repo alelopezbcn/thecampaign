@@ -1,3 +1,4 @@
+// Package cards contains the implementation of the card types in the game, including Ambush cards.
 package cards
 
 import (
