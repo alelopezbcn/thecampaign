@@ -104,6 +104,7 @@ type JoinGamePayload struct {
 
 // AttackPayload for attack action
 type AttackPayload struct {
+	WarriorID    string `json:"warrior_id"`
 	TargetPlayer string `json:"target_player"`
 	TargetID     string `json:"target_id"`
 	WeaponID     string `json:"weapon_id"`

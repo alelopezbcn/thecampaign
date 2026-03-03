@@ -3051,17 +3051,13 @@ body {
 
 /* End Turn Popup */
 .endturn-popup {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(30, 30, 50, 0.98);
     border-radius: 10px;
+    padding: 16px 24px;
+    margin-bottom: 8px;
     animation: endturnFadeIn 0.3s ease-out;
 }
 
@@ -4432,17 +4428,13 @@ body {
    ============================================================ */
 
 .turn-transition-modal {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
     background: rgba(30, 30, 50, 0.98);
     border-radius: 10px;
+    padding: 16px 24px;
+    margin-bottom: 8px;
     animation: endturnFadeIn 0.3s ease-out;
 }
 

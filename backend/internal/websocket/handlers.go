@@ -38,7 +38,7 @@ func (h *Hub) handleAttack(client *Client, payload interface{}) {
 		return
 	}
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewAttackAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
+		return g.ExecuteAction(gameactions.NewAttackAction(client.PlayerName, p.WarriorID, p.TargetPlayer, p.TargetID, p.WeaponID))
 	})
 }
 
