@@ -128,6 +128,19 @@ func (w *warriorBase) setSelf(self Warrior) {
 func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
+
+func (w *warriorBase) CanUseWeapon(wep types.WeaponType) bool {
+	switch wep {
+	case types.SwordWeaponType:
+		return w.warriorType == types.KnightWarriorType || w.warriorType == types.DragonWarriorType || w.warriorType == types.MercenaryWarriorType
+	case types.ArrowWeaponType:
+		return w.warriorType == types.ArcherWarriorType || w.warriorType == types.DragonWarriorType || w.warriorType == types.MercenaryWarriorType
+	case types.PoisonWeaponType:
+		return w.warriorType == types.MageWarriorType || w.warriorType == types.DragonWarriorType || w.warriorType == types.MercenaryWarriorType
+	default:
+		return true
+	}
+}
 func (w *warriorBase) IsDamaged() bool {
 	return w.health < warriorMaxHealth
 }

@@ -10,6 +10,8 @@ TheCampaign is a real-time multiplayer turn-based card game. Go backend with Web
 
 After modifying any `.go` file, run `gofmt -w <file>` on it before moving on.
 
+**Never edit mock files manually.** If a mock needs to change (e.g. interface changed, new method added), run `make mocks` to regenerate all mocks.
+
 ## Commands
 
 ```bash

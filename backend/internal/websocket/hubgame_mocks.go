@@ -70,18 +70,6 @@ func (mr *MockHubGameMockRecorder) DisconnectPlayer(playerName any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DisconnectPlayer", reflect.TypeOf((*MockHubGame)(nil).DisconnectPlayer), playerName)
 }
 
-// FinalizeDisconnection mocks base method.
-func (m *MockHubGame) FinalizeDisconnection(playerName string) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "FinalizeDisconnection", playerName)
-}
-
-// FinalizeDisconnection indicates an expected call of FinalizeDisconnection.
-func (mr *MockHubGameMockRecorder) FinalizeDisconnection(playerName any) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeDisconnection", reflect.TypeOf((*MockHubGame)(nil).FinalizeDisconnection), playerName)
-}
-
 // ExecuteAction mocks base method.
 func (m *MockHubGame) ExecuteAction(action gameactions.GameAction) (gamestatus.GameStatus, error) {
 	m.ctrl.T.Helper()
@@ -95,6 +83,18 @@ func (m *MockHubGame) ExecuteAction(action gameactions.GameAction) (gamestatus.G
 func (mr *MockHubGameMockRecorder) ExecuteAction(action any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ExecuteAction", reflect.TypeOf((*MockHubGame)(nil).ExecuteAction), action)
+}
+
+// FinalizeDisconnection mocks base method.
+func (m *MockHubGame) FinalizeDisconnection(playerName string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "FinalizeDisconnection", playerName)
+}
+
+// FinalizeDisconnection indicates an expected call of FinalizeDisconnection.
+func (mr *MockHubGameMockRecorder) FinalizeDisconnection(playerName any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FinalizeDisconnection", reflect.TypeOf((*MockHubGame)(nil).FinalizeDisconnection), playerName)
 }
 
 // GetPlayer mocks base method.
