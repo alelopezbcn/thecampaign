@@ -221,9 +221,11 @@ func (h *Hub) handleEndTurn(client *Client) {
 		return
 	}
 
-	room.mutex.Lock()
-	status, err := room.Game.ExecuteAction(gameactions.NewEndTurnPhaseAction(client.PlayerName, false))
-	room.mutex.Unlock()
+	status, err := func() (gamestatus.GameStatus, error) {
+		room.mutex.Lock()
+		defer room.mutex.Unlock()
+		return room.Game.ExecuteAction(gameactions.NewEndTurnPhaseAction(client.PlayerName, false))
+	}()
 
 	if err != nil {
 		client.SendError(err.Error())

@@ -600,6 +600,7 @@ func (h *Hub) startTurnTimer(gameID string) {
 		return
 	}
 
+	room.mutex.Lock()
 	// Stop any existing timer
 	if room.turnTimerStop != nil {
 		close(room.turnTimerStop)
@@ -610,11 +611,14 @@ func (h *Hub) startTurnTimer(gameID string) {
 
 	room.turnTimerStop = make(chan struct{})
 	room.turnTimer = time.NewTimer(turnTimeLimit)
+	// Capture both as locals so the goroutine never touches room fields directly.
 	stop := room.turnTimerStop
+	timerC := room.turnTimer.C
+	room.mutex.Unlock()
 
 	go func() {
 		select {
-		case <-room.turnTimer.C:
+		case <-timerC:
 			room.mutex.Lock()
 			if room.Game == nil {
 				room.mutex.Unlock()
@@ -656,6 +660,7 @@ func (h *Hub) stopTurnTimer(gameID string) {
 		return
 	}
 
+	room.mutex.Lock()
 	if room.turnTimerStop != nil {
 		close(room.turnTimerStop)
 		room.turnTimerStop = nil
@@ -664,6 +669,7 @@ func (h *Hub) stopTurnTimer(gameID string) {
 		room.turnTimer.Stop()
 		room.turnTimer = nil
 	}
+	room.mutex.Unlock()
 }
 
 // sendReconnectState sends the current game state to a reconnected player
