@@ -314,6 +314,9 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 			h.broadcastToGame(gameID, MsgError, ErrorPayload{
 				Message: playerName + " reconnected",
 			})
+			h.broadcastToGame(gameID, MsgPlayerReconnected, PlayerReconnectedPayload{
+				PlayerName: playerName,
+			})
 			h.sendReconnectState(gameID, playerName)
 			// Broadcast updated state to all so opponents see player is back
 			h.broadcastGameStateToAll(gameID)
@@ -847,6 +850,10 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 
 	h.broadcastToGame(gameID, MsgError, ErrorPayload{
 		Message: playerName + " disconnected",
+	})
+	h.broadcastToGame(gameID, MsgPlayerDisconnected, PlayerDisconnectedPayload{
+		PlayerName:      playerName,
+		GracePeriodSecs: int(disconnectGracePeriod.Seconds()),
 	})
 
 	if wasTheirTurn {

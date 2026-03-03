@@ -6,6 +6,7 @@ let timerInterval = null;
 let pendingAnimationsCallback = null; // Deferred animations waiting for modal close
 let endTurnCountdownTimer = null;
 const END_TURN_COUNTDOWN_SECS = 3;
+const disconnectCountdowns = {}; // playerName -> { secondsLeft, intervalId }
 const MAX_RECONNECT_ATTEMPTS = 20;
 const DEFAULT_CASTLE_GOAL = 25;
 const DEFAULT_GAME_CONFIG = {
@@ -505,9 +506,38 @@ function handleMessage(message) {
         case 'game_ended':
             handleGameEnded();
             break;
+        case 'player_disconnected':
+            startDisconnectCountdown(message.payload.player_name, message.payload.grace_period_secs);
+            break;
+        case 'player_reconnected':
+            clearDisconnectCountdown(message.payload.player_name);
+            break;
         default:
             console.log('Unknown message type:', message.type);
     }
+}
+
+function startDisconnectCountdown(playerName, seconds) {
+    clearDisconnectCountdown(playerName);
+    disconnectCountdowns[playerName] = { secondsLeft: seconds };
+    disconnectCountdowns[playerName].intervalId = setInterval(() => {
+        const entry = disconnectCountdowns[playerName];
+        if (!entry) return;
+        entry.secondsLeft--;
+        if (entry.secondsLeft <= 0) {
+            clearDisconnectCountdown(playerName);
+        } else {
+            const badge = document.querySelector(`.disconnect-countdown[data-player="${CSS.escape(playerName)}"]`);
+            if (badge) badge.textContent = `Disconnected (${entry.secondsLeft}s)`;
+        }
+    }, 1000);
+}
+
+function clearDisconnectCountdown(playerName) {
+    const entry = disconnectCountdowns[playerName];
+    if (!entry) return;
+    clearInterval(entry.intervalId);
+    delete disconnectCountdowns[playerName];
 }
 
 function handleError(payload) {
@@ -3421,10 +3451,11 @@ function renderOpponents(opponents) {
         // Header
         const header = document.createElement('div');
         header.className = 'opponent-header';
+        const disconnectEntry = disconnectCountdowns[opponent.player_name];
         const badgeHtml = opponent.is_eliminated
             ? '<span class="opponent-badge eliminated-badge">Eliminated</span>'
             : opponent.is_disconnected
-                ? '<span class="opponent-badge eliminated-badge">Disconnected</span>'
+                ? `<span class="opponent-badge eliminated-badge disconnect-countdown" data-player="${opponent.player_name}">Disconnected${disconnectEntry ? ` (${disconnectEntry.secondsLeft}s)` : ''}</span>`
                 : '';
         header.innerHTML = `
             <span class="opponent-name">${opponent.player_name}</span>

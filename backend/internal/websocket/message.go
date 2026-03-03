@@ -34,12 +34,14 @@ const (
 	MsgRestartGame  MessageType = "restart_game"
 
 	// Server to Client messages
-	MsgGameState        MessageType = "game_state"
-	MsgError            MessageType = "error"
-	MsgGameStarted      MessageType = "game_started"
-	MsgWaitingForPlayer MessageType = "waiting_for_player"
-	MsgPlayerJoined     MessageType = "player_joined"
-	MsgGameEnded        MessageType = "game_ended"
+	MsgGameState           MessageType = "game_state"
+	MsgError               MessageType = "error"
+	MsgGameStarted         MessageType = "game_started"
+	MsgWaitingForPlayer    MessageType = "waiting_for_player"
+	MsgPlayerJoined        MessageType = "player_joined"
+	MsgGameEnded           MessageType = "game_ended"
+	MsgPlayerDisconnected  MessageType = "player_disconnected"
+	MsgPlayerReconnected   MessageType = "player_reconnected"
 )
 
 // Message is the base WebSocket message structure
@@ -215,6 +217,17 @@ type GameStatePayload struct {
 // ErrorPayload for error messages
 type ErrorPayload struct {
 	Message string `json:"message"`
+}
+
+// PlayerDisconnectedPayload notifies clients that a player disconnected and the grace period has started.
+type PlayerDisconnectedPayload struct {
+	PlayerName      string `json:"player_name"`
+	GracePeriodSecs int    `json:"grace_period_secs"`
+}
+
+// PlayerReconnectedPayload notifies clients that a player reconnected within the grace period.
+type PlayerReconnectedPayload struct {
+	PlayerName string `json:"player_name"`
 }
 
 // GameStartedPayload when game starts
