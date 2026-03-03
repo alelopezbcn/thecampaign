@@ -107,9 +107,10 @@ func (a *desertionAction) execute(g desertionGame) (*Result, func() gamestatus.G
 	g.OnCardMovedToPile(discarded[0])
 
 	result.Action = types.LastActionDesertion
-	result.DeserterWarriorID = a.warrior.GetID()
-	result.DeserterFromPlayer = a.targetPlayer.Name()
-	result.DeserterWarrior = a.warrior
+	result.Desertion = &DesertionDetails{
+		FromPlayer: a.targetPlayer.Name(),
+		Warrior:    a.warrior,
+	}
 
 	g.AddHistory(fmt.Sprintf("%s's warrior deserted to %s's ranks",
 		a.targetPlayer.Name(), p.Name()), types.CategoryAction)

@@ -277,7 +277,6 @@ func TestDesertionAction_Execute(t *testing.T) {
 		mockDesertion.EXPECT().GetID().Return("DES1")
 		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockDesertion}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockDesertion)
-		mockWarrior.EXPECT().GetID().Return("W1")
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
@@ -289,9 +288,9 @@ func TestDesertionAction_Execute(t *testing.T) {
 		assert.NotNil(t, result)
 		assert.NotNil(t, statusFn)
 		assert.Equal(t, types.LastActionDesertion, result.Action)
-		assert.Equal(t, "Player2", result.DeserterFromPlayer)
-		assert.Equal(t, "W1", result.DeserterWarriorID)
-		assert.Equal(t, mockWarrior, result.DeserterWarrior)
+		assert.NotNil(t, result.Desertion)
+		assert.Equal(t, "Player2", result.Desertion.FromPlayer)
+		assert.Equal(t, mockWarrior, result.Desertion.Warrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -309,7 +308,6 @@ func TestDesertionAction_Execute(t *testing.T) {
 		mockDesertion.EXPECT().GetID().Return("DES1")
 		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockDesertion}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockDesertion)
-		mockWarrior.EXPECT().GetID().Return("W1")
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockGame.EXPECT().AddHistory(

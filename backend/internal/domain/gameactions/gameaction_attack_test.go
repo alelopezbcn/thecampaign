@@ -278,9 +278,10 @@ func TestAttackAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionAttack, result.Action)
-		assert.Equal(t, "S1", result.AttackWeaponID)
-		assert.Equal(t, "K1", result.AttackTargetID)
-		assert.Equal(t, "Player2", result.AttackTargetPlayer)
+		assert.NotNil(t, result.Attack)
+		assert.Equal(t, "S1", result.Attack.WeaponID)
+		assert.Equal(t, "K1", result.Attack.TargetID)
+		assert.Equal(t, "Player2", result.Attack.TargetPlayer)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -381,8 +382,9 @@ func TestAttackAction_Execute_AmbushCancelAttack(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, types.LastActionAmbush, result.Action)
-	assert.Equal(t, types.AmbushEffectCancelAttack, result.AmbushEffect)
-	assert.Equal(t, "Player1", result.AmbushAttackerName)
+	assert.NotNil(t, result.Attack)
+	assert.Equal(t, types.AmbushEffectCancelAttack, result.Attack.AmbushEffect)
+	assert.Equal(t, "Player1", result.Attack.AmbushAttackerName)
 }
 
 func TestAttackAction_Execute_AmbushStealWeapon(t *testing.T) {
@@ -402,7 +404,7 @@ func TestAttackAction_Execute_AmbushStealWeapon(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, types.LastActionAmbush, result.Action)
-	assert.Equal(t, types.AmbushEffectStealWeapon, result.AmbushEffect)
+	assert.Equal(t, types.AmbushEffectStealWeapon, result.Attack.AmbushEffect)
 }
 
 func TestAttackAction_Execute_AmbushReflectDamage_NoWarriors(t *testing.T) {
@@ -424,7 +426,7 @@ func TestAttackAction_Execute_AmbushReflectDamage_NoWarriors(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, types.LastActionAmbush, result.Action)
-	assert.Equal(t, types.AmbushEffectReflectDamage, result.AmbushEffect)
+	assert.Equal(t, types.AmbushEffectReflectDamage, result.Attack.AmbushEffect)
 }
 
 func TestAttackAction_Execute_AmbushReflectDamage_WithWarrior_UsesTargetMultiplier(t *testing.T) {
@@ -452,7 +454,7 @@ func TestAttackAction_Execute_AmbushReflectDamage_WithWarrior_UsesTargetMultipli
 
 	assert.NoError(t, err)
 	assert.Equal(t, types.LastActionAmbush, result.Action)
-	assert.Equal(t, types.AmbushEffectReflectDamage, result.AmbushEffect)
+	assert.Equal(t, types.AmbushEffectReflectDamage, result.Attack.AmbushEffect)
 }
 
 func TestAttackAction_Execute_AmbushInstantKill_NoWarriors(t *testing.T) {
@@ -477,7 +479,7 @@ func TestAttackAction_Execute_AmbushInstantKill_NoWarriors(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, types.LastActionAmbush, result.Action)
-	assert.Equal(t, types.AmbushEffectInstantKill, result.AmbushEffect)
+	assert.Equal(t, types.AmbushEffectInstantKill, result.Attack.AmbushEffect)
 }
 
 func TestAttackAction_Execute_NoAmbush_NormalAttack(t *testing.T) {
@@ -561,7 +563,7 @@ func TestAttackAction_Execute_AmbushDrainLife(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, types.LastActionAmbush, result.Action)
-	assert.Equal(t, types.AmbushEffectDrainLife, result.AmbushEffect)
+	assert.Equal(t, types.AmbushEffectDrainLife, result.Attack.AmbushEffect)
 }
 
 func TestAttackAction_Execute_Curse(t *testing.T) {
@@ -662,6 +664,6 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 
 		assert.NoError(t, err)
 		assert.Equal(t, types.LastActionAmbush, result.Action)
-		assert.Equal(t, types.AmbushEffectReflectDamage, result.AmbushEffect)
+		assert.Equal(t, types.AmbushEffectReflectDamage, result.Attack.AmbushEffect)
 	})
 }

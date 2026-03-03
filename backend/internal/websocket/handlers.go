@@ -8,333 +8,205 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 )
 
+// parsePayload unmarshals an arbitrary WebSocket payload into T.
+// On error it sends an error message to the client and returns false.
+func parsePayload[T any](client *Client, payload interface{}, errMsg string) (T, bool) {
+	var zero T
+	data, err := json.Marshal(payload)
+	if err != nil {
+		client.SendError("Invalid payload")
+		return zero, false
+	}
+	var p T
+	if err := json.Unmarshal(data, &p); err != nil {
+		client.SendError(errMsg)
+		return zero, false
+	}
+	return p, true
+}
+
 func (h *Hub) handleDrawCard(client *Client) {
 	log.Printf("handleDrawCard called by %s", client.PlayerName)
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewDrawCardAction(client.PlayerName))
 	})
 }
 
 func (h *Hub) handleAttack(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[AttackPayload](client, payload, "Invalid attack payload")
+	if !ok {
 		return
 	}
-
-	var p AttackPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid attack payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewAttackAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
 	})
 }
 
 func (h *Hub) handleSpecialPower(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[SpecialPowerPayload](client, payload, "Invalid special power payload")
+	if !ok {
 		return
 	}
-
-	var p SpecialPowerPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid special power payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewSpecialPowerAction(client.PlayerName, p.UserID, p.TargetID, p.WeaponID))
 	})
 }
 
-// handleWeaponAction is a shared handler for weapon card actions.
-// makeAction receives the parsed payload and returns the GameAction to execute.
-func (h *Hub) handleWeaponAction(
-	client *Client,
-	payload interface{},
-	makeAction func(playerName string, p WeaponPayload) gameactions.GameAction,
-) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
-		return
-	}
-
-	var p WeaponPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid weapon payload")
-		return
-	}
-
-	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(makeAction(client.PlayerName, p))
-	})
-}
-
 func (h *Hub) handleHarpoon(client *Client, payload interface{}) {
-	h.handleWeaponAction(client, payload, func(name string, p WeaponPayload) gameactions.GameAction {
-		return gameactions.NewHarpoonAction(name, p.TargetPlayer, p.TargetID, p.WeaponID)
+	p, ok := parsePayload[WeaponPayload](client, payload, "Invalid weapon payload")
+	if !ok {
+		return
+	}
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewHarpoonAction(client.PlayerName, p.TargetPlayer, p.TargetID, p.WeaponID))
 	})
 }
 
 func (h *Hub) handleBloodRain(client *Client, payload interface{}) {
-	h.handleWeaponAction(client, payload, func(name string, p WeaponPayload) gameactions.GameAction {
-		return gameactions.NewBloodRainAction(name, p.TargetPlayer, p.WeaponID)
+	p, ok := parsePayload[WeaponPayload](client, payload, "Invalid weapon payload")
+	if !ok {
+		return
+	}
+	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
+		return g.ExecuteAction(gameactions.NewBloodRainAction(client.PlayerName, p.TargetPlayer, p.WeaponID))
 	})
 }
 
 func (h *Hub) handleMoveWarrior(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[MoveWarriorPayload](client, payload, "Invalid move warrior payload")
+	if !ok {
 		return
 	}
-
-	var p MoveWarriorPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid move warrior payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewMoveWarriorAction(client.PlayerName, p.WarriorID, p.TargetPlayer))
 	})
 }
 
 func (h *Hub) handleTrade(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[TradePayload](client, payload, "Invalid trade payload")
+	if !ok {
 		return
 	}
-
-	var p TradePayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid trade payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewTradeAction(client.PlayerName, p.CardIDs))
 	})
 }
 
 func (h *Hub) handleBuy(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[BuyPayload](client, payload, "Invalid buy payload")
+	if !ok {
 		return
 	}
-
-	var p BuyPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid buy payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewBuyAction(client.PlayerName, p.CardID))
 	})
 }
 
 func (h *Hub) handleForge(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[ForgePayload](client, payload, "Invalid forge payload")
+	if !ok {
 		return
 	}
-
-	var p ForgePayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid forge payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewForgeAction(client.PlayerName, p.CardID1, p.CardID2))
 	})
 }
 
 func (h *Hub) handleBuyMercenary(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[BuyMercenaryPayload](client, payload, "Invalid buy_mercenary payload")
+	if !ok {
 		return
 	}
-
-	var p BuyMercenaryPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid buy_mercenary payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewBuyMercenaryAction(client.PlayerName, p.CardID))
 	})
 }
 
 func (h *Hub) handleConstruct(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[ConstructPayload](client, payload, "Invalid construct payload")
+	if !ok {
 		return
 	}
-
-	var p ConstructPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid construct payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewConstructAction(client.PlayerName, p.CardID, p.TargetPlayer))
 	})
 }
 
 func (h *Hub) handleSpy(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[SpyPayload](client, payload, "Invalid spy payload")
+	if !ok {
 		return
 	}
-
-	var p SpyPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid spy payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewSpyAction(client.PlayerName, p.TargetPlayer, p.Option, p.CardID))
 	})
 }
 
 func (h *Hub) handleSteal(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[StealPayload](client, payload, "Invalid steal payload")
+	if !ok {
 		return
 	}
-
-	var p StealPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid steal payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewStealAction(client.PlayerName, p.TargetPlayer, p.CardPosition, p.CardID))
 	})
 }
 
 func (h *Hub) handleDesertion(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[DesertionPayload](client, payload, "Invalid desertion payload")
+	if !ok {
 		return
 	}
-
-	var p DesertionPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid desertion payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewDesertionAction(client.PlayerName, p.TargetPlayer, p.WarriorID, p.CardID))
 	})
 }
 
 func (h *Hub) handleCatapult(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[CatapultPayload](client, payload, "Invalid catapult payload")
+	if !ok {
 		return
 	}
-
-	var p CatapultPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid catapult payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewCatapultAction(client.PlayerName, p.TargetPlayer, p.CardPosition, p.CardID))
 	})
 }
 
 func (h *Hub) handleFortress(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[FortressPayload](client, payload, "Invalid fortress payload")
+	if !ok {
 		return
 	}
-
-	var p FortressPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid fortress payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewFortressAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 
 func (h *Hub) handleResurrection(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[ResurrectionPayload](client, payload, "Invalid resurrection payload")
+	if !ok {
 		return
 	}
-
-	var p ResurrectionPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid resurrection payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewResurrectionAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 
 func (h *Hub) handleSabotage(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[SabotagePayload](client, payload, "Invalid sabotage payload")
+	if !ok {
 		return
 	}
-
-	var p SabotagePayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid sabotage payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewSabotageAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 
 func (h *Hub) handlePlaceAmbush(client *Client, payload interface{}) {
-	data, err := json.Marshal(payload)
-	if err != nil {
-		client.SendError("Invalid payload")
+	p, ok := parsePayload[PlaceAmbushPayload](client, payload, "Invalid place_ambush payload")
+	if !ok {
 		return
 	}
-
-	var p PlaceAmbushPayload
-	if err := json.Unmarshal(data, &p); err != nil {
-		client.SendError("Invalid place_ambush payload")
-		return
-	}
-
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
 		return g.ExecuteAction(gameactions.NewPlaceAmbushAction(client.PlayerName, p.CardID))
 	})

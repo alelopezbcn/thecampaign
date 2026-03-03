@@ -425,23 +425,7 @@ func (h *Hub) handleStartGame(client *Client) {
 	gameID := room.ID
 
 	// For 2v2, interleave teams: T1, T2, T1, T2
-	var playerNames []string
-	if room.GameMode == types.GameMode2v2 {
-		var t1Names, t2Names []string
-		for name, team := range room.TeamAssignments {
-			if team == 1 {
-				t1Names = append(t1Names, name)
-			} else {
-				t2Names = append(t2Names, name)
-			}
-		}
-		playerNames = []string{t1Names[0], t2Names[0], t1Names[1], t2Names[1]}
-	} else {
-		playerNames = make([]string, 0, room.MaxPlayers)
-		for name := range room.Players {
-			playerNames = append(playerNames, name)
-		}
-	}
+	playerNames := room.orderedPlayerNames()
 
 	deckCfg := cards.DeckConfig{
 		Warriors:           room.Config.Warriors,
@@ -528,22 +512,7 @@ func (h *Hub) handleRestartGame(client *Client) {
 
 	gameID := room.ID
 
-	var playerNames []string
-	if room.GameMode == types.GameMode2v2 {
-		var t1Names, t2Names []string
-		for name, team := range room.TeamAssignments {
-			if team == 1 {
-				t1Names = append(t1Names, name)
-			} else {
-				t2Names = append(t2Names, name)
-			}
-		}
-		playerNames = []string{t1Names[0], t2Names[0], t1Names[1], t2Names[1]}
-	} else {
-		for name := range room.Players {
-			playerNames = append(playerNames, name)
-		}
-	}
+	playerNames := room.orderedPlayerNames()
 
 	deckCfg := cards.DeckConfig{
 		Warriors:           room.Config.Warriors,
@@ -925,6 +894,28 @@ func (h *Hub) getGameRoom(client *Client) (*GameRoom, bool) {
 
 	room, exists := h.gameRooms[client.GameID]
 	return room, exists
+}
+
+// orderedPlayerNames returns player names in start order.
+// For 2v2 it interleaves teams: T1[0], T2[0], T1[1], T2[1].
+// For other modes it returns players in map iteration order.
+func (r *GameRoom) orderedPlayerNames() []string {
+	if r.GameMode == types.GameMode2v2 {
+		var t1Names, t2Names []string
+		for name, team := range r.TeamAssignments {
+			if team == 1 {
+				t1Names = append(t1Names, name)
+			} else {
+				t2Names = append(t2Names, name)
+			}
+		}
+		return []string{t1Names[0], t2Names[0], t1Names[1], t2Names[1]}
+	}
+	names := make([]string, 0, len(r.Players))
+	for name := range r.Players {
+		names = append(names, name)
+	}
+	return names
 }
 
 func copyTeams(src map[string]int) map[string]int {
