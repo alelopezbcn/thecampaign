@@ -2,7 +2,6 @@ package gameactions
 
 import (
 	"fmt"
-	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -41,6 +40,7 @@ func applyWeaponModifier(weapon cards.Weapon, mod int) cards.Weapon {
 
 type attackAction struct {
 	playerName       string
+	warriorID        string
 	targetPlayerName string
 	targetID         string
 	weaponID         string
@@ -49,11 +49,13 @@ type attackAction struct {
 	targetPlayer  board.Player
 	target        cards.Attackable
 	weapon        cards.Weapon
+	attacker      cards.Warrior
 }
 
-func NewAttackAction(playerName, targetPlayerName, targetID, weaponID string) *attackAction {
+func NewAttackAction(playerName, warriorID, targetPlayerName, targetID, weaponID string) *attackAction {
 	return &attackAction{
 		playerName:       playerName,
+		warriorID:        warriorID,
 		targetPlayerName: targetPlayerName,
 		targetID:         targetID,
 		weaponID:         weaponID,
@@ -97,6 +99,19 @@ func (a *attackAction) Validate(g Game) error {
 
 	if !a.weapon.CanBeUsedWith(a.currentPlayer.Field()) {
 		return fmt.Errorf("%s weapon cannot be used", a.weapon.Type())
+	}
+
+	attackerCard, ok := p.GetCardFromField(a.warriorID)
+	if !ok {
+		return fmt.Errorf("warrior %s not found in your field", a.warriorID)
+	}
+	a.attacker, ok = attackerCard.(cards.Warrior)
+	if !ok {
+		return fmt.Errorf("card %s is not a warrior", a.warriorID)
+	}
+	wepType := a.weapon.Type()
+	if !a.attacker.CanUseWeapon(wepType) {
+		return fmt.Errorf("%s cannot use %s weapon", a.attacker.Type(), wepType)
 	}
 
 	return nil
@@ -175,19 +190,14 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 	switch effect {
 	case types.AmbushEffectReflectDamage:
 		// Reflected damage equals the exact amount the original target would have received.
-		w := findWarriorForWeapon(a.currentPlayer.Field(), weaponType)
-		if w != nil {
-			multiplier := 1
-			if targetWarrior, ok := a.target.(cards.Warrior); ok {
-				multiplier = effectiveWeapon.MultiplierFactor(targetWarrior)
-			}
-			w.ReceiveDamage(effectiveWeapon, multiplier)
-			g.AddHistory(fmt.Sprintf("%s's attack was reflected — %s takes damage",
-				a.currentPlayer.Name(), w.String()), types.CategoryAction)
-		} else {
-			g.AddHistory(fmt.Sprintf("%s's attack was reflected (no target found)",
-				a.currentPlayer.Name()), types.CategoryAction)
+		// The damage is reflected back to the warrior who performed the attack.
+		multiplier := 1
+		if targetWarrior, ok := a.target.(cards.Warrior); ok {
+			multiplier = effectiveWeapon.MultiplierFactor(targetWarrior)
 		}
+		a.attacker.ReceiveDamage(effectiveWeapon, multiplier)
+		g.AddHistory(fmt.Sprintf("%s's attack was reflected — %s takes damage",
+			a.currentPlayer.Name(), a.attacker.String()), types.CategoryAction)
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 
 	case types.AmbushEffectCancelAttack:
@@ -218,62 +228,13 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 			a.currentPlayer.Name()), types.CategoryAction)
 
 	case types.AmbushEffectInstantKill:
-		// A random warrior in the attacker's field is instantly killed.
-		w := findAnyWarrior(a.currentPlayer.Field())
-		if w != nil {
-			w.KillByAmbush()
-			g.AddHistory(fmt.Sprintf("%s triggered an ambush — %s was instantly killed!",
-				a.currentPlayer.Name(), w.String()), types.CategoryAction)
-		} else {
-			g.AddHistory(fmt.Sprintf("%s triggered an ambush — instant kill (no warriors found)",
-				a.currentPlayer.Name()), types.CategoryAction)
-		}
+		// The warrior who performed the attack is instantly killed.
+		a.attacker.KillByAmbush()
+		g.AddHistory(fmt.Sprintf("%s triggered an ambush — %s was instantly killed!",
+			a.currentPlayer.Name(), a.attacker.String()), types.CategoryAction)
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
 	}
 
 	return result
-}
-
-// findWarriorForWeapon finds a warrior in the field that matches the weapon type.
-// Falls back to any random warrior if no type match exists.
-func findWarriorForWeapon(f board.FieldReader, weaponType types.WeaponType) cards.Warrior {
-	warriors := f.Warriors()
-	if len(warriors) == 0 {
-		return nil
-	}
-
-	var compatible []cards.Warrior
-	for _, w := range warriors {
-		switch weaponType {
-		case types.SwordWeaponType:
-			if w.Type() == types.KnightWarriorType || w.Type() == types.DragonWarriorType || w.Type() == types.MercenaryWarriorType {
-				compatible = append(compatible, w)
-			}
-		case types.ArrowWeaponType:
-			if w.Type() == types.ArcherWarriorType || w.Type() == types.DragonWarriorType || w.Type() == types.MercenaryWarriorType {
-				compatible = append(compatible, w)
-			}
-		case types.PoisonWeaponType:
-			if w.Type() == types.MageWarriorType || w.Type() == types.DragonWarriorType || w.Type() == types.MercenaryWarriorType {
-				compatible = append(compatible, w)
-			}
-		default:
-			compatible = append(compatible, w)
-		}
-	}
-
-	if len(compatible) > 0 {
-		return compatible[rand.Intn(len(compatible))]
-	}
-	return warriors[rand.Intn(len(warriors))]
-}
-
-// findAnyWarrior returns a random warrior from the field, or nil if empty.
-func findAnyWarrior(f board.FieldReader) cards.Warrior {
-	warriors := f.Warriors()
-	if len(warriors) == 0 {
-		return nil
-	}
-	return warriors[rand.Intn(len(warriors))]
 }

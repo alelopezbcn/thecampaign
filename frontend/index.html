@@ -247,6 +247,37 @@
                 </div>
             </div>
 
+            <!-- End Turn Popup (between board and action buttons) -->
+            <div id="endturn-popup" class="endturn-popup hidden">
+                <div class="endturn-popup-content">
+                    <div class="endturn-icon">⏳</div>
+                    <div class="endturn-popup-text">
+                        <h2>End of Turn</h2>
+                        <p>All phases completed</p>
+                        <p class="endturn-next-player">Next: <strong id="endturn-next-player-name"></strong></p>
+                    </div>
+                    <div class="endturn-countdown-wrap">
+                        <div id="endturn-countdown-bar" class="endturn-countdown-bar"></div>
+                    </div>
+                    <button id="endturn-popup-btn" class="btn btn-danger">End Now</button>
+                </div>
+            </div>
+
+            <!-- Turn Transition Notification (between board and action buttons) -->
+            <div id="turn-transition-modal" class="turn-transition-modal hidden">
+                <div class="turn-transition-content">
+                    <div class="turn-transition-icon">&#9876;</div>
+                    <div class="turn-transition-text">
+                        <h2 class="turn-transition-title">Next Turn</h2>
+                        <p id="turn-transition-player" class="turn-transition-player"></p>
+                    </div>
+                    <div class="turn-transition-countdown-wrap">
+                        <div id="turn-transition-bar" class="turn-transition-bar"></div>
+                    </div>
+                    <button id="turn-transition-close" class="btn btn-secondary btn-small">Got it</button>
+                </div>
+            </div>
+
             <!-- Action Panel -->
             <div class="action-panel">
                 <div id="action-prompt-container" class="action-prompt-container hidden">
@@ -259,37 +290,6 @@
                     <button id="forge-btn" class="btn btn-action" disabled>Forge</button>
                     <button id="skip-phase-btn" class="btn btn-skip" disabled>Skip Phase</button>
                     <button id="end-turn-btn" class="btn btn-danger" disabled>End Turn</button>
-                </div>
-
-                <!-- End Turn Popup (overlays action panel) -->
-                <div id="endturn-popup" class="endturn-popup hidden">
-                    <div class="endturn-popup-content">
-                        <div class="endturn-icon">⏳</div>
-                        <div class="endturn-popup-text">
-                            <h2>End of Turn</h2>
-                            <p>All phases completed</p>
-                            <p class="endturn-next-player">Next: <strong id="endturn-next-player-name"></strong></p>
-                        </div>
-                        <div class="endturn-countdown-wrap">
-                            <div id="endturn-countdown-bar" class="endturn-countdown-bar"></div>
-                        </div>
-                        <button id="endturn-popup-btn" class="btn btn-danger">End Now</button>
-                    </div>
-                </div>
-
-                <!-- Turn Transition Notification (overlays action panel) -->
-                <div id="turn-transition-modal" class="turn-transition-modal hidden">
-                    <div class="turn-transition-content">
-                        <div class="turn-transition-icon">&#9876;</div>
-                        <div class="turn-transition-text">
-                            <h2 class="turn-transition-title">Next Turn</h2>
-                            <p id="turn-transition-player" class="turn-transition-player"></p>
-                        </div>
-                        <div class="turn-transition-countdown-wrap">
-                            <div id="turn-transition-bar" class="turn-transition-bar"></div>
-                        </div>
-                        <button id="turn-transition-close" class="btn btn-secondary btn-small">Got it</button>
-                    </div>
                 </div>
             </div>
         </div>

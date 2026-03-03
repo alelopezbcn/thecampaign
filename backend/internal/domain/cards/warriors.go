@@ -20,6 +20,7 @@ type Warrior interface {
 	Type() types.WarriorType
 	IsDamaged() bool
 	Resurrect()
+	CanUseWeapon(wep types.WeaponType) bool
 }
 
 type knight struct {

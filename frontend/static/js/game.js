@@ -1285,10 +1285,22 @@ function handleCardClick(cardID, cardType, context, card = null) {
         } else {
             // Regular attacks cannot target allies
             if (isAllyBoard) return;
+            // For Sword/Arrow/Poison: must select attacker warrior first
+            if (gameState.actionState.type === 'attack' && !gameState.actionState.warriorId) {
+                const weapon = findCardById(gameState.actionState.weaponId);
+                if (WEAPON_ATTACKER_TYPES[(weapon?.sub_type || '').toLowerCase()]) return;
+            }
         }
 
         gameState.actionState.targetPlayer = opponentName;
         handleAttackPhaseTargetClick(cardID, isAllyBoard ? 'ally' : 'enemy');
+        return;
+    }
+
+    // Handle attacker warrior selection for regular-weapon attacks (player field)
+    if (gameState.actionState.weaponId && gameState.actionState.type === 'attack' &&
+        !gameState.actionState.warriorId && context === 'player-field') {
+        handleAttackPhaseAttackerClick(cardID);
         return;
     }
 
@@ -1327,8 +1339,25 @@ function handleCardClick(cardID, cardType, context, card = null) {
     }
 }
 
+// Maps regular weapon sub_type → warrior sub_types that can wield it.
+// Only Sword/Arrow/Poison require attacker selection; BloodRain/Harpoon keep their existing flow.
+const WEAPON_ATTACKER_TYPES = {
+    'sword':  ['knight', 'dragon', 'mercenary'],
+    'arrow':  ['archer', 'dragon', 'mercenary'],
+    'poison': ['mage', 'dragon', 'mercenary'],
+};
+
+// Warrior types that can use the Special Power card.
+const SPECIAL_POWER_USER_TYPES = ['archer', 'knight', 'mage'];
+
 // Attack phase handlers
 function handleAttackPhaseHandClick(cardID, card) {
+    // Clicking the already-selected weapon deselects it
+    if (gameState.actionState.weaponId === cardID) {
+        resetActionState();
+        return;
+    }
+
     // Check if card can be used
     if (card && card.can_be_used === false) {
         return; // Card cannot be used in this phase
@@ -1370,8 +1399,16 @@ function handleAttackPhaseHandClick(cardID, card) {
         highlightSelectedCard(cardID);
         const weaponName = getCardName(card);
         const weaponDmg = card?.value || 0;
-        updateActionPrompt(`⚔️ ${weaponName} (${weaponDmg} DMG) - Select a target`);
-        highlightValidTargets(card);
+        const weaponSubType = (card?.sub_type || '').toLowerCase();
+        if (WEAPON_ATTACKER_TYPES[weaponSubType]) {
+            // Sword/Arrow/Poison: select attacker warrior first
+            updateActionPrompt(`⚔️ ${weaponName} (${weaponDmg} DMG) - Select a warrior to attack with`);
+            highlightValidAttackerWarriors(card);
+        } else {
+            // Other weapons: go directly to target selection
+            updateActionPrompt(`⚔️ ${weaponName} (${weaponDmg} DMG) - Select a target`);
+            highlightValidTargets(card);
+        }
         showConfirmButtons();
     } else if (cardType === 'harpoon') {
         gameState.actionState.type = 'harpoon';
@@ -1411,9 +1448,18 @@ function handleAttackPhaseHandClick(cardID, card) {
 }
 
 function handleAttackPhaseUserClick(cardID) {
+    const warrior = findCardById(cardID);
+    const warriorType = (warrior?.sub_type || '').toLowerCase();
+    if (!SPECIAL_POWER_USER_TYPES.includes(warriorType)) return;
+
     // User selected a warrior to use the special power
     gameState.actionState.userId = cardID;
     highlightUserWarrior(cardID);
+
+    // Remove attacker selection state from own field
+    const playerField = document.getElementById('player-field');
+    playerField?.classList.remove('selecting-ally', 'targeting-mode');
+    playerField?.querySelectorAll('.card.valid-target').forEach(c => c.classList.remove('valid-target'));
 
     // Get the weapon and user cards for display
     const weapon = findCardById(gameState.actionState.weaponId);
@@ -1451,6 +1497,33 @@ function handleAttackPhaseUserClick(cardID) {
     // Highlight valid targets for this specific warrior type, then enable field selection
     highlightSpecialPowerTargets(userType, weapon);
     enableSpecialPowerTargetSelection(userType);
+}
+
+function handleAttackPhaseAttackerClick(cardID) {
+    const weapon = findCardById(gameState.actionState.weaponId);
+    const warrior = findCardById(cardID);
+    const weaponSubType = (weapon?.sub_type || '').toLowerCase();
+    const validTypes = WEAPON_ATTACKER_TYPES[weaponSubType] || [];
+    const warriorType = (warrior?.sub_type || '').toLowerCase();
+
+    // Validate warrior-weapon compatibility
+    if (validTypes.length > 0 && !validTypes.includes(warriorType)) return;
+
+    gameState.actionState.warriorId = cardID;
+    highlightUserWarrior(cardID);
+
+    // Remove attacker selection state from own field
+    const playerField = document.getElementById('player-field');
+    playerField?.classList.remove('selecting-ally');
+    playerField?.querySelectorAll('.card.valid-target').forEach(c => c.classList.remove('valid-target'));
+
+    const warriorName = getCardName(warrior);
+    const weaponName = getCardName(weapon);
+    const weaponDmg = weapon?.value || 0;
+    updateActionPrompt(`⚔️ ${warriorName} attacks with ${weaponName} (${weaponDmg} DMG) - Select a target`);
+
+    // Now highlight valid enemy targets
+    highlightValidTargets(weapon);
 }
 
 function handleAttackPhaseTargetClick(cardID, side) {
@@ -1560,7 +1633,13 @@ function showAttackConfirmModal(weapon, target) {
     const isProtected = target?.protected_by && target.protected_by.id;
     const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
 
-    let cardsHtml = renderCardForModal(weapon, { showDoubleDamage: hasDoubleDamage });
+    const attacker = findCardById(gameState.actionState.warriorId);
+    let cardsHtml = '';
+    if (attacker) {
+        cardsHtml += renderCardForModal(attacker);
+        cardsHtml += renderArrow();
+    }
+    cardsHtml += renderCardForModal(weapon, { showDoubleDamage: hasDoubleDamage });
     cardsHtml += renderArrow();
     cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp });
 
@@ -1601,6 +1680,7 @@ function showAttackConfirmModal(weapon, target) {
         description: description,
         onConfirm: () => {
             sendAction('attack', {
+                warrior_id: gameState.actionState.warriorId,
                 target_player: gameState.actionState.targetPlayer,
                 weapon_id: gameState.actionState.weaponId,
                 target_id: gameState.actionState.targetId
@@ -2126,13 +2206,34 @@ function showConstructConfirmModal(resource, cardID, targetPlayer) {
 }
 
 function highlightValidUserWarriors(weapon) {
-    // For special powers, enable selection on player's field
-    // Don't highlight all warriors - only the selected one will be highlighted
     const playerField = document.getElementById('player-field');
-    // Enable hover/selection on player field for SpecialPower
     playerField.classList.add('selecting-ally');
-    // Note: We don't add valid-target here anymore
-    // The user will click to select, and that will highlight with 'selected' class
+    playerField.classList.add('targeting-mode');
+
+    playerField.querySelectorAll('.card').forEach(cardEl => {
+        const fieldCard = findCardById(cardEl.dataset.cardId);
+        const warriorType = (fieldCard?.sub_type || '').toLowerCase();
+        if (SPECIAL_POWER_USER_TYPES.includes(warriorType)) {
+            cardEl.classList.add('valid-target');
+        }
+    });
+}
+
+function highlightValidAttackerWarriors(weapon) {
+    const weaponSubType = (weapon?.sub_type || '').toLowerCase();
+    const validTypes = WEAPON_ATTACKER_TYPES[weaponSubType] || [];
+
+    const playerField = document.getElementById('player-field');
+    playerField.classList.add('selecting-ally');
+    playerField.classList.add('targeting-mode');
+
+    playerField.querySelectorAll('.card').forEach(cardEl => {
+        const fieldCard = findCardById(cardEl.dataset.cardId);
+        const warriorType = (fieldCard?.sub_type || '').toLowerCase();
+        if (validTypes.length === 0 || validTypes.includes(warriorType)) {
+            cardEl.classList.add('valid-target');
+        }
+    });
 }
 
 function enableSpecialPowerTargetSelection(userType) {

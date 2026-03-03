@@ -92,6 +92,20 @@ func (mr *MockWarriorMockRecorder) BeAttacked(weapon any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockWarrior)(nil).BeAttacked), weapon)
 }
 
+// CanUseWeapon mocks base method.
+func (m *MockWarrior) CanUseWeapon(wep types.WeaponType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanUseWeapon", wep)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanUseWeapon indicates an expected call of CanUseWeapon.
+func (mr *MockWarriorMockRecorder) CanUseWeapon(wep any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanUseWeapon", reflect.TypeOf((*MockWarrior)(nil).CanUseWeapon), wep)
+}
+
 // GetCardMovedToPileObserver mocks base method.
 func (m *MockWarrior) GetCardMovedToPileObserver() cards.CardMovedToPileObserver {
 	m.ctrl.T.Helper()
@@ -378,6 +392,20 @@ func (m *MockMercenary) BeAttacked(weapon cards.Weapon) error {
 func (mr *MockMercenaryMockRecorder) BeAttacked(weapon any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BeAttacked", reflect.TypeOf((*MockMercenary)(nil).BeAttacked), weapon)
+}
+
+// CanUseWeapon mocks base method.
+func (m *MockMercenary) CanUseWeapon(wep types.WeaponType) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CanUseWeapon", wep)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// CanUseWeapon indicates an expected call of CanUseWeapon.
+func (mr *MockMercenaryMockRecorder) CanUseWeapon(wep any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CanUseWeapon", reflect.TypeOf((*MockMercenary)(nil).CanUseWeapon), wep)
 }
 
 // GetCardMovedToPileObserver mocks base method.
