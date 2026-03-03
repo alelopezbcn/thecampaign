@@ -805,7 +805,7 @@ function handleGameState(payload) {
     // Detect if a card was sabotaged from us
     const sabotagedCards = payload.game_status.sabotaged_from_you_card;
     if (sabotagedCards && sabotagedCards.length > 0) {
-        showStolenCardModal(sabotagedCards[0]);
+        showStolenCardModal(sabotagedCards[0], 'sabotaged');
     }
 
     // Detect spy notification
@@ -1136,15 +1136,21 @@ function clearSelections() {
     document.querySelectorAll('.card.selected').forEach(card => {
         card.classList.remove('selected');
     });
+    document.querySelectorAll('.card.selected-user').forEach(card => {
+        card.classList.remove('selected-user');
+    });
     // Remove valid-target highlights and multiplier badges
     document.querySelectorAll('.card.valid-target').forEach(card => {
         card.classList.remove('valid-target');
     });
     // Remove selection mode classes from fields
-    document.getElementById('player-field')?.classList.remove('selecting-ally');
+    const playerField = document.getElementById('player-field');
+    playerField?.classList.remove('selecting-ally');
+    playerField?.classList.remove('targeting-mode');
     document.querySelectorAll('.opponent-field').forEach(f => {
         f.classList.remove('selecting-target');
         f.classList.remove('selecting-ally');
+        f.classList.remove('targeting-mode');
     });
     document.querySelectorAll('.dmg-multiplier-badge').forEach(badge => {
         badge.remove();
@@ -1272,6 +1278,9 @@ function handleCardClick(cardID, cardType, context, card = null) {
                     // Mage (Heal) and Knight (Protect) can only target ally boards
                     if (!isAllyBoard) return;
                 }
+            } else {
+                // Must select a user warrior from your field first
+                return;
             }
         } else {
             // Regular attacks cannot target allies
@@ -1293,6 +1302,19 @@ function handleCardClick(cardID, cardType, context, card = null) {
     // Handle target selection for special power on own field (Mage heal, Knight protect)
     if (gameState.actionState.weaponId && gameState.actionState.type === 'specialpower' &&
         gameState.actionState.userId && context === 'player-field') {
+        // Re-click the selected user warrior = deselect, UNLESS it is also a valid target
+        if (cardID === gameState.actionState.userId) {
+            const weapon = findCardById(gameState.actionState.weaponId);
+            const isValidTarget = weapon?.use_on?.includes(cardID);
+            if (!isValidTarget) {
+                document.querySelector(`[data-card-id="${cardID}"]`)?.classList.remove('selected-user');
+                gameState.actionState.userId = null;
+                clearSpecialPowerTargetSelection();
+                updateActionPrompt(`✨ ${getCardName(weapon)} - Select a warrior from your field to use it`);
+                return;
+            }
+            // Valid target (e.g. Knight self-protect, Mage self-heal) — fall through to target selection
+        }
         const userId = gameState.actionState.userId;
         const user = findCardById(userId);
         const userType = (user?.sub_type || '').toLowerCase();
@@ -1391,7 +1413,7 @@ function handleAttackPhaseHandClick(cardID, card) {
 function handleAttackPhaseUserClick(cardID) {
     // User selected a warrior to use the special power
     gameState.actionState.userId = cardID;
-    highlightSelectedCard(cardID);
+    highlightUserWarrior(cardID);
 
     // Get the weapon and user cards for display
     const weapon = findCardById(gameState.actionState.weaponId);
@@ -1426,8 +1448,8 @@ function handleAttackPhaseUserClick(cardID) {
 
     updateActionPrompt(`${emoji} ${userName} will use ${effect} - ${targetHint}`);
 
-    // Enable target selection on the appropriate field based on warrior type
-    // Don't pre-highlight targets - only the selected one will be highlighted
+    // Highlight valid targets for this specific warrior type, then enable field selection
+    highlightSpecialPowerTargets(userType, weapon);
     enableSpecialPowerTargetSelection(userType);
 }
 
@@ -1436,7 +1458,7 @@ function handleAttackPhaseTargetClick(cardID, side) {
     const weapon = findCardById(gameState.actionState.weaponId);
     console.log('Attack target click:', { cardID, side, weaponUseOn: weapon?.use_on, isValidTarget: weapon?.use_on?.includes(cardID) });
 
-    if (weapon && weapon.use_on && !weapon.use_on.includes(cardID)) {
+    if (!weapon || !weapon.use_on || !weapon.use_on.includes(cardID)) {
         console.log('Target rejected - not in use_on list');
         return; // Not a valid target
     }
@@ -2061,16 +2083,31 @@ function showConstructConfirmModal(resource, cardID, targetPlayer) {
     }
 
     const currentValue = castle?.value || 0;
-    const newValue = currentValue + resourceValue;
+
+    // Apply Harvest event modifier when castle is already constructed
+    const gs = gameState.currentState;
+    const harvestMod = (gs?.current_event === 'harvest' && castle?.constructed)
+        ? (gs.current_event_resource_modifier || 0)
+        : 0;
+    const effectiveValue = harvestMod !== 0
+        ? Math.max(1, resourceValue + harvestMod)
+        : resourceValue;
+    const newValue = currentValue + effectiveValue;
 
     let cardsHtml = renderCardForModal(resource);
     cardsHtml += renderArrow();
     cardsHtml += renderCastleIcon();
 
     const castleLabel = targetName ? `${targetName}'s castle` : 'your castle';
-    const description = castle?.constructed
-        ? `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`
-        : `${resourceName} (${resourceValue} value) will be added to ${castleLabel}`;
+    let description;
+    if (!castle?.constructed) {
+        description = `${resourceName} (${resourceValue} value) will be added to ${castleLabel}`;
+    } else if (harvestMod !== 0) {
+        const sign = harvestMod > 0 ? '+' : '';
+        description = `${resourceName} (${resourceValue} ${sign}${harvestMod} Harvest = ${effectiveValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`;
+    } else {
+        description = `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`;
+    }
 
     const payload = { card_id: cardID };
     if (targetPlayer) {
@@ -2103,13 +2140,78 @@ function enableSpecialPowerTargetSelection(userType) {
     const playerField = document.getElementById('player-field');
 
     if (userType === 'archer') {
-        // Archer (Instant Kill) targets enemies only (not allies)
-        document.querySelectorAll('.opponent-board:not(.ally) .opponent-field').forEach(f => f.classList.add('selecting-target'));
+        // Archer (Instant Kill) targets enemies only — dim own field + ally fields too
+        document.querySelectorAll('.opponent-board:not(.ally) .opponent-field').forEach(f => {
+            f.classList.add('selecting-target');
+            f.classList.add('targeting-mode');
+        });
+        playerField.classList.add('targeting-mode');
+        document.querySelectorAll('.opponent-board.ally .opponent-field').forEach(f => {
+            f.classList.add('targeting-mode');
+        });
     } else {
-        // Mage (Heal) and Knight (Protect) target own field + ally fields
+        // Mage (Heal) and Knight (Protect) target own field + ally fields; dim enemies
         playerField.classList.add('selecting-ally');
-        document.querySelectorAll('.opponent-board.ally .opponent-field').forEach(f => f.classList.add('selecting-ally'));
+        playerField.classList.add('targeting-mode');
+        document.querySelectorAll('.opponent-board.ally .opponent-field').forEach(f => {
+            f.classList.add('selecting-ally');
+            f.classList.add('targeting-mode');
+        });
+        document.querySelectorAll('.opponent-board:not(.ally) .opponent-field').forEach(f => {
+            f.classList.add('targeting-mode');
+        });
     }
+}
+
+function highlightUserWarrior(cardID) {
+    // Remove any existing selected-user highlight
+    document.querySelectorAll('.card.selected-user').forEach(c => c.classList.remove('selected-user'));
+    const card = document.querySelector(`[data-card-id="${cardID}"]`);
+    if (card) {
+        card.classList.add('selected-user');
+        card.classList.remove('selected'); // use gold glow, not the default blue
+    }
+}
+
+function highlightSpecialPowerTargets(userType, weapon) {
+    if (!weapon?.use_on) return;
+    const useOn = weapon.use_on;
+
+    if (userType === 'archer') {
+        // Valid targets are enemy (non-ally) field warriors
+        document.querySelectorAll('.opponent-board:not(.ally) .opponent-field .card').forEach(card => {
+            if (useOn.includes(card.dataset.cardId)) {
+                card.classList.add('valid-target');
+            }
+        });
+    } else {
+        // Valid targets are own field + ally field warriors
+        document.querySelectorAll('#player-field .card').forEach(card => {
+            if (useOn.includes(card.dataset.cardId)) {
+                card.classList.add('valid-target');
+            }
+        });
+        document.querySelectorAll('.opponent-board.ally .opponent-field .card').forEach(card => {
+            if (useOn.includes(card.dataset.cardId)) {
+                card.classList.add('valid-target');
+            }
+        });
+    }
+}
+
+function clearSpecialPowerTargetSelection() {
+    // Remove valid-target from all field cards
+    document.querySelectorAll('.opponent-field .card.valid-target, #player-field .card.valid-target').forEach(c => {
+        c.classList.remove('valid-target');
+    });
+    // Remove targeting-mode and target selection classes from opponent fields
+    document.querySelectorAll('.opponent-field').forEach(f => {
+        f.classList.remove('selecting-target');
+        f.classList.remove('selecting-ally');
+        f.classList.remove('targeting-mode');
+    });
+    // Remove targeting-mode from player field (but keep selecting-ally for step 1)
+    document.getElementById('player-field')?.classList.remove('targeting-mode');
 }
 
 function highlightValidTargets(weapon) {
@@ -2222,15 +2324,15 @@ function resetActionState() {
     };
 
     // Clear visual selections
-    document.querySelectorAll('.card.selected, .card.valid-target').forEach(card => {
-        card.classList.remove('selected', 'valid-target');
+    document.querySelectorAll('.card.selected, .card.valid-target, .card.selected-user').forEach(card => {
+        card.classList.remove('selected', 'valid-target', 'selected-user');
     });
 
     // Remove selection mode classes from fields
-    document.getElementById('player-field')?.classList.remove('selecting-ally');
+    const playerField = document.getElementById('player-field');
+    playerField?.classList.remove('selecting-ally', 'targeting-mode');
     document.querySelectorAll('.opponent-field').forEach(f => {
-        f.classList.remove('selecting-target');
-        f.classList.remove('selecting-ally');
+        f.classList.remove('selecting-target', 'selecting-ally', 'targeting-mode');
     });
 
     // Remove damage multiplier badges
@@ -4463,7 +4565,7 @@ function showEventChangeToast(gs) {
 // Stolen Card Notification Modal
 let stolenCardTimer = null;
 
-function showStolenCardModal(card) {
+function showStolenCardModal(card, action = 'stolen') {
     const modal = document.getElementById('stolen-card-modal');
     const container = document.getElementById('stolen-card-container');
     const text = document.getElementById('stolen-card-text');
@@ -4473,7 +4575,9 @@ function showStolenCardModal(card) {
     // Render the stolen card
     const cardName = card.sub_type || card.type;
     container.innerHTML = renderCardForModal(card);
-    text.textContent = `${cardName} was stolen from you!`;
+    text.textContent = action === 'sabotaged'
+        ? `${cardName} was sabotaged from you!`
+        : `${cardName} was stolen from you!`;
 
     modal.classList.remove('hidden');
 

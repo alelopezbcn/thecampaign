@@ -61,8 +61,9 @@ type GameStatus struct {
 	CurrentEvent               string                 `json:"current_event"`
 	CurrentEventDisplay        string                 `json:"current_event_display"`
 	CurrentEventDescription    string                 `json:"current_event_description"`
-	CurrentEventWeaponModifier int                    `json:"current_event_weapon_modifier,omitempty"`
-	CurrentEventExcludedWeapon string                 `json:"current_event_excluded_weapon,omitempty"`
+	CurrentEventWeaponModifier    int                    `json:"current_event_weapon_modifier,omitempty"`
+	CurrentEventExcludedWeapon    string                 `json:"current_event_excluded_weapon,omitempty"`
+	CurrentEventResourceModifier  int                    `json:"current_event_resource_modifier,omitempty"`
 }
 
 type OpponentStatus struct {
@@ -152,6 +153,9 @@ func applyEventInfo(in BuildInput, gs *GameStatus) {
 	if in.CurrentEvent.Type == types.EventTypeCurse {
 		gs.CurrentEventWeaponModifier = in.CurrentEvent.CurseModifier
 		gs.CurrentEventExcludedWeapon = string(in.CurrentEvent.CurseExcludedWeapon)
+	}
+	if in.CurrentEvent.Type == types.EventTypeHarvest {
+		gs.CurrentEventResourceModifier = in.CurrentEvent.HarvestModifier
 	}
 }
 

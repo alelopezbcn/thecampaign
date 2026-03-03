@@ -153,7 +153,7 @@ func NewSpecialPowerHandCard(cardID string,
 	}
 
 	return newHandCard(cardID, CardTypeSpecialPower,
-		0, canBeUsedOnIDs, true)
+		0, canBeUsedOnIDs, len(canBeUsedOnIDs) > 0)
 }
 
 func NewHarpoonHandCard(cardID string, enemyFields []FieldInput,

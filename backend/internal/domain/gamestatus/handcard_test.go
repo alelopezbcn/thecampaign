@@ -391,7 +391,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -413,7 +413,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -456,7 +456,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -476,7 +476,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -487,7 +487,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -526,7 +526,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -546,7 +546,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -585,7 +585,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 
@@ -603,7 +603,7 @@ func TestNewSpecialPowerHandCard(t *testing.T) {
 			myField, []gamestatus.FieldInput{allyField}, []gamestatus.FieldInput{},
 			types.PhaseTypeAttack)
 
-		assert.True(t, hc.CanBeUsed)
+		assert.False(t, hc.CanBeUsed)
 		assert.Empty(t, hc.CanBeUsedOnIDs)
 	})
 }
