@@ -99,10 +99,12 @@ func (a *harpoonAction) execute(g harpoonGame) (*Result, func() gamestatus.GameS
 		a.playerName, a.dragon.String()), types.CategoryAction)
 
 	result := &Result{
-		Action:             types.LastActionHarpoon,
-		AttackWeaponID:     a.weaponID,
-		AttackTargetID:     a.targetID,
-		AttackTargetPlayer: a.targetPlayerName,
+		Action: types.LastActionHarpoon,
+		Attack: &AttackDetails{
+			WeaponID:     a.weaponID,
+			TargetID:     a.targetID,
+			TargetPlayer: a.targetPlayerName,
+		},
 	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.Status(p)

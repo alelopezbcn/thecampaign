@@ -202,8 +202,9 @@ func TestSabotageAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionSabotage, result.Action)
-		assert.Equal(t, "Player2", result.SabotagedFrom)
-		assert.Equal(t, mockTargetCard, result.SabotagedCard)
+		assert.NotNil(t, result.Sabotage)
+		assert.Equal(t, "Player2", result.Sabotage.From)
+		assert.Equal(t, mockTargetCard, result.Sabotage.Card)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

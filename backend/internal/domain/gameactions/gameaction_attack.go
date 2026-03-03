@@ -140,10 +140,12 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		types.CategoryAction)
 
 	result := &Result{
-		Action:             types.LastActionAttack,
-		AttackWeaponID:     a.weaponID,
-		AttackTargetID:     a.targetID,
-		AttackTargetPlayer: a.targetPlayerName,
+		Action: types.LastActionAttack,
+		Attack: &AttackDetails{
+			WeaponID:     a.weaponID,
+			TargetID:     a.targetID,
+			TargetPlayer: a.targetPlayerName,
+		},
 	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.Status(a.currentPlayer)
@@ -160,12 +162,14 @@ func (a *attackAction) NextPhase() types.PhaseType {
 // effectiveWeapon carries the Curse-adjusted damage; weaponType is cached to avoid extra Type() calls.
 func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWeapon cards.Weapon, weaponType types.WeaponType, g attackGame) *Result {
 	result := &Result{
-		Action:             types.LastActionAmbush,
-		AttackWeaponID:     a.weaponID,
-		AttackTargetID:     a.targetID,
-		AttackTargetPlayer: a.targetPlayerName,
-		AmbushEffect:       effect,
-		AmbushAttackerName: a.playerName,
+		Action: types.LastActionAmbush,
+		Attack: &AttackDetails{
+			WeaponID:           a.weaponID,
+			TargetID:           a.targetID,
+			TargetPlayer:       a.targetPlayerName,
+			AmbushEffect:       effect,
+			AmbushAttackerName: a.playerName,
+		},
 	}
 
 	switch effect {

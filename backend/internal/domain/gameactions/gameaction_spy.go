@@ -75,7 +75,7 @@ func (a *spyAction) execute(g spyGame) (*Result, func() gamestatus.GameStatus, e
 		g.AddHistory(fmt.Sprintf("%s spied top 5 cards from deck", p.Name()),
 			types.CategoryAction)
 
-		result.Spy = types.SpyInfo{Target: types.SpyTargetDeck}
+		result.Spy = &types.SpyInfo{Target: types.SpyTargetDeck}
 		spiedCards = g.Board().Deck().Reveal(5)
 	case 2:
 		// Reveal target's cards
@@ -87,7 +87,7 @@ func (a *spyAction) execute(g spyGame) (*Result, func() gamestatus.GameStatus, e
 		g.AddHistory(fmt.Sprintf("%s spied on %s's hand",
 			p.Name(), targetPlayer.Name()), types.CategoryAction)
 
-		result.Spy = types.SpyInfo{Target: types.SpyTargetPlayer, TargetPlayer: targetPlayer.Name()}
+		result.Spy = &types.SpyInfo{Target: types.SpyTargetPlayer, TargetPlayer: targetPlayer.Name()}
 		spiedCards = targetPlayer.Hand().ShowCards()
 	default:
 		return result, nil, errors.New("invalid Spy option")

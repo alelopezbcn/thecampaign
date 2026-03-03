@@ -201,8 +201,9 @@ func TestStealAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionSteal, result.Action)
-		assert.Equal(t, "Player2", result.StolenFrom)
-		assert.Equal(t, mockStolenCard, result.StolenCard)
+		assert.NotNil(t, result.Steal)
+		assert.Equal(t, "Player2", result.Steal.From)
+		assert.Equal(t, mockStolenCard, result.Steal.Card)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 

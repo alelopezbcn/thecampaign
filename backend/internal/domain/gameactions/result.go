@@ -6,19 +6,34 @@ import (
 )
 
 type Result struct {
-	Action             types.LastActionType
-	MovedWarriorID     string
-	StolenFrom         string
-	StolenCard         cards.Card
-	SabotagedFrom      string
-	SabotagedCard      cards.Card
-	Spy                types.SpyInfo
-	AttackWeaponID     string
-	AttackTargetID     string
-	AttackTargetPlayer string
-	AmbushEffect       types.AmbushEffect
+	Action         types.LastActionType
+	MovedWarriorID string            // "" = no warrior moved
+	Spy            *types.SpyInfo    // nil = no spy action
+	Attack         *AttackDetails    // nil = no attack
+	Steal          *StealDetails     // nil = no steal
+	Sabotage       *SabotageDetails  // nil = no sabotage
+	Desertion      *DesertionDetails // nil = no desertion
+}
+
+type AttackDetails struct {
+	WeaponID           string
+	TargetID           string
+	TargetPlayer       string
+	AmbushEffect       types.AmbushEffect // zero value = no ambush triggered
 	AmbushAttackerName string
-	DeserterWarriorID  string
-	DeserterFromPlayer string
-	DeserterWarrior    cards.Warrior
+}
+
+type StealDetails struct {
+	From string
+	Card cards.Card
+}
+
+type SabotageDetails struct {
+	From string
+	Card cards.Card
+}
+
+type DesertionDetails struct {
+	FromPlayer string
+	Warrior    cards.Warrior
 }

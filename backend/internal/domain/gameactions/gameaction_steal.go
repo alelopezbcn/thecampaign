@@ -96,9 +96,11 @@ func (a *stealAction) execute(g stealGame) (*Result, func() gamestatus.GameStatu
 	g.OnCardMovedToPile(thief[0])
 	p.TakeCards(stolenCard)
 
-	result.StolenFrom = a.targetPlayer.Name()
-	result.StolenCard = stolenCard
 	result.Action = types.LastActionSteal
+	result.Steal = &StealDetails{
+		From: a.targetPlayer.Name(),
+		Card: stolenCard,
+	}
 
 	g.AddHistory(fmt.Sprintf("%s stole a card from %s",
 		p.Name(), a.targetPlayer.Name()), types.CategoryAction)

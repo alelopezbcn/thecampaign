@@ -850,23 +850,33 @@ func (g *game) getStatus(viewer board.Player,
 		TurnStartedAt:            g.turnState.StartedAt,
 		History:                  g.getHistory(),
 		LastMovedWarriorID:       g.lastResult.MovedWarriorID,
-		LastAttackWeaponID:       g.lastResult.AttackWeaponID,
-		LastAttackTargetID:       g.lastResult.AttackTargetID,
-		LastAttackTargetPlayer:   g.lastResult.AttackTargetPlayer,
-		StolenFrom:               g.lastResult.StolenFrom,
-		StolenCard:               g.lastResult.StolenCard,
-		SabotagedFrom:            g.lastResult.SabotagedFrom,
-		SabotagedCard:            g.lastResult.SabotagedCard,
-		SpyTarget:                g.lastResult.Spy.Target,
-		SpyTargetPlayer:          g.lastResult.Spy.TargetPlayer,
 		CurrentPlayerName:        g.CurrentPlayer().Name(),
 		IsPlayerWinner:           g.isPlayerWinner(viewerIdx),
 		CanMoveWarrior:           g.turnState.CanMoveWarrior,
-		AmbushEffect:             g.lastResult.AmbushEffect,
-		AmbushAttackerName:       g.lastResult.AmbushAttackerName,
-		DeserterFromPlayer:       g.lastResult.DeserterFromPlayer,
-		DeserterWarrior:          g.lastResult.DeserterWarrior,
 		CurrentEvent:             g.currentEvent,
+	}
+	if a := g.lastResult.Attack; a != nil {
+		gameStatusDTO.LastAttackWeaponID = a.WeaponID
+		gameStatusDTO.LastAttackTargetID = a.TargetID
+		gameStatusDTO.LastAttackTargetPlayer = a.TargetPlayer
+		gameStatusDTO.AmbushEffect = a.AmbushEffect
+		gameStatusDTO.AmbushAttackerName = a.AmbushAttackerName
+	}
+	if s := g.lastResult.Steal; s != nil {
+		gameStatusDTO.StolenFrom = s.From
+		gameStatusDTO.StolenCard = s.Card
+	}
+	if s := g.lastResult.Sabotage; s != nil {
+		gameStatusDTO.SabotagedFrom = s.From
+		gameStatusDTO.SabotagedCard = s.Card
+	}
+	if s := g.lastResult.Spy; s != nil {
+		gameStatusDTO.SpyTarget = s.Target
+		gameStatusDTO.SpyTargetPlayer = s.TargetPlayer
+	}
+	if d := g.lastResult.Desertion; d != nil {
+		gameStatusDTO.DeserterFromPlayer = d.FromPlayer
+		gameStatusDTO.DeserterWarrior = d.Warrior
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()

@@ -95,13 +95,14 @@ func (a *sabotageAction) execute(g sabotageGame) (*Result, func() gamestatus.Gam
 
 	g.OnCardMovedToPile(sabCard[0])
 
-	targetName := a.targetPlayer.Name()
-	result.SabotagedFrom = targetName
-	result.SabotagedCard = destroyedCard
 	result.Action = types.LastActionSabotage
+	result.Sabotage = &SabotageDetails{
+		From: a.targetPlayer.Name(),
+		Card: destroyedCard,
+	}
 
 	g.AddHistory(fmt.Sprintf("%s destroyed a card from %s's hand",
-		p.Name(), targetName), types.CategoryAction)
+		p.Name(), a.targetPlayer.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {
 		return g.StatusWithModal(p, []cards.Card{destroyedCard})
