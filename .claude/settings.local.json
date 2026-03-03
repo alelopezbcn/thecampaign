@@ -33,7 +33,9 @@
       "Bash(make mocks)",
       "Bash(echo \"Exit: $?\")",
       "Bash(echo \"EXIT: $?\")",
-      "Bash(wc -l /c/temp/projects/TheCampaign/backend/internal/domain/gameactions/*.go)"
+      "Bash(wc -l /c/temp/projects/TheCampaign/backend/internal/domain/gameactions/*.go)",
+      "Bash(gofmt -w ./internal/websocket/client.go)",
+      "Bash(gofmt -w ./internal/websocket/hub.go ./internal/websocket/handlers.go)"
     ]
   }
 }

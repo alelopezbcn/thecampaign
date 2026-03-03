@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"time"
 
@@ -118,8 +119,9 @@ func (c *Client) writePump() {
 	}
 }
 
-// SendMessage sends a message to the client
-func (c *Client) SendMessage(msgType MessageType, payload interface{}) error {
+// SendMessage sends a message to the client.
+// Only the hub is allowed to close c.send; this function never closes it.
+func (c *Client) SendMessage(msgType MessageType, payload interface{}) (err error) {
 	msg := Message{
 		Type:    msgType,
 		Payload: payload,
@@ -130,11 +132,22 @@ func (c *Client) SendMessage(msgType MessageType, payload interface{}) error {
 		return err
 	}
 
+	// Recover from a panic in case the hub closes c.send concurrently.
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("client disconnected")
+		}
+	}()
+
 	select {
 	case c.send <- data:
 	default:
-		log.Printf("Client send buffer full, closing connection")
-		close(c.send)
+		log.Printf("Client send buffer full for %s, dropping connection", c.PlayerName)
+		// Ask the hub to unregister instead of closing the channel directly.
+		select {
+		case c.hub.unregister <- c:
+		default:
+		}
 	}
 
 	return nil
