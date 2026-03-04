@@ -3,12 +3,13 @@ package types
 type EventType string
 
 const (
-	EventTypeNone      EventType = ""
-	EventTypeCurse     EventType = "curse"
-	EventTypeHarvest   EventType = "harvest"
-	EventTypePlague    EventType = "plague"
-	EventTypeAbundance EventType = "abundance"
-	EventTypeBloodlust EventType = "bloodlust"
+	EventTypeNone            EventType = ""
+	EventTypeCurse           EventType = "curse"
+	EventTypeHarvest         EventType = "harvest"
+	EventTypePlague          EventType = "plague"
+	EventTypeAbundance       EventType = "abundance"
+	EventTypeBloodlust       EventType = "bloodlust"
+	EventTypeChampionsBounty EventType = "champions_bounty"
 )
 
 var AllEventTypes = []EventType{
@@ -18,6 +19,7 @@ var AllEventTypes = []EventType{
 	EventTypePlague,
 	EventTypeAbundance,
 	EventTypeBloodlust,
+	EventTypeChampionsBounty,
 }
 
 // CurseWeapons contains the three weapon types that can be affected by the Curse event.

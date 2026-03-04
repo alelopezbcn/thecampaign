@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
@@ -84,10 +85,26 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, cas
 	return g, nil
 }
 
+func (g *game) availableEventTypes() []types.EventType {
+	isFFA := g.mode == types.GameModeFFA3 || g.mode == types.GameModeFFA5
+	var result []types.EventType
+	for _, et := range types.AllEventTypes {
+		if et == types.EventTypeChampionsBounty && !isFFA {
+			continue
+		}
+		result = append(result, et)
+	}
+	return result
+}
+
 func (g *game) drawRandomEvent() types.ActiveEvent {
+	if forced := os.Getenv("FORCE_EVENT"); forced != "" {
+		return types.ActiveEvent{Type: types.EventType(forced)}
+	}
 	if len(g.eventBag) == 0 {
-		g.eventBag = make([]types.EventType, len(types.AllEventTypes))
-		copy(g.eventBag, types.AllEventTypes)
+		available := g.availableEventTypes()
+		g.eventBag = make([]types.EventType, len(available))
+		copy(g.eventBag, available)
 		rand.Shuffle(len(g.eventBag), func(i, j int) {
 			g.eventBag[i], g.eventBag[j] = g.eventBag[j], g.eventBag[i]
 		})

@@ -6,21 +6,19 @@ Code improvements:
 Deseable:
 
 Events:
-
 Blood Price — attacking costs HP
 Cowardice — warriors can't attack unless outnumbered
-Champion's Bounty — bonus gold/cards for killing the strongest enemy
 Duel — two warriors fight 1v1, others can't interfere
 Berserker — each kill gives +1 attack this turn
 Bounty Hunt — first player to get X kills wins a reward
-Cards:
 
+Cards:
 Medal of Honor — reward card for achieving kills
 War Stories — draw extra cards based on kills this turn
 Veteran's Blade — weapon that gets stronger with kills
 Tribute — enemy must pay gold or lose a warrior
 Grudge — bonus damage against the player who last killed your warrior
-Systems:
 
+Systems:
 Warrior Ranks (Blooded / Veteran / Elite) — warriors gain rank through kills, unlocking passive bonuses
 End-Game Stats — post-game summary screen (kills, damage dealt, etc.)

@@ -50,6 +50,11 @@ func bloodlustEvent() gameevents.EventHandler {
 	return gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeBloodlust})
 }
 
+// championsBountyEvent returns an EventHandler for a Champion's Bounty event.
+func championsBountyEvent() gameevents.EventHandler {
+	return gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeChampionsBounty})
+}
+
 func TestDrawCardAction_PlayerName(t *testing.T) {
 	action := gameactions.NewDrawCardAction("Player1")
 	assert.Equal(t, "Player1", action.PlayerName())
