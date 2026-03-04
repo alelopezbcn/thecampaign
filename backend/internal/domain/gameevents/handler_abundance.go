@@ -9,6 +9,7 @@ func (h *abundanceHandler) ExtraDrawCards() int                         { return
 func (h *abundanceHandler) WeaponDamageModifier(_ types.WeaponType) int { return 0 }
 func (h *abundanceHandler) ConstructionValueModifier() int              { return 0 }
 func (h *abundanceHandler) TurnStartWarriorHPModifier() int             { return 0 }
+func (h *abundanceHandler) OnKillHealAmount() int                       { return 0 }
 func (h *abundanceHandler) Display() (string, string) {
 	return "Abundance", "Draw 1 extra card at the start of your turn"
 }

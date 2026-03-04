@@ -67,6 +67,7 @@ func TestCalmHandler_AllMethodsReturnZero(t *testing.T) {
 	assert.Equal(t, 0, h.WeaponDamageModifier(types.SwordWeaponType))
 	assert.Equal(t, 0, h.ConstructionValueModifier())
 	assert.Equal(t, 0, h.TurnStartWarriorHPModifier())
+	assert.Equal(t, 0, h.OnKillHealAmount())
 }
 
 func TestCalmHandler_Display(t *testing.T) {
@@ -120,6 +121,7 @@ func TestCurseHandler_OtherMethodsReturnZero(t *testing.T) {
 	assert.Equal(t, 0, h.ExtraDrawCards())
 	assert.Equal(t, 0, h.ConstructionValueModifier())
 	assert.Equal(t, 0, h.TurnStartWarriorHPModifier())
+	assert.Equal(t, 0, h.OnKillHealAmount())
 }
 
 func TestCurseHandler_Display_NegativeModifier(t *testing.T) {
@@ -165,6 +167,7 @@ func TestHarvestHandler_OtherMethodsReturnZero(t *testing.T) {
 	assert.Equal(t, 0, h.ExtraDrawCards())
 	assert.Equal(t, 0, h.WeaponDamageModifier(types.SwordWeaponType))
 	assert.Equal(t, 0, h.TurnStartWarriorHPModifier())
+	assert.Equal(t, 0, h.OnKillHealAmount())
 }
 
 func TestHarvestHandler_Display_NegativeModifier(t *testing.T) {
@@ -201,6 +204,7 @@ func TestPlagueHandler_OtherMethodsReturnZero(t *testing.T) {
 	assert.Equal(t, 0, h.ExtraDrawCards())
 	assert.Equal(t, 0, h.WeaponDamageModifier(types.SwordWeaponType))
 	assert.Equal(t, 0, h.ConstructionValueModifier())
+	assert.Equal(t, 0, h.OnKillHealAmount())
 }
 
 func TestPlagueHandler_Display_NegativeModifier(t *testing.T) {
@@ -234,11 +238,43 @@ func TestAbundanceHandler_OtherMethodsReturnZero(t *testing.T) {
 	assert.Equal(t, 0, h.WeaponDamageModifier(types.SwordWeaponType))
 	assert.Equal(t, 0, h.ConstructionValueModifier())
 	assert.Equal(t, 0, h.TurnStartWarriorHPModifier())
+	assert.Equal(t, 0, h.OnKillHealAmount())
 }
 
 func TestAbundanceHandler_Display(t *testing.T) {
 	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeAbundance})
 	name, desc := h.Display()
 	assert.Equal(t, "Abundance", name)
+	assert.NotEmpty(t, desc)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// bloodlustHandler
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewHandler_Bloodlust(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeBloodlust})
+	name, _ := h.Display()
+	assert.Equal(t, "Bloodlust", name)
+	assert.Equal(t, 2, h.OnKillHealAmount())
+}
+
+func TestBloodlustHandler_OnKillHealAmount(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeBloodlust})
+	assert.Equal(t, 2, h.OnKillHealAmount())
+}
+
+func TestBloodlustHandler_OtherMethodsReturnZero(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeBloodlust})
+	assert.Equal(t, 0, h.ExtraDrawCards())
+	assert.Equal(t, 0, h.WeaponDamageModifier(types.SwordWeaponType))
+	assert.Equal(t, 0, h.ConstructionValueModifier())
+	assert.Equal(t, 0, h.TurnStartWarriorHPModifier())
+}
+
+func TestBloodlustHandler_Display(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeBloodlust})
+	name, desc := h.Display()
+	assert.Equal(t, "Bloodlust", name)
 	assert.NotEmpty(t, desc)
 }

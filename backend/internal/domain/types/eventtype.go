@@ -8,6 +8,7 @@ const (
 	EventTypeHarvest   EventType = "harvest"
 	EventTypePlague    EventType = "plague"
 	EventTypeAbundance EventType = "abundance"
+	EventTypeBloodlust EventType = "bloodlust"
 )
 
 var AllEventTypes = []EventType{
@@ -16,6 +17,7 @@ var AllEventTypes = []EventType{
 	EventTypeHarvest,
 	EventTypePlague,
 	EventTypeAbundance,
+	EventTypeBloodlust,
 }
 
 // CurseWeapons contains the three weapon types that can be affected by the Curse event.

@@ -79,3 +79,23 @@ Each turn follows a phase sequence: `draw` -> `attack` -> `spy/steal` -> `buy` -
 - **1v1**: 2 players, castle goal 25
 - **2v2**: 4 players in 2 teams, castle goal 30, allies can construct on each other's castles and move warriors to ally fields
 - **FFA3/FFA5**: 3 or 5 players free-for-all, castle goal 25
+
+## Help File (`frontend/static/js/help.js`)
+
+**Keep this file in sync whenever game mechanics change.** It is the single source of truth for the in-game reference modal. Update it when you:
+
+- Add, remove, or change a **card type** (warriors, weapons, ambush effects, spy/steal/sabotage/desertion, catapult, resurrection, gold)
+- Add, remove, or change a **game event** (`domain/gameevents/`)
+- Change a **game limit** (hand limit → `board.MaxCardsInHand`, turn time, trade limit, warrior moves, ambush limit)
+- Change **castle goals** or **win conditions**
+- Add or modify a **game mode**
+- Change **turn phase** sequence or rules
+- Add or change **special power** behaviour per warrior type
+
+## Phase Badge Tooltips (`frontend/index.html` — `data-tip` on `.pb-phase` spans)
+
+**Keep these tooltips in sync whenever playable cards or mechanics change per phase.** Update them when you:
+
+- Add or remove a **card type** playable in Attack, Spy/Steal, Buy, or Build phase
+- Add a new **card action** (e.g. a new Buy-phase card like Mercenary)
+- Change **which phase** a card belongs to
