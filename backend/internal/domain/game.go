@@ -878,6 +878,8 @@ func (g *game) getStatus(viewer board.Player,
 		gameStatusDTO.LastAttackTargetPlayer = a.TargetPlayer
 		gameStatusDTO.AmbushEffect = a.AmbushEffect
 		gameStatusDTO.AmbushAttackerName = a.AmbushAttackerName
+		gameStatusDTO.ChampionsBountyEarner = a.ChampionsBountyEarner
+		gameStatusDTO.ChampionsBountyCards = a.ChampionsBountyCards
 	}
 	if s := g.lastResult.Steal; s != nil {
 		gameStatusDTO.StolenFrom = s.From

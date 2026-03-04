@@ -16,11 +16,13 @@ type Result struct {
 }
 
 type AttackDetails struct {
-	WeaponID           string
-	TargetID           string
-	TargetPlayer       string
-	AmbushEffect       types.AmbushEffect // zero value = no ambush triggered
-	AmbushAttackerName string
+	WeaponID              string
+	TargetID              string
+	TargetPlayer          string
+	AmbushEffect          types.AmbushEffect // zero value = no ambush triggered
+	AmbushAttackerName    string
+	ChampionsBountyEarner string // "" = bounty not triggered
+	ChampionsBountyCards  int
 }
 
 type StealDetails struct {
