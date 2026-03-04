@@ -628,7 +628,7 @@
         <div class="help-event-item" data-event="champions_bounty">
             <span class="help-event-name">Champion's Bounty</span>
             <span class="help-event-sep">&#8212;</span>
-            <span class="help-event-desc"><em>(FFA3 / FFA5 only)</em> When you kill any warrior belonging to the enemy whose warriors have the <span class="hp">highest combined HP</span> on the field, you immediately draw <span class="hp">1&nbsp;card</span>. Ties count — if multiple enemies share the top HP total, killing any of their warriors grants the reward.</span>
+            <span class="help-event-desc"><em>(FFA3 / FFA5 only)</em> When a <span class="hp">weapon attack</span> kills any warrior belonging to the enemy whose warriors have the <span class="hp">highest combined HP</span> on the field, you immediately draw <span class="hp">1&nbsp;card</span>. Ties count — if multiple enemies share the top HP total, killing any of their warriors grants the reward. <em>Special powers, harpoons, and other non-weapon kills do not trigger this bonus.</em></span>
         </div>
     `;
 

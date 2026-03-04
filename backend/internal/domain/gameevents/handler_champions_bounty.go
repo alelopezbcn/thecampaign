@@ -15,5 +15,5 @@ func (h *championsBountyHandler) TurnStartWarriorHPModifier() int             { 
 func (h *championsBountyHandler) OnKillHealAmount() int                       { return 0 }
 func (h *championsBountyHandler) OnKillBountyCards() int                      { return championsBountyCards }
 func (h *championsBountyHandler) Display() (string, string) {
-	return "Champion's Bounty", "Draw 1 card when killing a warrior belonging to the enemy with the highest total field HP"
+	return "Champion's Bounty", "Draw 1 card when a weapon attack kills a warrior belonging to the enemy with the highest total field HP (weapon attacks only — special powers do not trigger this)"
 }
