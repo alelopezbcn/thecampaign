@@ -1400,6 +1400,7 @@ function handleAttackPhaseHandClick(cardID, card) {
             showCatapultModal();
         } else if (enemies.length > 1) {
             showTargetPlayerModal('Select a castle to attack', enemies, (playerName) => {
+                gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showCatapultModal();
             });
@@ -1443,8 +1444,12 @@ function handleAttackPhaseHandClick(cardID, card) {
         } else {
             showTargetPlayerModal('Select a field to drench in Blood Rain', enemies, (playerName) => {
                 const enemy = getOpponentByName(playerName);
+                gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
+            }, (opp) => {
+                const count = (opp.field || []).length;
+                return `${count} warrior${count !== 1 ? 's' : ''} on field`;
             });
         }
     } else if (cardType === 'resurrection') {
@@ -1810,6 +1815,7 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         } else {
             // Multiple enemies, show target player selection first
             showTargetPlayerModal('Select a player to steal from', enemies, (playerName) => {
+                gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showStealModal();
             }, (opp) => `${opp.cards_in_hand} cards in hand`);
@@ -1819,10 +1825,10 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         gameState.pendingModalAction = 'sabotage';
         const enemies = getEnemyOpponents();
         if (enemies.length === 1) {
-            sendAction('sabotage', { card_id: gameState.actionState.weaponId, target_player: enemies[0].player_name });
+            sendAction('sabotage', { card_id: cardID, target_player: enemies[0].player_name });
         } else {
             showTargetPlayerModal('Select a player to sabotage', enemies,
-                (playerName) => sendAction('sabotage', { card_id: gameState.actionState.weaponId, target_player: playerName }),
+                (playerName) => sendAction('sabotage', { card_id: cardID, target_player: playerName }),
                 (opp) => `${opp.cards_in_hand} card(s) in hand`);
         }
     } else if (cardType === 'desertion') {
@@ -1839,6 +1845,7 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         } else {
             showTargetPlayerModal('Select a player to steal warrior from', enemies,
                 (playerName) => {
+                    gameState.actionState.weaponId = cardID;
                     gameState.actionState.targetPlayer = playerName;
                     showDesertionModal();
                 },

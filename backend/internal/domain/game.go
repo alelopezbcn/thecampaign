@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"os"
 	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
@@ -98,9 +97,6 @@ func (g *game) availableEventTypes() []types.EventType {
 }
 
 func (g *game) drawRandomEvent() types.ActiveEvent {
-	if forced := os.Getenv("FORCE_EVENT"); forced != "" {
-		return types.ActiveEvent{Type: types.EventType(forced)}
-	}
 	if len(g.eventBag) == 0 {
 		available := g.availableEventTypes()
 		g.eventBag = make([]types.EventType, len(available))
