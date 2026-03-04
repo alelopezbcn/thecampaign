@@ -163,6 +163,10 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		a.attacker.HealBy(healAmount)
 	}
 
+	// Remove the used weapon before drawing bounty cards so the freed slot counts
+	// toward CanTakeCards when Champion's Bounty tries to draw.
+	a.currentPlayer.RemoveFromHand(a.weaponID)
+
 	// Champion's Bounty: if the target was killed and their player had the highest
 	// total field HP (ties included), draw bonus cards.
 	if bountyCards > 0 && a.target.Health() == 0 {
@@ -175,8 +179,6 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 			}
 		}
 	}
-
-	a.currentPlayer.RemoveFromHand(a.weaponID)
 
 	g.AddHistory(fmt.Sprintf("%s attacked %s with %s",
 		a.currentPlayer.Name(), a.target.String(), a.weapon.String()),
