@@ -713,3 +713,59 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		assert.Equal(t, types.AmbushEffectReflectDamage, result.Attack.AmbushEffect)
 	})
 }
+
+func TestAttackAction_Execute_Bloodlust(t *testing.T) {
+	t.Run("Attacker heals when target is killed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior :=
+			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		mockDefField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Field().Return(mockDefField)
+		mockDefField.EXPECT().SlotCards().Return(nil)
+
+		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+		mockTargetWarrior.EXPECT().Health().Return(0) // target died
+		mockAttackerWarrior.EXPECT().HealBy(2)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockTargetWarrior.EXPECT().String().Return("Knight (0)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionAttack, result.Action)
+	})
+
+	t.Run("Attacker does not heal when target survives", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
+			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		mockDefField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Field().Return(mockDefField)
+		mockDefField.EXPECT().SlotCards().Return(nil)
+
+		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+		mockTargetWarrior.EXPECT().Health().Return(10) // target survived
+		// HealBy must NOT be called
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockTargetWarrior.EXPECT().String().Return("Knight (10)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionAttack, result.Action)
+	})
+}

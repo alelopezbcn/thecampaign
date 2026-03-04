@@ -1698,6 +1698,7 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
 
     let title = 'Special Power';
     let description = '';
+    let healedHp = 0;
 
     const isProtected = target?.protected_by && target.protected_by.id;
     const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
@@ -1718,7 +1719,8 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
             break;
         case 'mage':
             title = 'Heal';
-            description = `${userName} will heal ${targetName} (${targetHp} HP)`;
+            healedHp = (target?.sub_type || '').toLowerCase() === 'mercenary' ? 15 : 20;
+            description = `${userName} will heal ${targetName} (${targetHp} → ${healedHp} HP)`;
             break;
         default:
             description = `${userName} will use ${getCardName(specialPower)} on ${targetName}`;
@@ -1726,7 +1728,7 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
 
     let cardsHtml = renderCardForModal(user);
     cardsHtml += renderArrow();
-    cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp });
+    cardsHtml += renderCardForModal(target, { showShield: isProtected, shieldHp: shieldHp, showHealResult: userType === 'mage', healedHp });
 
     showActionConfirmModal({
         title: title,
@@ -4326,6 +4328,33 @@ function updatePhaseTracker() {
         }
     }
 
+    // Update phase badge strip in action bar
+    const badge = document.getElementById('phase-badge');
+    if (badge) {
+        const badgePhaseOrder = ['attack', 'spy/steal', 'buy', 'construct'];
+        const currentPhase = status?.current_action;
+        if (gameState.isYourTurn && currentPhase && currentPhase !== 'endturn') {
+            badge.classList.remove('hidden');
+            const currentIdx = badgePhaseOrder.indexOf(currentPhase);
+            badge.querySelectorAll('.pb-phase').forEach(el => {
+                const phase = el.dataset.phase;
+                const idx = badgePhaseOrder.indexOf(phase);
+                el.classList.remove('active', 'done', 'skipped');
+                if (idx === currentIdx) {
+                    el.classList.add('active');
+                } else if (idx < currentIdx) {
+                    if (gameState.executedPhases.includes(phase)) {
+                        el.classList.add('done');
+                    } else {
+                        el.classList.add('skipped');
+                    }
+                }
+            });
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+
     // Phase order
     const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct', 'endturn'];
     const currentAction = status?.current_action || '';
@@ -4599,7 +4628,7 @@ function formatEventDesc(desc, eventType) {
             const cls = verb === 'gain' ? 'event-num-positive' : 'event-num-negative';
             return verb + ' <span class="' + cls + '">' + num + '</span>';
         });
-    } else if (eventType === 'abundance') {
+    } else if (eventType === 'abundance' || eventType === 'bloodlust') {
         // Bare digit → always positive/green
         html = html.replace(/\b(\d+)\b/g, (match) => '<span class="event-num-positive">' + match + '</span>');
     }
@@ -4626,6 +4655,9 @@ function showEventTurnModal(gs) {
     const content = document.getElementById('event-turn-modal-content');
     content.dataset.event = gs.current_event || '';
     const eventType = gs.current_event || '';
+    const eventIcons = { curse: '⚔️', harvest: '🌾', plague: '☠️', abundance: '💰', bloodlust: '🩸', calm: '🌿' };
+    const iconEl = document.getElementById('event-turn-modal-icon');
+    if (iconEl) iconEl.textContent = eventIcons[eventType] || '🌐';
     document.getElementById('event-turn-modal-name').textContent = gs.current_event_display || '';
     const modalDesc = gs.current_event_description || '';
     document.getElementById('event-turn-modal-desc').innerHTML = formatEventDesc(modalDesc, eventType);
@@ -4930,6 +4962,9 @@ function renderCardForModal(card, options = {}) {
     }
     if (options.showShield) {
         badgeHtml += `<div class="shield-badge">🛡️ ${options.shieldHp} HP</div>`;
+    }
+    if (options.showHealResult) {
+        badgeHtml += `<div class="heal-result-badge">✨ ${options.healedHp} HP</div>`;
     }
 
     let cardHtml;

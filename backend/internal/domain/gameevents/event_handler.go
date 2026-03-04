@@ -15,6 +15,8 @@ type EventHandler interface {
 	ConstructionValueModifier() int
 	// TurnStartWarriorHPModifier returns the HP modifier applied to the active player's warriors at turn start (0 if none).
 	TurnStartWarriorHPModifier() int
+	// OnKillHealAmount returns the HP restored to the killing warrior when it defeats an enemy (0 if none).
+	OnKillHealAmount() int
 	// Display returns the event's display name and a human-readable description of its effect.
 	Display() (name, description string)
 }
@@ -30,6 +32,8 @@ func NewHandler(event types.ActiveEvent) EventHandler {
 		return &plagueHandler{modifier: event.PlagueModifier}
 	case types.EventTypeAbundance:
 		return &abundanceHandler{}
+	case types.EventTypeBloodlust:
+		return &bloodlustHandler{}
 	default:
 		return &calmHandler{}
 	}

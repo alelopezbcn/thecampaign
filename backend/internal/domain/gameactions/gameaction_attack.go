@@ -122,10 +122,11 @@ func (a *attackAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, e
 }
 
 func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameStatus, error) {
+	handler := g.EventHandler()
+
 	// Apply Curse event modifier to weapon damage (cached to avoid repeated Type() calls).
 	weaponType := a.weapon.Type()
-	weaponMod := g.EventHandler().WeaponDamageModifier(weaponType)
-	effectiveWeapon := applyWeaponModifier(a.weapon, weaponMod)
+	effectiveWeapon := applyWeaponModifier(a.weapon, handler.WeaponDamageModifier(weaponType))
 
 	// Check if the defender has an ambush in their field.
 	if ambush, ok := board.GetFieldSlotCard[cards.Ambush](a.targetPlayer.Field()); ok {
@@ -146,6 +147,11 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 	if err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("attack action failed: %w", err)
+	}
+
+	// Bloodlust: if the target was killed, restore HP to the attacking warrior.
+	if healAmount := handler.OnKillHealAmount(); healAmount > 0 && a.target.Health() == 0 {
+		a.attacker.HealBy(healAmount)
 	}
 
 	a.currentPlayer.RemoveFromHand(a.weaponID)

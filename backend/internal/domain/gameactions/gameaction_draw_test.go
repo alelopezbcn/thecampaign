@@ -45,6 +45,11 @@ func harvestEvent(modifier int) gameevents.EventHandler {
 	})
 }
 
+// bloodlustEvent returns an EventHandler for a Bloodlust event.
+func bloodlustEvent() gameevents.EventHandler {
+	return gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeBloodlust})
+}
+
 func TestDrawCardAction_PlayerName(t *testing.T) {
 	action := gameactions.NewDrawCardAction("Player1")
 	assert.Equal(t, "Player1", action.PlayerName())
