@@ -167,10 +167,15 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 	// toward CanTakeCards when Champion's Bounty tries to draw.
 	a.currentPlayer.RemoveFromHand(a.weaponID)
 
+	g.AddHistory(fmt.Sprintf("%s attacked %s with %s",
+		a.currentPlayer.Name(), a.target.String(), a.weapon.String()),
+		types.CategoryAction)
+
 	// Champion's Bounty: if the target was killed and their player had the highest
 	// total field HP (ties included), draw bonus cards.
 	var bountyEarner string
 	var bountyDrawn int
+	var bountyCards2 []cards.Card
 	if bountyCards > 0 && a.target.Health() == 0 {
 		if isTopEnemy(targetPlayerPreKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
 			drawn, drawErr := g.DrawCards(a.currentPlayer, bountyCards)
@@ -178,15 +183,12 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 				a.currentPlayer.TakeCards(drawn...)
 				bountyEarner = a.currentPlayer.Name()
 				bountyDrawn = len(drawn)
+				bountyCards2 = drawn
 				g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — drew %d card(s)",
 					a.currentPlayer.Name(), len(drawn)), types.CategoryInfo)
 			}
 		}
 	}
-
-	g.AddHistory(fmt.Sprintf("%s attacked %s with %s",
-		a.currentPlayer.Name(), a.target.String(), a.weapon.String()),
-		types.CategoryAction)
 
 	result := &Result{
 		Action: types.LastActionAttack,
@@ -199,7 +201,7 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		},
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.Status(a.currentPlayer)
+		return g.Status(a.currentPlayer, bountyCards2...)
 	}
 
 	return result, statusFn, nil
