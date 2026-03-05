@@ -52,6 +52,18 @@ func (mr *MockWarriorMockRecorder) AddCardMovedToPileObserver(observer any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockWarrior)(nil).AddCardMovedToPileObserver), observer)
 }
 
+// AddKill mocks base method.
+func (m *MockWarrior) AddKill() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddKill")
+}
+
+// AddKill indicates an expected call of AddKill.
+func (mr *MockWarriorMockRecorder) AddKill() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddKill", reflect.TypeOf((*MockWarrior)(nil).AddKill))
+}
+
 // AddWarriorDeadObserver mocks base method.
 func (m *MockWarrior) AddWarriorDeadObserver(o cards.WarriorDeadObserver) {
 	m.ctrl.T.Helper()
@@ -237,6 +249,20 @@ func (mr *MockWarriorMockRecorder) KillByAmbush() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KillByAmbush", reflect.TypeOf((*MockWarrior)(nil).KillByAmbush))
 }
 
+// Kills mocks base method.
+func (m *MockWarrior) Kills() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Kills")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Kills indicates an expected call of Kills.
+func (mr *MockWarriorMockRecorder) Kills() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Kills", reflect.TypeOf((*MockWarrior)(nil).Kills))
+}
+
 // Name mocks base method.
 func (m *MockWarrior) Name() string {
 	m.ctrl.T.Helper()
@@ -352,6 +378,18 @@ func (m *MockMercenary) AddCardMovedToPileObserver(observer cards.CardMovedToPil
 func (mr *MockMercenaryMockRecorder) AddCardMovedToPileObserver(observer any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddCardMovedToPileObserver", reflect.TypeOf((*MockMercenary)(nil).AddCardMovedToPileObserver), observer)
+}
+
+// AddKill mocks base method.
+func (m *MockMercenary) AddKill() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "AddKill")
+}
+
+// AddKill indicates an expected call of AddKill.
+func (mr *MockMercenaryMockRecorder) AddKill() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddKill", reflect.TypeOf((*MockMercenary)(nil).AddKill))
 }
 
 // AddWarriorDeadObserver mocks base method.
@@ -551,6 +589,20 @@ func (m *MockMercenary) KillByAmbush() {
 func (mr *MockMercenaryMockRecorder) KillByAmbush() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "KillByAmbush", reflect.TypeOf((*MockMercenary)(nil).KillByAmbush))
+}
+
+// Kills mocks base method.
+func (m *MockMercenary) Kills() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Kills")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// Kills indicates an expected call of Kills.
+func (mr *MockMercenaryMockRecorder) Kills() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Kills", reflect.TypeOf((*MockMercenary)(nil).Kills))
 }
 
 // Name mocks base method.

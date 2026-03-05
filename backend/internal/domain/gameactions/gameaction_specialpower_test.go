@@ -343,6 +343,8 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
+		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, errors.New("card not found"))
 
@@ -378,6 +380,8 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
+		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
@@ -400,6 +404,8 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
+		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")

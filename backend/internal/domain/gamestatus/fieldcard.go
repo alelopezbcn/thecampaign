@@ -9,6 +9,7 @@ type FieldCard struct {
 	Card
 	AttackedBy  []Card `json:"attacked_by,omitempty"`
 	ProtectedBy *Card  `json:"protected_by,omitempty"`
+	Kills       int    `json:"kills,omitempty"`
 }
 
 func NewFieldCard(warrior cards.Warrior) FieldCard {
@@ -52,5 +53,6 @@ func NewFieldCard(warrior cards.Warrior) FieldCard {
 		Card:        newCard(warrior.GetID(), aCardType, warrior.Health()),
 		AttackedBy:  attackedByCards,
 		ProtectedBy: protectedByCard,
+		Kills:       warrior.Kills(),
 	}
 }
