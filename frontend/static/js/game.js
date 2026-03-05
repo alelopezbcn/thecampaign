@@ -3929,7 +3929,7 @@ function createCardElement(card, context) {
     // Kill counter badge — shown on warriors with at least one kill
     const cardKills = card.kills || 0;
     const killsBadgeHtml = (cardType === 'warrior' && cardKills > 0)
-        ? `<div class="kills-badge">💀 ${cardKills}</div>`
+        ? `<div class="kills-badge" title="${cardKills} kill${cardKills !== 1 ? 's' : ''} — each kill adds +1 damage to this warrior's attacks">💀 ${cardKills}</div>`
         : '';
 
     // Create card HTML
