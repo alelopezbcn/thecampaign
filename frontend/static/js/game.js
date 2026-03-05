@@ -318,6 +318,12 @@ function setupEventListeners() {
         if (e.target === e.currentTarget) hideAmbushTriggeredModal();
     });
 
+    // Champion's Bounty modal close
+    document.getElementById('champions-bounty-close').addEventListener('click', hideChampionsBountyModal);
+    document.getElementById('champions-bounty-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) hideChampionsBountyModal();
+    });
+
     // Event turn modal close
     document.getElementById('event-turn-modal-close').addEventListener('click', hideEventTurnModal);
     document.getElementById('event-turn-modal').addEventListener('click', (e) => {
@@ -340,6 +346,7 @@ function setupEventListeners() {
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
         { id: 'desertion-notification-modal', hide: hideDesertionNotificationModal },
+        { id: 'champions-bounty-modal', hide: hideChampionsBountyModal },
         { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
@@ -824,6 +831,12 @@ function handleGameState(payload) {
     const desertionNotification = payload.game_status.desertion_notification;
     if (desertionNotification) {
         showDesertionNotificationModal(desertionNotification);
+    }
+
+    // Detect Champion's Bounty (shown to all players)
+    const championsBounty = payload.game_status.champions_bounty;
+    if (championsBounty) {
+        showChampionsBountyModal(championsBounty);
     }
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -1387,6 +1400,7 @@ function handleAttackPhaseHandClick(cardID, card) {
             showCatapultModal();
         } else if (enemies.length > 1) {
             showTargetPlayerModal('Select a castle to attack', enemies, (playerName) => {
+                gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showCatapultModal();
             });
@@ -1430,8 +1444,12 @@ function handleAttackPhaseHandClick(cardID, card) {
         } else {
             showTargetPlayerModal('Select a field to drench in Blood Rain', enemies, (playerName) => {
                 const enemy = getOpponentByName(playerName);
+                gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
+            }, (opp) => {
+                const count = (opp.field || []).length;
+                return `${count} warrior${count !== 1 ? 's' : ''} on field`;
             });
         }
     } else if (cardType === 'resurrection') {
@@ -1797,6 +1815,7 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         } else {
             // Multiple enemies, show target player selection first
             showTargetPlayerModal('Select a player to steal from', enemies, (playerName) => {
+                gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showStealModal();
             }, (opp) => `${opp.cards_in_hand} cards in hand`);
@@ -1806,10 +1825,10 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         gameState.pendingModalAction = 'sabotage';
         const enemies = getEnemyOpponents();
         if (enemies.length === 1) {
-            sendAction('sabotage', { card_id: gameState.actionState.weaponId, target_player: enemies[0].player_name });
+            sendAction('sabotage', { card_id: cardID, target_player: enemies[0].player_name });
         } else {
             showTargetPlayerModal('Select a player to sabotage', enemies,
-                (playerName) => sendAction('sabotage', { card_id: gameState.actionState.weaponId, target_player: playerName }),
+                (playerName) => sendAction('sabotage', { card_id: cardID, target_player: playerName }),
                 (opp) => `${opp.cards_in_hand} card(s) in hand`);
         }
     } else if (cardType === 'desertion') {
@@ -1826,6 +1845,7 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         } else {
             showTargetPlayerModal('Select a player to steal warrior from', enemies,
                 (playerName) => {
+                    gameState.actionState.weaponId = cardID;
                     gameState.actionState.targetPlayer = playerName;
                     showDesertionModal();
                 },
@@ -4758,6 +4778,7 @@ function hideSpyNotificationModal() {
 
 // Desertion Notification Modal — shown to the player whose warrior was stolen
 let desertionNotificationTimer = null;
+let championsBountyTimer = null;
 
 function showDesertionNotificationModal(notification) {
     const modal = document.getElementById('desertion-notification-modal');
@@ -4783,6 +4804,40 @@ function hideDesertionNotificationModal() {
     if (desertionNotificationTimer) {
         clearTimeout(desertionNotificationTimer);
         desertionNotificationTimer = null;
+    }
+}
+
+function showChampionsBountyModal(notification) {
+    const modal = document.getElementById('champions-bounty-modal');
+    const textEl = document.getElementById('champions-bounty-text');
+    const fill = document.getElementById('champions-bounty-timer-fill');
+    if (!modal || !textEl) return;
+
+    const isYou = notification.earned_by === gameState.playerName;
+    const cardWord = notification.cards === 1 ? 'card' : 'cards';
+    textEl.textContent = isYou
+        ? `You slew the champion's warrior and drew ${notification.cards} ${cardWord}!`
+        : `${notification.earned_by} slew the champion's warrior and drew ${notification.cards} ${cardWord}!`;
+
+    // Restart the timer bar animation
+    if (fill) {
+        fill.style.animation = 'none';
+        fill.offsetHeight; // reflow
+        fill.style.animation = 'bountyTimerShrink 4s linear forwards';
+    }
+
+    modal.classList.remove('hidden');
+
+    if (championsBountyTimer) clearTimeout(championsBountyTimer);
+    championsBountyTimer = setTimeout(() => hideChampionsBountyModal(), 4000);
+}
+
+function hideChampionsBountyModal() {
+    const modal = document.getElementById('champions-bounty-modal');
+    if (modal) modal.classList.add('hidden');
+    if (championsBountyTimer) {
+        clearTimeout(championsBountyTimer);
+        championsBountyTimer = null;
     }
 }
 

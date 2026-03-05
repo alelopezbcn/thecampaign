@@ -5509,3 +5509,72 @@ body {
     background: linear-gradient(160deg, rgba(45, 18, 5, 0.98) 0%, rgba(18, 18, 32, 0.98) 60%);
 }
 .event-turn-modal-content[data-event="bloodlust"] .event-turn-modal-name { color: #f0922e; }
+
+/* ── Champion's Bounty Notification Modal ──────────────────────────────── */
+.champions-bounty-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.champions-bounty-modal.hidden {
+    display: none;
+}
+
+.champions-bounty-content {
+    background: linear-gradient(145deg, #1a1a0a 0%, #2e2800 60%, #1a1a0a 100%);
+    border: 2px solid rgba(241, 196, 15, 0.6);
+    border-radius: 16px;
+    padding: 28px 44px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(241, 196, 15, 0.25), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.4s ease-out;
+    min-width: 300px;
+    max-width: 420px;
+}
+
+.champions-bounty-header {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #f1c40f;
+    margin-bottom: 12px;
+    text-shadow: 0 0 12px rgba(241, 196, 15, 0.5);
+}
+
+.champions-bounty-text {
+    color: #f0e68c;
+    font-size: 1rem;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.champions-bounty-timer-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(241, 196, 15, 0.2);
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.champions-bounty-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: #f1c40f;
+    border-radius: 2px;
+    transform-origin: left;
+    animation: bountyTimerShrink 4s linear forwards;
+}
+
+@keyframes bountyTimerShrink {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}

@@ -20,50 +20,56 @@ type DesertionNotification struct {
 	StolenBy    string `json:"stolen_by"`
 }
 
+type ChampionsBountyNotification struct {
+	EarnedBy string `json:"earned_by"`
+	Cards    int    `json:"cards"`
+}
+
 type GameStatus struct {
-	CurrentPlayer                string                 `json:"current_player"`
-	TurnPlayer                   string                 `json:"turn_player"`
-	CurrentAction                string                 `json:"current_action"`
-	LastAction                   types.LastActionType   `json:"last_action,omitempty"`
-	NewCards                     []string               `json:"new_cards"`
-	CanMoveWarrior               bool                   `json:"can_move_warrior"`
-	CanTrade                     bool                   `json:"can_trade"`
-	CanForge                     bool                   `json:"can_forge"`
-	CurrentPlayerHand            []HandCard             `json:"current_player_hand"`
-	CurrentPlayerField           []FieldCard            `json:"current_player_field"`
-	CurrentPlayerCastle          Castle                 `json:"current_player_castle"`
-	CurrentPlayerAmbushInField   bool                   `json:"current_player_ambush_in_field"`
-	IsEliminated                 bool                   `json:"is_eliminated"`
-	IsDisconnected               bool                   `json:"is_disconnected"`
-	Opponents                    []OpponentStatus       `json:"opponents"`
-	GameMode                     string                 `json:"game_mode"`
-	Cemetery                     Cemetery               `json:"cemetery"`
-	DiscardPile                  DiscardPile            `json:"discard_pile"`
-	CardsInDeck                  int                    `json:"cards_in_deck"`
-	ModalCards                   []Card                 `json:"modal_cards,omitempty"`
-	LastMovedWarriorID           string                 `json:"last_moved_warrior_id,omitempty"`
-	LastAttackWeaponID           string                 `json:"last_attack_weapon_id,omitempty"`
-	LastAttackTargetID           string                 `json:"last_attack_target_id,omitempty"`
-	LastAttackTargetPlayer       string                 `json:"last_attack_target_player,omitempty"`
-	StolenFromYouCard            []Card                 `json:"stolen_from_you_card,omitempty"`
-	SabotagedFromYouCard         []Card                 `json:"sabotaged_from_you_card,omitempty"`
-	SpyNotification              string                 `json:"spy_notification,omitempty"`
-	AmbushTriggered              *AmbushTrigger         `json:"ambush_triggered,omitempty"`
-	DesertionNotification        *DesertionNotification `json:"desertion_notification,omitempty"`
-	History                      []HistoryLine          `json:"history"`
-	PlayersOrder                 []string               `json:"players_order"`
-	NextTurnPlayer               string                 `json:"next_turn_player,omitempty"`
-	GameOverMsg                  string                 `json:"game_over_msg,omitempty"`
-	IsWinner                     bool                   `json:"is_winner"`
-	GameStartedAt                string                 `json:"game_started_at"`
-	TurnStartedAt                string                 `json:"turn_started_at"`
-	TurnTimeLimitSecs            int                    `json:"turn_time_limit_secs"`
-	CurrentEvent                 string                 `json:"current_event"`
-	CurrentEventDisplay          string                 `json:"current_event_display"`
-	CurrentEventDescription      string                 `json:"current_event_description"`
-	CurrentEventWeaponModifier   int                    `json:"current_event_weapon_modifier,omitempty"`
-	CurrentEventExcludedWeapon   string                 `json:"current_event_excluded_weapon,omitempty"`
-	CurrentEventResourceModifier int                    `json:"current_event_resource_modifier,omitempty"`
+	CurrentPlayer                string                       `json:"current_player"`
+	TurnPlayer                   string                       `json:"turn_player"`
+	CurrentAction                string                       `json:"current_action"`
+	LastAction                   types.LastActionType         `json:"last_action,omitempty"`
+	NewCards                     []string                     `json:"new_cards"`
+	CanMoveWarrior               bool                         `json:"can_move_warrior"`
+	CanTrade                     bool                         `json:"can_trade"`
+	CanForge                     bool                         `json:"can_forge"`
+	CurrentPlayerHand            []HandCard                   `json:"current_player_hand"`
+	CurrentPlayerField           []FieldCard                  `json:"current_player_field"`
+	CurrentPlayerCastle          Castle                       `json:"current_player_castle"`
+	CurrentPlayerAmbushInField   bool                         `json:"current_player_ambush_in_field"`
+	IsEliminated                 bool                         `json:"is_eliminated"`
+	IsDisconnected               bool                         `json:"is_disconnected"`
+	Opponents                    []OpponentStatus             `json:"opponents"`
+	GameMode                     string                       `json:"game_mode"`
+	Cemetery                     Cemetery                     `json:"cemetery"`
+	DiscardPile                  DiscardPile                  `json:"discard_pile"`
+	CardsInDeck                  int                          `json:"cards_in_deck"`
+	ModalCards                   []Card                       `json:"modal_cards,omitempty"`
+	LastMovedWarriorID           string                       `json:"last_moved_warrior_id,omitempty"`
+	LastAttackWeaponID           string                       `json:"last_attack_weapon_id,omitempty"`
+	LastAttackTargetID           string                       `json:"last_attack_target_id,omitempty"`
+	LastAttackTargetPlayer       string                       `json:"last_attack_target_player,omitempty"`
+	StolenFromYouCard            []Card                       `json:"stolen_from_you_card,omitempty"`
+	SabotagedFromYouCard         []Card                       `json:"sabotaged_from_you_card,omitempty"`
+	SpyNotification              string                       `json:"spy_notification,omitempty"`
+	AmbushTriggered              *AmbushTrigger               `json:"ambush_triggered,omitempty"`
+	DesertionNotification        *DesertionNotification       `json:"desertion_notification,omitempty"`
+	ChampionsBounty              *ChampionsBountyNotification `json:"champions_bounty,omitempty"`
+	History                      []HistoryLine                `json:"history"`
+	PlayersOrder                 []string                     `json:"players_order"`
+	NextTurnPlayer               string                       `json:"next_turn_player,omitempty"`
+	GameOverMsg                  string                       `json:"game_over_msg,omitempty"`
+	IsWinner                     bool                         `json:"is_winner"`
+	GameStartedAt                string                       `json:"game_started_at"`
+	TurnStartedAt                string                       `json:"turn_started_at"`
+	TurnTimeLimitSecs            int                          `json:"turn_time_limit_secs"`
+	CurrentEvent                 string                       `json:"current_event"`
+	CurrentEventDisplay          string                       `json:"current_event_display"`
+	CurrentEventDescription      string                       `json:"current_event_description"`
+	CurrentEventWeaponModifier   int                          `json:"current_event_weapon_modifier,omitempty"`
+	CurrentEventExcludedWeapon   string                       `json:"current_event_excluded_weapon,omitempty"`
+	CurrentEventResourceModifier int                          `json:"current_event_resource_modifier,omitempty"`
 }
 
 type OpponentStatus struct {
@@ -126,6 +132,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 	applySpyNotification(in, &gs)
 	applyAmbushNotification(in, &gs)
 	applyDesertionNotification(in, &gs)
+	applyChampionsBountyNotification(in, &gs)
 
 	processHandCards(in.Viewer, in, &gs)
 
@@ -210,6 +217,15 @@ func applyAmbushNotification(in BuildInput, gs *GameStatus) {
 		gs.AmbushTriggered = &AmbushTrigger{
 			Effect:        in.AmbushEffect,
 			EffectDisplay: in.AmbushEffect.DisplayName(),
+		}
+	}
+}
+
+func applyChampionsBountyNotification(in BuildInput, gs *GameStatus) {
+	if in.ChampionsBountyEarner != "" && in.ChampionsBountyCards > 0 {
+		gs.ChampionsBounty = &ChampionsBountyNotification{
+			EarnedBy: in.ChampionsBountyEarner,
+			Cards:    in.ChampionsBountyCards,
 		}
 	}
 }

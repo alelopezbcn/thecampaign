@@ -271,8 +271,10 @@
         .help-event-item[data-event="plague"]    .help-event-name { color: #9b59b6; }
         .help-event-item[data-event="abundance"] { border-color: rgba(46,213,115,0.35); }
         .help-event-item[data-event="abundance"] .help-event-name { color: #2ed573; }
-        .help-event-item[data-event="bloodlust"] { border-color: rgba(230,126,34,0.35); }
-        .help-event-item[data-event="bloodlust"] .help-event-name { color: #e67e22; }
+        .help-event-item[data-event="bloodlust"]         { border-color: rgba(230,126,34,0.35); }
+        .help-event-item[data-event="bloodlust"]         .help-event-name { color: #e67e22; }
+        .help-event-item[data-event="champions_bounty"]  { border-color: rgba(241,196,15,0.35); }
+        .help-event-item[data-event="champions_bounty"]  .help-event-name { color: #f1c40f; }
 
         /* Mode grid */
         .help-mode-grid {
@@ -622,6 +624,11 @@
             <span class="help-event-name">Bloodlust</span>
             <span class="help-event-sep">&#8212;</span>
             <span class="help-event-desc">Whenever one of your warriors kills an enemy, that warrior is immediately restored <span class="hp">2&nbsp;HP</span>. Killing multiple enemies in one turn stacks the healing.</span>
+        </div>
+        <div class="help-event-item" data-event="champions_bounty">
+            <span class="help-event-name">Champion's Bounty</span>
+            <span class="help-event-sep">&#8212;</span>
+            <span class="help-event-desc"><em>(FFA3 / FFA5 only)</em> When a <span class="hp">weapon attack</span> kills any warrior belonging to the enemy whose warriors have the <span class="hp">highest combined HP</span> on the field, you immediately draw <span class="hp">1&nbsp;card</span>. Ties count — if multiple enemies share the top HP total, killing any of their warriors grants the reward. <em>Special powers, harpoons, and other non-weapon kills do not trigger this bonus.</em></span>
         </div>
     `;
 

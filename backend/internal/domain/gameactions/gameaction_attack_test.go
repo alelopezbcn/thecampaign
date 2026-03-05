@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -760,6 +761,168 @@ func TestAttackAction_Execute_Bloodlust(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockTargetWarrior.EXPECT().String().Return("Knight (10)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
+		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionAttack, result.Action)
+	})
+}
+
+func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
+	t.Run("Kill top-HP enemy warrior draws a card", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
+			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		mockDefField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
+		mockDefField.EXPECT().SlotCards().Return(nil)
+		mockDefField.EXPECT().Warriors().Return([]cards.Warrior{mockTargetWarrior})
+
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		gomock.InOrder(
+			mockTargetWarrior.EXPECT().Health().Return(10), // pre-kill snapshot
+			mockTargetWarrior.EXPECT().Health().Return(0),  // kill check
+		)
+		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+
+		// Only enemy is the target player — isTopEnemy trivially true
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		mockBountyCard := mocks.NewMockCard(ctrl)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockBountyCard}, nil)
+		mockPlayer1.EXPECT().TakeCards(mockBountyCard)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockTargetWarrior.EXPECT().String().Return("Knight (0)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Times(2) // bounty + attack
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionAttack, result.Action)
+	})
+
+	t.Run("Kill non-top enemy warrior draws no card", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
+			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		mockDefField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
+		mockDefField.EXPECT().SlotCards().Return(nil)
+		mockDefField.EXPECT().Warriors().Return([]cards.Warrior{mockTargetWarrior}) // total HP 5
+
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		gomock.InOrder(
+			mockTargetWarrior.EXPECT().Health().Return(5), // pre-kill snapshot
+			mockTargetWarrior.EXPECT().Health().Return(0), // kill check
+		)
+		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+
+		// Player3 has higher total HP — target player is not top
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3Field := mocks.NewMockField(ctrl)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2, mockPlayer3})
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3")
+		mockPlayer3.EXPECT().Field().Return(mockPlayer3Field)
+		strongerWarrior := mocks.NewMockWarrior(ctrl)
+		mockPlayer3Field.EXPECT().Warriors().Return([]cards.Warrior{strongerWarrior})
+		strongerWarrior.EXPECT().Health().Return(8)
+
+		// DrawCards must NOT be called
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockTargetWarrior.EXPECT().String().Return("Knight (0)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()) // attack only
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionAttack, result.Action)
+	})
+
+	t.Run("Kill tied-top enemy warrior draws a card", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
+			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		mockDefField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
+		mockDefField.EXPECT().SlotCards().Return(nil)
+		mockDefField.EXPECT().Warriors().Return([]cards.Warrior{mockTargetWarrior}) // total HP 8
+
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		gomock.InOrder(
+			mockTargetWarrior.EXPECT().Health().Return(8), // pre-kill snapshot
+			mockTargetWarrior.EXPECT().Health().Return(0), // kill check
+		)
+		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+
+		// Player3 ties at 8 HP — target player ties for top → bounty applies
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3Field := mocks.NewMockField(ctrl)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2, mockPlayer3})
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3")
+		mockPlayer3.EXPECT().Field().Return(mockPlayer3Field)
+		equalWarrior := mocks.NewMockWarrior(ctrl)
+		mockPlayer3Field.EXPECT().Warriors().Return([]cards.Warrior{equalWarrior})
+		equalWarrior.EXPECT().Health().Return(8)
+
+		mockBountyCard := mocks.NewMockCard(ctrl)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockBountyCard}, nil)
+		mockPlayer1.EXPECT().TakeCards(mockBountyCard)
+
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockTargetWarrior.EXPECT().String().Return("Knight (0)")
+		mockWeapon.EXPECT().String().Return("Sword (5)")
+		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Times(2)
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionAttack, result.Action)
+	})
+
+	t.Run("Target survives — no card drawn", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
+			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		mockDefField := mocks.NewMockField(ctrl)
+		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
+		mockDefField.EXPECT().SlotCards().Return(nil)
+		mockDefField.EXPECT().Warriors().Return([]cards.Warrior{mockTargetWarrior})
+
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+		mockTargetWarrior.EXPECT().Health().Return(5).Times(2) // pre-kill + kill check (survived)
+
+		// PlayerIndex/Enemies/DrawCards must NOT be called
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockTargetWarrior.EXPECT().String().Return("Knight (5)")
+		mockWeapon.EXPECT().String().Return("Sword (3)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
 

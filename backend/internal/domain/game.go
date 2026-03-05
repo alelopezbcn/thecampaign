@@ -84,10 +84,23 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, cas
 	return g, nil
 }
 
+func (g *game) availableEventTypes() []types.EventType {
+	isFFA := g.mode == types.GameModeFFA3 || g.mode == types.GameModeFFA5
+	var result []types.EventType
+	for _, et := range types.AllEventTypes {
+		if et == types.EventTypeChampionsBounty && !isFFA {
+			continue
+		}
+		result = append(result, et)
+	}
+	return result
+}
+
 func (g *game) drawRandomEvent() types.ActiveEvent {
 	if len(g.eventBag) == 0 {
-		g.eventBag = make([]types.EventType, len(types.AllEventTypes))
-		copy(g.eventBag, types.AllEventTypes)
+		available := g.availableEventTypes()
+		g.eventBag = make([]types.EventType, len(available))
+		copy(g.eventBag, available)
 		rand.Shuffle(len(g.eventBag), func(i, j int) {
 			g.eventBag[i], g.eventBag[j] = g.eventBag[j], g.eventBag[i]
 		})
@@ -861,6 +874,8 @@ func (g *game) getStatus(viewer board.Player,
 		gameStatusDTO.LastAttackTargetPlayer = a.TargetPlayer
 		gameStatusDTO.AmbushEffect = a.AmbushEffect
 		gameStatusDTO.AmbushAttackerName = a.AmbushAttackerName
+		gameStatusDTO.ChampionsBountyEarner = a.ChampionsBountyEarner
+		gameStatusDTO.ChampionsBountyCards = a.ChampionsBountyCards
 	}
 	if s := g.lastResult.Steal; s != nil {
 		gameStatusDTO.StolenFrom = s.From

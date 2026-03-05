@@ -54,6 +54,8 @@ type BuildInput struct {
 	CanMoveWarrior           bool
 	AmbushEffect             types.AmbushEffect
 	AmbushAttackerName       string
+	ChampionsBountyEarner    string
+	ChampionsBountyCards     int
 	DeserterFromPlayer       string
 	DeserterWarrior          cards.Warrior
 	CurrentEvent             types.ActiveEvent

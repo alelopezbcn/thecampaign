@@ -13,6 +13,7 @@ import (
 type attackGame interface {
 	GamePlayers
 	GameTurn
+	GameCards
 	GameHistory
 	GameStatusProvider
 }
@@ -142,6 +143,14 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		return result, statusFn, nil
 	}
 
+	// Champion's Bounty: snapshot target player's total field HP before the attack,
+	// so we can compare against other enemies after the kill.
+	bountyCards := handler.OnKillBountyCards()
+	var targetPlayerPreKillHP int
+	if bountyCards > 0 {
+		targetPlayerPreKillHP = totalFieldHP(a.targetPlayer)
+	}
+
 	// Normal attack.
 	err := a.target.BeAttacked(effectiveWeapon)
 	if err != nil {
@@ -154,22 +163,45 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		a.attacker.HealBy(healAmount)
 	}
 
+	// Remove the used weapon before drawing bounty cards so the freed slot counts
+	// toward CanTakeCards when Champion's Bounty tries to draw.
 	a.currentPlayer.RemoveFromHand(a.weaponID)
 
 	g.AddHistory(fmt.Sprintf("%s attacked %s with %s",
 		a.currentPlayer.Name(), a.target.String(), a.weapon.String()),
 		types.CategoryAction)
 
+	// Champion's Bounty: if the target was killed and their player had the highest
+	// total field HP (ties included), draw bonus cards.
+	var bountyEarner string
+	var bountyDrawn int
+	var bountyCards2 []cards.Card
+	if bountyCards > 0 && a.target.Health() == 0 {
+		if isTopEnemy(targetPlayerPreKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
+			drawn, drawErr := g.DrawCards(a.currentPlayer, bountyCards)
+			if drawErr == nil {
+				a.currentPlayer.TakeCards(drawn...)
+				bountyEarner = a.currentPlayer.Name()
+				bountyDrawn = len(drawn)
+				bountyCards2 = drawn
+				g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — drew %d card(s)",
+					a.currentPlayer.Name(), len(drawn)), types.CategoryInfo)
+			}
+		}
+	}
+
 	result := &Result{
 		Action: types.LastActionAttack,
 		Attack: &AttackDetails{
-			WeaponID:     a.weaponID,
-			TargetID:     a.targetID,
-			TargetPlayer: a.targetPlayerName,
+			WeaponID:              a.weaponID,
+			TargetID:              a.targetID,
+			TargetPlayer:          a.targetPlayerName,
+			ChampionsBountyEarner: bountyEarner,
+			ChampionsBountyCards:  bountyDrawn,
 		},
 	}
 	statusFn := func() gamestatus.GameStatus {
-		return g.Status(a.currentPlayer)
+		return g.Status(a.currentPlayer, bountyCards2...)
 	}
 
 	return result, statusFn, nil
@@ -181,6 +213,28 @@ func (a *attackAction) NextPhase() types.PhaseType {
 
 // applyAmbushEffect applies the pre-determined ambush effect and returns the result.
 // effectiveWeapon carries the Curse-adjusted damage; weaponType is cached to avoid extra Type() calls.
+// totalFieldHP returns the sum of current HP of all warriors in a player's field.
+func totalFieldHP(p board.Player) int {
+	total := 0
+	for _, w := range p.Field().Warriors() {
+		total += w.Health()
+	}
+	return total
+}
+
+// isTopEnemy returns true if targetPreKillHP is >= the total field HP of every other enemy.
+func isTopEnemy(targetPreKillHP int, targetPlayerName string, enemies []board.Player) bool {
+	for _, e := range enemies {
+		if e.Name() == targetPlayerName {
+			continue
+		}
+		if totalFieldHP(e) > targetPreKillHP {
+			return false
+		}
+	}
+	return true
+}
+
 func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWeapon cards.Weapon, weaponType types.WeaponType, g attackGame) *Result {
 	result := &Result{
 		Action: types.LastActionAmbush,
