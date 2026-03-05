@@ -288,32 +288,19 @@ func validateForExecuteWithTargetPlayer(t *testing.T, ctrl *gomock.Controller, t
 	return a, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior
 }
 
-// validateForExecute sets up expectations for a successful Validate call and
-// calls Validate on the action, populating its internal target/weapon/player.
-func validateForExecute(t *testing.T, ctrl *gomock.Controller, targetID, weaponID string) (
-	action gameactions.GameAction,
-	mockGame *mocks.MockGame,
-	mockPlayer1 *mocks.MockPlayer,
-	mockWarrior *mocks.MockWarrior,
-	mockWeapon *mocks.MockWeapon,
-) {
-	t.Helper()
-	a, mockGame, mockPlayer1, _, mockWarrior, mockWeapon, _ := validateForExecuteWithTargetPlayer(t, ctrl, targetID, weaponID)
-	return a, mockGame, mockPlayer1, mockWarrior, mockWeapon
-}
-
 func TestAttackAction_Execute(t *testing.T) {
 	t.Run("Error when attack fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, _, mockPlayer2, mockWarrior, mockWeapon, _ := validateForExecuteWithTargetPlayer(t, ctrl, "targetID", "weaponID")
+		action, mockGame, _, mockPlayer2, mockWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "targetID", "weaponID")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
 
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(errors.New("attack failed"))
 
 		result, _, err := action.Execute(mockGame)
@@ -329,15 +316,17 @@ func TestAttackAction_Execute(t *testing.T) {
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, _ := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
 
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+		mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -360,15 +349,17 @@ func TestAttackAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, _ := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
 
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+		mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -442,10 +433,11 @@ func TestAttackAction_Execute_AmbushCancelAttack(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	action, mockGame, mockPlayer1, _, _, mockWeapon, _, _ := setupAmbushAttack(t, ctrl, types.AmbushEffectCancelAttack)
+	action, mockGame, mockPlayer1, _, _, mockWeapon, _, mockAttackerWarrior := setupAmbushAttack(t, ctrl, types.AmbushEffectCancelAttack)
 
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	mockPlayer1.EXPECT().Name().Return("Player1")
 	mockPlayer1.EXPECT().RemoveFromHand("weaponID").Return([]cards.Card{mockWeapon}, nil)
 	mockCardObs := mocks.NewMockCardMovedToPileObserver(ctrl)
@@ -467,10 +459,11 @@ func TestAttackAction_Execute_AmbushStealWeapon(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	action, mockGame, mockPlayer1, mockPlayer2, _, mockWeapon, _, _ := setupAmbushAttack(t, ctrl, types.AmbushEffectStealWeapon)
+	action, mockGame, mockPlayer1, mockPlayer2, _, mockWeapon, _, mockAttackerWarrior := setupAmbushAttack(t, ctrl, types.AmbushEffectStealWeapon)
 
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	mockPlayer1.EXPECT().Name().Return("Player1")
 	mockPlayer1.EXPECT().RemoveFromHand("weaponID").Return([]cards.Card{mockWeapon}, nil)
 	mockPlayer2.EXPECT().ForceAddCard(mockWeapon)
@@ -491,6 +484,7 @@ func TestAttackAction_Execute_AmbushReflectDamage(t *testing.T) {
 
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	// MultiplierFactor is called with the ORIGINAL target (mockTargetWarrior from setupAmbushAttack)
 	mockWeapon.EXPECT().MultiplierFactor(gomock.Any()).Return(2)
 	mockAttackerWarrior.EXPECT().ReceiveDamage(mockWeapon, 2)
@@ -514,6 +508,7 @@ func TestAttackAction_Execute_AmbushInstantKill(t *testing.T) {
 
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	// The warrior who attacked is instantly killed by the ambush
 	mockAttackerWarrior.EXPECT().KillByAmbush()
 	mockAttackerWarrior.EXPECT().String().Return("Knight (20)")
@@ -535,7 +530,7 @@ func TestAttackAction_Execute_NoAmbush_NormalAttack(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, _ := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+	action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 
 	mockDefenderField := mocks.NewMockField(ctrl)
 	mockPlayer2.EXPECT().Field().Return(mockDefenderField)
@@ -543,8 +538,10 @@ func TestAttackAction_Execute_NoAmbush_NormalAttack(t *testing.T) {
 
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 	mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
+	mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
 	mockWarrior.EXPECT().String().Return("Knight (20)")
 	mockWeapon.EXPECT().String().Return("Sword (5)")
 	mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -599,6 +596,7 @@ func TestAttackAction_Execute_AmbushDrainLife(t *testing.T) {
 	// EventHandler (calm — no modifier)
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+	mockAttackerWarrior.EXPECT().Kills().Return(0)
 
 	// DrainLife heals the target equal to weapon damage × multiplier
 	mockWeapon.EXPECT().MultiplierFactor(mockTargetWarrior).Return(1)
@@ -627,8 +625,7 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		// Curse excludes Sword; Arrow and Poison are affected with -2
 		event := curseEvent(types.SwordWeaponType, -2)
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "A1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "A1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
@@ -636,10 +633,12 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		mockGame.EXPECT().EventHandler().Return(event)
 		mockWeapon.EXPECT().Type().Return(types.ArrowWeaponType) // Arrow is affected
 		mockWeapon.EXPECT().DamageAmount().Return(5)             // 5 + (-2) = 3 effective
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		// BeAttacked receives the curse-modified wrapper (not the original mockWeapon)
 		mockWarrior.EXPECT().BeAttacked(gomock.Any()).Return(nil)
+		mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Arrow (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("A1").Return(nil, nil)
@@ -660,8 +659,7 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		// Curse excludes Sword — Sword deals normal damage
 		event := curseEvent(types.SwordWeaponType, -2)
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
@@ -669,9 +667,11 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		mockGame.EXPECT().EventHandler().Return(event)
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType) // Sword is excluded → mod=0
 		// DamageAmount NOT called (mod=0 so wrapper is not created)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil) // original weapon, unmodified
+		mockWarrior.EXPECT().Health().Return(15)                // target survives — no kill
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -697,6 +697,7 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		mockGame.EXPECT().EventHandler().Return(event)
 		mockWeapon.EXPECT().Type().Return(types.ArrowWeaponType) // Arrow is affected → mod=-2
 		mockWeapon.EXPECT().DamageAmount().Return(5)             // effective = 3
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 
 		// MultiplierFactor called on the curse-modified wrapper (delegates to embedded weapon's method)
 		mockWeapon.EXPECT().MultiplierFactor(gomock.Any()).Return(1)
@@ -720,16 +721,17 @@ func TestAttackAction_Execute_Bloodlust(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
 
 		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockTargetWarrior.EXPECT().Health().Return(0) // target died
+		mockTargetWarrior.EXPECT().Health().Return(0).Times(2) // target died: AddKill check + bloodlust check
+		mockAttackerWarrior.EXPECT().AddKill()
 		mockAttackerWarrior.EXPECT().HealBy(2)
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockTargetWarrior.EXPECT().String().Return("Knight (0)")
@@ -747,16 +749,16 @@ func TestAttackAction_Execute_Bloodlust(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
 
 		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockTargetWarrior.EXPECT().Health().Return(10) // target survived
+		mockTargetWarrior.EXPECT().Health().Return(10).Times(2) // target survived: AddKill check + bloodlust check
 		// HealBy must NOT be called
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockTargetWarrior.EXPECT().String().Return("Knight (10)")
@@ -776,8 +778,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
 		mockDefField.EXPECT().SlotCards().Return(nil)
@@ -785,9 +786,12 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 
 		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
+		mockAttackerWarrior.EXPECT().AddKill()
 		gomock.InOrder(
 			mockTargetWarrior.EXPECT().Health().Return(10), // pre-kill snapshot
-			mockTargetWarrior.EXPECT().Health().Return(0),  // kill check
+			mockTargetWarrior.EXPECT().Health().Return(0),  // AddKill check
+			mockTargetWarrior.EXPECT().Health().Return(0),  // bounty kill check
 		)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
 
@@ -816,8 +820,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
 		mockDefField.EXPECT().SlotCards().Return(nil)
@@ -825,9 +828,12 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 
 		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
+		mockAttackerWarrior.EXPECT().AddKill()
 		gomock.InOrder(
 			mockTargetWarrior.EXPECT().Health().Return(5), // pre-kill snapshot
-			mockTargetWarrior.EXPECT().Health().Return(0), // kill check
+			mockTargetWarrior.EXPECT().Health().Return(0), // AddKill check
+			mockTargetWarrior.EXPECT().Health().Return(0), // bounty kill check
 		)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
 
@@ -860,8 +866,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
 		mockDefField.EXPECT().SlotCards().Return(nil)
@@ -869,9 +874,12 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 
 		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
+		mockAttackerWarrior.EXPECT().AddKill()
 		gomock.InOrder(
 			mockTargetWarrior.EXPECT().Health().Return(8), // pre-kill snapshot
-			mockTargetWarrior.EXPECT().Health().Return(0), // kill check
+			mockTargetWarrior.EXPECT().Health().Return(0), // AddKill check
+			mockTargetWarrior.EXPECT().Health().Return(0), // bounty kill check
 		)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
 
@@ -907,8 +915,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, _ :=
-			validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
+		action, mockGame, mockPlayer1, mockPlayer2, mockTargetWarrior, mockWeapon, mockAttackerWarrior := validateForExecuteWithTargetPlayer(t, ctrl, "K1", "S1")
 		mockDefField := mocks.NewMockField(ctrl)
 		mockPlayer2.EXPECT().Field().Return(mockDefField).AnyTimes()
 		mockDefField.EXPECT().SlotCards().Return(nil)
@@ -916,8 +923,9 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 
 		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
+		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockTargetWarrior.EXPECT().Health().Return(5).Times(2) // pre-kill + kill check (survived)
+		mockTargetWarrior.EXPECT().Health().Return(5).Times(3) // pre-kill + AddKill check + bounty kill check (survived)
 
 		// PlayerIndex/Enemies/DrawCards must NOT be called
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()

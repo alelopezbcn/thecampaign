@@ -129,6 +129,9 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 	weaponType := a.weapon.Type()
 	effectiveWeapon := applyWeaponModifier(a.weapon, handler.WeaponDamageModifier(weaponType))
 
+	// Apply attacker kill bonus (+1 DMG per kill earned by this warrior).
+	effectiveWeapon = applyWeaponModifier(effectiveWeapon, a.attacker.Kills())
+
 	// Check if the defender has an ambush in their field.
 	if ambush, ok := board.GetFieldSlotCard[cards.Ambush](a.targetPlayer.Field()); ok {
 		a.targetPlayer.Field().RemoveSlotCard(ambush)
@@ -156,6 +159,11 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 	if err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("attack action failed: %w", err)
+	}
+
+	// Award kill credit to the attacker when the target is defeated.
+	if a.target.Health() == 0 {
+		a.attacker.AddKill()
 	}
 
 	// Bloodlust: if the target was killed, restore HP to the attacking warrior.

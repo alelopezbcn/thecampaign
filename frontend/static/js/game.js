@@ -1644,17 +1644,19 @@ function showAttackConfirmModal(weapon, target) {
     const multiplier = weapon?.dmg_mult?.[targetId] || 1;
     const hasDoubleDamage = multiplier > 1;
 
+    const attacker = findCardById(gameState.actionState.warriorId);
+    const killBonus = attacker?.kills || 0;
+
     const curseModifier = getCurseWeaponModifier(weapon);
-    const effectiveWeaponDmg = Math.max(0, weaponDmg + curseModifier);
+    const effectiveWeaponDmg = Math.max(0, weaponDmg + curseModifier + killBonus);
     const effectiveDmg = effectiveWeaponDmg * multiplier;
 
     const isProtected = target?.protected_by && target.protected_by.id;
     const shieldHp = isProtected ? (target.protected_by.value || 0) : 0;
 
-    const attacker = findCardById(gameState.actionState.warriorId);
     let cardsHtml = '';
     if (attacker) {
-        cardsHtml += renderCardForModal(attacker);
+        cardsHtml += renderCardForModal(attacker, { killBonus: killBonus });
         cardsHtml += renderArrow();
     }
     cardsHtml += renderCardForModal(weapon, { showDoubleDamage: hasDoubleDamage });
@@ -1664,12 +1666,16 @@ function showAttackConfirmModal(weapon, target) {
     let description;
     let dmgLabel;
     const curseSign = curseModifier > 0 ? '+' : '';
-    if (hasDoubleDamage && curseModifier !== 0) {
-        dmgLabel = `${weaponName} (${weaponDmg}${curseSign}${curseModifier}=${effectiveWeaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
+    const killSign = killBonus > 0 ? `+${killBonus}💀` : '';
+    const hasModifiers = curseModifier !== 0 || killBonus > 0;
+    if (hasDoubleDamage && hasModifiers) {
+        const modStr = (curseModifier !== 0 ? `${curseSign}${curseModifier}` : '') + killSign;
+        dmgLabel = `${weaponName} (${weaponDmg}${modStr}=${effectiveWeaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
     } else if (hasDoubleDamage) {
         dmgLabel = `${weaponName} (${weaponDmg} x${multiplier} = ${effectiveDmg} DMG)`;
-    } else if (curseModifier !== 0) {
-        dmgLabel = `${weaponName} (${weaponDmg}${curseSign}${curseModifier} = ${effectiveWeaponDmg} DMG)`;
+    } else if (hasModifiers) {
+        const modStr = (curseModifier !== 0 ? `${curseSign}${curseModifier}` : '') + killSign;
+        dmgLabel = `${weaponName} (${weaponDmg}${modStr} = ${effectiveWeaponDmg} DMG)`;
     } else {
         dmgLabel = `${weaponName} (${weaponDmg} DMG)`;
     }
@@ -3920,10 +3926,17 @@ function createCardElement(card, context) {
         </div>
     ` : '';
 
+    // Kill counter badge — shown on warriors with at least one kill
+    const cardKills = card.kills || 0;
+    const killsBadgeHtml = (cardType === 'warrior' && cardKills > 0)
+        ? `<div class="kills-badge">💀 ${cardKills}</div>`
+        : '';
+
     // Create card HTML
     if (imageUrl) {
         div.innerHTML = `
             ${shieldHtml}
+            ${killsBadgeHtml}
             <div class="card-image">
                 <img src="${imageUrl}" alt="${getCardName(card)}" draggable="false">
             </div>
@@ -3935,6 +3948,7 @@ function createCardElement(card, context) {
     } else {
         div.innerHTML = `
             ${shieldHtml}
+            ${killsBadgeHtml}
             <div class="card-header">
                 <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
                 <span class="card-type ${cardType}">${card.type || cardType}</span>
@@ -5020,6 +5034,9 @@ function renderCardForModal(card, options = {}) {
     }
     if (options.showHealResult) {
         badgeHtml += `<div class="heal-result-badge">✨ ${options.healedHp} HP</div>`;
+    }
+    if (options.killBonus > 0) {
+        badgeHtml += `<div class="kill-bonus-badge">💀 +${options.killBonus} DMG</div>`;
     }
 
     let cardHtml;

@@ -134,6 +134,11 @@ func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamest
 		return result, nil, fmt.Errorf("special power action failed: %w", err)
 	}
 
+	// Award kill credit to the archer when the target is instantly killed.
+	if a.usedOn.Health() == 0 {
+		a.usedBy.AddKill()
+	}
+
 	if _, err := p.RemoveFromHand(a.specialPower.GetID()); err != nil {
 		return &Result{}, nil, fmt.Errorf("removing special power from hand failed: %w", err)
 	}

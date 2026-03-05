@@ -21,6 +21,7 @@ type warriorBase struct {
 	warriorType         types.WarriorType
 	WarriorDeadObserver WarriorDeadObserver
 	self                Warrior // concrete outer type, preserved through cemetery/resurrection
+	kills               int     // number of enemy warriors killed; persists through resurrection
 }
 
 func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
@@ -128,6 +129,9 @@ func (w *warriorBase) setSelf(self Warrior) {
 func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
+
+func (w *warriorBase) Kills() int { return w.kills }
+func (w *warriorBase) AddKill()   { w.kills++ }
 
 func (w *warriorBase) CanUseWeapon(wep types.WeaponType) bool {
 	switch wep {
