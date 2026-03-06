@@ -1122,11 +1122,11 @@ func TestNewAmbushHandCard(t *testing.T) {
 		wantUsed              bool
 	}{
 		{
-			name:                  "Usable in Buy phase when field has no ambush",
+			name:                  "Not usable in Buy phase",
 			cardID:                "AMB1",
 			fieldAlreadyHasAmbush: false,
 			action:                types.PhaseTypeBuy,
-			wantUsed:              true,
+			wantUsed:              false,
 		},
 		{
 			name:                  "Not usable in Buy phase when field already has ambush",
@@ -1136,11 +1136,11 @@ func TestNewAmbushHandCard(t *testing.T) {
 			wantUsed:              false,
 		},
 		{
-			name:                  "Not usable in Attack phase",
+			name:                  "Usable in Attack phase when field has no ambush",
 			cardID:                "AMB3",
 			fieldAlreadyHasAmbush: false,
 			action:                types.PhaseTypeAttack,
-			wantUsed:              false,
+			wantUsed:              true,
 		},
 		{
 			name:                  "Not usable in SpySteal phase",
@@ -1187,11 +1187,11 @@ func TestNewDesertionHandCard(t *testing.T) {
 		wantUsed                bool
 	}{
 		{
-			name:                    "Usable in SpySteal phase when enemy has weak warrior",
+			name:                    "Not usable in SpySteal phase even if enemy has weak warrior",
 			cardID:                  "DES1",
 			anyEnemyHasWeakWarriors: true,
 			action:                  types.PhaseTypeSpySteal,
-			wantUsed:                true,
+			wantUsed:                false,
 		},
 		{
 			name:                    "Not usable in SpySteal phase when no enemy has weak warrior",
@@ -1201,11 +1201,11 @@ func TestNewDesertionHandCard(t *testing.T) {
 			wantUsed:                false,
 		},
 		{
-			name:                    "Not usable in Attack phase even if enemy has weak warrior",
+			name:                    "Usable in Attack phase when enemy has weak warrior",
 			cardID:                  "DES3",
 			anyEnemyHasWeakWarriors: true,
 			action:                  types.PhaseTypeAttack,
-			wantUsed:                false,
+			wantUsed:                true,
 		},
 		{
 			name:                    "Not usable in Buy phase",

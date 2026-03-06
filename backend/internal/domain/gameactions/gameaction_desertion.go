@@ -47,7 +47,7 @@ func NewDesertionAction(playerName, targetPlayerName, warriorID, cardID string) 
 func (a *desertionAction) PlayerName() string { return a.playerName }
 
 func (a *desertionAction) Validate(g Game) error {
-	if g.CurrentAction() != types.PhaseTypeSpySteal {
+	if g.CurrentAction() != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot use desertion in the %s phase", g.CurrentAction())
 	}
 

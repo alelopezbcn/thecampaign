@@ -371,7 +371,7 @@
                 <li class="help-phase-item">
                     <span class="help-phase-icon">💰</span>
                     <div>
-                        <div class="help-phase-name">Buy / Trade / Ambush</div>
+                        <div class="help-phase-name">Buy / Trade</div>
                         <div class="help-phase-desc">Spend Gold cards to draw new cards (value &divide; 2, rounded down). Trade 3 cards for 1 (once per turn). Place an Ambush trap in your field (max 1 per field). Skip when done.</div>
                     </div>
                 </li>
@@ -548,7 +548,7 @@
             </table>
         </div>
         <div class="help-section">
-            <div class="help-section-title">Spy / Steal / Sabotage / Desertion</div>
+            <div class="help-section-title">Spy / Steal / Sabotage</div>
             <p class="help-note" style="margin-bottom:10px">Played during the Spy &amp; Steal phase. Multiple cards can be used per turn.</p>
             <table class="help-table">
                 <tr><th>Card</th><th>Effect</th></tr>

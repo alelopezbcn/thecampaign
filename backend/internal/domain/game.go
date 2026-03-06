@@ -577,44 +577,63 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	g.turnState.CanForge = !g.turnState.HasForged && p.CanForgeWeapons()
 
 	if expectedAction == types.PhaseTypeAttack {
-		// Check if player can attack with weapons OR catapult
-		canAttackWithCatapult := false
+		canPlayPhase := false
 
-		if ok := board.HasCardTypeInHand[cards.Catapult](p); ok {
+		if board.HasCardTypeInHand[cards.Catapult](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				if e.Castle().CanBeAttacked() {
-					canAttackWithCatapult = true
+					canPlayPhase = true
 					break
 				}
 			}
 		}
 
-		canAttackWithBloodRain := false
-		if board.HasCardTypeInHand[cards.BloodRain](p) {
+		if !canPlayPhase && board.HasCardTypeInHand[cards.BloodRain](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				if len(e.Field().Warriors()) > 0 {
-					canAttackWithBloodRain = true
+					canPlayPhase = true
 					break
 				}
 			}
 		}
 
-		canAttackWithHarpoon := false
-		if board.HasCardTypeInHand[cards.Harpoon](p) {
+		if !canPlayPhase && board.HasCardTypeInHand[cards.Harpoon](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				for _, w := range e.Field().Warriors() {
 					if w.Type() == types.DragonWarriorType {
-						canAttackWithHarpoon = true
+						canPlayPhase = true
 						break
 					}
 				}
-				if canAttackWithHarpoon {
+				if canPlayPhase {
 					break
 				}
 			}
 		}
 
-		if p.CanAttack() || canAttackWithCatapult || canAttackWithBloodRain || canAttackWithHarpoon || g.turnState.CanMoveWarrior {
+		if !canPlayPhase && board.HasCardTypeInHand[cards.Desertion](p) {
+			for _, e := range g.Enemies(g.currentTurn) {
+				for _, w := range e.Field().Warriors() {
+					if w.Health() <= cards.DesertionMaxHP {
+						canPlayPhase = true
+						break
+					}
+				}
+				if canPlayPhase {
+					break
+				}
+			}
+		}
+
+		if !canPlayPhase && board.HasCardTypeInHand[cards.Ambush](p) {
+			canPlayPhase = !board.HasFieldSlotCard[cards.Ambush](p.Field())
+		}
+
+		if !canPlayPhase && board.HasCardTypeInHand[cards.Resurrection](p) {
+			canPlayPhase = g.board.Cemetery().Count() > 0
+		}
+
+		if p.CanAttack() || canPlayPhase || g.turnState.CanMoveWarrior {
 			g.currentAction = types.PhaseTypeAttack
 
 			return gameStatusFn()
@@ -628,22 +647,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		hasThief := board.HasCardTypeInHand[cards.Thief](p)
 		hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
 
-		canUseDesertion := false
-		if board.HasCardTypeInHand[cards.Desertion](p) {
-			for _, e := range g.Enemies(g.currentTurn) {
-				for _, w := range e.Field().Warriors() {
-					if w.Health() <= cards.DesertionMaxHP {
-						canUseDesertion = true
-						break
-					}
-				}
-				if canUseDesertion {
-					break
-				}
-			}
-		}
-
-		if hasSpy || hasThief || hasSabotage || canUseDesertion {
+		if hasSpy || hasThief || hasSabotage {
 			g.currentAction = types.PhaseTypeSpySteal
 
 			return gameStatusFn()
@@ -653,11 +657,7 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	}
 
 	if expectedAction == types.PhaseTypeBuy {
-		canPlaceAmbush := false
-		if board.HasCardTypeInHand[cards.Ambush](p) {
-			canPlaceAmbush = !board.HasFieldSlotCard[cards.Ambush](p.Field())
-		}
-		if p.CanBuy() || g.turnState.CanTrade || canPlaceAmbush {
+		if p.CanBuy() || g.turnState.CanTrade {
 			g.currentAction = types.PhaseTypeBuy
 
 			return gameStatusFn()
