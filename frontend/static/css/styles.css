@@ -2012,7 +2012,7 @@ body {
 /* Protected card with shield */
 .card.protected {
     border-color: #4ecdc4;
-    box-shadow: 0 0 10px rgba(78, 205, 196, 0.3);
+    box-shadow: 0 0 14px rgba(78, 205, 196, 0.7), 0 0 28px rgba(78, 205, 196, 0.35), inset 0 0 8px rgba(78, 205, 196, 0.15);
 }
 
 .card-shield {
@@ -2027,34 +2027,36 @@ body {
     justify-content: center;
     z-index: 10;
     pointer-events: none;
-    background: radial-gradient(ellipse at center, rgba(78, 205, 196, 0.25) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(78, 205, 196, 0.45) 0%, rgba(78, 205, 196, 0.1) 55%, transparent 75%);
 }
 
 .shield-icon {
-    font-size: 4.2em;
-    filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.8));
-    animation: shieldGlow 2s ease-in-out infinite;
+    font-size: 5em;
+    filter: drop-shadow(0 0 10px rgba(78, 205, 196, 1)) drop-shadow(0 0 4px #fff);
+    animation: shieldGlow 1.6s ease-in-out infinite;
     line-height: 1;
 }
 
 .shield-value {
-    background: rgba(26, 26, 46, 0.85);
-    color: #4ecdc4;
-    font-size: 0.85em;
+    background: rgba(26, 26, 46, 0.92);
+    color: #7ffff4;
+    font-size: 0.9em;
     font-weight: bold;
-    padding: 1px 6px;
+    padding: 2px 8px;
     border-radius: 8px;
-    border: 1px solid #4ecdc4;
+    border: 1.5px solid #4ecdc4;
     margin-top: 4px;
     text-align: center;
+    text-shadow: 0 0 6px rgba(78, 205, 196, 0.9);
+    box-shadow: 0 0 6px rgba(78, 205, 196, 0.5);
 }
 
 @keyframes shieldGlow {
     0%, 100% {
-        filter: drop-shadow(0 0 6px rgba(78, 205, 196, 0.6));
+        filter: drop-shadow(0 0 8px rgba(78, 205, 196, 0.8)) drop-shadow(0 0 3px #fff);
     }
     50% {
-        filter: drop-shadow(0 0 14px rgba(78, 205, 196, 1));
+        filter: drop-shadow(0 0 20px rgba(78, 205, 196, 1)) drop-shadow(0 0 8px rgba(255,255,255,0.8));
     }
 }
 

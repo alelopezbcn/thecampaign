@@ -24,12 +24,12 @@ func TestPlaceAmbushAction_NextPhase(t *testing.T) {
 }
 
 func TestPlaceAmbushAction_Validate(t *testing.T) {
-	t.Run("Error when not in Buy phase", func(t *testing.T) {
+	t.Run("Error when not in Attack phase", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack).Times(2)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy).Times(2)
 
 		action := gameactions.NewPlaceAmbushAction("Player1", "amb1")
 		err := action.Validate(mockGame)
@@ -44,7 +44,7 @@ func TestPlaceAmbushAction_Validate(t *testing.T) {
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockPlayer.EXPECT().GetCardFromHand("amb1").Return(nil, false)
 
@@ -62,7 +62,7 @@ func TestPlaceAmbushAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer := mocks.NewMockPlayer(ctrl)
 		mockCard := mocks.NewMockCard(ctrl) // not an Ambush
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockPlayer.EXPECT().GetCardFromHand("amb1").Return(mockCard, true)
 
@@ -81,7 +81,7 @@ func TestPlaceAmbushAction_Validate(t *testing.T) {
 		mockPlayer := mocks.NewMockPlayer(ctrl)
 		mockField := mocks.NewMockField(ctrl)
 		ambushCard := cards.NewAmbush("amb1")
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockPlayer.EXPECT().GetCardFromHand("AMB1").Return(ambushCard, true)
 		mockPlayer.EXPECT().Field().Return(mockField)
@@ -102,7 +102,7 @@ func TestPlaceAmbushAction_Validate(t *testing.T) {
 		mockPlayer := mocks.NewMockPlayer(ctrl)
 		mockField := mocks.NewMockField(ctrl)
 		ambushCard := cards.NewAmbush("amb1")
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockPlayer.EXPECT().GetCardFromHand("AMB1").Return(ambushCard, true)
 		mockPlayer.EXPECT().Field().Return(mockField)
@@ -127,7 +127,7 @@ func TestPlaceAmbushAction_Execute(t *testing.T) {
 		ambushCard := cards.NewAmbush("amb1")
 
 		// Validate first
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
 		mockPlayer.EXPECT().GetCardFromHand("AMB1").Return(ambushCard, true)
 		mockPlayer.EXPECT().Field().Return(mockField).AnyTimes()

@@ -34,7 +34,7 @@ func validateDesertionAction(
 	mockField2 := mocks.NewMockField(ctrl)
 	mockWarrior := mocks.NewMockWarrior(ctrl)
 
-	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 	mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
 	mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
@@ -68,12 +68,12 @@ func TestDesertionAction_NextPhase(t *testing.T) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 func TestDesertionAction_Validate(t *testing.T) {
-	t.Run("Error when not in SpySteal phase", func(t *testing.T) {
+	t.Run("Error when not in Attack phase", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack).Times(2)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal).Times(2)
 
 		action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
 		err := action.Validate(mockGame)
@@ -89,7 +89,7 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(nil, false)
 
@@ -108,7 +108,7 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockCard := mocks.NewMockCard(ctrl)
 
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockCard, true)
 
@@ -127,7 +127,7 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockDesertion := mocks.NewMockDesertion(ctrl)
 
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Unknown").Return(nil, errors.New("player not found"))
@@ -149,7 +149,7 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockField2 := mocks.NewMockField(ctrl)
 
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
@@ -174,7 +174,7 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockField2 := mocks.NewMockField(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
@@ -200,7 +200,7 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockField2 := mocks.NewMockField(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 
-		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal)
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
@@ -224,8 +224,7 @@ func TestDesertionAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, _, mockPlayer2, mockField2, mockWarrior, _ :=
-			validateDesertionAction(t, ctrl)
+		action, mockGame, _, mockPlayer2, mockField2, mockWarrior, _ := validateDesertionAction(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mocks.NewMockPlayer(ctrl))
 		mockPlayer2.EXPECT().Field().Return(mockField2)
@@ -243,8 +242,7 @@ func TestDesertionAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion :=
-			validateDesertionAction(t, ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion := validateDesertionAction(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
@@ -265,8 +263,7 @@ func TestDesertionAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion :=
-			validateDesertionAction(t, ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion := validateDesertionAction(t, ctrl)
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
@@ -298,8 +295,7 @@ func TestDesertionAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion :=
-			validateDesertionAction(t, ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion := validateDesertionAction(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)

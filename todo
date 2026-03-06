@@ -1,5 +1,10 @@
 Fixes:
 flickering cards
+evento bloodlust solo aplica a regular weapons?
+harpoon no tiene tests
+ambush should be placed in allies field as well
+resurrection que muestre en modal a quien resucito, y tambien se lo indique a los demas players
+
 
 Code improvements:
 

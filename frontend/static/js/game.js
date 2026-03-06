@@ -1117,11 +1117,13 @@ function sendAction(actionType, payload = null) {
         'special_power': 'attack',
         'harpoon': 'attack',
         'blood_rain': 'attack',
+        'place_ambush': 'attack',
+        'resurrection': 'attack',
+        'desertion': 'attack',
+        'catapult': 'attack',
         'spy': 'spy/steal',
         'steal': 'spy/steal',
         'sabotage': 'spy/steal',
-        'desertion': 'spy/steal',
-        'catapult': 'spy/steal',
         'buy': 'buy',
         'construct': 'construct',
         'fortress': 'construct'
@@ -1461,6 +1463,36 @@ function handleAttackPhaseHandClick(cardID, card) {
             showResurrectionTargetModal(cardID, card, allies);
         } else {
             showResurrectionConfirmModal(cardID, card, '');
+        }
+    } else if (cardType === 'ambush') {
+        gameState.actionState.type = 'ambush';
+        gameState.actionState.weaponId = cardID;
+        highlightSelectedCard(cardID);
+        showAmbushPlaceConfirmModal(card, cardID);
+    } else if (cardType === 'desertion') {
+        gameState.actionState.type = 'desertion';
+        gameState.actionState.weaponId = cardID;
+        highlightSelectedCard(cardID);
+        const enemies = getEnemyOpponents().filter(opp => (opp.field || []).some(w => w.value <= 5));
+        if (enemies.length === 0) {
+            updateActionPrompt('No enemies have warriors with 5 HP or less!');
+            resetActionState();
+            return;
+        }
+        if (enemies.length === 1) {
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            showDesertionModal();
+        } else {
+            showTargetPlayerModal('Select a player to steal warrior from', enemies,
+                (playerName) => {
+                    gameState.actionState.weaponId = cardID;
+                    gameState.actionState.targetPlayer = playerName;
+                    showDesertionModal();
+                },
+                (opp) => {
+                    const weakCount = (opp.field || []).filter(w => w.value <= 5).length;
+                    return weakCount > 0 ? `${weakCount} weak warrior(s) (≤5 HP)` : 'No warriors ≤5 HP';
+                });
         }
     }
 }

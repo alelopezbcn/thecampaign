@@ -35,7 +35,7 @@ func NewPlaceAmbushAction(playerName, cardID string) *placeAmbushAction {
 func (a *placeAmbushAction) PlayerName() string { return a.playerName }
 
 func (a *placeAmbushAction) Validate(g Game) error {
-	if g.CurrentAction() != types.PhaseTypeBuy {
+	if g.CurrentAction() != types.PhaseTypeAttack {
 		return fmt.Errorf("cannot place ambush in the %s phase", g.CurrentAction())
 	}
 

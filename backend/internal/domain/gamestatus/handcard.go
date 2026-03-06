@@ -213,22 +213,28 @@ func NewCatapultHandCard(cardID string, canBeUsed bool,
 		canBeUsed)
 }
 
-func NewFortressHandCard(cardID string, castleConstructed bool,
-	allyCastleConstructed bool, action types.PhaseType,
-) HandCard {
-	if action != types.PhaseTypeConstruct {
-		return newHandCard(cardID, CardTypeFortress, 0, []string{}, false)
-	}
-	canBeUsed := castleConstructed || allyCastleConstructed
-	return newHandCard(cardID, CardTypeFortress, 0, []string{}, canBeUsed)
-}
-
 func NewResurrectionHandCard(cardID string, cemeteryCount int, action types.PhaseType) HandCard {
 	if action != types.PhaseTypeAttack {
 		return newHandCard(cardID, CardTypeResurrection, 0, []string{}, false)
 	}
 	return newHandCard(cardID, CardTypeResurrection, 0, []string{}, cemeteryCount > 0)
 }
+
+func NewDesertionHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeDesertion, 0, []string{},
+		anyEnemyHasWeakWarriors && action == types.PhaseTypeAttack)
+}
+
+func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
+	if action != types.PhaseTypeAttack {
+		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)
+	}
+	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, !fieldAlreadyHasAmbush)
+}
+
+// ---------------
+// Spy Phase cards
+// ---------------
 
 func NewSpyHandCard(cardID string, action types.PhaseType) HandCard {
 	return newHandCard(cardID, CardTypeSpy, 0, []string{},
@@ -245,17 +251,9 @@ func NewSabotageHandCard(cardID string, anyEnemyHasCards bool, action types.Phas
 		anyEnemyHasCards && action == types.PhaseTypeSpySteal)
 }
 
-func NewDesertionHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
-	return newHandCard(cardID, CardTypeDesertion, 0, []string{},
-		anyEnemyHasWeakWarriors && action == types.PhaseTypeSpySteal)
-}
-
-func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
-	if action != types.PhaseTypeBuy {
-		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)
-	}
-	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, !fieldAlreadyHasAmbush)
-}
+// -------------------------
+// Buy/Construct Phase cards
+// -------------------------
 
 func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 	allyCastleConstructed bool, canBuy bool, action types.PhaseType,
@@ -278,6 +276,20 @@ func NewResourceHandCard(resource cards.Resource, playerCastleConstructed bool,
 
 	return newHandCard(resource.GetID(), CardTypeResource,
 		resource.Value(), []string{}, canBuy)
+}
+
+// ---------------------
+// Construct Phase cards
+// ---------------------
+
+func NewFortressHandCard(cardID string, castleConstructed bool,
+	allyCastleConstructed bool, action types.PhaseType,
+) HandCard {
+	if action != types.PhaseTypeConstruct {
+		return newHandCard(cardID, CardTypeFortress, 0, []string{}, false)
+	}
+	canBeUsed := castleConstructed || allyCastleConstructed
+	return newHandCard(cardID, CardTypeFortress, 0, []string{}, canBeUsed)
 }
 
 // specialWeaponHandCardBuilders maps each special WeaponType to its HandCard builder.

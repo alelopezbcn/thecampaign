@@ -174,13 +174,13 @@ var cardConfig = map[string]CardConfigEntry{
 	"spy": {
 		Description: `𝐒𝐩𝐲
 𝐄𝐟𝐟𝐞𝐜𝐭: Peek at an opponent's full hand OR the top 5 cards of the deck.
-𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage 🎭`,
 		Image: "spy.webp",
 	},
 	"thief": {
 		Description: `𝐓𝐡𝐢𝐞𝐟
 𝐄𝐟𝐟𝐞𝐜𝐭: Steal a random card from an opponent's hand.
-𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage 🎭`,
 		Image: "thief.webp",
 	},
 	"catapult": {
@@ -208,14 +208,14 @@ var cardConfig = map[string]CardConfigEntry{
 		Description: `𝐒𝐚𝐛𝐨𝐭𝐚𝐠𝐞
 𝐄𝐟𝐟𝐞𝐜𝐭: Destroy a random card from an opponent's hand.
 𝐍𝐨𝐭𝐞: The card is discarded, not stolen.
-𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage 🎭`,
 		Image: "sabotage.webp",
 	},
 	"desertion": {
 		Description: `𝐃𝐞𝐬𝐞𝐫𝐭𝐢𝐨𝐧
 𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to desert.
 𝐂𝐨𝐧𝐝𝐢𝐭𝐢𝐨𝐧: Target must have 5 HP or less.
-𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage / Desertion 🎭`,
+𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
 		Image: "desertion.webp",
 	},
 	"ambush": {
@@ -229,7 +229,7 @@ var cardConfig = map[string]CardConfigEntry{
 • Drain Life (23%)
 • Instant Kill (8%)
 𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Only one Ambush per field.
-𝐏𝐡𝐚𝐬𝐞: Buy / Trade / Ambush 💰`,
+𝐏𝐡𝐚𝐬𝐞: Attack 💰`,
 		Image: "ambush.webp",
 	},
 }

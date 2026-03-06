@@ -137,6 +137,12 @@ func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamest
 	// Award kill credit to the archer when the target is instantly killed.
 	if a.usedOn.Health() == 0 {
 		a.usedBy.AddKill()
+
+		// Bloodlust: if the target was killed, restore HP to the attacking warrior.
+		handler := g.EventHandler()
+		if healAmount := handler.OnKillHealAmount(); healAmount > 0 && a.usedOn.Health() == 0 {
+			a.usedBy.HealBy(healAmount)
+		}
 	}
 
 	if _, err := p.RemoveFromHand(a.specialPower.GetID()); err != nil {
