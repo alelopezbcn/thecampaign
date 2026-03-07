@@ -4,26 +4,16 @@ evento bloodlust solo aplica a regular weapons?
 harpoon no tiene tests
 ambush should be placed in allies field as well
 resurrection que muestre en modal a quien resucito, y tambien se lo indique a los demas players
-
-
-Code improvements:
-
-Deseable:
-Add to game settings list of enable events and cards, so players can customize their experience
-
-
-
-Events:
-Blood Price — attacking costs HP
-Cowardice — warriors can't attack unless outnumbered
-
-Cards:
-Medal of Honor — reward card for achieving kills
-War Stories — draw extra cards based on kills this turn
-Veteran's Blade — weapon that gets stronger with kills
-Tribute — enemy must pay gold or lose a warrior
-Grudge — bonus damage against the player who last killed your warrior
-
-Systems:
-Warrior Ranks (Blooded / Veteran / Elite) — warriors gain rank through kills, unlocking passive bonuses
+Bug del dragon
+nombres de los eventos
+que pasa cuando se amata al del Castillo? todo deberia ir al deck
+arrastrar castle max value from settigs a la UI
+bug de replay, connected to server y no pasa nada
+bounty que de cartas por matar con bloodrain
+en l.a etapa de buy me deja usar Hand Warriors como monedas. Skimilar issue with Dragon in construct
+    only gold cards can be used to buy
+    only gold cards can be used to hire a mercenary
+mejorar popups, menos clicks.
+change Desertion name to Treason
+sum HP in field next to warrior name
 End-Game Stats — post-game summary screen (kills, damage dealt, etc.)

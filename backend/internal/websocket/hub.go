@@ -200,11 +200,11 @@ func maxPlayersForMode(mode types.GameMode) int {
 	}
 }
 
-// generateGameID creates a short 6-character uppercase alphanumeric game ID.
+// generateGameID creates a short 4-character uppercase alphanumeric game ID.
 // Avoids ambiguous characters (I, O, 0, 1).
 func generateGameID() string {
 	const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
-	id := make([]byte, 6)
+	id := make([]byte, 4)
 	for i := range id {
 		id[i] = chars[rand.IntN(len(chars))]
 	}

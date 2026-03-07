@@ -107,7 +107,7 @@ var cardConfig = map[string]CardConfigEntry{
 	},
 	"mercenary": {
 		Description: `𝐍𝐞𝐮𝐭𝐫𝐚𝐥 𝐖𝐚𝐫𝐫𝐢𝐨𝐫 𝐟𝐨𝐫 𝐇𝐢𝐫𝐞
-𝐑𝐞𝐜𝐫𝐮𝐢𝐭𝐦𝐞𝐧𝐭 𝐂𝐨𝐬𝐭: 6+ 🪙.
+𝐑𝐞𝐜𝐫𝐮𝐢𝐭𝐦𝐞𝐧𝐭 𝐂𝐨𝐬𝐭: 8+ 🪙.
 𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be recruited directly to your field.
 𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack using any weapon.
 𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Cannot use Special Powers.`,
@@ -143,7 +143,7 @@ var cardConfig = map[string]CardConfigEntry{
 	"resource": {
 		Description: `𝐆𝐨𝐥𝐝 𝐑𝐞𝐬𝐨𝐮𝐫𝐜𝐞
 𝐄𝐟𝐟𝐞𝐜𝐭: Spend 2 Coins to buy 1 Card.
-𝐌𝐞𝐫𝐜𝐞𝐧𝐚𝐫𝐲: Spend 6+ Coins to recruit directly to field.
+𝐌𝐞𝐫𝐜𝐞𝐧𝐚𝐫𝐲: Spend 8+ Coins to recruit directly to field.
 𝐔𝐭𝐢𝐥𝐢𝐭𝐲: A value-1 Gold can construct your Castle.
 𝐏𝐡𝐚𝐬𝐞: Buy 💰 / Build 🏰`,
 		Image: "gold.webp",

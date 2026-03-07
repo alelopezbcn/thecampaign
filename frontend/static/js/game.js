@@ -419,6 +419,17 @@ function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
 
+    // Close any existing connection cleanly before opening a new one.
+    // Nulling out onclose first prevents the stale handler from clobbering
+    // the new ws reference or triggering an unwanted reconnect cycle.
+    if (ws) {
+        ws.onclose = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.close();
+        ws = null;
+    }
+
     ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
@@ -1775,7 +1786,7 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
             break;
         case 'mage':
             title = 'Heal';
-            healedHp = (target?.sub_type || '').toLowerCase() === 'mercenary' ? 15 : 20;
+            healedHp = (target?.sub_type || '').toLowerCase() === 'mercenary' ? 10 : 20;
             description = `${userName} will heal ${targetName} (${targetHp} → ${healedHp} HP)`;
             break;
         default:
@@ -1920,8 +1931,8 @@ function showBuyConfirmModal(resource, cardID) {
     const resourceValue = resource?.value || 0;
     const cardsToReceive = Math.floor(resourceValue / 2);
 
-    // When gold >= 6, offer a choice: deck cards or mercenary
-    if (resourceValue >= 6) {
+    // When gold >= 8, offer a choice: deck cards or mercenary
+    if (resourceValue >= 8) {
         const content = `
             <div class="target-player-options">
                 <div class="target-player-option" onclick="window._buyChoiceCallback('deck')">
@@ -1935,7 +1946,7 @@ function showBuyConfirmModal(resource, cardID) {
                     <span class="player-icon">⚔️</span>
                     <div class="player-info">
                         <div class="player-name">Hire Mercenary</div>
-                        <div class="player-detail">15 HP · uses any weapon · no special powers</div>
+                        <div class="player-detail">10 HP · uses any weapon · no special powers</div>
                     </div>
                 </div>
             </div>`;

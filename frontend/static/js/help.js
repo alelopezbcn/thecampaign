@@ -445,7 +445,7 @@
                 </tr>
                 <tr>
                     <td><span class="hc">Mercenary</span></td>
-                    <td class="hn">15</td>
+                    <td class="hn">10</td>
                     <td>Any</td>
                     <td>None</td>
                     <td>No &times;2 damage. Lower max HP. Can carry any weapon.</td>
