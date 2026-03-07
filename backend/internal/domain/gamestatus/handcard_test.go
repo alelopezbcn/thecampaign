@@ -39,7 +39,7 @@ func TestNewWarriorHandCard(t *testing.T) {
 			assert.Equal(t, "W1", hc.ID)
 			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, 20, hc.Value)
-			assert.True(t, hc.CanBeUsed)
+			assert.False(t, hc.CanBeUsed) // warriors in hand are never directly usable; move_warrior uses CanMoveWarrior
 			assert.Empty(t, hc.CanBeUsedOnIDs)
 		})
 	}

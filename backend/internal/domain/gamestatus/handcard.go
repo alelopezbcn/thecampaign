@@ -38,8 +38,12 @@ func NewWarriorHandCard(warrior cards.Warrior) HandCard {
 		aCardType = CardTypeMercenary
 	}
 
+	// Warriors in hand are never directly "usable" as a card action — they are only
+	// moved to the field via the move_warrior flow (governed by CanMoveWarrior).
+	// Setting CanBeUsed = false prevents them from being mistakenly selected as
+	// gold in the buy phase or as building material in the construct phase.
 	return newHandCard(warrior.GetID(), aCardType,
-		warrior.Health(), []string{}, true)
+		warrior.Health(), []string{}, false)
 }
 
 func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
