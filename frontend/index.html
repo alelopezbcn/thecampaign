@@ -256,7 +256,7 @@
                 <div id="phase-badge" class="phase-badge hidden">
                     <span class="pb-phase" data-phase="attack" data-tip="• Regular Weapons&#10;• Special Powers&#10;• Catapult&#10;• Resurrection&#10;• Move Warrior">⚔️ Attack</span>
                     <span class="pb-sep">›</span>
-                    <span class="pb-phase" data-phase="spy/steal" data-tip="• Spy&#10;• Steal&#10;• Sabotage&#10;• Desertion">🎭 Spy / Steal</span>
+                    <span class="pb-phase" data-phase="spy/steal" data-tip="• Spy&#10;• Steal&#10;• Sabotage&#10;• Treason">🎭 Spy / Steal</span>
                     <span class="pb-sep">›</span>
                     <span class="pb-phase" data-phase="buy" data-tip="• Gold (spend to draw cards)&#10;• Trade (3 cards → 1)&#10;• Mercenary (hire a warrior)&#10;• Ambush (place trap in field)">💰 Buy</span>
                     <span class="pb-sep">›</span>
@@ -386,17 +386,17 @@
             </div>
         </div>
 
-        <!-- Desertion Notification Modal (victim) -->
-        <div id="desertion-notification-modal" class="desertion-notification-modal hidden">
-            <div class="desertion-notification-content">
-                <div class="desertion-notification-header">&#128073; Desertion!</div>
-                <div class="desertion-notification-body">
-                    <div id="desertion-warrior-container" class="desertion-warrior-container"></div>
-                    <div class="desertion-notification-info">
-                        <p id="desertion-notification-text" class="desertion-notification-text"></p>
+        <!-- Treason Notification Modal (victim) -->
+        <div id="treason-notification-modal" class="treason-notification-modal hidden">
+            <div class="treason-notification-content">
+                <div class="treason-notification-header">&#128073; Treason!</div>
+                <div class="treason-notification-body">
+                    <div id="treason-warrior-container" class="treason-warrior-container"></div>
+                    <div class="treason-notification-info">
+                        <p id="treason-notification-text" class="treason-notification-text"></p>
                     </div>
                 </div>
-                <button id="desertion-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
+                <button id="treason-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
             </div>
         </div>
 
@@ -495,8 +495,8 @@
                             <input type="number" id="cfg-resurrections" class="settings-input" min="0" max="10">
                         </div>
                         <div class="settings-row">
-                            <label>Desertions</label>
-                            <input type="number" id="cfg-desertions" class="settings-input" min="0" max="10">
+                            <label>Treasons</label>
+                            <input type="number" id="cfg-treasons" class="settings-input" min="0" max="10">
                         </div>
                     </div>
                 </div>

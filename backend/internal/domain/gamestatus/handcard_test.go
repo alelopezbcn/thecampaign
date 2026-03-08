@@ -1178,7 +1178,7 @@ func TestNewAmbushHandCard(t *testing.T) {
 	}
 }
 
-func TestNewDesertionHandCard(t *testing.T) {
+func TestNewTreasonHandCard(t *testing.T) {
 	tests := []struct {
 		name                    string
 		cardID                  string
@@ -1232,10 +1232,10 @@ func TestNewDesertionHandCard(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := gamestatus.NewDesertionHandCard(tt.cardID, tt.anyEnemyHasWeakWarriors, tt.action)
+			hc := gamestatus.NewTreasonHandCard(tt.cardID, tt.anyEnemyHasWeakWarriors, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.ID)
-			assert.Equal(t, gamestatus.CardTypeDesertion, hc.CardType())
+			assert.Equal(t, gamestatus.CardTypeTreason, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)

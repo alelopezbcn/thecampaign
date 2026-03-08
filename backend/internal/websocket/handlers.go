@@ -152,13 +152,13 @@ func (h *Hub) handleSteal(client *Client, payload interface{}) {
 	})
 }
 
-func (h *Hub) handleDesertion(client *Client, payload interface{}) {
-	p, ok := parsePayload[DesertionPayload](client, payload, "Invalid desertion payload")
+func (h *Hub) handleTreason(client *Client, payload interface{}) {
+	p, ok := parsePayload[TreasonPayload](client, payload, "Invalid treason payload")
 	if !ok {
 		return
 	}
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewDesertionAction(client.PlayerName, p.TargetPlayer, p.WarriorID, p.CardID))
+		return g.ExecuteAction(gameactions.NewTreasonAction(client.PlayerName, p.TargetPlayer, p.WarriorID, p.CardID))
 	})
 }
 
@@ -226,7 +226,6 @@ func (h *Hub) handleEndTurn(client *Client) {
 		defer room.mutex.Unlock()
 		return room.Game.ExecuteAction(gameactions.NewEndTurnPhaseAction(client.PlayerName, false))
 	}()
-
 	if err != nil {
 		client.SendError(err.Error())
 		return

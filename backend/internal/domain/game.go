@@ -611,10 +611,10 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 			}
 		}
 
-		if !canPlayPhase && board.HasCardTypeInHand[cards.Desertion](p) {
+		if !canPlayPhase && board.HasCardTypeInHand[cards.Treason](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				for _, w := range e.Field().Warriors() {
-					if w.Health() <= cards.DesertionMaxHP {
+					if w.Health() <= cards.TreasonMaxHP {
 						canPlayPhase = true
 						break
 					}
@@ -818,7 +818,7 @@ func (g *game) getStatus(viewer board.Player,
 			anyEnemyHasCards = true
 		}
 		for _, w := range enemy.Field().Warriors() {
-			if w.Health() <= cards.DesertionMaxHP {
+			if w.Health() <= cards.TreasonMaxHP {
 				anyEnemyHasWeakWarriors = true
 			}
 		}
@@ -889,9 +889,9 @@ func (g *game) getStatus(viewer board.Player,
 		gameStatusDTO.SpyTarget = s.Target
 		gameStatusDTO.SpyTargetPlayer = s.TargetPlayer
 	}
-	if d := g.lastResult.Desertion; d != nil {
-		gameStatusDTO.DeserterFromPlayer = d.FromPlayer
-		gameStatusDTO.DeserterWarrior = d.Warrior
+	if d := g.lastResult.Treason; d != nil {
+		gameStatusDTO.TraitorFromPlayer = d.FromPlayer
+		gameStatusDTO.TraitorWarrior = d.Warrior
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()

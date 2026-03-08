@@ -224,8 +224,8 @@ func NewResurrectionHandCard(cardID string, cemeteryCount int, action types.Phas
 	return newHandCard(cardID, CardTypeResurrection, 0, []string{}, cemeteryCount > 0)
 }
 
-func NewDesertionHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
-	return newHandCard(cardID, CardTypeDesertion, 0, []string{},
+func NewTreasonHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeTreason, 0, []string{},
 		anyEnemyHasWeakWarriors && action == types.PhaseTypeAttack)
 }
 

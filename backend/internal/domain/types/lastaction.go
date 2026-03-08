@@ -22,7 +22,7 @@ const (
 	LastActionResurrection    LastActionType = "resurrection"
 	LastActionPlaceAmbush     LastActionType = "place_ambush"
 	LastActionAmbush          LastActionType = "ambush"
-	LastActionDesertion       LastActionType = "desertion"
+	LastActionTreason         LastActionType = "treason"
 	LastActionForge           LastActionType = "forge"
 	LastActionSkip            LastActionType = "skip"
 	LastActionEndTurn         LastActionType = "end_turn"

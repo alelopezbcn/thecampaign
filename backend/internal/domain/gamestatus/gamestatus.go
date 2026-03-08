@@ -15,7 +15,7 @@ type AmbushTrigger struct {
 	EffectDisplay string             `json:"effect_display"`
 }
 
-type DesertionNotification struct {
+type TreasonNotification struct {
 	WarriorCard Card   `json:"warrior_card"`
 	StolenBy    string `json:"stolen_by"`
 }
@@ -54,7 +54,7 @@ type GameStatus struct {
 	SabotagedFromYouCard         []Card                       `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification              string                       `json:"spy_notification,omitempty"`
 	AmbushTriggered              *AmbushTrigger               `json:"ambush_triggered,omitempty"`
-	DesertionNotification        *DesertionNotification       `json:"desertion_notification,omitempty"`
+	TreasonNotification          *TreasonNotification         `json:"treason_notification,omitempty"`
 	ChampionsBounty              *ChampionsBountyNotification `json:"champions_bounty,omitempty"`
 	History                      []HistoryLine                `json:"history"`
 	PlayersOrder                 []string                     `json:"players_order"`
@@ -131,7 +131,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 	applySabotageNotification(in, &gs)
 	applySpyNotification(in, &gs)
 	applyAmbushNotification(in, &gs)
-	applyDesertionNotification(in, &gs)
+	applyTreasonNotification(in, &gs)
 	applyChampionsBountyNotification(in, &gs)
 
 	processHandCards(in.Viewer, in, &gs)
@@ -230,11 +230,11 @@ func applyChampionsBountyNotification(in BuildInput, gs *GameStatus) {
 	}
 }
 
-func applyDesertionNotification(in BuildInput, gs *GameStatus) {
-	if in.LastAction == types.LastActionDesertion && in.DeserterFromPlayer != "" &&
-		in.Viewer.Name == in.DeserterFromPlayer && in.DeserterWarrior != nil {
-		gs.DesertionNotification = &DesertionNotification{
-			WarriorCard: fromDomainCard(in.DeserterWarrior),
+func applyTreasonNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionTreason && in.TraitorFromPlayer != "" &&
+		in.Viewer.Name == in.TraitorFromPlayer && in.TraitorWarrior != nil {
+		gs.TreasonNotification = &TreasonNotification{
+			WarriorCard: fromDomainCard(in.TraitorWarrior),
 			StolenBy:    in.CurrentPlayerName,
 		}
 	}
@@ -277,9 +277,9 @@ func processHandCards(viewer ViewerInput, game BuildInput, gs *GameStatus) {
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewSabotageHandCard(ct.GetID(), game.AnyEnemyHasCards, action))
 
-		case cards.Desertion:
+		case cards.Treason:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewDesertionHandCard(ct.GetID(), game.AnyEnemyHasWeakWarriors, action))
+				NewTreasonHandCard(ct.GetID(), game.AnyEnemyHasWeakWarriors, action))
 
 		case cards.Fortress:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,

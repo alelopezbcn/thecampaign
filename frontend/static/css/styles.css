@@ -4098,17 +4098,17 @@ body {
     }
 }
 
-/* ========== Desertion Animation ========== */
+/* ========== Treason Animation ========== */
 
-.desertion-ghost {
+.treason-ghost {
     position: fixed;
     pointer-events: none;
     z-index: 9999;
-    animation: desertionFly 1.3s ease-in-out forwards;
+    animation: treasonFly 1.3s ease-in-out forwards;
     transform-style: preserve-3d;
 }
 
-@keyframes desertionFly {
+@keyframes treasonFly {
     0% {
         transform: translate(0, 0) rotateY(0deg) scale(1);
         opacity: 1;
@@ -4131,11 +4131,11 @@ body {
 }
 
 /* Flash on the player-field when the warrior lands */
-.desertion-landing-flash {
-    animation: desertionLandingFlash 0.7s ease-out forwards;
+.treason-landing-flash {
+    animation: treasonLandingFlash 0.7s ease-out forwards;
 }
 
-@keyframes desertionLandingFlash {
+@keyframes treasonLandingFlash {
     0%   { box-shadow: inset 0 0 30px 10px rgba(34, 255, 136, 0.6); }
     100% { box-shadow: inset 0 0 0 0 transparent; }
 }
@@ -5097,8 +5097,8 @@ body {
     color: #d1d5db;
 }
 
-/* ===== Desertion Notification Modal (victim) ============================= */
-.desertion-notification-modal {
+/* ===== Treason Notification Modal (victim) ============================= */
+.treason-notification-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -5112,9 +5112,9 @@ body {
     animation: fadeIn 0.3s ease-out;
 }
 
-.desertion-notification-modal.hidden { display: none; }
+.treason-notification-modal.hidden { display: none; }
 
-.desertion-notification-content {
+.treason-notification-content {
     background: linear-gradient(145deg, #1a0808 0%, #3b0d0d 100%);
     border: 2px solid rgba(220, 38, 38, 0.6);
     border-radius: 16px;
@@ -5126,7 +5126,7 @@ body {
     max-width: 380px;
 }
 
-.desertion-notification-header {
+.treason-notification-header {
     font-size: 1.5rem;
     font-weight: 800;
     color: #f87171;
@@ -5135,7 +5135,7 @@ body {
     letter-spacing: 1px;
 }
 
-.desertion-notification-body {
+.treason-notification-body {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -5143,19 +5143,19 @@ body {
     margin-bottom: 16px;
 }
 
-.desertion-warrior-container {
+.treason-warrior-container {
     display: flex;
     justify-content: center;
 }
 
-.desertion-notification-text {
+.treason-notification-text {
     font-size: 0.95rem;
     color: #fca5a5;
     font-weight: 600;
 }
 
-/* ===== Desertion Modal warrior grid ====================================== */
-.desertion-warrior-grid {
+/* ===== Treason Modal warrior grid ====================================== */
+.treason-warrior-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -5163,13 +5163,13 @@ body {
     padding: 8px;
 }
 
-.desertion-warrior-option {
+.treason-warrior-option {
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     border-radius: 8px;
 }
 
-.desertion-warrior-option:hover {
+.treason-warrior-option:hover {
     transform: scale(1.08);
     box-shadow: 0 0 20px rgba(34, 255, 136, 0.5);
 }

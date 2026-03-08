@@ -22,7 +22,7 @@ const DEFAULT_GAME_CONFIG = {
     ambushes: 1,
     blood_rains: 2,
     resurrections: 1,
-    desertions: 1,
+    treasons: 1,
     construction_cards: 1,
     high_value_gold_cards: 0,
     castle_goal: DEFAULT_CASTLE_GOAL
@@ -129,7 +129,7 @@ function applyPreset(config) {
         'cfg-ambushes':            'ambushes',
         'cfg-blood-rains':         'blood_rains',
         'cfg-resurrections':       'resurrections',
-        'cfg-desertions':          'desertions',
+        'cfg-treasons':          'treasons',
         'cfg-construction-cards':  'construction_cards',
         'cfg-high-value-gold':     'high_value_gold_cards',
         'cfg-castle-goal':         'castle_goal'
@@ -155,7 +155,7 @@ function readConfigFromInputs() {
         ambushes:           parseInt(document.getElementById('cfg-ambushes').value) || 0,
         blood_rains:        parseInt(document.getElementById('cfg-blood-rains').value) || 0,
         resurrections:      parseInt(document.getElementById('cfg-resurrections').value) || 0,
-        desertions:         parseInt(document.getElementById('cfg-desertions').value) || 0,
+        treasons:         parseInt(document.getElementById('cfg-treasons').value) || 0,
         construction_cards:    parseInt(document.getElementById('cfg-construction-cards').value) || 1,
         high_value_gold_cards: parseInt(document.getElementById('cfg-high-value-gold').value) || 0,
         castle_goal:           parseInt(document.getElementById('cfg-castle-goal').value) || DEFAULT_CASTLE_GOAL
@@ -230,7 +230,7 @@ function setupEventListeners() {
         'cfg-warriors', 'cfg-dragons', 'cfg-harpoons', 'cfg-special-powers',
         'cfg-spies', 'cfg-thieves', 'cfg-sabotages', 'cfg-catapults',
         'cfg-fortresses', 'cfg-ambushes', 'cfg-blood-rains', 'cfg-resurrections',
-        'cfg-desertions', 'cfg-construction-cards', 'cfg-castle-goal'
+        'cfg-treasons', 'cfg-construction-cards', 'cfg-castle-goal'
     ];
     cfgInputIds.forEach(id => {
         document.getElementById(id).addEventListener('input', markConfigCustom);
@@ -309,8 +309,8 @@ function setupEventListeners() {
     // Spy notification modal close
     document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
 
-    // Desertion notification modal close
-    document.getElementById('desertion-notification-close').addEventListener('click', hideDesertionNotificationModal);
+    // Treason notification modal close
+    document.getElementById('treason-notification-close').addEventListener('click', hideTreasonNotificationModal);
 
     // Ambush triggered modal close
     document.getElementById('ambush-triggered-close').addEventListener('click', hideAmbushTriggeredModal);
@@ -345,7 +345,7 @@ function setupEventListeners() {
         { id: 'action-confirm-modal', hide: onActionConfirmNo },
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
-        { id: 'desertion-notification-modal', hide: hideDesertionNotificationModal },
+        { id: 'treason-notification-modal', hide: hideTreasonNotificationModal },
         { id: 'champions-bounty-modal', hide: hideChampionsBountyModal },
         { id: 'gameover-modal', hide: () => location.reload() },
     ];
@@ -660,10 +660,10 @@ function handleGameState(payload) {
         sabotageData = prepareSabotageAnimation(previousState, payload.game_status);
     }
 
-    // Detect desertion (warrior flying from enemy field to own field)
-    let desertionData = null;
+    // Detect treason (warrior flying from enemy field to own field)
+    let treasonData = null;
     if (previousState) {
-        desertionData = prepareDesertionAnimation(previousState, payload.game_status);
+        treasonData = prepareTreasonAnimation(previousState, payload.game_status);
     }
 
     // Detect warrior move for animation (before re-render)
@@ -764,8 +764,8 @@ function handleGameState(payload) {
         if (sabotageData) {
             playSabotageAnimation(sabotageData);
         }
-        if (desertionData) {
-            playDesertionAnimation(desertionData);
+        if (treasonData) {
+            playTreasonAnimation(treasonData);
         }
         if (deckDrawInfo) {
             setTimeout(() => playDeckDrawAnimation(deckDrawInfo), 50);
@@ -838,10 +838,10 @@ function handleGameState(payload) {
         showAmbushTriggeredModal(ambushTriggered.effect_display);
     }
 
-    // Detect desertion notification (victim only)
-    const desertionNotification = payload.game_status.desertion_notification;
-    if (desertionNotification) {
-        showDesertionNotificationModal(desertionNotification);
+    // Detect treason notification (victim only)
+    const treasonNotification = payload.game_status.treason_notification;
+    if (treasonNotification) {
+        showTreasonNotificationModal(treasonNotification);
     }
 
     // Detect Champion's Bounty (shown to all players)
@@ -1130,7 +1130,7 @@ function sendAction(actionType, payload = null) {
         'blood_rain': 'attack',
         'place_ambush': 'attack',
         'resurrection': 'attack',
-        'desertion': 'attack',
+        'treason': 'attack',
         'catapult': 'attack',
         'spy': 'spy/steal',
         'steal': 'spy/steal',
@@ -1480,8 +1480,8 @@ function handleAttackPhaseHandClick(cardID, card) {
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
         showAmbushPlaceConfirmModal(card, cardID);
-    } else if (cardType === 'desertion') {
-        gameState.actionState.type = 'desertion';
+    } else if (cardType === 'treason') {
+        gameState.actionState.type = 'treason';
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
         const enemies = getEnemyOpponents().filter(opp => (opp.field || []).some(w => w.value <= 5));
@@ -1492,13 +1492,13 @@ function handleAttackPhaseHandClick(cardID, card) {
         }
         if (enemies.length === 1) {
             gameState.actionState.targetPlayer = enemies[0].player_name;
-            showDesertionModal();
+            showTreasonModal();
         } else {
             showTargetPlayerModal('Select a player to steal warrior from', enemies,
                 (playerName) => {
                     gameState.actionState.weaponId = cardID;
                     gameState.actionState.targetPlayer = playerName;
-                    showDesertionModal();
+                    showTreasonModal();
                 },
                 (opp) => {
                     const weakCount = (opp.field || []).filter(w => w.value <= 5).length;
@@ -1880,8 +1880,8 @@ function handleSpyStealPhaseHandClick(cardID, card) {
                 (playerName) => sendAction('sabotage', { card_id: cardID, target_player: playerName }),
                 (opp) => `${opp.cards_in_hand} card(s) in hand`);
         }
-    } else if (cardType === 'desertion') {
-        gameState.actionState.type = 'desertion';
+    } else if (cardType === 'treason') {
+        gameState.actionState.type = 'treason';
         const enemies = getEnemyOpponents().filter(opp => (opp.field || []).some(w => w.value <= 5));
         if (enemies.length === 0) {
             updateActionPrompt('No enemies have warriors with 5 HP or less!');
@@ -1890,13 +1890,13 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         }
         if (enemies.length === 1) {
             gameState.actionState.targetPlayer = enemies[0].player_name;
-            showDesertionModal();
+            showTreasonModal();
         } else {
             showTargetPlayerModal('Select a player to steal warrior from', enemies,
                 (playerName) => {
                     gameState.actionState.weaponId = cardID;
                     gameState.actionState.targetPlayer = playerName;
-                    showDesertionModal();
+                    showTreasonModal();
                 },
                 (opp) => {
                     const weakCount = (opp.field || []).filter(w => w.value <= 5).length;
@@ -3447,15 +3447,14 @@ function playSabotageAnimation(sabotageData) {
     setTimeout(() => ghost.remove(), 1200);
 }
 
-// ── Desertion Animation ──────────────────────────────────────────────────────
+// ── Treason Animation ──────────────────────────────────────────────────────
 
 // Captures the warrior card element in the enemy field before re-render.
-function prepareDesertionAnimation(previousState, newState) {
-    if (newState.last_action !== 'desertion') return null;
+function prepareTreasonAnimation(previousState, newState) {
+    if (newState.last_action !== 'treason') return null;
     // Only animate from the attacker's perspective
     if (newState.turn_player !== newState.current_player) return null;
 
-    const deserterID = newState.last_moved_warrior_id; // not used; search by field change
     const prevOpponents = previousState.opponents || [];
     const newOpponents = newState.opponents || [];
 
@@ -3480,7 +3479,7 @@ function prepareDesertionAnimation(previousState, newState) {
 }
 
 // Warrior ghost flies from the enemy field to the player's own field with a flip + glow.
-function playDesertionAnimation(data) {
+function playTreasonAnimation(data) {
     if (!data) return;
 
     const { clone, rect } = data;
@@ -3492,7 +3491,7 @@ function playDesertionAnimation(data) {
     const dy = (targetRect.top + targetRect.height / 2) - (rect.top + rect.height / 2);
 
     const ghost = document.createElement('div');
-    ghost.className = 'desertion-ghost';
+    ghost.className = 'treason-ghost';
     ghost.style.left = rect.left + 'px';
     ghost.style.top = rect.top + 'px';
     ghost.style.width = rect.width + 'px';
@@ -3509,8 +3508,8 @@ function playDesertionAnimation(data) {
     // After the warrior lands, flash the player-field green
     setTimeout(() => {
         ghost.remove();
-        playerField.classList.add('desertion-landing-flash');
-        setTimeout(() => playerField.classList.remove('desertion-landing-flash'), 700);
+        playerField.classList.add('treason-landing-flash');
+        setTimeout(() => playerField.classList.remove('treason-landing-flash'), 700);
     }, 1300);
 }
 
@@ -4261,7 +4260,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage' || type === 'desertion' || type === 'ambush') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage' || type === 'treason' || type === 'ambush') return 'special';
     return 'unknown';
 }
 
@@ -4833,34 +4832,34 @@ function hideSpyNotificationModal() {
     }
 }
 
-// Desertion Notification Modal — shown to the player whose warrior was stolen
-let desertionNotificationTimer = null;
+// Treason Notification Modal — shown to the player whose warrior was stolen
+let treasonNotificationTimer = null;
 let championsBountyTimer = null;
 
-function showDesertionNotificationModal(notification) {
-    const modal = document.getElementById('desertion-notification-modal');
-    const container = document.getElementById('desertion-warrior-container');
-    const text = document.getElementById('desertion-notification-text');
+function showTreasonNotificationModal(notification) {
+    const modal = document.getElementById('treason-notification-modal');
+    const container = document.getElementById('treason-warrior-container');
+    const text = document.getElementById('treason-notification-text');
     if (!modal || !container || !text) return;
 
     const warrior = notification.warrior_card;
     const stolenBy = notification.stolen_by;
     container.innerHTML = renderCardForModal(warrior);
     const warriorName = warrior.sub_type || warrior.type || 'Warrior';
-    text.textContent = `${warriorName} (${warrior.value} HP) deserted to ${stolenBy}!`;
+    text.textContent = `${warriorName} (${warrior.value} HP) moved to ${stolenBy} rank!`;
 
     modal.classList.remove('hidden');
 
-    if (desertionNotificationTimer) clearTimeout(desertionNotificationTimer);
-    desertionNotificationTimer = setTimeout(() => hideDesertionNotificationModal(), 5000);
+    if (treasonNotificationTimer) clearTimeout(treasonNotificationTimer);
+    treasonNotificationTimer = setTimeout(() => hideTreasonNotificationModal(), 5000);
 }
 
-function hideDesertionNotificationModal() {
-    const modal = document.getElementById('desertion-notification-modal');
+function hideTreasonNotificationModal() {
+    const modal = document.getElementById('treason-notification-modal');
     if (modal) modal.classList.add('hidden');
-    if (desertionNotificationTimer) {
-        clearTimeout(desertionNotificationTimer);
-        desertionNotificationTimer = null;
+    if (treasonNotificationTimer) {
+        clearTimeout(treasonNotificationTimer);
+        treasonNotificationTimer = null;
     }
 }
 
@@ -5271,8 +5270,8 @@ function selectStealPosition(position) {
     hideGameModal();
 }
 
-// Desertion Modal — shows eligible warriors (≤5 HP) from the target opponent's field
-function showDesertionModal() {
+// Treason Modal — shows eligible warriors (≤5 HP) from the target opponent's field
+function showTreasonModal() {
     const targetName = gameState.actionState.targetPlayer;
     const opponent = getOpponentByName(targetName);
     const field = (opponent?.field || []).filter(w => w.value <= 5);
@@ -5283,13 +5282,13 @@ function showDesertionModal() {
         return;
     }
 
-    let content = '<div class="desertion-warrior-grid">';
+    let content = '<div class="treason-warrior-grid">';
     field.forEach(warrior => {
         const subType = warrior.sub_type || warrior.type || 'Warrior';
         const imgKey = subType.toLowerCase();
         const imgSrc = `/static/img/cards/${imgKey}.webp`;
         content += `
-            <div class="desertion-warrior-option" onclick="selectDesertionWarrior('${warrior.id}')">
+            <div class="treason-warrior-option" onclick="selectTreasonWarrior('${warrior.id}')">
                 <div class="card ${imgKey} has-image" style="border-color:${warrior.color};">
                     <div class="card-image"><img src="${imgSrc}" alt="${subType}" draggable="false" onerror="this.parentNode.style.display='none'"></div>
                     <div class="card-info">
@@ -5302,11 +5301,11 @@ function showDesertionModal() {
     });
     content += '</div>';
 
-    showGameModal(`Desertion — ${targetName}`, 'Choose a weakened warrior to convince (≤5 HP)', content, true);
+    showGameModal(`Treason — ${targetName}`, 'Choose a weakened warrior to convince (≤5 HP)', content, true);
 }
 
-function selectDesertionWarrior(warriorID) {
-    sendAction('desertion', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
+function selectTreasonWarrior(warriorID) {
+    sendAction('treason', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
     hideGameModal();
 }
 

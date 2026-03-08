@@ -161,7 +161,7 @@ var messageHandlers = map[MessageType]func(*Hub, *Client, interface{}){
 	MsgConstruct:    func(h *Hub, c *Client, p interface{}) { h.handleConstruct(c, p) },
 	MsgSpy:          func(h *Hub, c *Client, p interface{}) { h.handleSpy(c, p) },
 	MsgSteal:        func(h *Hub, c *Client, p interface{}) { h.handleSteal(c, p) },
-	MsgDesertion:    func(h *Hub, c *Client, p interface{}) { h.handleDesertion(c, p) },
+	MsgTreason:      func(h *Hub, c *Client, p interface{}) { h.handleTreason(c, p) },
 	MsgCatapult:     func(h *Hub, c *Client, p interface{}) { h.handleCatapult(c, p) },
 	MsgFortress:     func(h *Hub, c *Client, p interface{}) { h.handleFortress(c, p) },
 	MsgResurrection: func(h *Hub, c *Client, p interface{}) { h.handleResurrection(c, p) },
@@ -440,7 +440,7 @@ func (h *Hub) handleStartGame(client *Client) {
 		Ambushes:           room.Config.Ambushes,
 		BloodRains:         room.Config.BloodRains,
 		Resurrections:      room.Config.Resurrections,
-		Desertions:         room.Config.Desertions,
+		Treasons:           room.Config.Treasons,
 		ConstructionCards:  room.Config.ConstructionCards,
 		HighValueGoldCards: room.Config.HighValueGoldCards,
 	}
@@ -527,7 +527,7 @@ func (h *Hub) handleRestartGame(client *Client) {
 		Ambushes:           room.Config.Ambushes,
 		BloodRains:         room.Config.BloodRains,
 		Resurrections:      room.Config.Resurrections,
-		Desertions:         room.Config.Desertions,
+		Treasons:           room.Config.Treasons,
 		ConstructionCards:  room.Config.ConstructionCards,
 		HighValueGoldCards: room.Config.HighValueGoldCards,
 	}

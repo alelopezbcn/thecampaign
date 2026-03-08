@@ -84,7 +84,7 @@ Each turn follows a phase sequence: `draw` -> `attack` -> `spy/steal` -> `buy` -
 
 **Keep this file in sync whenever game mechanics change.** It is the single source of truth for the in-game reference modal. Update it when you:
 
-- Add, remove, or change a **card type** (warriors, weapons, ambush effects, spy/steal/sabotage/desertion, catapult, resurrection, gold)
+- Add, remove, or change a **card type** (warriors, weapons, ambush effects, spy/steal/sabotage/treason, catapult, resurrection, gold)
 - Add, remove, or change a **game event** (`domain/gameevents/`)
 - Change a **game limit** (hand limit → `board.MaxCardsInHand`, turn time, trade limit, warrior moves, ambush limit)
 - Change **castle goals** or **win conditions**

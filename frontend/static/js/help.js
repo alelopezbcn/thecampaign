@@ -22,7 +22,7 @@
 //
 //  Cards tab:
 //    - Ambush effects (reflect, cancel, steal weapon, drain life, instant kill)
-//    - Spy / Steal / Sabotage / Desertion rules
+//    - Spy / Steal / Sabotage / Treason rules
 //    - Other cards: Catapult, Resurrection, Gold
 //
 //  Events tab:
@@ -365,7 +365,7 @@
                     <span class="help-phase-icon">🎭</span>
                     <div>
                         <div class="help-phase-name">Spy / Steal</div>
-                        <div class="help-phase-desc">Use Spy, Steal, Sabotage, or Desertion cards against opponents. Multiple uses per turn are allowed. Skip when done.</div>
+                        <div class="help-phase-desc">Use Spy, Steal, Sabotage, or Treason cards against opponents. Multiple uses per turn are allowed. Skip when done.</div>
                     </div>
                 </li>
                 <li class="help-phase-item">
@@ -565,7 +565,7 @@
                     <td>Destroy a random card from a target player&apos;s hand (sent to discard).</td>
                 </tr>
                 <tr>
-                    <td><span class="hc hc-purple">Desertion</span></td>
+                    <td><span class="hc hc-purple">Treason</span></td>
                     <td>Recruit a weakened enemy warrior (&le;5&nbsp;HP) from an opponent&apos;s field directly onto your field.</td>
                 </tr>
             </table>

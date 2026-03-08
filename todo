@@ -1,13 +1,14 @@
 Fixes:
 flickering cards
-harpoon no tiene tests, event neither
+harpoon no tiene tests, events neither
 
 ambush should be placed in allies field as well
 resurrection que muestre en modal a quien resucito, y tambien se lo indique a los demas players
-que pasa cuando se amata al del Castillo? todo deberia ir al deck
+
+limpiar castle en UI cuando el player es eliminado
 arrastrar castle max value from settigs a la UI
 
-change Desertion name to Treason
+change Treason name to Treason
 
 End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
 

@@ -211,17 +211,17 @@ var cardConfig = map[string]CardConfigEntry{
 𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage 🎭`,
 		Image: "sabotage.webp",
 	},
-	"desertion": {
-		Description: `𝐃𝐞𝐬𝐞𝐫𝐭𝐢𝐨𝐧
-𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to desert.
+	"treason": {
+		Description: `𝐓𝐫𝐞𝐚𝐬𝐨𝐧
+𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to betray their team.
 𝐂𝐨𝐧𝐝𝐢𝐭𝐢𝐨𝐧: Target must have 5 HP or less.
 𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
-		Image: "desertion.webp",
+		Image: "treason.webp",
 	},
 	"ambush": {
 		Description: `𝐀𝐦𝐛𝐮𝐬𝐡
-𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Placed face-down. Triggers on weapon attacks.
-𝐍𝐨𝐭𝐞: Does NOT trigger on Special Powers.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Placed face-down. Triggers on regular weapon attacks.
+𝐍𝐨𝐭𝐞: Finishes attack phase when used.
 𝐏𝐨𝐬𝐬𝐢𝐛𝐥𝐞 𝐄𝐟𝐟𝐞𝐜𝐭𝐬:
 • Reflect Damage (23%)
 • Cancel Attack (23%)

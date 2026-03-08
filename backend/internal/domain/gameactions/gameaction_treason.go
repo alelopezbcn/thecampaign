@@ -9,8 +9,8 @@ import (
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
 )
 
-// desertionGame declares the minimum Game surface needed by desertionAction.
-type desertionGame interface {
+// treasonGame declares the minimum Game surface needed by treasonAction.
+type treasonGame interface {
 	GamePlayers
 	GameTurn
 	GameCards
@@ -18,25 +18,25 @@ type desertionGame interface {
 	GameStatusProvider
 }
 
-// desertionTargetPlayer declares the minimum Player surface needed by desertionAction.
-type desertionTargetPlayer interface {
+// treasonTargetPlayer declares the minimum Player surface needed by treasonAction.
+type treasonTargetPlayer interface {
 	board.PlayerIdentity
 	board.PlayerField
 }
 
-type desertionAction struct {
+type treasonAction struct {
 	playerName       string
 	targetPlayerName string
 	warriorID        string
 	cardID           string
 
-	targetPlayer desertionTargetPlayer
-	desertion    cards.Desertion
+	targetPlayer treasonTargetPlayer
+	treason      cards.Treason
 	warrior      cards.Warrior
 }
 
-func NewDesertionAction(playerName, targetPlayerName, warriorID, cardID string) *desertionAction {
-	return &desertionAction{
+func NewTreasonAction(playerName, targetPlayerName, warriorID, cardID string) *treasonAction {
+	return &treasonAction{
 		playerName:       playerName,
 		targetPlayerName: targetPlayerName,
 		warriorID:        warriorID,
@@ -44,11 +44,11 @@ func NewDesertionAction(playerName, targetPlayerName, warriorID, cardID string) 
 	}
 }
 
-func (a *desertionAction) PlayerName() string { return a.playerName }
+func (a *treasonAction) PlayerName() string { return a.playerName }
 
-func (a *desertionAction) Validate(g Game) error {
+func (a *treasonAction) Validate(g Game) error {
 	if g.CurrentAction() != types.PhaseTypeAttack {
-		return fmt.Errorf("cannot use desertion in the %s phase", g.CurrentAction())
+		return fmt.Errorf("cannot use treason in the %s phase", g.CurrentAction())
 	}
 
 	p := g.CurrentPlayer()
@@ -56,9 +56,9 @@ func (a *desertionAction) Validate(g Game) error {
 	if !ok {
 		return fmt.Errorf("card %s not found in hand", a.cardID)
 	}
-	desertion, ok := raw.(cards.Desertion)
+	treason, ok := raw.(cards.Treason)
 	if !ok {
-		return fmt.Errorf("card %s is not a desertion card", a.cardID)
+		return fmt.Errorf("card %s is not a treason card", a.cardID)
 	}
 
 	var err error
@@ -73,22 +73,22 @@ func (a *desertionAction) Validate(g Game) error {
 	}
 
 	hp := warrior.Health()
-	if hp > cards.DesertionMaxHP {
-		return fmt.Errorf("warrior has %d HP — only warriors with %d or fewer HP can be deserved",
-			hp, cards.DesertionMaxHP)
+	if hp > cards.TreasonMaxHP {
+		return fmt.Errorf("warrior has %d HP — only warriors with %d or fewer HP can be traitors",
+			hp, cards.TreasonMaxHP)
 	}
 
-	a.desertion = desertion
+	a.treason = treason
 	a.warrior = warrior
 
 	return nil
 }
 
-func (a *desertionAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
+func (a *treasonAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, error) {
 	return a.execute(g)
 }
 
-func (a *desertionAction) execute(g desertionGame) (*Result, func() gamestatus.GameStatus, error) {
+func (a *treasonAction) execute(g treasonGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
 	result := &Result{}
 
@@ -99,20 +99,20 @@ func (a *desertionAction) execute(g desertionGame) (*Result, func() gamestatus.G
 	}
 	p.PlaceWarriorOnField(a.warrior)
 
-	// Discard the Desertion card.
-	discarded, err := p.RemoveFromHand(a.desertion.GetID())
+	// Discard the Treason card.
+	discarded, err := p.RemoveFromHand(a.treason.GetID())
 	if err != nil {
-		return result, nil, fmt.Errorf("removing desertion card from hand failed: %w", err)
+		return result, nil, fmt.Errorf("removing treason card from hand failed: %w", err)
 	}
 	g.OnCardMovedToPile(discarded[0])
 
-	result.Action = types.LastActionDesertion
-	result.Desertion = &DesertionDetails{
+	result.Action = types.LastActionTreason
+	result.Treason = &TreasonDetails{
 		FromPlayer: a.targetPlayer.Name(),
 		Warrior:    a.warrior,
 	}
 
-	g.AddHistory(fmt.Sprintf("%s's warrior deserted to %s's ranks",
+	g.AddHistory(fmt.Sprintf("%s's warrior moved to %s's ranks",
 		a.targetPlayer.Name(), p.Name()), types.CategoryAction)
 
 	statusFn := func() gamestatus.GameStatus {
@@ -122,6 +122,6 @@ func (a *desertionAction) execute(g desertionGame) (*Result, func() gamestatus.G
 	return result, statusFn, nil
 }
 
-func (a *desertionAction) NextPhase() types.PhaseType {
+func (a *treasonAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeBuy
 }

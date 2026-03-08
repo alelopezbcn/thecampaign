@@ -56,7 +56,7 @@ type BuildInput struct {
 	AmbushAttackerName       string
 	ChampionsBountyEarner    string
 	ChampionsBountyCards     int
-	DeserterFromPlayer       string
-	DeserterWarrior          cards.Warrior
+	TraitorFromPlayer        string
+	TraitorWarrior           cards.Warrior
 	CurrentEvent             types.ActiveEvent
 }
