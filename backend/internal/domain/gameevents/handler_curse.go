@@ -33,12 +33,14 @@ func (h *curseHandler) WeaponDamageModifier(weaponType types.WeaponType) int {
 }
 
 func (h *curseHandler) Display() (string, string) {
-	sign := "+"
-	if h.modifier < 0 {
-		sign = ""
+	if h.modifier > 0 {
+		return "Blessing", fmt.Sprintf(
+			"All weapons except %s deal +%d damage this round",
+			h.excludedWeapon, h.modifier,
+		)
 	}
 	return "Curse", fmt.Sprintf(
-		"All weapons except %s deal %s%d damage this round",
-		h.excludedWeapon, sign, h.modifier,
+		"All weapons except %s deal %d damage this round",
+		h.excludedWeapon, h.modifier,
 	)
 }

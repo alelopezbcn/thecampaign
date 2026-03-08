@@ -321,11 +321,10 @@ func TestMercenary_Heal_RestoresToMercenaryMaxHealth(t *testing.T) {
 
 func TestMercenary_Resurrect_RestoresToMercenaryMaxHealth(t *testing.T) {
 	merc := NewMercenary("mc1")
-	_ = merc.BeAttacked(NewSword("sw1", 10))
+	_ = merc.BeAttacked(NewSword("sw1", 5))
 	assert.True(t, merc.IsDamaged())
 
 	merc.Resurrect()
 
-	assert.Equal(t, mercenaryMaxHealth, merc.Health())
-	assert.False(t, merc.IsDamaged())
+	assert.Equal(t, mercenaryMaxHealth/2, merc.Health())
 }

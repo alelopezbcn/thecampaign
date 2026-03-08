@@ -18,7 +18,7 @@ func TestFromDomainCard_Warrior(t *testing.T) {
 		{"Archer", cards.NewArcher("W1"), CardTypeArcher, 20},
 		{"Mage", cards.NewMage("W1"), CardTypeMage, 20},
 		{"Dragon", cards.NewDragon("W1"), CardTypeDragon, 20},
-		{"Mercenary", cards.NewMercenary("W1"), CardTypeMercenary, 15},
+		{"Mercenary", cards.NewMercenary("W1"), CardTypeMercenary, 10},
 	}
 
 	for _, tt := range tests {

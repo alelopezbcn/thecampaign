@@ -801,7 +801,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 
 		mockBountyCard := mocks.NewMockCard(ctrl)
-		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockBountyCard}, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 2).Return([]cards.Card{mockBountyCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockBountyCard)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
@@ -896,7 +896,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		equalWarrior.EXPECT().Health().Return(8)
 
 		mockBountyCard := mocks.NewMockCard(ctrl)
-		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockBountyCard}, nil)
+		mockGame.EXPECT().DrawCards(mockPlayer1, 2).Return([]cards.Card{mockBountyCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockBountyCard)
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()

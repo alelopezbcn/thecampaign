@@ -1,17 +1,26 @@
 Fixes:
 flickering cards
-evento bloodlust solo aplica a regular weapons?
-harpoon no tiene tests
+harpoon no tiene tests, event neither
+
 ambush should be placed in allies field as well
 resurrection que muestre en modal a quien resucito, y tambien se lo indique a los demas players
-nombres de los eventos
 que pasa cuando se amata al del Castillo? todo deberia ir al deck
 arrastrar castle max value from settigs a la UI
-bounty que de cartas por matar con bloodrain, asi como da con instant kill
-mejorar popups, menos clicks (enter should click when there is only one option).
+
 change Desertion name to Treason
-sum HP in field next to warrior name
+
 End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
+
 mover historial a la derecha, y hacerlo collapsible
 Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
+mejorar popups, menos clicks (enter should click when there is only one option).
+
+forge que separe las cartas al moverlas al mazo
+
+sum HP in field next to warrior name
+bounty que de cartas por matar con bloodrain, asi como da con instant kill - esto ya funciona asi?
+Champions bounty to draw 2 cards when killing an enemy with most HP, and benefit when just attacking the most powerful, and special powers to trigger this as well, and bloodrain, and harpoon
+
+evento bloodlust deberia aplicar a todas las armas, blood rain, harpoon, instant kill
+
 

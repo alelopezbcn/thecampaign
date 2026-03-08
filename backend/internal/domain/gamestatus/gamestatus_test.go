@@ -738,7 +738,7 @@ func TestNewGameStatus_EventInfo_Harvest(t *testing.T) {
 	gs := gamestatus.NewGameStatus(dto)
 
 	assert.Equal(t, "harvest", gs.CurrentEvent)
-	assert.Equal(t, "Harvest", gs.CurrentEventDisplay)
+	assert.Equal(t, "Bountiful Harvest", gs.CurrentEventDisplay)
 	assert.NotEmpty(t, gs.CurrentEventDescription)
 }
 

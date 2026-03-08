@@ -233,7 +233,7 @@ func TestWarriorBase_Resurrect_RestoresHealthAndClearsDamageState(t *testing.T) 
 	}
 
 	w.Resurrect()
-	assert.Equal(t, warriorMaxHealth, w.health)
+	assert.Equal(t, warriorMaxHealth/2, w.health)
 	assert.Empty(t, w.attackedBy)
 	assert.Nil(t, w.protectedBy)
 }
@@ -247,7 +247,7 @@ func TestWarriorBase_Resurrect_AlreadyFullHealth(t *testing.T) {
 	}
 
 	w.Resurrect()
-	assert.Equal(t, warriorMaxHealth, w.health)
+	assert.Equal(t, warriorMaxHealth/2, w.health)
 	assert.Empty(t, w.attackedBy)
 	assert.Nil(t, w.protectedBy)
 }
