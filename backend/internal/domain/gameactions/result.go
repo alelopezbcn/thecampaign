@@ -7,12 +7,13 @@ import (
 
 type Result struct {
 	Action         types.LastActionType
-	MovedWarriorID string           // "" = no warrior moved
-	Spy            *types.SpyInfo   // nil = no spy action
-	Attack         *AttackDetails   // nil = no attack
-	Steal          *StealDetails    // nil = no steal
-	Sabotage       *SabotageDetails // nil = no sabotage
-	Treason        *TreasonDetails  // nil = no treason
+	MovedWarriorID string               // "" = no warrior moved
+	Spy            *types.SpyInfo       // nil = no spy action
+	Attack         *AttackDetails       // nil = no attack
+	Steal          *StealDetails        // nil = no steal
+	Sabotage       *SabotageDetails     // nil = no sabotage
+	Treason        *TreasonDetails      // nil = no treason
+	Resurrection   *ResurrectionDetails // nil = no resurrection
 }
 
 type AttackDetails struct {
@@ -38,4 +39,10 @@ type SabotageDetails struct {
 type TreasonDetails struct {
 	FromPlayer string
 	Warrior    cards.Warrior
+}
+
+type ResurrectionDetails struct {
+	Warrior      cards.Warrior
+	TargetPlayer string // player whose field received the warrior
+	PlayerName   string // player who played the card
 }

@@ -25,6 +25,12 @@ type ChampionsBountyNotification struct {
 	Cards    int    `json:"cards"`
 }
 
+type ResurrectionNotification struct {
+	WarriorCard  Card   `json:"warrior_card"`
+	TargetPlayer string `json:"target_player"`
+	PlayerName   string `json:"player_name"`
+}
+
 type GameStatus struct {
 	CurrentPlayer                string                       `json:"current_player"`
 	TurnPlayer                   string                       `json:"turn_player"`
@@ -57,6 +63,7 @@ type GameStatus struct {
 	AmbushTriggered              *AmbushTrigger               `json:"ambush_triggered,omitempty"`
 	TreasonNotification          *TreasonNotification         `json:"treason_notification,omitempty"`
 	ChampionsBounty              *ChampionsBountyNotification `json:"champions_bounty,omitempty"`
+	ResurrectionNotification     *ResurrectionNotification    `json:"resurrection_notification,omitempty"`
 	History                      []HistoryLine                `json:"history"`
 	PlayersOrder                 []string                     `json:"players_order"`
 	NextTurnPlayer               string                       `json:"next_turn_player,omitempty"`
@@ -135,6 +142,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 	applyAmbushNotification(in, &gs)
 	applyTreasonNotification(in, &gs)
 	applyChampionsBountyNotification(in, &gs)
+	applyResurrectionNotification(in, &gs)
 
 	processHandCards(in.Viewer, in, &gs)
 
@@ -233,6 +241,16 @@ func applyChampionsBountyNotification(in BuildInput, gs *GameStatus) {
 	}
 }
 
+func applyResurrectionNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionResurrection && in.ResurrectionWarrior != nil {
+		gs.ResurrectionNotification = &ResurrectionNotification{
+			WarriorCard:  fromDomainCard(in.ResurrectionWarrior),
+			TargetPlayer: in.ResurrectionTargetPlayer,
+			PlayerName:   in.ResurrectionPlayerName,
+		}
+	}
+}
+
 func applyTreasonNotification(in BuildInput, gs *GameStatus) {
 	if in.LastAction == types.LastActionTreason && in.TraitorFromPlayer != "" &&
 		in.Viewer.Name == in.TraitorFromPlayer && in.TraitorWarrior != nil {
@@ -294,8 +312,14 @@ func processHandCards(viewer ViewerInput, game BuildInput, gs *GameStatus) {
 				NewResurrectionHandCard(ct.GetID(), game.CemeteryCount, action))
 
 		case cards.Ambush:
+			canBePlaced := !viewer.Field.HasAmbush
+			for _, f := range game.AllyFields {
+				if !f.HasAmbush {
+					canBePlaced = true
+				}
+			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewAmbushHandCard(ct.GetID(), viewer.Field.HasAmbush, action))
+				NewAmbushHandCard(ct.GetID(), canBePlaced, action))
 
 		case cards.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,

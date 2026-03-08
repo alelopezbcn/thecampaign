@@ -324,6 +324,12 @@ function setupEventListeners() {
         if (e.target === e.currentTarget) hideChampionsBountyModal();
     });
 
+    // Resurrection modal close
+    document.getElementById('resurrection-close').addEventListener('click', hideResurrectionModal);
+    document.getElementById('resurrection-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) hideResurrectionModal();
+    });
+
     // Event turn modal close
     document.getElementById('event-turn-modal-close').addEventListener('click', hideEventTurnModal);
     document.getElementById('event-turn-modal').addEventListener('click', (e) => {
@@ -347,6 +353,7 @@ function setupEventListeners() {
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
         { id: 'treason-notification-modal', hide: hideTreasonNotificationModal },
         { id: 'champions-bounty-modal', hide: hideChampionsBountyModal },
+        { id: 'resurrection-modal', hide: hideResurrectionModal },
         { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
@@ -848,6 +855,12 @@ function handleGameState(payload) {
     const championsBounty = payload.game_status.champions_bounty;
     if (championsBounty) {
         showChampionsBountyModal(championsBounty);
+    }
+
+    // Detect Resurrection (shown to all players)
+    const resurrectionNotification = payload.game_status.resurrection_notification;
+    if (resurrectionNotification) {
+        showResurrectionModal(resurrectionNotification);
     }
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -1479,7 +1492,13 @@ function handleAttackPhaseHandClick(cardID, card) {
         gameState.actionState.type = 'ambush';
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
-        showAmbushPlaceConfirmModal(card, cardID);
+        const ambushAllies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated && !o.ambush_in_field);
+        const ownHasAmbush = !!gameState.currentState?.current_player_ambush_in_field;
+        if (ambushAllies.length > 0) {
+            showAmbushTargetModal(card, cardID, ambushAllies, ownHasAmbush);
+        } else {
+            showAmbushPlaceConfirmModal(card, cardID, '');
+        }
     } else if (cardType === 'treason') {
         gameState.actionState.type = 'treason';
         gameState.actionState.weaponId = cardID;
@@ -4846,6 +4865,7 @@ function hideSpyNotificationModal() {
 // Treason Notification Modal — shown to the player whose warrior was stolen
 let treasonNotificationTimer = null;
 let championsBountyTimer = null;
+let resurrectionTimer = null;
 
 function showTreasonNotificationModal(notification) {
     const modal = document.getElementById('treason-notification-modal');
@@ -4908,6 +4928,52 @@ function hideChampionsBountyModal() {
     }
 }
 
+function showResurrectionModal(notification) {
+    const modal = document.getElementById('resurrection-modal');
+    const textEl = document.getElementById('resurrection-text');
+    const fill = document.getElementById('resurrection-timer-fill');
+    if (!modal || !textEl) return;
+
+    const isYou = notification.player_name === gameState.playerName;
+    const warriorName = notification.warrior_card?.sub_type || 'a warrior';
+    const target = notification.target_player;
+    const targetIsYou = target === gameState.playerName;
+
+    let msg;
+    if (isYou) {
+        msg = targetIsYou || !target || target === notification.player_name
+            ? `You resurrected ${warriorName} from the cemetery!`
+            : `You resurrected ${warriorName} to ${target}'s field!`;
+    } else {
+        msg = targetIsYou
+            ? `${notification.player_name} resurrected ${warriorName} to your field!`
+            : target && target !== notification.player_name
+                ? `${notification.player_name} resurrected ${warriorName} to ${target}'s field!`
+                : `${notification.player_name} resurrected ${warriorName} from the cemetery!`;
+    }
+    textEl.textContent = msg;
+
+    if (fill) {
+        fill.style.animation = 'none';
+        fill.offsetHeight;
+        fill.style.animation = 'resurrectionTimerShrink 4s linear forwards';
+    }
+
+    modal.classList.remove('hidden');
+
+    if (resurrectionTimer) clearTimeout(resurrectionTimer);
+    resurrectionTimer = setTimeout(() => hideResurrectionModal(), 4000);
+}
+
+function hideResurrectionModal() {
+    const modal = document.getElementById('resurrection-modal');
+    if (modal) modal.classList.add('hidden');
+    if (resurrectionTimer) {
+        clearTimeout(resurrectionTimer);
+        resurrectionTimer = null;
+    }
+}
+
 // Ambush placed animation — shown to all players when a player places an ambush card
 function showAmbushPlacedAnimation(gameStatus) {
     const isOwnField = gameStatus.turn_player === gameStatus.current_player;
@@ -4946,8 +5012,49 @@ function showAmbushPlacedAnimation(gameStatus) {
     setTimeout(() => text.remove(), 1800);
 }
 
+// Ambush Target Selection Modal (2v2 — own field vs ally field)
+function showAmbushTargetModal(card, cardID, allies, canPlaceOwn) {
+    let content = '<div class="target-player-options">';
+
+    if (canPlaceOwn === false) {
+        // own field already has ambush — don't show own option
+    } else {
+        content += `
+            <div class="target-player-option" onclick="window._ambushTargetCallback('')">
+                <span class="player-icon">⚠</span>
+                <div class="player-info">
+                    <div class="player-name">Your Field</div>
+                    <div class="player-detail">Place ambush on your own field</div>
+                </div>
+            </div>
+        `;
+    }
+
+    allies.forEach(ally => {
+        const name = ally.player_name;
+        content += `
+            <div class="target-player-option" onclick="window._ambushTargetCallback('${name}')">
+                <span class="player-icon">🤝</span>
+                <div class="player-info">
+                    <div class="player-name">${name}'s Field</div>
+                    <div class="player-detail">Place ambush on ally's field</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._ambushTargetCallback = (targetPlayer) => {
+        hideGameModal();
+        delete window._ambushTargetCallback;
+        showAmbushPlaceConfirmModal(card, cardID, targetPlayer);
+    };
+
+    showGameModal('Place Ambush', 'Choose which field to protect', content, true);
+}
+
 // Ambush Place Confirmation Modal
-function showAmbushPlaceConfirmModal(card, cardID) {
+function showAmbushPlaceConfirmModal(card, cardID, targetPlayer) {
     const effectRows = [
         { label: 'Reflect Damage', chance: '23%', desc: 'Attacker\'s weapon damage is reflected back at their own warrior.' },
         { label: 'Attack Cancelled', chance: '23%', desc: 'The attack is cancelled and the weapon is discarded.' },
@@ -4976,7 +5083,7 @@ function showAmbushPlaceConfirmModal(card, cardID) {
         cardsHtml: renderCardForModal(card),
         description,
         onConfirm: () => {
-            sendMessage('place_ambush', { card_id: cardID });
+            sendMessage('place_ambush', { card_id: cardID, target_player: targetPlayer || '' });
             resetActionState();
         },
     });

@@ -120,7 +120,14 @@ func (a *resurrectionAction) execute(g resurrectionGame) (*Result, func() gamest
 	}
 
 	a.currentPhase = g.CurrentAction()
-	result := &Result{Action: types.LastActionResurrection}
+	result := &Result{
+		Action: types.LastActionResurrection,
+		Resurrection: &ResurrectionDetails{
+			Warrior:      warrior,
+			TargetPlayer: targetName,
+			PlayerName:   playerName,
+		},
+	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.Status(p)
 	}

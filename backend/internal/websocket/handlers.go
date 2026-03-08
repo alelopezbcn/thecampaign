@@ -208,7 +208,7 @@ func (h *Hub) handlePlaceAmbush(client *Client, payload interface{}) {
 		return
 	}
 	h.executeGameAction(client, func(g HubGame) (gamestatus.GameStatus, error) {
-		return g.ExecuteAction(gameactions.NewPlaceAmbushAction(client.PlayerName, p.CardID))
+		return g.ExecuteAction(gameactions.NewPlaceAmbushAction(client.PlayerName, p.TargetPlayer, p.CardID))
 	})
 }
 

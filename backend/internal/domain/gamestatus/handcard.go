@@ -229,11 +229,10 @@ func NewTreasonHandCard(cardID string, anyEnemyHasWeakWarriors bool, action type
 		anyEnemyHasWeakWarriors && action == types.PhaseTypeAttack)
 }
 
-func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
-	if action != types.PhaseTypeAttack {
-		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)
-	}
-	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, !fieldAlreadyHasAmbush)
+// NewAmbushHandCard returns a hand card for an ambush.
+// canBePlaced is true when at least one valid field (own or ally) is available for placement.
+func NewAmbushHandCard(cardID string, canBePlaced bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, canBePlaced && action == types.PhaseTypeAttack)
 }
 
 // ---------------

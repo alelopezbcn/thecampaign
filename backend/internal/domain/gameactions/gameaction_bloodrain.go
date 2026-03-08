@@ -83,6 +83,21 @@ func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.G
 		return result, nil, fmt.Errorf("blood rain action failed: %w", err)
 	}
 
+	// Bloodlust: for each target killed, heal all of the player's field warriors.
+	if healAmount := g.EventHandler().OnKillHealAmount(); healAmount > 0 {
+		kills := 0
+		for _, t := range a.targets {
+			if t.Health() == 0 {
+				kills++
+			}
+		}
+		if kills > 0 {
+			for _, w := range a.currentPlayer.Field().Warriors() {
+				w.HealBy(healAmount * kills)
+			}
+		}
+	}
+
 	if _, err := a.currentPlayer.RemoveFromHand(a.bloodRain.GetID()); err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("removing blood rain from hand failed: %w", err)

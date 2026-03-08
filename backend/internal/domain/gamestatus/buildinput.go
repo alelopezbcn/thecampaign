@@ -59,4 +59,7 @@ type BuildInput struct {
 	TraitorFromPlayer        string
 	TraitorWarrior           cards.Warrior
 	CurrentEvent             types.ActiveEvent
+	ResurrectionWarrior      cards.Warrior
+	ResurrectionTargetPlayer string
+	ResurrectionPlayerName   string
 }

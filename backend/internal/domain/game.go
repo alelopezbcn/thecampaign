@@ -640,7 +640,17 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		}
 
 		if !canPlayPhase && board.HasCardTypeInHand[cards.Ambush](p) {
-			canPlayPhase = !board.HasFieldSlotCard[cards.Ambush](p.Field())
+			if !board.HasFieldSlotCard[cards.Ambush](p.Field()) {
+				canPlayPhase = true
+			}
+			if !canPlayPhase {
+				for _, ally := range g.Allies(g.currentTurn) {
+					if !board.HasFieldSlotCard[cards.Ambush](ally.Field()) {
+						canPlayPhase = true
+						break
+					}
+				}
+			}
 		}
 
 		if !canPlayPhase && board.HasCardTypeInHand[cards.Resurrection](p) {
@@ -906,6 +916,11 @@ func (g *game) getStatus(viewer board.Player,
 	if d := g.lastResult.Treason; d != nil {
 		gameStatusDTO.TraitorFromPlayer = d.FromPlayer
 		gameStatusDTO.TraitorWarrior = d.Warrior
+	}
+	if r := g.lastResult.Resurrection; r != nil {
+		gameStatusDTO.ResurrectionWarrior = r.Warrior
+		gameStatusDTO.ResurrectionTargetPlayer = r.TargetPlayer
+		gameStatusDTO.ResurrectionPlayerName = r.PlayerName
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()

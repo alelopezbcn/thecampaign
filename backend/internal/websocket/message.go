@@ -206,7 +206,8 @@ type SabotagePayload struct {
 
 // PlaceAmbushPayload for placing an ambush card in the field
 type PlaceAmbushPayload struct {
-	CardID string `json:"card_id"`
+	CardID       string `json:"card_id"`
+	TargetPlayer string `json:"target_player,omitempty"` // "" = own field
 }
 
 // GameStatePayload is sent to update clients with game state

@@ -6,6 +6,19 @@ Test: I would like to have a sum of the HP in field for each player next to the 
 
 Test: I would like to add the viewers player name (my name) in my board, and have also the sum of the HP.
 
+1. Ambush on ally fields (2v2)
+Backend: place_ambush action now accepts target_player. Validates ally relationship, places ambush on the ally's field slot. Ambush card is usable if any available field (own or ally) lacks an ambush.
+Frontend: When playing an ambush in 2v2, if allies have open fields, a target modal appears (Your Field / Ally's Field). The confirm modal sends target_player in the payload.
+2. Bloodlust event — Harpoon & Blood Rain
+Harpoon: If the dragon dies, all warriors on the attacker's field are healed by the Bloodlust heal amount (2 HP).
+Blood Rain: For each enemy warrior killed by Blood Rain, all warriors on the attacker's field heal by the Bloodlust amount. (2 kills = 4 HP total)
+3. Resurrection notification modal
+Backend: After resurrection, a resurrection_notification object is included in game_state for all players — contains the resurrected warrior's card, whose field it went to, and who played it.
+Frontend: Purple modal with 4s auto-close timer bar, shown to all players simultaneously.
+
+
+
+
 
 Fixes:
 flickering cards
@@ -31,3 +44,7 @@ Champions bounty should be triggered by special powers, Harpoon and bloodrain (i
 End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
 
 I would like to UNforge the forged cards when discarding it to the discard pile (when the warrior attacked with forged cards dies). Consider we can forge a forged card. Example: forge 2+5=7, then reforged 7+5=13. When discarded the 13 DMG card, 3 different cards must be discarded, 2, 5 and 5.
+
+
+
+make game.js smaller? split in different files?

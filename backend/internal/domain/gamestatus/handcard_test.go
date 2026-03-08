@@ -1115,59 +1115,66 @@ func TestNewBloodRainHandCard(t *testing.T) {
 
 func TestNewAmbushHandCard(t *testing.T) {
 	tests := []struct {
-		name                  string
-		cardID                string
-		fieldAlreadyHasAmbush bool
-		action                types.PhaseType
-		wantUsed              bool
+		name        string
+		cardID      string
+		canBePlaced bool
+		action      types.PhaseType
+		wantUsed    bool
 	}{
 		{
-			name:                  "Not usable in Buy phase",
-			cardID:                "AMB1",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeBuy,
-			wantUsed:              false,
+			name:        "Not usable in Buy phase",
+			cardID:      "AMB1",
+			canBePlaced: true,
+			action:      types.PhaseTypeBuy,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Not usable in Buy phase when field already has ambush",
-			cardID:                "AMB2",
-			fieldAlreadyHasAmbush: true,
-			action:                types.PhaseTypeBuy,
-			wantUsed:              false,
+			name:        "Not usable in Buy phase when cannot be placed",
+			cardID:      "AMB2",
+			canBePlaced: false,
+			action:      types.PhaseTypeBuy,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Usable in Attack phase when field has no ambush",
-			cardID:                "AMB3",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeAttack,
-			wantUsed:              true,
+			name:        "Usable in Attack phase when can be placed",
+			cardID:      "AMB3",
+			canBePlaced: true,
+			action:      types.PhaseTypeAttack,
+			wantUsed:    true,
 		},
 		{
-			name:                  "Not usable in SpySteal phase",
-			cardID:                "AMB4",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeSpySteal,
-			wantUsed:              false,
+			name:        "Not usable in Attack phase when cannot be placed",
+			cardID:      "AMB7",
+			canBePlaced: false,
+			action:      types.PhaseTypeAttack,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Not usable in Construct phase",
-			cardID:                "AMB5",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeConstruct,
-			wantUsed:              false,
+			name:        "Not usable in SpySteal phase",
+			cardID:      "AMB4",
+			canBePlaced: true,
+			action:      types.PhaseTypeSpySteal,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Not usable in DrawCard phase",
-			cardID:                "AMB6",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeDrawCard,
-			wantUsed:              false,
+			name:        "Not usable in Construct phase",
+			cardID:      "AMB5",
+			canBePlaced: true,
+			action:      types.PhaseTypeConstruct,
+			wantUsed:    false,
+		},
+		{
+			name:        "Not usable in DrawCard phase",
+			cardID:      "AMB6",
+			canBePlaced: true,
+			action:      types.PhaseTypeDrawCard,
+			wantUsed:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := gamestatus.NewAmbushHandCard(tt.cardID, tt.fieldAlreadyHasAmbush, tt.action)
+			hc := gamestatus.NewAmbushHandCard(tt.cardID, tt.canBePlaced, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.ID)
 			assert.Equal(t, gamestatus.CardTypeAmbush, hc.CardType())

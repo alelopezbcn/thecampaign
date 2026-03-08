@@ -88,6 +88,13 @@ func (a *harpoonAction) execute(g harpoonGame) (*Result, func() gamestatus.GameS
 		return result, nil, fmt.Errorf("harpoon action failed: %w", err)
 	}
 
+	// Bloodlust: if the dragon was killed, heal all of the player's field warriors.
+	if healAmount := g.EventHandler().OnKillHealAmount(); healAmount > 0 && a.dragon.Health() == 0 {
+		for _, w := range p.Field().Warriors() {
+			w.HealBy(healAmount)
+		}
+	}
+
 	if _, err := p.RemoveFromHand(a.harpoon.GetID()); err != nil {
 		result := &Result{}
 		return result, nil, fmt.Errorf("removing harpoon from hand failed: %w", err)
