@@ -36,6 +36,7 @@ type GameStatus struct {
 	CanForge                     bool                         `json:"can_forge"`
 	CurrentPlayerHand            []HandCard                   `json:"current_player_hand"`
 	CurrentPlayerField           []FieldCard                  `json:"current_player_field"`
+	CurrentPlayerFieldHP         int                          `json:"current_player_field_hp"`
 	CurrentPlayerCastle          Castle                       `json:"current_player_castle"`
 	CurrentPlayerAmbushInField   bool                         `json:"current_player_ambush_in_field"`
 	IsEliminated                 bool                         `json:"is_eliminated"`
@@ -75,6 +76,7 @@ type GameStatus struct {
 type OpponentStatus struct {
 	PlayerName     string      `json:"player_name"`
 	Field          []FieldCard `json:"field"`
+	FieldHP        int         `json:"field_hp"`
 	Castle         Castle      `json:"castle"`
 	CardsInHand    int         `json:"cards_in_hand"`
 	IsAlly         bool        `json:"is_ally"`
@@ -138,6 +140,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 
 	for _, warrior := range in.Viewer.Field.Warriors {
 		gs.CurrentPlayerField = append(gs.CurrentPlayerField, NewFieldCard(warrior))
+		gs.CurrentPlayerFieldHP += warrior.Health()
 	}
 	gs.CurrentPlayerAmbushInField = in.Viewer.Field.HasAmbush
 
@@ -315,6 +318,7 @@ func processOpponents(game BuildInput, gs *GameStatus) {
 		}
 		for _, warrior := range opp.Field.Warriors {
 			o.Field = append(o.Field, NewFieldCard(warrior))
+			o.FieldHP += warrior.Health()
 		}
 		gs.Opponents = append(gs.Opponents, o)
 	}

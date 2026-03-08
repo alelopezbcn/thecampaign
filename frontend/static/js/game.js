@@ -2188,7 +2188,7 @@ function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
                 <span class="player-icon">🏰</span>
                 <div class="player-info">
                     <div class="player-name">Your Castle</div>
-                    <div class="player-detail">${gameState.currentState?.current_player_castle?.constructed ? 'Value: ' + (gameState.currentState.current_player_castle.value || 0) + '/25' : 'Start construction'}</div>
+                    <div class="player-detail">${gameState.currentState?.current_player_castle?.constructed ? 'Value: ' + (gameState.currentState.current_player_castle.value || 0) + '/' + (gameState.currentState.current_player_castle.resources_to_win || 25) : 'Start construction'}</div>
                 </div>
             </div>
         `;
@@ -2203,7 +2203,7 @@ function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
                 <span class="player-icon">🤝</span>
                 <div class="player-info">
                     <div class="player-name">${name}'s Castle</div>
-                    <div class="player-detail">Value: ${castleValue}/25</div>
+                    <div class="player-detail">Value: ${castleValue}/${ally.castle?.resources_to_win || 25}</div>
                 </div>
             </div>
         `;
@@ -2255,9 +2255,9 @@ function showConstructConfirmModal(resource, cardID, targetPlayer) {
         description = `${resourceName} (${resourceValue} value) will be added to ${castleLabel}`;
     } else if (harvestMod !== 0) {
         const sign = harvestMod > 0 ? '+' : '';
-        description = `${resourceName} (${resourceValue} ${sign}${harvestMod} Harvest = ${effectiveValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`;
+        description = `${resourceName} (${resourceValue} ${sign}${harvestMod} Harvest = ${effectiveValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/${castle?.resources_to_win || 25}`;
     } else {
-        description = `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`;
+        description = `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/${castle?.resources_to_win || 25}`;
     }
 
     const payload = { card_id: cardID };
@@ -3625,6 +3625,14 @@ function renderGameBoard(status) {
     // Render all opponent boards
     renderOpponents(status.opponents || []);
 
+    // Render own board header (name + field HP)
+    const playerHeader = document.getElementById('player-board-header');
+    if (playerHeader) {
+        const fieldHP = status.current_player_field_hp || 0;
+        const hpBadge = fieldHP > 0 ? `<span class="field-hp-badge">${fieldHP} HP</span>` : '';
+        playerHeader.innerHTML = `<span class="opponent-name">${status.current_player || ''}</span>${hpBadge}`;
+    }
+
     // Active player board glow
     const playerBoard = document.querySelector('.player-board');
     if (playerBoard) {
@@ -3730,8 +3738,11 @@ function renderOpponents(opponents) {
             : opponent.is_disconnected
                 ? `<span class="opponent-badge eliminated-badge disconnect-countdown" data-player="${opponent.player_name}">Disconnected${disconnectEntry ? ` (${disconnectEntry.secondsLeft}s)` : ''}</span>`
                 : '';
+        const fieldHP = opponent.field_hp || 0;
+        const hpBadge = fieldHP > 0 ? `<span class="field-hp-badge">${fieldHP} HP</span>` : '';
         header.innerHTML = `
             <span class="opponent-name">${opponent.player_name}</span>
+            ${hpBadge}
             ${opponent.is_ally ? '<span class="opponent-badge ally-badge">Ally</span>' : ''}
             ${badgeHtml}
         `;
@@ -3807,7 +3818,7 @@ function renderCastleInto(container, castle) {
     if (isProtected) container.classList.add('fortified');
 
     if (isConstructed) {
-        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const castleGoal = castle.resources_to_win || (gameState.gameMode === '2v2' ? 30 : 25);
         const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
         const fortressIndicator = isProtected
             ? `<div class="castle-fortress-indicator" title="Protected by a Fortress wall"><svg class="fortress-shield-icon" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shieldGrad" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGrad)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/><line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/><line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/></svg><div class="fortress-badge">Fortified</div></div>`
@@ -4042,7 +4053,7 @@ function renderCastle(containerId, castle) {
     if (isProtected) container.classList.add('fortified');
 
     if (isConstructed) {
-        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const castleGoal = castle.resources_to_win || (gameState.gameMode === '2v2' ? 30 : 25);
         const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
         const fortressIndicator = isProtected
             ? `<div class="castle-fortress-indicator" title="Protected by a Fortress wall"><svg class="fortress-shield-icon" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shieldGrad" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGrad)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/><line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/><line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/></svg><div class="fortress-badge">Fortified</div></div>`
@@ -5163,7 +5174,7 @@ function getOpponentByName(name) {
 function showTargetPlayerModal(title, opponents, callback, detailFn) {
     const defaultDetail = (opp) => {
         const castle = opp.castle || {};
-        return `Castle: ${castle.value || 0}/25 gold, ${castle.resource_cards || 0} resource cards`;
+        return `Castle: ${castle.value || 0}/${castle.resources_to_win || 25} gold, ${castle.resource_cards || 0} resource cards`;
     };
     const getDetail = detailFn || defaultDetail;
 

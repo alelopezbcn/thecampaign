@@ -620,6 +620,39 @@ func TestNewGameStatus_CurrentPlayerField_EmptyWhenNoWarriors(t *testing.T) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// CurrentPlayerFieldHP tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewGameStatus_CurrentPlayerFieldHP_SumsWarriorHP(t *testing.T) {
+	knight := cards.NewKnight("K1") // default HP
+	archer := cards.NewArcher("A1")
+	dto := minimalDTO("Player1")
+	dto.Viewer.Field.Warriors = []cards.Warrior{knight, archer}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health()+archer.Health(), gs.CurrentPlayerFieldHP)
+}
+
+func TestNewGameStatus_CurrentPlayerFieldHP_ZeroWhenNoWarriors(t *testing.T) {
+	dto := minimalDTO("Player1")
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Zero(t, gs.CurrentPlayerFieldHP)
+}
+
+func TestNewGameStatus_CurrentPlayerFieldHP_SingleWarrior(t *testing.T) {
+	knight := cards.NewKnight("K1")
+	dto := minimalDTO("Player1")
+	dto.Viewer.Field.Warriors = []cards.Warrior{knight}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health(), gs.CurrentPlayerFieldHP)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Opponent metadata tests
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -697,6 +730,54 @@ func TestNewGameStatus_OpponentStatus_FieldWarriorsConverted(t *testing.T) {
 	assert.Len(t, gs.Opponents[0].Field, 1)
 	assert.Equal(t, "A1", gs.Opponents[0].Field[0].ID)
 	assert.Equal(t, gamestatus.CardTypeArcher, gs.Opponents[0].Field[0].CardType())
+}
+
+func TestNewGameStatus_OpponentStatus_FieldHP_SumsWarriorHP(t *testing.T) {
+	knight := cards.NewKnight("K1")
+	archer := cards.NewArcher("A1")
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name:  "Player2",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{knight, archer}},
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health()+archer.Health(), gs.Opponents[0].FieldHP)
+}
+
+func TestNewGameStatus_OpponentStatus_FieldHP_ZeroWhenNoWarriors(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{Name: "Player2"},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Zero(t, gs.Opponents[0].FieldHP)
+}
+
+func TestNewGameStatus_OpponentStatus_FieldHP_IndependentPerOpponent(t *testing.T) {
+	knight := cards.NewKnight("K1")
+	archer := cards.NewArcher("A1")
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name:  "Player2",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{knight}},
+		},
+		{
+			Name:  "Player3",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{archer}},
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health(), gs.Opponents[0].FieldHP)
+	assert.Equal(t, archer.Health(), gs.Opponents[1].FieldHP)
 }
 
 // ──────────────────────────────────────────────────────────────────────────────

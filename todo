@@ -1,25 +1,33 @@
+Test: limpiar castle en UI cuando el player es eliminado
+
+Test: We are able to setup the max castle resources in the settings, but the UI has the castle total resources hardcoded. We should show the totl resources set in the settins of the game 5/XX (example when he castle has 5 gold coins over XX, value from settings)
+
+Test: I would like to have a sum of the HP in field for each player next to the player name, on top of the board.
+
+Test: I would like to add the viewers player name (my name) in my board, and have also the sum of the HP.
+
+
 Fixes:
 flickering cards
 harpoon no tiene tests, events neither
-
-ambush should be placed in allies field as well
-resurrection que muestre en modal a quien resucito, y tambien se lo indique a los demas players
-
-limpiar castle en UI cuando el player es eliminado
-arrastrar castle max value from settigs a la UI
-
-End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
 
 mover historial a la derecha, y hacerlo collapsible
 Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
 mejorar popups, menos clicks (enter should click when there is only one option).
 
-forge que separe las cartas al moverlas al mazo
+Some things that I need you to work on. What is the best way to tackle all of this?
+Remember that we cover new functinality with tests. Lets make a plan.
 
-sum HP in field next to warrior name
-bounty que de cartas por matar con bloodrain, asi como da con instant kill - esto ya funciona asi?
-Champions bounty to draw 2 cards when killing an enemy with most HP, and benefit when just attacking the most powerful, and special powers to trigger this as well, and bloodrain, and harpoon
+ambush cards should be allowed to be placed in allies field in 2v2 mode as well
 
-evento bloodlust deberia aplicar a todas las armas, blood rain, harpoon, instant kill
+resurrection should display a modal showing what warrior was resurrected. This should be also shown to every player. Auto close the modal after 4 secs.
 
+bloodlust event should apply to all weapons, Blood rain, Harpoon, Instant kill
 
+Champions bounty now draws 2 cards when killing an enemy with most HP. I would be nice t add some kind of benefit when attacking the most powerful enemy (without killing).
+
+Champions bounty should be triggered by special powers, Harpoon and bloodrain (in the case of bloodrain it will draw 2 cards max, no matter how many warriors are killed)
+
+End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
+
+I would like to UNforge the forged cards when discarding it to the discard pile (when the warrior attacked with forged cards dies). Consider we can forge a forged card. Example: forge 2+5=7, then reforged 7+5=13. When discarded the 13 DMG card, 3 different cards must be discarded, 2, 5 and 5.

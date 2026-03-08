@@ -22,7 +22,7 @@ cd backend && go build -o ../server.exe ./cmd/server
 ./server.exe
 
 # Run all tests
-cd backend && go test ./...
+make test
 
 # Run a single test
 cd backend && go test ./internal/domain/ -run TestName
@@ -34,6 +34,13 @@ make mocks
 make up        # docker-compose up --build
 make down      # docker-compose down
 ```
+
+## Testing
+
+**Always write tests for new code.** When adding a new function, method, or game action:
+- Add unit tests in the same package (e.g. `gameaction_foo_test.go` alongside `gameaction_foo.go`)
+- Cover the happy path and at least one error/edge case
+- Run `make test` after writing tests to confirm they pass
 
 ## Architecture
 

@@ -16,6 +16,7 @@ type CastleReader interface {
 	ResourceCardsCount() int
 	ResourceCards() []cards.Resource
 	CanBeAttacked() bool
+	ResourcesToWin() int
 }
 
 // CastleMutator — castle mutation
@@ -158,6 +159,10 @@ func (c *castle) RemoveGold(position int) (cards.Resource, error) {
 
 func (c *castle) CanBeAttacked() bool {
 	return c.IsConstructed() && (c.ResourceCardsCount() > 0 || c.IsProtected())
+}
+
+func (c *castle) ResourcesToWin() int {
+	return c.resourcesToWin
 }
 
 func (c *castle) String() string {

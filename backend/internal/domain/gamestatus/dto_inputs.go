@@ -8,6 +8,7 @@ type CastleInput struct {
 	IsProtected        bool
 	ResourceCardsCount int
 	Value              int
+	ResourcesToWin     int
 }
 
 // FieldInput is a pre-extracted snapshot of a player's field.

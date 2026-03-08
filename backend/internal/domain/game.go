@@ -931,6 +931,7 @@ func extractCastle(c board.Castle) gamestatus.CastleInput {
 		IsProtected:        c.IsProtected(),
 		ResourceCardsCount: c.ResourceCardsCount(),
 		Value:              c.Value(),
+		ResourcesToWin:     c.ResourcesToWin(),
 	}
 }
 
