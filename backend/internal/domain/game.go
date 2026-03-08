@@ -285,12 +285,26 @@ func (g *game) OnFieldWithoutWarriors(playerName string) {
 	g.AddHistory(playerName+" has been eliminated!", types.CategoryElimination)
 
 	eliminatedPlayer := g.board.Players()[eliminatedIdx]
-	// Move all cards from the eliminated player's hand to the discard pile
-	for _, c := range eliminatedPlayer.Hand().ShowCards() {
+
+	// Snapshot hand cards (ShowCards returns the live slice) then remove and discard
+	hand := eliminatedPlayer.Hand()
+	rawCards := hand.ShowCards()
+	snapshot := make([]cards.Card, len(rawCards))
+	copy(snapshot, rawCards)
+	for _, c := range snapshot {
+		hand.RemoveCard(c)
 		g.board.DiscardPile().Discard(c)
 	}
-	// Move all castled cards to the discard pile
-	for _, c := range eliminatedPlayer.Castle().ResourceCards() {
+
+	// Clear slot cards from field (SlotCards already returns a copy)
+	field := eliminatedPlayer.Field()
+	for _, c := range field.SlotCards() {
+		field.RemoveSlotCard(c)
+		g.board.DiscardPile().Discard(c)
+	}
+
+	// Reset castle: clears isConstructed, initialCard, resources, protection
+	for _, c := range eliminatedPlayer.Castle().Reset() {
 		g.board.DiscardPile().Discard(c)
 	}
 }

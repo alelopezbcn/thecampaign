@@ -245,6 +245,80 @@ func TestCastle_RemoveGold(t *testing.T) {
 	})
 }
 
+func TestCastle_Reset(t *testing.T) {
+	t.Run("Unbuilt castle returns empty and stays unbuilt", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		c, _, _ := newTestCastle(ctrl)
+
+		cards := c.Reset()
+
+		assert.Empty(t, cards)
+		assert.False(t, c.IsConstructed())
+		assert.Equal(t, 0, c.Value())
+		assert.Equal(t, 0, c.ResourceCardsCount())
+	})
+
+	t.Run("Built castle with resources returns initialCard and resources, resets state", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		c, _, _ := newTestCastle(ctrl)
+		constructCastle(t, c, ctrl)
+
+		g1 := mocks.NewMockResource(ctrl)
+		g1.EXPECT().Value().Return(4).AnyTimes()
+		g2 := mocks.NewMockResource(ctrl)
+		g2.EXPECT().Value().Return(6).AnyTimes()
+		c.Construct(g1)
+		c.Construct(g2)
+
+		returned := c.Reset()
+
+		// Should include the initial construction card ("init") + 2 resources
+		assert.Len(t, returned, 3)
+		assert.False(t, c.IsConstructed())
+		assert.Equal(t, 0, c.Value())
+		assert.Equal(t, 0, c.ResourceCardsCount())
+		assert.False(t, c.IsProtected())
+	})
+
+	t.Run("Built castle with fortress returns initialCard, resources, and fortress", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		c, _, _ := newTestCastle(ctrl)
+		constructCastle(t, c, ctrl)
+
+		gold := mocks.NewMockResource(ctrl)
+		gold.EXPECT().Value().Return(5).AnyTimes()
+		c.Construct(gold)
+
+		fortress := mocks.NewMockFortress(ctrl)
+		c.SetProtection(fortress)
+
+		returned := c.Reset()
+
+		// initialCard + 1 resource + fortress
+		assert.Len(t, returned, 3)
+		assert.False(t, c.IsConstructed())
+		assert.False(t, c.IsProtected())
+	})
+
+	t.Run("Can be constructed again after reset", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		c, _, _ := newTestCastle(ctrl)
+		constructCastle(t, c, ctrl)
+
+		c.Reset()
+
+		r := mocks.NewMockResource(ctrl)
+		r.EXPECT().Value().Return(1).AnyTimes()
+		err := c.Construct(r)
+		assert.NoError(t, err)
+		assert.True(t, c.IsConstructed())
+	})
+}
+
 func TestCastle_CanBeAttacked(t *testing.T) {
 	t.Run("False when not constructed", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
