@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -40,9 +41,10 @@ func setUpSPArcherEnemySearch(
 }
 
 // validateSPActionArcher runs Validate for archer targeting enemy warrior.
+// Returns action, game, player1, player2 (enemy), attacking warrior, target, special power.
 func validateSPActionArcher(
 	t *testing.T, ctrl *gomock.Controller,
-) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockWarrior, *mocks.MockWarrior, *mocks.MockSpecialPower) {
+) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockWarrior, *mocks.MockWarrior, *mocks.MockSpecialPower) {
 	t.Helper()
 	mockGame := mocks.NewMockGame(ctrl)
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
@@ -69,7 +71,7 @@ func validateSPActionArcher(
 	if err := action.Validate(mockGame); err != nil {
 		t.Fatalf("validateSPActionArcher: unexpected error: %v", err)
 	}
-	return action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP
+	return action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockTarget, mockSP
 }
 
 func TestSpecialPowerAction_PlayerName(t *testing.T) {
@@ -305,7 +307,7 @@ func TestSpecialPowerAction_Validate(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, _, _, _, _, _ := validateSPActionArcher(t, ctrl)
+		action, _, _, _, _, _, _ := validateSPActionArcher(t, ctrl)
 		assert.NotNil(t, action)
 	})
 
@@ -339,13 +341,13 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
 		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
 		mockWarrior.EXPECT().AddKill()
-		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, errors.New("card not found"))
 
@@ -360,9 +362,10 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(errors.New("power failed"))
 
 		result, _, err := action.Execute(mockGame)
@@ -376,14 +379,14 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
 		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
 		mockWarrior.EXPECT().AddKill()
-		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
@@ -402,13 +405,13 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
 		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
 		mockWarrior.EXPECT().AddKill()
-		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
 		mockTarget.EXPECT().String().Return("Knight (20)")
@@ -425,5 +428,161 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 		assert.NotNil(t, statusFn)
 		assert.Contains(t, capturedMsg, "Player1")
 		assert.Contains(t, capturedMsg, "special power")
+	})
+}
+
+func TestSpecialPowerAction_Execute_Bloodlust(t *testing.T) {
+	t.Run("Attacking warrior healed when target is killed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockTarget.EXPECT().Health().Return(0) // killed
+		mockWarrior.EXPECT().AddKill()
+		mockWarrior.EXPECT().HealBy(2) // heals only the attacker, not all field warriors
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
+		mockTarget.EXPECT().String().Return("Knight (0)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, types.LastActionSpecialPower, result.Action)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+
+	t.Run("No healing when target survives", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockTarget.EXPECT().Health().Return(5) // survived — HealBy must NOT be called
+		// AddKill must NOT be called
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
+		mockTarget.EXPECT().String().Return("Knight (5)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionSpecialPower, result.Action)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+
+	t.Run("No healing when no bloodlust event", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, _, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		mockTarget.EXPECT().Health().Return(0) // killed — HealBy must NOT be called (no bloodlust)
+		mockWarrior.EXPECT().AddKill()
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
+		mockTarget.EXPECT().String().Return("Knight (0)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionSpecialPower, result.Action)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+}
+
+func TestSpecialPowerAction_Execute_ChampionsBounty(t *testing.T) {
+	t.Run("Bounty drawn when target is killed and target player is top enemy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		mockTargetField := mocks.NewMockField(ctrl)
+		mockBountyCard := mocks.NewMockCard(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		// pre-kill snapshot: target player has one warrior with 10 HP
+		mockPlayer2.EXPECT().Field().Return(mockTargetField)
+		mockTargetField.EXPECT().Warriors().Return([]cards.Warrior{mockTarget})
+		mockTarget.EXPECT().Health().Return(10) // pre-kill HP
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		// post-attack: target killed
+		mockTarget.EXPECT().Health().Return(0)
+		mockWarrior.EXPECT().AddKill()
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
+		mockTarget.EXPECT().String().Return("Knight (0)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Times(2) // action + bounty
+		// isTopEnemy: only enemy is mockPlayer2 — trivially top.
+		// Name() called twice: once in applyChampionsBounty, once inside isTopEnemy loop.
+		mockPlayer2.EXPECT().Name().Return("Player2").Times(2)
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockPlayer2})
+		mockGame.EXPECT().DrawCards(mockPlayer1, 2).Return([]cards.Card{mockBountyCard}, nil)
+		mockPlayer1.EXPECT().TakeCards(mockBountyCard)
+		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockGame.EXPECT().Status(mockPlayer1, mockBountyCard).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, types.LastActionSpecialPower, result.Action)
+		assert.Equal(t, "Player1", result.Attack.ChampionsBountyEarner)
+		assert.Equal(t, 1, result.Attack.ChampionsBountyCards)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+
+	t.Run("No bounty when target survives", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer1, mockPlayer2, mockWarrior, mockTarget, mockSP := validateSPActionArcher(t, ctrl)
+		mockTargetField := mocks.NewMockField(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		// pre-kill snapshot
+		mockPlayer2.EXPECT().Field().Return(mockTargetField)
+		mockTargetField.EXPECT().Warriors().Return([]cards.Warrior{mockTarget})
+		mockTarget.EXPECT().Health().Return(10) // pre-kill HP
+		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
+		// target survived — no bounty
+		mockTarget.EXPECT().Health().Return(5)
+		// AddKill must NOT be called
+		mockSP.EXPECT().GetID().Return("SP1")
+		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
+		mockTarget.EXPECT().String().Return("Knight (5)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+		_ = statusFn()
+
+		assert.NoError(t, err)
+		assert.Equal(t, "", result.Attack.ChampionsBountyEarner)
+		assert.Equal(t, 0, result.Attack.ChampionsBountyCards)
 	})
 }

@@ -12,6 +12,8 @@ After modifying any `.go` file, run `gofmt -w <file>` on it before moving on.
 
 **Never edit mock files manually.** If a mock needs to change (e.g. interface changed, new method added), run `make mocks` to regenerate all mocks.
 
+**Split long functions into smaller, well-named methods.** Keep orchestrating functions (e.g. `execute()`) short and readable by extracting sub-steps into focused methods with doc comments (e.g. `snapshotPreKillHP`, `applyBloodlust`, `applyChampionsBounty`).
+
 ## Commands
 
 ```bash
