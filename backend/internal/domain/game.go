@@ -922,6 +922,9 @@ func (g *game) getStatus(viewer board.Player,
 		gameStatusDTO.ResurrectionTargetPlayer = r.TargetPlayer
 		gameStatusDTO.ResurrectionPlayerName = r.PlayerName
 	}
+	if pa := g.lastResult.PlaceAmbush; pa != nil {
+		gameStatusDTO.AmbushPlacedOn = pa.TargetPlayer
+	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
 

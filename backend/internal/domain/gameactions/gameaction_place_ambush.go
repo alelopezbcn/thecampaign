@@ -90,13 +90,21 @@ func (a *placeAmbushAction) execute(g placeAmbushGame) (*Result, func() gamestat
 	p.RemoveFromHand(a.ambushCard.GetID())
 	a.targetField.SetSlotCard(a.ambushCard)
 
-	if a.targetPlayerName == "" || a.targetPlayerName == p.Name() {
-		g.AddHistory(fmt.Sprintf("%s placed an ambush", p.Name()), types.CategoryAction)
-	} else {
-		g.AddHistory(fmt.Sprintf("%s placed an ambush on %s's field", p.Name(), a.targetPlayerName), types.CategoryAction)
+	placerName := p.Name()
+	targetPlayer := a.targetPlayerName
+	if targetPlayer == "" {
+		targetPlayer = placerName
 	}
 
-	result := &Result{Action: types.LastActionPlaceAmbush}
+	if a.targetPlayerName == "" {
+		g.AddHistory(fmt.Sprintf("%s placed an ambush", placerName), types.CategoryAction)
+	} else {
+		g.AddHistory(fmt.Sprintf("%s placed an ambush on %s's field", placerName, a.targetPlayerName), types.CategoryAction)
+	}
+	result := &Result{
+		Action:      types.LastActionPlaceAmbush,
+		PlaceAmbush: &PlaceAmbushDetails{TargetPlayer: targetPlayer},
+	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.Status(p)
 	}

@@ -61,6 +61,7 @@ type GameStatus struct {
 	SabotagedFromYouCard         []Card                       `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification              string                       `json:"spy_notification,omitempty"`
 	AmbushTriggered              *AmbushTrigger               `json:"ambush_triggered,omitempty"`
+	AmbushPlacedOn               string                       `json:"ambush_placed_on,omitempty"`
 	TreasonNotification          *TreasonNotification         `json:"treason_notification,omitempty"`
 	ChampionsBounty              *ChampionsBountyNotification `json:"champions_bounty,omitempty"`
 	ResurrectionNotification     *ResurrectionNotification    `json:"resurrection_notification,omitempty"`
@@ -139,6 +140,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 	applyStealNotification(in, &gs)
 	applySabotageNotification(in, &gs)
 	applySpyNotification(in, &gs)
+	applyPlaceAmbushAnimation(in, &gs)
 	applyAmbushNotification(in, &gs)
 	applyTreasonNotification(in, &gs)
 	applyChampionsBountyNotification(in, &gs)
@@ -219,6 +221,12 @@ func applySpyNotification(in BuildInput, gs *GameStatus) {
 		gs.SpyNotification = in.CurrentPlayerName + " spied on the deck"
 	} else {
 		gs.SpyNotification = in.CurrentPlayerName + " spied on " + in.SpyTargetPlayer + "'s hand"
+	}
+}
+
+func applyPlaceAmbushAnimation(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionPlaceAmbush && in.AmbushPlacedOn != "" {
+		gs.AmbushPlacedOn = in.AmbushPlacedOn
 	}
 }
 

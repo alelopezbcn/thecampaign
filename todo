@@ -6,6 +6,14 @@ Test: I would like to have a sum of the HP in field for each player next to the 
 
 Test: I would like to add the viewers player name (my name) in my board, and have also the sum of the HP.
 
+Test: ambush cards should be allowed to be placed in allies field in 2v2 mode as well
+
+Test: resurrection should display a modal showing what warrior was resurrected. This should be also shown to every player. Auto close the modal after 4 secs.
+
+Test: bloodlust event should apply to all weapons, Blood rain, Harpoon, Instant kill
+
+
+
 1. Ambush on ally fields (2v2)
 Backend: place_ambush action now accepts target_player. Validates ally relationship, places ambush on the ally's field slot. Ambush card is usable if any available field (own or ally) lacks an ambush.
 Frontend: When playing an ambush in 2v2, if allies have open fields, a target modal appears (Your Field / Ally's Field). The confirm modal sends target_player in the payload.
@@ -17,7 +25,105 @@ Backend: After resurrection, a resurrection_notification object is included in g
 Frontend: Purple modal with 4s auto-close timer bar, shown to all players simultaneously.
 
 
+Manual testing steps
+Ambush on ally field
+Start a 2v2 game (4 players)
+During your Attack phase, have an Ambush card in hand
+Click it — you should see a target modal: "Your Field" and "[Ally]'s Field"
+Pick ally's field → confirm modal appears → click Yes
+Ally's field shows the face-down ambush card
+On an enemy's turn, when they attack a warrior on that ally's field, the ambush should trigger
+Bloodlust + Harpoon
+Start a game with the Bloodlust event active (or wait for it to appear)
+In your Attack phase, use a Harpoon against an enemy Dragon
+If the dragon's HP reaches 0: all your field warriors should gain +2 HP
+If the dragon survives: no healing
+Bloodlust + Blood Rain
+Same setup — Bloodlust event active
+Use Blood Rain against an enemy with multiple warriors
+Each warrior killed grants +2 HP to all your field warriors
+Check warrior HP badges on your field to confirm
+Resurrection modal
+Any player uses Resurrection during Attack phase
+All players (including opponents) should see a purple "Resurrection!" modal
+Text describes who resurrected, what warrior, and whose field it went to
+Modal auto-closes after 4 seconds, or dismiss manually
+In 2v2, verify the modal correctly says "to [ally]'s field" when targeting an ally
 
+
+
+Manual test steps — Champion's Bounty on Harpoon/Blood Rain
+
+Champion's Bounty is a random global event, so you'll need to get lucky or temporarily force it. The simplest approach: start multiple games until the event is drawn.
+
+Setup
+
+Start the server: ./server.exe
+Open two browser tabs, join the same game room (1v1)
+Wait for the game to show the event banner — look for Champion's Bounty at the top
+If the wrong event comes up, end the game and start another. (FFA3/FFA5 would be ideal since Champion's Bounty only applies in FFA modes — check OnKillBountyCards() returns 0 for all modes or if it's mode-gated. Actually looking at the handler, it always returns 2 — it's not mode-gated in the code. So 1v1 works too.)
+
+Harpoon test
+
+During the Buy phase, buy or acquire a Harpoon and a Dragon warrior
+On your Attack phase, place the Dragon on the field
+Ensure the opponent has a Dragon on their field
+Use the Harpoon on the opponent's Dragon — kill it (it has 8 HP, Harpoon deals 8 on a Dragon)
+Expected: Champion's Bounty notification appears (top of screen or notification), and your hand grows by 2 cards
+Blood Rain test
+
+Acquire a Blood Rain card and have warriors in the enemy field
+On your Attack phase, use Blood Rain on the enemy field
+Kill at least one enemy warrior
+Expected: Champion's Bounty notification appears and 2 cards are drawn
+Negative test — dragon survives
+
+Use Harpoon on a Dragon that has more than 8 HP (e.g. one that has been healed or has a buff)
+Expected: No Champion's Bounty notification, no extra cards drawn
+
+
+Bloodlust on Archer Instant Kill
+Setup:
+
+./server.exe — open two browser tabs, join the same room
+Wait until the event banner shows Bloodlust (or restart games until it appears)
+During the Buy phase, get an Archer warrior and a Special Power card into your hand/field
+Happy path — target killed:
+
+Enter the Attack phase — place Archer on your field
+Use the Special Power on an enemy warrior
+Expected: The Archer's HP badge increases by +2 (the attacker heals, not all field warriors)
+The history log shows the special power action
+Negative — target survives (if applicable — instant kill always kills, but test no-Bloodlust):
+
+Do the same with a Calm or any non-Bloodlust event
+Expected: Archer HP is unchanged after the kill
+Key distinction from Harpoon/Blood Rain: only the Archer itself heals — not every warrior on your field.
+
+Champion's Bounty on Archer Instant Kill
+Champion's Bounty is only drawn in FFA3 or FFA5 game modes.
+
+Setup:
+
+Start an FFA3 or FFA5 game (at least 3 browser tabs)
+Wait until the event banner shows Champion's Bounty
+Get an Archer + Special Power card
+Identify which enemy player has the most total field HP (the HP sum shown next to the player name)
+Happy path — kill the top enemy:
+
+In your Attack phase, use Special Power on a warrior belonging to the player with the highest field HP total
+The instant kill succeeds (HP → 0)
+Expected:
+Your hand grows by 2 cards
+History log shows a "Champion's Bounty" entry
+result.Attack.ChampionsBountyEarner = your player name, ChampionsBountyCards = number drawn
+Negative — target is NOT the top enemy:
+
+Use Special Power on a warrior from the player with lower total field HP
+Expected: No extra cards drawn, no bounty history entry
+Negative — target survives:
+
+Not possible for instant kill (it always kills), but verify the Calm event scenario: no bounty, no heal
 
 
 Fixes:
@@ -28,14 +134,6 @@ mover historial a la derecha, y hacerlo collapsible
 Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
 mejorar popups, menos clicks (enter should click when there is only one option).
 
-Some things that I need you to work on. What is the best way to tackle all of this?
-Remember that we cover new functinality with tests. Lets make a plan.
-
-ambush cards should be allowed to be placed in allies field in 2v2 mode as well
-
-resurrection should display a modal showing what warrior was resurrected. This should be also shown to every player. Auto close the modal after 4 secs.
-
-bloodlust event should apply to all weapons, Blood rain, Harpoon, Instant kill
 
 Champions bounty now draws 2 cards when killing an enemy with most HP. I would be nice t add some kind of benefit when attacking the most powerful enemy (without killing).
 

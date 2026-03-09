@@ -1495,7 +1495,7 @@ function handleAttackPhaseHandClick(cardID, card) {
         const ambushAllies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated && !o.ambush_in_field);
         const ownHasAmbush = !!gameState.currentState?.current_player_ambush_in_field;
         if (ambushAllies.length > 0) {
-            showAmbushTargetModal(card, cardID, ambushAllies, ownHasAmbush);
+            showAmbushTargetModal(card, cardID, ambushAllies, !ownHasAmbush);
         } else {
             showAmbushPlaceConfirmModal(card, cardID, '');
         }
@@ -4976,15 +4976,16 @@ function hideResurrectionModal() {
 
 // Ambush placed animation — shown to all players when a player places an ambush card
 function showAmbushPlacedAnimation(gameStatus) {
-    const isOwnField = gameStatus.turn_player === gameStatus.current_player;
+    // ambush_placed_on identifies whose field received the ambush (handles ally placement in 2v2)
+    const targetPlayer = gameStatus.ambush_placed_on || gameStatus.turn_player;
 
     let fieldEl;
-    if (isOwnField) {
+    if (targetPlayer === gameStatus.current_player) {
         fieldEl = document.getElementById('player-field');
     } else {
         const opponentFields = document.querySelectorAll('.opponent-field');
         for (const f of opponentFields) {
-            if (f.dataset.opponentName === gameStatus.turn_player) {
+            if (f.dataset.opponentName === targetPlayer) {
                 fieldEl = f;
                 break;
             }

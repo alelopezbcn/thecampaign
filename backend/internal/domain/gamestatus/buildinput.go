@@ -62,4 +62,5 @@ type BuildInput struct {
 	ResurrectionWarrior      cards.Warrior
 	ResurrectionTargetPlayer string
 	ResurrectionPlayerName   string
+	AmbushPlacedOn           string // player whose field received the ambush (place_ambush action)
 }

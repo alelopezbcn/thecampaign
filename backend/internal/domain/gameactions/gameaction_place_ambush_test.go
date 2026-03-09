@@ -252,7 +252,7 @@ func TestPlaceAmbushAction_Execute(t *testing.T) {
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("AMB1").Return(nil, nil)
 		mockAllyField.EXPECT().SetSlotCard(ambushCard)
-		mockPlayer1.EXPECT().Name().Return("Player1").Times(2) // condition check + format string
+		mockPlayer1.EXPECT().Name().Return("Player1") // used once, stored in placerName variable
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
 		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 

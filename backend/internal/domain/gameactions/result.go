@@ -14,6 +14,11 @@ type Result struct {
 	Sabotage       *SabotageDetails     // nil = no sabotage
 	Treason        *TreasonDetails      // nil = no treason
 	Resurrection   *ResurrectionDetails // nil = no resurrection
+	PlaceAmbush    *PlaceAmbushDetails  // nil = not a place ambush action
+}
+
+type PlaceAmbushDetails struct {
+	TargetPlayer string // player whose field received the ambush
 }
 
 type AttackDetails struct {
