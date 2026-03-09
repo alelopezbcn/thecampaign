@@ -345,8 +345,9 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		mockTarget.EXPECT().Health().Return(5) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
-		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
+		mockTarget.EXPECT().Health().Return(0) // postHP: killed
 		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, errors.New("card not found"))
@@ -366,6 +367,7 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		mockTarget.EXPECT().Health().Return(5) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(errors.New("power failed"))
 
 		result, _, err := action.Execute(mockGame)
@@ -384,8 +386,9 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		mockTarget.EXPECT().Health().Return(5) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
-		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
+		mockTarget.EXPECT().Health().Return(0) // postHP: killed
 		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
@@ -409,8 +412,9 @@ func TestSpecialPowerAction_Execute(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		mockTarget.EXPECT().Health().Return(5) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
-		mockTarget.EXPECT().Health().Return(0) // target killed by instant kill
+		mockTarget.EXPECT().Health().Return(0) // postHP: killed
 		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
@@ -441,8 +445,9 @@ func TestSpecialPowerAction_Execute_Bloodlust(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockTarget.EXPECT().Health().Return(5) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
-		mockTarget.EXPECT().Health().Return(0) // killed
+		mockTarget.EXPECT().Health().Return(0) // postHP: killed
 		mockWarrior.EXPECT().AddKill()
 		mockWarrior.EXPECT().HealBy(2) // heals only the attacker, not all field warriors
 		mockSP.EXPECT().GetID().Return("SP1")
@@ -468,8 +473,9 @@ func TestSpecialPowerAction_Execute_Bloodlust(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockTarget.EXPECT().Health().Return(8) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
-		mockTarget.EXPECT().Health().Return(5) // survived — HealBy must NOT be called
+		mockTarget.EXPECT().Health().Return(5) // postHP: survived — HealBy must NOT be called
 		// AddKill must NOT be called
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
@@ -493,8 +499,9 @@ func TestSpecialPowerAction_Execute_Bloodlust(t *testing.T) {
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		mockTarget.EXPECT().Health().Return(5) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
-		mockTarget.EXPECT().Health().Return(0) // killed — HealBy must NOT be called (no bloodlust)
+		mockTarget.EXPECT().Health().Return(0) // postHP: killed — HealBy must NOT be called (no bloodlust)
 		mockWarrior.EXPECT().AddKill()
 		mockSP.EXPECT().GetID().Return("SP1")
 		mockPlayer1.EXPECT().RemoveFromHand("SP1").Return(nil, nil)
@@ -525,7 +532,8 @@ func TestSpecialPowerAction_Execute_ChampionsBounty(t *testing.T) {
 		// pre-kill snapshot: target player has one warrior with 10 HP
 		mockPlayer2.EXPECT().Field().Return(mockTargetField)
 		mockTargetField.EXPECT().Warriors().Return([]cards.Warrior{mockTarget})
-		mockTarget.EXPECT().Health().Return(10) // pre-kill HP
+		mockTarget.EXPECT().Health().Return(10) // pre-kill HP (snapshotPreKillHP)
+		mockTarget.EXPECT().Health().Return(10) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
 		// post-attack: target killed
 		mockTarget.EXPECT().Health().Return(0)
@@ -567,7 +575,8 @@ func TestSpecialPowerAction_Execute_ChampionsBounty(t *testing.T) {
 		// pre-kill snapshot
 		mockPlayer2.EXPECT().Field().Return(mockTargetField)
 		mockTargetField.EXPECT().Warriors().Return([]cards.Warrior{mockTarget})
-		mockTarget.EXPECT().Health().Return(10) // pre-kill HP
+		mockTarget.EXPECT().Health().Return(10) // pre-kill HP (snapshotPreKillHP)
+		mockTarget.EXPECT().Health().Return(10) // targetPreHP
 		mockSP.EXPECT().Use(mockWarrior, mockTarget).Return(nil)
 		// target survived — no bounty
 		mockTarget.EXPECT().Health().Return(5)

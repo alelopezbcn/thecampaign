@@ -301,6 +301,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockGame.EXPECT().EventHandler().Return(calmEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
+		mockWarrior.EXPECT().Health().Return(5) // preAttackHP snapshot
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(errors.New("attack failed"))
 
 		result, _, err := action.Execute(mockGame)
@@ -326,7 +327,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
+		mockWarrior.EXPECT().Health().Return(15).Times(2) // pre-attack + post-attack (survives)
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -359,7 +360,7 @@ func TestAttackAction_Execute(t *testing.T) {
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
+		mockWarrior.EXPECT().Health().Return(15).Times(2) // pre-attack + post-attack (survives)
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -541,7 +542,7 @@ func TestAttackAction_Execute_NoAmbush_NormalAttack(t *testing.T) {
 	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 	mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-	mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
+	mockWarrior.EXPECT().Health().Return(15).Times(2) // pre-attack + post-attack (survives)
 	mockWarrior.EXPECT().String().Return("Knight (20)")
 	mockWeapon.EXPECT().String().Return("Sword (5)")
 	mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -638,7 +639,7 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		// BeAttacked receives the curse-modified wrapper (not the original mockWeapon)
 		mockWarrior.EXPECT().BeAttacked(gomock.Any()).Return(nil)
-		mockWarrior.EXPECT().Health().Return(15) // target survives — no kill
+		mockWarrior.EXPECT().Health().Return(15).Times(2) // pre-attack + post-attack (survives)
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Arrow (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("A1").Return(nil, nil)
@@ -671,7 +672,7 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil) // original weapon, unmodified
-		mockWarrior.EXPECT().Health().Return(15)                // target survives — no kill
+		mockWarrior.EXPECT().Health().Return(15).Times(2)       // pre-attack + post-attack (survives)
 		mockWarrior.EXPECT().String().Return("Knight (20)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
 		mockPlayer1.EXPECT().RemoveFromHand("S1").Return(nil, nil)
@@ -717,7 +718,7 @@ func TestAttackAction_Execute_Curse(t *testing.T) {
 }
 
 func TestAttackAction_Execute_Bloodlust(t *testing.T) {
-	t.Run("Attacker heals when target is killed", func(t *testing.T) {
+	t.Run("A random field warrior is healed when target is killed", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -726,13 +727,21 @@ func TestAttackAction_Execute_Bloodlust(t *testing.T) {
 		mockPlayer2.EXPECT().Field().Return(mockDefField)
 		mockDefField.EXPECT().SlotCards().Return(nil)
 
+		mockBloodlustField := mocks.NewMockField(ctrl)
+		mockFieldWarrior := mocks.NewMockWarrior(ctrl)
+
 		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockTargetWarrior.EXPECT().Health().Return(0).Times(2) // target died: AddKill check + bloodlust check
+		gomock.InOrder(
+			mockTargetWarrior.EXPECT().Health().Return(10), // pre-attack HP
+			mockTargetWarrior.EXPECT().Health().Return(0),  // post-attack HP (killed)
+		)
 		mockAttackerWarrior.EXPECT().AddKill()
-		mockAttackerWarrior.EXPECT().HealBy(2)
+		mockPlayer1.EXPECT().Field().Return(mockBloodlustField)
+		mockBloodlustField.EXPECT().Warriors().Return([]cards.Warrior{mockFieldWarrior})
+		mockFieldWarrior.EXPECT().HealBy(2)
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockTargetWarrior.EXPECT().String().Return("Knight (0)")
 		mockWeapon.EXPECT().String().Return("Sword (5)")
@@ -758,7 +767,7 @@ func TestAttackAction_Execute_Bloodlust(t *testing.T) {
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockTargetWarrior.EXPECT().Health().Return(10).Times(2) // target survived: AddKill check + bloodlust check
+		mockTargetWarrior.EXPECT().Health().Return(10).Times(2) // pre-attack + post-attack (survives)
 		// HealBy must NOT be called
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockTargetWarrior.EXPECT().String().Return("Knight (10)")
@@ -789,9 +798,9 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockAttackerWarrior.EXPECT().AddKill()
 		gomock.InOrder(
-			mockTargetWarrior.EXPECT().Health().Return(10), // pre-kill snapshot
-			mockTargetWarrior.EXPECT().Health().Return(0),  // AddKill check
-			mockTargetWarrior.EXPECT().Health().Return(0),  // bounty kill check
+			mockTargetWarrior.EXPECT().Health().Return(10), // pre-kill snapshot (bounty)
+			mockTargetWarrior.EXPECT().Health().Return(10), // pre-attack snapshot (damage)
+			mockTargetWarrior.EXPECT().Health().Return(0),  // post-attack: killed
 		)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
 
@@ -831,9 +840,9 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockAttackerWarrior.EXPECT().AddKill()
 		gomock.InOrder(
-			mockTargetWarrior.EXPECT().Health().Return(5), // pre-kill snapshot
-			mockTargetWarrior.EXPECT().Health().Return(0), // AddKill check
-			mockTargetWarrior.EXPECT().Health().Return(0), // bounty kill check
+			mockTargetWarrior.EXPECT().Health().Return(5), // pre-kill snapshot (bounty)
+			mockTargetWarrior.EXPECT().Health().Return(5), // pre-attack snapshot (damage)
+			mockTargetWarrior.EXPECT().Health().Return(0), // post-attack: killed
 		)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
 
@@ -877,9 +886,9 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockAttackerWarrior.EXPECT().AddKill()
 		gomock.InOrder(
-			mockTargetWarrior.EXPECT().Health().Return(8), // pre-kill snapshot
-			mockTargetWarrior.EXPECT().Health().Return(0), // AddKill check
-			mockTargetWarrior.EXPECT().Health().Return(0), // bounty kill check
+			mockTargetWarrior.EXPECT().Health().Return(8), // pre-kill snapshot (bounty)
+			mockTargetWarrior.EXPECT().Health().Return(8), // pre-attack snapshot (damage)
+			mockTargetWarrior.EXPECT().Health().Return(0), // post-attack: killed
 		)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
 
@@ -925,7 +934,7 @@ func TestAttackAction_Execute_ChampionsBounty(t *testing.T) {
 		mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
 		mockAttackerWarrior.EXPECT().Kills().Return(0)
 		mockTargetWarrior.EXPECT().BeAttacked(mockWeapon).Return(nil)
-		mockTargetWarrior.EXPECT().Health().Return(5).Times(3) // pre-kill + AddKill check + bounty kill check (survived)
+		mockTargetWarrior.EXPECT().Health().Return(5).Times(3) // pre-kill snapshot + pre-attack + post-attack (survived)
 
 		// PlayerIndex/Enemies/DrawCards must NOT be called
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()

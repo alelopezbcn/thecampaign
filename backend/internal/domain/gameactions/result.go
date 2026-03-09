@@ -29,6 +29,8 @@ type AttackDetails struct {
 	AmbushAttackerName    string
 	ChampionsBountyEarner string // "" = bounty not triggered
 	ChampionsBountyCards  int
+	KillsGranted          int // 1 if a kill was earned this action, 0 otherwise
+	DamageDealt           int // HP damage actually inflicted this action
 }
 
 type StealDetails struct {

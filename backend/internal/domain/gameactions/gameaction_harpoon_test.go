@@ -51,14 +51,13 @@ func TestHarpoonAction_NextPhase(t *testing.T) {
 }
 
 func TestHarpoonAction_Execute_Bloodlust(t *testing.T) {
-	t.Run("All field warriors are healed when dragon is killed", func(t *testing.T) {
+	t.Run("A random field warrior is healed when dragon is killed", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		action, mockGame, mockPlayer, _, mockDragon, mockHarpoon := validateHarpoon(t, ctrl)
 		mockField := mocks.NewMockField(ctrl)
-		mockFieldWarrior1 := mocks.NewMockWarrior(ctrl)
-		mockFieldWarrior2 := mocks.NewMockWarrior(ctrl)
+		mockFieldWarrior := mocks.NewMockWarrior(ctrl)
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
@@ -66,9 +65,8 @@ func TestHarpoonAction_Execute_Bloodlust(t *testing.T) {
 		mockHarpoon.EXPECT().Attack(mockDragon).Return(nil)
 		mockDragon.EXPECT().Health().Return(0) // dragon died
 		mockPlayer.EXPECT().Field().Return(mockField)
-		mockField.EXPECT().Warriors().Return([]cards.Warrior{mockFieldWarrior1, mockFieldWarrior2})
-		mockFieldWarrior1.EXPECT().HealBy(2)
-		mockFieldWarrior2.EXPECT().HealBy(2)
+		mockField.EXPECT().Warriors().Return([]cards.Warrior{mockFieldWarrior})
+		mockFieldWarrior.EXPECT().HealBy(2)
 		mockHarpoon.EXPECT().GetID().Return("harpoon-id")
 		mockPlayer.EXPECT().RemoveFromHand("harpoon-id").Return(nil, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockHarpoon)

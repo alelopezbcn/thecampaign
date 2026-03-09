@@ -138,11 +138,16 @@ func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamest
 
 	preKillHP := a.snapshotPreKillHP(bountyCards)
 
+	// Snapshot pre-attack HP for damage tracking.
+	targetPreHP := a.usedOn.Health()
+
 	if err := a.specialPower.Use(a.usedBy, a.usedOn); err != nil {
 		return &Result{}, nil, fmt.Errorf("special power action failed: %w", err)
 	}
 
-	killed := a.usedOn.Health() == 0
+	// Post-attack state (single Health() call used for kill detection and damage calculation).
+	postHP := a.usedOn.Health()
+	killed := postHP == 0
 	if killed {
 		a.usedBy.AddKill()
 	}
@@ -157,12 +162,18 @@ func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamest
 
 	newCards, earner, drawn := a.applyChampionsBounty(g, p, bountyCards, preKillHP, killed)
 
+	killsGranted := 0
+	if killed {
+		killsGranted = 1
+	}
 	result := &Result{
 		Action: types.LastActionSpecialPower,
 		Attack: &AttackDetails{
 			TargetID:              a.targetID,
 			ChampionsBountyEarner: earner,
 			ChampionsBountyCards:  drawn,
+			KillsGranted:          killsGranted,
+			DamageDealt:           targetPreHP - postHP,
 		},
 	}
 	return result, func() gamestatus.GameStatus { return g.Status(p, newCards...) }, nil

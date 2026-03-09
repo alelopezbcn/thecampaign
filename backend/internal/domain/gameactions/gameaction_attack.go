@@ -2,6 +2,7 @@ package gameactions
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -154,6 +155,9 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		targetPlayerPreKillHP = totalFieldHP(a.targetPlayer)
 	}
 
+	// Snapshot pre-attack HP for damage tracking.
+	preAttackHP := a.target.Health()
+
 	// Normal attack.
 	err := a.target.BeAttacked(effectiveWeapon)
 	if err != nil {
@@ -161,14 +165,16 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		return result, nil, fmt.Errorf("attack action failed: %w", err)
 	}
 
-	// Award kill credit to the attacker when the target is defeated.
-	if a.target.Health() == 0 {
+	// Post-attack state (single Health() call used for kill detection and damage calculation).
+	postAttackHP := a.target.Health()
+	killed := postAttackHP == 0
+	if killed {
 		a.attacker.AddKill()
 	}
 
-	// Bloodlust: if the target was killed, restore HP to the attacking warrior.
-	if healAmount := handler.OnKillHealAmount(); healAmount > 0 && a.target.Health() == 0 {
-		a.attacker.HealBy(healAmount)
+	// Bloodlust: if the target was killed, restore HP to a random field warrior.
+	if healAmount := handler.OnKillHealAmount(); healAmount > 0 && killed {
+		a.applyBloodlust(healAmount)
 	}
 
 	// Remove the used weapon before drawing bounty cards so the freed slot counts
@@ -184,7 +190,7 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 	var bountyEarner string
 	var bountyDrawn int
 	var bountyCards2 []cards.Card
-	if bountyCards > 0 && a.target.Health() == 0 {
+	if bountyCards > 0 && killed {
 		if isTopEnemy(targetPlayerPreKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
 			drawn, drawErr := g.DrawCards(a.currentPlayer, bountyCards)
 			if drawErr == nil {
@@ -198,6 +204,10 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 		}
 	}
 
+	killsGranted := 0
+	if killed {
+		killsGranted = 1
+	}
 	result := &Result{
 		Action: types.LastActionAttack,
 		Attack: &AttackDetails{
@@ -206,6 +216,8 @@ func (a *attackAction) execute(g attackGame) (*Result, func() gamestatus.GameSta
 			TargetPlayer:          a.targetPlayerName,
 			ChampionsBountyEarner: bountyEarner,
 			ChampionsBountyCards:  bountyDrawn,
+			KillsGranted:          killsGranted,
+			DamageDealt:           preAttackHP - postAttackHP,
 		},
 	}
 	statusFn := func() gamestatus.GameStatus {
@@ -241,6 +253,15 @@ func isTopEnemy(targetPreKillHP int, targetPlayerName string, enemies []board.Pl
 		}
 	}
 	return true
+}
+
+// applyBloodlust heals a random field warrior when a kill is scored.
+func (a *attackAction) applyBloodlust(healAmount int) {
+	warriors := a.currentPlayer.Field().Warriors()
+	if len(warriors) == 0 {
+		return
+	}
+	warriors[rand.Intn(len(warriors))].HealBy(healAmount)
 }
 
 func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWeapon cards.Weapon, weaponType types.WeaponType, g attackGame) *Result {

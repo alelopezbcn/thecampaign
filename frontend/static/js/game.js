@@ -906,7 +906,7 @@ function handleGameState(payload) {
     const gameOverMsg = payload.game_status.game_over_msg;
     if (gameOverMsg && gameOverMsg.length > 0) {
         const isWinner = checkIsWinner(gameOverMsg, payload.game_status);
-        showGameOverModal(isWinner, gameOverMsg);
+        showGameOverModal(isWinner, gameOverMsg, payload.game_status.player_stats);
     }
 
     // Check for error message
@@ -937,7 +937,7 @@ function checkIsWinner(gameOverMsg, status) {
 function handleGameEnded() {
     const gameOverMsg = gameState.currentState?.game_over_msg || 'Game Over!';
     const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
-    showGameOverModal(isWinner, gameOverMsg);
+    showGameOverModal(isWinner, gameOverMsg, gameState.currentState?.player_stats);
 }
 
 // Screen management
@@ -5662,11 +5662,12 @@ function showCardsModal(cards, title, subtitle, showPositionIndicators = false) 
 }
 
 // Game Over Modal
-function showGameOverModal(isWinner, message) {
+function showGameOverModal(isWinner, message, playerStats) {
     const modal = document.getElementById('gameover-modal');
     const iconElement = document.getElementById('gameover-modal-icon');
     const titleElement = document.getElementById('gameover-modal-title');
     const messageElement = document.getElementById('gameover-modal-message');
+    const statsEl = document.getElementById('gameover-stats');
 
     if (isWinner) {
         iconElement.textContent = '🏆';
@@ -5679,6 +5680,27 @@ function showGameOverModal(isWinner, message) {
     }
 
     messageElement.textContent = message;
+
+    if (playerStats && playerStats.length > 0) {
+        const rows = playerStats.map(s => {
+            const crown = s.is_winner ? ' 👑' : '';
+            const mvp = s.is_mvp ? ' ⭐' : '';
+            return `<tr class="${s.is_winner ? 'stat-winner' : ''}">
+                <td>${s.name}${crown}${mvp}</td>
+                <td>${s.kills}</td>
+                <td>${s.damage}</td>
+                <td>${s.castle_value}</td>
+            </tr>`;
+        }).join('');
+        statsEl.innerHTML = `<table class="gameover-stats-table">
+            <thead><tr><th>Player</th><th>Kills</th><th>Damage</th><th>Castle</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+        statsEl.classList.remove('hidden');
+    } else {
+        statsEl.classList.add('hidden');
+    }
+
     modal.classList.remove('hidden');
 }
 

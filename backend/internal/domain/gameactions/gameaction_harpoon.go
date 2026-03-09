@@ -2,6 +2,7 @@ package gameactions
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -131,13 +132,16 @@ func (a *harpoonAction) snapshotPreKillHP(bountyCards int) int {
 	return totalFieldHP(a.targetPlayer)
 }
 
-// applyBloodlust heals all of the player's field warriors if the dragon was killed.
+// applyBloodlust heals a random field warrior if the dragon was killed.
 func (a *harpoonAction) applyBloodlust(healAmount int, p board.Player) {
-	if healAmount > 0 && a.dragon.Health() == 0 {
-		for _, w := range p.Field().Warriors() {
-			w.HealBy(healAmount)
-		}
+	if healAmount <= 0 || a.dragon.Health() != 0 {
+		return
 	}
+	warriors := p.Field().Warriors()
+	if len(warriors) == 0 {
+		return
+	}
+	warriors[rand.Intn(len(warriors))].HealBy(healAmount)
 }
 
 // applyChampionsBounty draws bonus cards when the dragon was killed and its player

@@ -36,6 +36,8 @@ type game struct {
 	historyTracker      int
 	lastResult          gameactions.Result
 	winState            winState
+	playerKills         map[string]int // total kills per player across the game
+	playerDamage        map[string]int // total HP damage dealt per player across the game
 	gameStartedAt       time.Time
 }
 
@@ -58,6 +60,8 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, cas
 		mode:                mode,
 		eliminatedPlayers:   make(map[int]bool),
 		disconnectedPlayers: make(map[int]bool),
+		playerKills:         make(map[string]int),
+		playerDamage:        make(map[string]int),
 		gameStartedAt:       now,
 		turnState:           types.TurnState{StartedAt: now},
 	}
@@ -423,6 +427,11 @@ func (g *game) ExecuteAction(action gameactions.GameAction) (
 	}
 
 	g.lastResult = *result
+	if a := result.Attack; a != nil {
+		name := g.CurrentPlayer().Name()
+		g.playerKills[name] += a.KillsGranted
+		g.playerDamage[name] += a.DamageDealt
+	}
 
 	nextPhase := action.NextPhase()
 
@@ -927,6 +936,30 @@ func (g *game) getStatus(viewer board.Player,
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
+	if gameStatusDTO.IsGameOver {
+		// Determine MVP: most kills; damage dealt as tiebreaker.
+		mvpName := ""
+		bestKills, bestDamage := -1, -1
+		for _, p := range allPlayers {
+			k := g.playerKills[p.Name()]
+			d := g.playerDamage[p.Name()]
+			if k > bestKills || (k == bestKills && d > bestDamage) {
+				bestKills = k
+				bestDamage = d
+				mvpName = p.Name()
+			}
+		}
+		for i, p := range allPlayers {
+			gameStatusDTO.PlayerStats = append(gameStatusDTO.PlayerStats, gamestatus.PlayerStatInput{
+				Name:        p.Name(),
+				Kills:       g.playerKills[p.Name()],
+				Damage:      g.playerDamage[p.Name()],
+				CastleValue: p.Castle().Value(),
+				IsWinner:    g.isPlayerWinner(i),
+				IsMVP:       p.Name() == mvpName,
+			})
+		}
+	}
 
 	return gamestatus.NewGameStatus(gameStatusDTO)
 }

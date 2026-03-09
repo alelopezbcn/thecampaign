@@ -2,6 +2,7 @@ package gameactions
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -141,13 +142,16 @@ func (a *bloodRainAction) countKills(healAmount, bountyCards int) int {
 	return kills
 }
 
-// applyBloodlust heals all of the player's field warriors for each target killed.
+// applyBloodlust heals a random field warrior by healAmount per kill scored.
 func (a *bloodRainAction) applyBloodlust(healAmount, kills int) {
-	if healAmount > 0 && kills > 0 {
-		for _, w := range a.currentPlayer.Field().Warriors() {
-			w.HealBy(healAmount * kills)
-		}
+	if healAmount <= 0 || kills == 0 {
+		return
 	}
+	warriors := a.currentPlayer.Field().Warriors()
+	if len(warriors) == 0 {
+		return
+	}
+	warriors[rand.Intn(len(warriors))].HealBy(healAmount * kills)
 }
 
 // applyChampionsBounty draws bonus cards when any target was killed and the target

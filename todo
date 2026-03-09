@@ -1,43 +1,3 @@
-Test: limpiar castle en UI cuando el player es eliminado
-
-Test: We are able to setup the max castle resources in the settings, but the UI has the castle total resources hardcoded. We should show the totl resources set in the settins of the game 5/XX (example when he castle has 5 gold coins over XX, value from settings)
-
-Test: I would like to have a sum of the HP in field for each player next to the player name, on top of the board.
-
-Test: I would like to add the viewers player name (my name) in my board, and have also the sum of the HP.
-
-Test: ambush cards should be allowed to be placed in allies field in 2v2 mode as well
-
-Test: resurrection should display a modal showing what warrior was resurrected. This should be also shown to every player. Auto close the modal after 4 secs.
-
-Test: bloodlust event should apply to all weapons, Blood rain, Harpoon, Instant kill
-
-
-
-1. Ambush on ally fields (2v2)
-Backend: place_ambush action now accepts target_player. Validates ally relationship, places ambush on the ally's field slot. Ambush card is usable if any available field (own or ally) lacks an ambush.
-Frontend: When playing an ambush in 2v2, if allies have open fields, a target modal appears (Your Field / Ally's Field). The confirm modal sends target_player in the payload.
-2. Bloodlust event — Harpoon & Blood Rain
-Harpoon: If the dragon dies, all warriors on the attacker's field are healed by the Bloodlust heal amount (2 HP).
-Blood Rain: For each enemy warrior killed by Blood Rain, all warriors on the attacker's field heal by the Bloodlust amount. (2 kills = 4 HP total)
-3. Resurrection notification modal
-Backend: After resurrection, a resurrection_notification object is included in game_state for all players — contains the resurrected warrior's card, whose field it went to, and who played it.
-Frontend: Purple modal with 4s auto-close timer bar, shown to all players simultaneously.
-
-
-Manual testing steps
-Ambush on ally field
-Start a 2v2 game (4 players)
-During your Attack phase, have an Ambush card in hand
-Click it — you should see a target modal: "Your Field" and "[Ally]'s Field"
-Pick ally's field → confirm modal appears → click Yes
-Ally's field shows the face-down ambush card
-On an enemy's turn, when they attack a warrior on that ally's field, the ambush should trigger
-Bloodlust + Harpoon
-Start a game with the Bloodlust event active (or wait for it to appear)
-In your Attack phase, use a Harpoon against an enemy Dragon
-If the dragon's HP reaches 0: all your field warriors should gain +2 HP
-If the dragon survives: no healing
 Bloodlust + Blood Rain
 Same setup — Bloodlust event active
 Use Blood Rain against an enemy with multiple warriors
@@ -144,5 +104,8 @@ End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
 I would like to UNforge the forged cards when discarding it to the discard pile (when the warrior attacked with forged cards dies). Consider we can forge a forged card. Example: forge 2+5=7, then reforged 7+5=13. When discarded the 13 DMG card, 3 different cards must be discarded, 2, 5 and 5.
 
 
+La animacion cuando se aplica el bloodlust, en vez de mostrar el HP final, deberia mostrar +2 (el valor de bonus que se esta agregandp al HP)
+
+in resurrection modal, show the card of the resurrected warrior
 
 make game.js smaller? split in different files?

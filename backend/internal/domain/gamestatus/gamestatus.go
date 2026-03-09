@@ -25,6 +25,15 @@ type ChampionsBountyNotification struct {
 	Cards    int    `json:"cards"`
 }
 
+type PlayerStat struct {
+	Name        string `json:"name"`
+	Kills       int    `json:"kills"`
+	Damage      int    `json:"damage"`
+	CastleValue int    `json:"castle_value"`
+	IsWinner    bool   `json:"is_winner"`
+	IsMVP       bool   `json:"is_mvp"`
+}
+
 type ResurrectionNotification struct {
 	WarriorCard  Card   `json:"warrior_card"`
 	TargetPlayer string `json:"target_player"`
@@ -70,6 +79,7 @@ type GameStatus struct {
 	NextTurnPlayer               string                       `json:"next_turn_player,omitempty"`
 	GameOverMsg                  string                       `json:"game_over_msg,omitempty"`
 	IsWinner                     bool                         `json:"is_winner"`
+	PlayerStats                  []PlayerStat                 `json:"player_stats,omitempty"`
 	GameStartedAt                string                       `json:"game_started_at"`
 	TurnStartedAt                string                       `json:"turn_started_at"`
 	TurnTimeLimitSecs            int                          `json:"turn_time_limit_secs"`
@@ -159,6 +169,16 @@ func NewGameStatus(in BuildInput) GameStatus {
 	if in.IsGameOver {
 		gs.GameOverMsg = "Game over! The winner is " + in.Winner
 		gs.IsWinner = in.IsPlayerWinner
+		for _, s := range in.PlayerStats {
+			gs.PlayerStats = append(gs.PlayerStats, PlayerStat{
+				Name:        s.Name,
+				Kills:       s.Kills,
+				Damage:      s.Damage,
+				CastleValue: s.CastleValue,
+				IsWinner:    s.IsWinner,
+				IsMVP:       s.IsMVP,
+			})
+		}
 	}
 
 	return gs
