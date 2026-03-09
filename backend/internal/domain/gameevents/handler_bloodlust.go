@@ -13,6 +13,7 @@ func (h *bloodlustHandler) ConstructionValueModifier() int              { return
 func (h *bloodlustHandler) TurnStartWarriorHPModifier() int             { return 0 }
 func (h *bloodlustHandler) OnKillHealAmount() int                       { return bloodlustHealAmount }
 func (h *bloodlustHandler) OnKillBountyCards() int                      { return 0 }
+func (h *bloodlustHandler) OnHitBountyHeal() int                        { return 0 }
 func (h *bloodlustHandler) Display() (string, string) {
 	return "Bloodlust", "Warriors restore 2 HP each time they defeat an enemy"
 }

@@ -14,6 +14,7 @@ func (h *championsBountyHandler) ConstructionValueModifier() int              { 
 func (h *championsBountyHandler) TurnStartWarriorHPModifier() int             { return 0 }
 func (h *championsBountyHandler) OnKillHealAmount() int                       { return 0 }
 func (h *championsBountyHandler) OnKillBountyCards() int                      { return championsBountyCards }
+func (h *championsBountyHandler) OnHitBountyHeal() int                        { return 3 }
 func (h *championsBountyHandler) Display() (string, string) {
 	return "Champion's Bounty", "Draw 2 cards when killing a warrior from the enemy with the highest HP"
 }

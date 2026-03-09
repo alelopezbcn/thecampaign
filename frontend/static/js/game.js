@@ -1474,8 +1474,11 @@ function handleAttackPhaseHandClick(cardID, card) {
                 gameState.actionState.targetPlayer = playerName;
                 showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
             }, (opp) => {
-                const count = (opp.field || []).length;
-                return `${count} warrior${count !== 1 ? 's' : ''} on field`;
+                const field = opp.field || [];
+                const count = field.length;
+                const hpList = field.map(w => `${w.value || '?'}HP`).join(', ');
+                const hpSuffix = hpList ? ` — ${hpList}` : '';
+                return `${count} warrior${count !== 1 ? 's' : ''} on field${hpSuffix}`;
             });
         }
     } else if (cardType === 'resurrection') {
@@ -1672,11 +1675,13 @@ function showBloodRainConfirmModal(weapon, targetOpponent) {
     const warriorSummary = warriorCount === 1
         ? `1 warrior (${dmg} DMG)`
         : warriorCount > 1 ? `${warriorCount} warriors (${dmg} DMG each)` : `all warriors (${dmg} DMG each)`;
+    const hpParts = targetField.map(w => `${getCardName(w)} <span class="hp-preview">${w.value || '?'}HP</span>`).join(' · ');
+    const hpSuffix = hpParts ? ` — ${hpParts}` : '';
 
     showActionConfirmModal({
         title: 'Blood Rain',
         cardsHtml: cardsHtml,
-        description: `🩸 Blood Rain hits all of ${targetName}'s warriors — ${warriorSummary}`,
+        description: `🩸 Blood Rain hits all of ${targetName}'s warriors — ${warriorSummary}${hpSuffix}`,
         onConfirm: () => {
             sendAction('blood_rain', {
                 target_player: gameState.actionState.targetPlayer,
@@ -2776,7 +2781,7 @@ function showFloatingDamage(cardId, damage, skipSlash = false) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display heal animation on a card with green cross and count-up
+// Display heal animation on a card with green cross and floating +amount bonus
 function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
@@ -2792,22 +2797,13 @@ function showFloatingHeal(cardId, fromHp, toHp) {
     cardElement.appendChild(cross);
     setTimeout(() => cross.remove(), 2000);
 
-    // Count-up number
-    const countup = document.createElement('div');
-    countup.className = 'heal-countup';
-    countup.textContent = fromHp;
-    cardElement.appendChild(countup);
-
-    let current = fromHp;
-    const interval = setInterval(() => {
-        current++;
-        countup.textContent = current;
-        if (current >= toHp) {
-            clearInterval(interval);
-        }
-    }, 80);
-
-    setTimeout(() => countup.remove(), 3500);
+    // Floating +amount bonus (shows the heal delta, not the final HP)
+    const amount = toHp - fromHp;
+    const floatingBonus = document.createElement('div');
+    floatingBonus.className = 'floating-heal';
+    floatingBonus.textContent = `+${amount}`;
+    cardElement.appendChild(floatingBonus);
+    setTimeout(() => floatingBonus.remove(), 3000);
 }
 
 // Extract protection state from game status
@@ -4938,6 +4934,16 @@ function showResurrectionModal(notification) {
     const warriorName = notification.warrior_card?.sub_type || 'a warrior';
     const target = notification.target_player;
     const targetIsYou = target === gameState.playerName;
+
+    const warriorImgEl = document.getElementById('resurrection-warrior-img');
+    if (warriorImgEl) {
+        const imageUrl = notification.warrior_card ? getCardImageUrl(notification.warrior_card) : null;
+        if (imageUrl) {
+            warriorImgEl.innerHTML = `<img src="${imageUrl}" alt="${warriorName}" class="resurrection-warrior-card-img">`;
+        } else {
+            warriorImgEl.innerHTML = '';
+        }
+    }
 
     let msg;
     if (isYou) {

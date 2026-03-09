@@ -20,6 +20,10 @@ type EventHandler interface {
 	// OnKillBountyCards returns the number of cards drawn when killing a warrior belonging to the
 	// enemy with the highest total field HP (0 if none). Only active in FFA modes.
 	OnKillBountyCards() int
+	// OnHitBountyHeal returns the HP healed to a random field warrior when hitting (without killing)
+	// a warrior belonging to the enemy with the highest total field HP (0 if none).
+	// For blood rain: triggers whenever the target player is top enemy, regardless of kills.
+	OnHitBountyHeal() int
 	// Display returns the event's display name and a human-readable description of its effect.
 	Display() (name, description string)
 }

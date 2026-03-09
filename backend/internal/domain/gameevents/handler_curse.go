@@ -18,6 +18,7 @@ func (h *curseHandler) ConstructionValueModifier() int  { return 0 }
 func (h *curseHandler) TurnStartWarriorHPModifier() int { return 0 }
 func (h *curseHandler) OnKillHealAmount() int           { return 0 }
 func (h *curseHandler) OnKillBountyCards() int          { return 0 }
+func (h *curseHandler) OnHitBountyHeal() int            { return 0 }
 
 func (h *curseHandler) WeaponDamageModifier(weaponType types.WeaponType) int {
 	if weaponType == h.excludedWeapon {

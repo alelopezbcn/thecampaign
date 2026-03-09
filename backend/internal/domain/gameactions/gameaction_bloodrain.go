@@ -84,8 +84,9 @@ func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.G
 	handler := g.EventHandler()
 	bountyCards := handler.OnKillBountyCards()
 	healAmount := handler.OnKillHealAmount()
+	hitHeal := handler.OnHitBountyHeal()
 
-	preKillHP := a.snapshotPreKillHP(bountyCards)
+	preKillHP := a.snapshotPreKillHP(bountyCards, hitHeal)
 
 	if err := a.bloodRain.Attack(a.targets); err != nil {
 		return &Result{}, nil, fmt.Errorf("blood rain action failed: %w", err)
@@ -101,6 +102,7 @@ func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.G
 	g.AddHistory(fmt.Sprintf("%s used blood rain on %s", a.playerName, a.targetPlayerName), types.CategoryAction)
 
 	newCards, earner, drawn := a.applyChampionsBounty(g, bountyCards, preKillHP, kills)
+	hitHealGranted := a.applyChampionsBountyHitHeal(g, hitHeal, preKillHP)
 
 	result := &Result{
 		Action: types.LastActionBloodRain,
@@ -109,6 +111,7 @@ func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.G
 			TargetPlayer:          a.targetPlayerName,
 			ChampionsBountyEarner: earner,
 			ChampionsBountyCards:  drawn,
+			ChampionsBountyHeal:   hitHealGranted,
 		},
 	}
 	return result, func() gamestatus.GameStatus { return g.Status(a.currentPlayer, newCards...) }, nil
@@ -119,12 +122,31 @@ func (a *bloodRainAction) NextPhase() types.PhaseType {
 }
 
 // snapshotPreKillHP returns the target player's total field HP before the attack,
-// used for Champion's Bounty eligibility. Returns 0 when the event is not active.
-func (a *bloodRainAction) snapshotPreKillHP(bountyCards int) int {
-	if bountyCards == 0 {
+// used for Champion's Bounty kill and hit-heal eligibility. Returns 0 when neither is active.
+func (a *bloodRainAction) snapshotPreKillHP(bountyCards, hitHeal int) int {
+	if bountyCards == 0 && hitHeal == 0 {
 		return 0
 	}
 	return totalFieldHP(a.targetPlayer)
+}
+
+// applyChampionsBountyHitHeal heals a random field warrior when the target player is top enemy.
+// For blood rain this triggers regardless of how many warriors were killed.
+func (a *bloodRainAction) applyChampionsBountyHitHeal(g bloodRainGame, hitHeal, preKillHP int) int {
+	if hitHeal == 0 {
+		return 0
+	}
+	if !isTopEnemy(preKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
+		return 0
+	}
+	warriors := a.currentPlayer.Field().Warriors()
+	if len(warriors) == 0 {
+		return 0
+	}
+	warriors[rand.Intn(len(warriors))].HealBy(hitHeal)
+	g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — warrior healed %d HP",
+		a.currentPlayer.Name(), hitHeal), types.CategoryInfo)
+	return hitHeal
 }
 
 // countKills counts target warriors that were killed by the attack.

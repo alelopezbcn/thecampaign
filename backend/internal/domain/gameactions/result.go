@@ -29,6 +29,7 @@ type AttackDetails struct {
 	AmbushAttackerName    string
 	ChampionsBountyEarner string // "" = bounty not triggered
 	ChampionsBountyCards  int
+	ChampionsBountyHeal   int // > 0 = hit-heal triggered (HP healed to a random warrior)
 	KillsGranted          int // 1 if a kill was earned this action, 0 otherwise
 	DamageDealt           int // HP damage actually inflicted this action
 }

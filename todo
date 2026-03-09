@@ -1,111 +1,28 @@
-Bloodlust + Blood Rain
-Same setup — Bloodlust event active
-Use Blood Rain against an enemy with multiple warriors
-Each warrior killed grants +2 HP to all your field warriors
-Check warrior HP badges on your field to confirm
-Resurrection modal
-Any player uses Resurrection during Attack phase
-All players (including opponents) should see a purple "Resurrection!" modal
-Text describes who resurrected, what warrior, and whose field it went to
-Modal auto-closes after 4 seconds, or dismiss manually
-In 2v2, verify the modal correctly says "to [ally]'s field" when targeting an ally
+test
+1. Unforge on warrior death (backend)
+Added unforgeObserver in gameaction_forge.go. When a forged weapon is discarded (warrior dies), its observer now discards the original component weapons instead of the combined card. Recursive forging is handled automatically — if component1 is itself a forged weapon with an unforgeObserver, it will recursively unforge too.
 
+2. Bloodlust animation shows +2
+In game.js, showFloatingHeal now shows a floating green +amount (using the existing .floating-heal CSS style) instead of the count-up HP display. Cleaner and more informative.
 
+3. Resurrection modal shows warrior card image
+Added <div id="resurrection-warrior-img"> in index.html and populated it with the warrior's card image in showResurrectionModal. Added CSS for sizing/styling in styles.css.
 
-Manual test steps — Champion's Bounty on Harpoon/Blood Rain
+4. Blood rain popup shows HP per warrior
+Both the target selection modal ("2 warriors on field — 15HP, 8HP") and the confirm modal description now include per-warrior HP. The confirm modal also shows each warrior by name with an HP badge inline.
 
-Champion's Bounty is a random global event, so you'll need to get lucky or temporarily force it. The simplest approach: start multiple games until the event is drawn.
-
-Setup
-
-Start the server: ./server.exe
-Open two browser tabs, join the same game room (1v1)
-Wait for the game to show the event banner — look for Champion's Bounty at the top
-If the wrong event comes up, end the game and start another. (FFA3/FFA5 would be ideal since Champion's Bounty only applies in FFA modes — check OnKillBountyCards() returns 0 for all modes or if it's mode-gated. Actually looking at the handler, it always returns 2 — it's not mode-gated in the code. So 1v1 works too.)
-
-Harpoon test
-
-During the Buy phase, buy or acquire a Harpoon and a Dragon warrior
-On your Attack phase, place the Dragon on the field
-Ensure the opponent has a Dragon on their field
-Use the Harpoon on the opponent's Dragon — kill it (it has 8 HP, Harpoon deals 8 on a Dragon)
-Expected: Champion's Bounty notification appears (top of screen or notification), and your hand grows by 2 cards
-Blood Rain test
-
-Acquire a Blood Rain card and have warriors in the enemy field
-On your Attack phase, use Blood Rain on the enemy field
-Kill at least one enemy warrior
-Expected: Champion's Bounty notification appears and 2 cards are drawn
-Negative test — dragon survives
-
-Use Harpoon on a Dragon that has more than 8 HP (e.g. one that has been healed or has a buff)
-Expected: No Champion's Bounty notification, no extra cards drawn
-
-
-Bloodlust on Archer Instant Kill
-Setup:
-
-./server.exe — open two browser tabs, join the same room
-Wait until the event banner shows Bloodlust (or restart games until it appears)
-During the Buy phase, get an Archer warrior and a Special Power card into your hand/field
-Happy path — target killed:
-
-Enter the Attack phase — place Archer on your field
-Use the Special Power on an enemy warrior
-Expected: The Archer's HP badge increases by +2 (the attacker heals, not all field warriors)
-The history log shows the special power action
-Negative — target survives (if applicable — instant kill always kills, but test no-Bloodlust):
-
-Do the same with a Calm or any non-Bloodlust event
-Expected: Archer HP is unchanged after the kill
-Key distinction from Harpoon/Blood Rain: only the Archer itself heals — not every warrior on your field.
-
-Champion's Bounty on Archer Instant Kill
-Champion's Bounty is only drawn in FFA3 or FFA5 game modes.
-
-Setup:
-
-Start an FFA3 or FFA5 game (at least 3 browser tabs)
-Wait until the event banner shows Champion's Bounty
-Get an Archer + Special Power card
-Identify which enemy player has the most total field HP (the HP sum shown next to the player name)
-Happy path — kill the top enemy:
-
-In your Attack phase, use Special Power on a warrior belonging to the player with the highest field HP total
-The instant kill succeeds (HP → 0)
-Expected:
-Your hand grows by 2 cards
-History log shows a "Champion's Bounty" entry
-result.Attack.ChampionsBountyEarner = your player name, ChampionsBountyCards = number drawn
-Negative — target is NOT the top enemy:
-
-Use Special Power on a warrior from the player with lower total field HP
-Expected: No extra cards drawn, no bounty history entry
-Negative — target survives:
-
-Not possible for instant kill (it always kills), but verify the Calm event scenario: no bounty, no heal
+Champion's Bounty — hit-heal (+3 HP):
+Normal attack (gameaction_attack.go): When the target survives and its player had the highest total field HP among enemies, a random attacker warrior heals +3 HP. This complements the existing kill bonus (draw 2 cards when killing from the top enemy).
+Blood Rain (gameaction_bloodrain.go): The +3 heal always fires when the target player is the top enemy — regardless of how many warriors were killed. Both the kill-card-draw and the hit-heal can trigger on the same blood rain.
 
 
 Fixes:
 flickering cards
 harpoon no tiene tests, events neither
 
-mover historial a la derecha, y hacerlo collapsible
-Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
 mejorar popups, menos clicks (enter should click when there is only one option).
 
-
-Champions bounty now draws 2 cards when killing an enemy with most HP. I would be nice t add some kind of benefit when attacking the most powerful enemy (without killing).
-
-Champions bounty should be triggered by special powers, Harpoon and bloodrain (in the case of bloodrain it will draw 2 cards max, no matter how many warriors are killed)
-
-End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
-
-I would like to UNforge the forged cards when discarding it to the discard pile (when the warrior attacked with forged cards dies). Consider we can forge a forged card. Example: forge 2+5=7, then reforged 7+5=13. When discarded the 13 DMG card, 3 different cards must be discarded, 2, 5 and 5.
-
-
-La animacion cuando se aplica el bloodlust, en vez de mostrar el HP final, deberia mostrar +2 (el valor de bonus que se esta agregandp al HP)
-
-in resurrection modal, show the card of the resurrected warrior
+mover historial a la derecha, y hacerlo collapsible
+Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
 
 make game.js smaller? split in different files?

@@ -5729,3 +5729,18 @@ body {
     from { transform: scaleX(1); }
     to   { transform: scaleX(0); }
 }
+
+.resurrection-warrior-img {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0 4px;
+}
+
+.resurrection-warrior-card-img {
+    width: 80px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid rgba(199, 77, 255, 0.5);
+    box-shadow: 0 0 12px rgba(199, 77, 255, 0.4);
+}

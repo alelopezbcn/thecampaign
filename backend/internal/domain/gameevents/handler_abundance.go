@@ -11,6 +11,7 @@ func (h *abundanceHandler) ConstructionValueModifier() int              { return
 func (h *abundanceHandler) TurnStartWarriorHPModifier() int             { return 0 }
 func (h *abundanceHandler) OnKillHealAmount() int                       { return 0 }
 func (h *abundanceHandler) OnKillBountyCards() int                      { return 0 }
+func (h *abundanceHandler) OnHitBountyHeal() int                        { return 0 }
 func (h *abundanceHandler) Display() (string, string) {
 	return "Abundance", "Draw 1 extra card at the start of your turn"
 }

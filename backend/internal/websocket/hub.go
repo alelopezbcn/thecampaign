@@ -296,7 +296,30 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 			}
 		}
 
-		// Close old client connection if still active
+		// Collect waiting-room payload data while still holding room.mutex.
+		var waitingPayload PlayerJoinedPayload
+		if !gameInProgress {
+			allNames := make([]string, 0, len(room.Players))
+			for name := range room.Players {
+				allNames = append(allNames, name)
+			}
+			waitingPayload = PlayerJoinedPayload{
+				GameID:     room.ID,
+				GameMode:   string(room.GameMode),
+				MaxPlayers: room.MaxPlayers,
+				PlayerName: playerName,
+				Players:    allNames,
+				Teams:      copyTeams(room.TeamAssignments),
+			}
+		} else {
+			room.Game.ReconnectPlayer(playerName)
+		}
+
+		room.mutex.Unlock()
+
+		// Close old client AFTER releasing room.mutex to avoid lock-order inversion:
+		// cleanupEmptyRoom holds h.mutex then acquires room.mutex, so we must never
+		// hold room.mutex when acquiring h.mutex.
 		if oldClient != nil {
 			h.mutex.Lock()
 			if _, ok := h.clients[oldClient]; ok {
@@ -309,8 +332,6 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		log.Printf("Player %s reconnected to game %s", playerName, gameID)
 
 		if gameInProgress {
-			room.Game.ReconnectPlayer(playerName)
-			room.mutex.Unlock()
 			h.broadcastToGame(gameID, MsgError, ErrorPayload{
 				Message: playerName + " reconnected",
 			})
@@ -321,21 +342,7 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 			// Broadcast updated state to all so opponents see player is back
 			h.broadcastGameStateToAll(gameID)
 		} else {
-			// Send full waiting room state including teams
-			allNames := make([]string, 0, len(room.Players))
-			for name := range room.Players {
-				allNames = append(allNames, name)
-			}
-			payload := PlayerJoinedPayload{
-				GameID:     room.ID,
-				GameMode:   string(room.GameMode),
-				MaxPlayers: room.MaxPlayers,
-				PlayerName: playerName,
-				Players:    allNames,
-				Teams:      copyTeams(room.TeamAssignments),
-			}
-			room.mutex.Unlock()
-			client.SendMessage(MsgPlayerJoined, payload)
+			client.SendMessage(MsgPlayerJoined, waitingPayload)
 		}
 		return
 	}
@@ -375,11 +382,15 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		return
 	}
 
+	playerCount := len(room.Players)
+	maxPlayers := room.MaxPlayers
+	roomMode := room.GameMode
+
 	log.Printf("Player %s joined game %s (%d/%d players)",
-		playerName, gameID, len(room.Players), room.MaxPlayers)
+		playerName, gameID, playerCount, maxPlayers)
 
 	// Broadcast updated player list to all players in the room
-	allNames := make([]string, 0, len(room.Players))
+	allNames := make([]string, 0, playerCount)
 	for name := range room.Players {
 		allNames = append(allNames, name)
 	}
@@ -391,38 +402,37 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 		c.SendMessage(MsgPlayerJoined, PlayerJoinedPayload{
 			GameID:     room.ID,
 			GameMode:   string(room.GameMode),
-			MaxPlayers: room.MaxPlayers,
+			MaxPlayers: maxPlayers,
 			PlayerName: playerName,
 			Players:    allNames,
 			Teams:      teams,
 		})
 	}
 	room.mutex.Unlock()
+
+	// Auto-start for non-2v2 modes when all players have joined.
+	// 2v2 keeps manual start so players can swap teams first.
+	if roomMode != types.GameMode2v2 && playerCount == maxPlayers {
+		h.startGame(gameID)
+	}
 }
 
-// handleStartGame handles a player requesting to start the game
-func (h *Hub) handleStartGame(client *Client) {
-	room, exists := h.getGameRoom(client)
+// startGame initialises and launches the game for a room that is already full.
+// It is safe to call with no locks held.
+func (h *Hub) startGame(gameID string) {
+	h.mutex.RLock()
+	room, exists := h.gameRooms[gameID]
+	h.mutex.RUnlock()
 	if !exists {
-		client.SendError("Game not found")
 		return
 	}
 
 	room.mutex.Lock()
 
-	if room.Game != nil {
+	if room.Game != nil || len(room.Players) < room.MaxPlayers {
 		room.mutex.Unlock()
-		client.SendError("Game already started")
 		return
 	}
-
-	if len(room.Players) < room.MaxPlayers {
-		room.mutex.Unlock()
-		client.SendError("Not all players have joined yet")
-		return
-	}
-
-	gameID := room.ID
 
 	// For 2v2, interleave teams: T1, T2, T1, T2
 	playerNames := room.orderedPlayerNames()
@@ -485,6 +495,34 @@ func (h *Hub) handleStartGame(client *Client) {
 	// Auto draw card for the first player and send game state
 	h.autoDrawAndBroadcast(gameID)
 	h.startTurnTimer(gameID)
+}
+
+// handleStartGame handles a player requesting to start the game (2v2 only — other modes auto-start).
+func (h *Hub) handleStartGame(client *Client) {
+	room, exists := h.getGameRoom(client)
+	if !exists {
+		client.SendError("Game not found")
+		return
+	}
+
+	room.mutex.Lock()
+
+	if room.Game != nil {
+		room.mutex.Unlock()
+		client.SendError("Game already started")
+		return
+	}
+
+	if len(room.Players) < room.MaxPlayers {
+		room.mutex.Unlock()
+		client.SendError("Not all players have joined yet")
+		return
+	}
+
+	gameID := room.ID
+	room.mutex.Unlock()
+
+	h.startGame(gameID)
 }
 
 // handleRestartGame resets the game for all players in the room with the same players and mode.
