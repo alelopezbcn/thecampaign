@@ -1,6 +1,5 @@
 Fixes:
 flickering cards
-harpoon no tiene tests, events neither
 
 mover historial a la derecha, y hacerlo collapsible
 Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
