@@ -105,15 +105,17 @@ func (a *forgeAction) execute(g forgeGame) (*Result, func() gamestatus.GameStatu
 	forgedID := "forged_" + a.cardID1 + "_" + a.cardID2
 	newWeapon := createWeaponByType(a.weapon1.Type(), forgedID, forgedDamage)
 
-	// unforgeObserver: when the forged weapon is discarded (e.g. warrior dies),
-	// discard each original component separately instead of the combined card.
-	// This handles recursive forging automatically: component1 may itself be a
-	// forged weapon whose observer will further unforge it into sub-components.
+	p.TakeCards(newWeapon)
+
+	// Override the observer set by TakeCards so that when the forged weapon is
+	// discarded (e.g. the warrior that used it dies), the original component
+	// cards are discarded separately instead of the combined card.
+	// Must be set after TakeCards, which would otherwise overwrite it.
+	// Recursive forging is handled automatically: if a component is itself a
+	// forged weapon, its own unforgeObserver will further split it on discard.
 	newWeapon.AddCardMovedToPileObserver(&unforgeObserver{
 		components: []cards.Weapon{a.weapon1, a.weapon2},
 	})
-
-	p.TakeCards(newWeapon)
 
 	g.AddHistory(fmt.Sprintf("%s forged a %s %d", p.Name(), newWeapon.Name(), forgedDamage),
 		types.CategoryAction)

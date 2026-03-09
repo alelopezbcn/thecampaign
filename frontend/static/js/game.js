@@ -380,9 +380,20 @@ function handleGlobalKeyboard(e) {
     const turnTransitionModal = document.getElementById('turn-transition-modal');
     const stolenCardModal = document.getElementById('stolen-card-modal');
     const spyNotificationModal = document.getElementById('spy-notification-modal');
+    const ambushTriggeredModal = document.getElementById('ambush-triggered-modal');
+    const treasonNotificationModal = document.getElementById('treason-notification-modal');
+    const championsBountyModal = document.getElementById('champions-bounty-modal');
+    const resurrectionModal = document.getElementById('resurrection-modal');
+    const eventTurnModal = document.getElementById('event-turn-modal');
+
     const isTurnTransitionOpen = turnTransitionModal && !turnTransitionModal.classList.contains('hidden');
     const isStolenCardOpen = stolenCardModal && !stolenCardModal.classList.contains('hidden');
     const isSpyNotificationOpen = spyNotificationModal && !spyNotificationModal.classList.contains('hidden');
+    const isAmbushTriggeredOpen = ambushTriggeredModal && !ambushTriggeredModal.classList.contains('hidden');
+    const isTreasonNotificationOpen = treasonNotificationModal && !treasonNotificationModal.classList.contains('hidden');
+    const isChampionsBountyOpen = championsBountyModal && !championsBountyModal.classList.contains('hidden');
+    const isResurrectionOpen = resurrectionModal && !resurrectionModal.classList.contains('hidden');
+    const isEventTurnOpen = eventTurnModal && !eventTurnModal.classList.contains('hidden');
 
     if (e.key === 'Escape') {
         if (isTurnTransitionOpen) {
@@ -391,6 +402,16 @@ function handleGlobalKeyboard(e) {
             hideStolenCardModal();
         } else if (isSpyNotificationOpen) {
             hideSpyNotificationModal();
+        } else if (isAmbushTriggeredOpen) {
+            hideAmbushTriggeredModal();
+        } else if (isTreasonNotificationOpen) {
+            hideTreasonNotificationModal();
+        } else if (isChampionsBountyOpen) {
+            hideChampionsBountyModal();
+        } else if (isResurrectionOpen) {
+            hideResurrectionModal();
+        } else if (isEventTurnOpen) {
+            hideEventTurnModal();
         } else if (isActionConfirmOpen) {
             onActionConfirmNo();
         } else if (isGameModalOpen) {
@@ -399,7 +420,17 @@ function handleGlobalKeyboard(e) {
             cancelAction();
         }
     } else if (e.key === 'Enter') {
-        if (isActionConfirmOpen) {
+        if (isAmbushTriggeredOpen) {
+            hideAmbushTriggeredModal();
+        } else if (isTreasonNotificationOpen) {
+            hideTreasonNotificationModal();
+        } else if (isChampionsBountyOpen) {
+            hideChampionsBountyModal();
+        } else if (isResurrectionOpen) {
+            hideResurrectionModal();
+        } else if (isEventTurnOpen) {
+            hideEventTurnModal();
+        } else if (isActionConfirmOpen) {
             onActionConfirmYes();
         } else if (isGameModalOpen) {
             hideGameModal();
@@ -4625,6 +4656,7 @@ function showGameModal(title, subtitle, content, showCloseOnly = true) {
 function hideGameModal() {
     const modal = document.getElementById('game-modal');
     modal.classList.add('hidden');
+    if (cardsModalTimer) { clearTimeout(cardsModalTimer); cardsModalTimer = null; }
     resetActionState();
     updateActionPrompt('');
 
@@ -4819,7 +4851,7 @@ function showStolenCardModal(card, action = 'stolen') {
     if (stolenCardTimer) clearTimeout(stolenCardTimer);
     stolenCardTimer = setTimeout(() => {
         hideStolenCardModal();
-    }, 4000);
+    }, 5000);
 }
 
 function hideStolenCardModal() {
@@ -4846,7 +4878,7 @@ function showSpyNotificationModal(message) {
     if (spyNotificationTimer) clearTimeout(spyNotificationTimer);
     spyNotificationTimer = setTimeout(() => {
         hideSpyNotificationModal();
-    }, 3000);
+    }, 5000);
 }
 
 function hideSpyNotificationModal() {
@@ -4862,6 +4894,8 @@ function hideSpyNotificationModal() {
 let treasonNotificationTimer = null;
 let championsBountyTimer = null;
 let resurrectionTimer = null;
+let ambushTriggeredTimer = null;
+let cardsModalTimer = null;
 
 function showTreasonNotificationModal(notification) {
     const modal = document.getElementById('treason-notification-modal');
@@ -4906,13 +4940,13 @@ function showChampionsBountyModal(notification) {
     if (fill) {
         fill.style.animation = 'none';
         fill.offsetHeight; // reflow
-        fill.style.animation = 'bountyTimerShrink 4s linear forwards';
+        fill.style.animation = 'bountyTimerShrink 5s linear forwards';
     }
 
     modal.classList.remove('hidden');
 
     if (championsBountyTimer) clearTimeout(championsBountyTimer);
-    championsBountyTimer = setTimeout(() => hideChampionsBountyModal(), 4000);
+    championsBountyTimer = setTimeout(() => hideChampionsBountyModal(), 5000);
 }
 
 function hideChampionsBountyModal() {
@@ -4962,13 +4996,13 @@ function showResurrectionModal(notification) {
     if (fill) {
         fill.style.animation = 'none';
         fill.offsetHeight;
-        fill.style.animation = 'resurrectionTimerShrink 4s linear forwards';
+        fill.style.animation = 'resurrectionTimerShrink 5s linear forwards';
     }
 
     modal.classList.remove('hidden');
 
     if (resurrectionTimer) clearTimeout(resurrectionTimer);
-    resurrectionTimer = setTimeout(() => hideResurrectionModal(), 4000);
+    resurrectionTimer = setTimeout(() => hideResurrectionModal(), 5000);
 }
 
 function hideResurrectionModal() {
@@ -5124,11 +5158,18 @@ function showAmbushTriggeredModal(effectDisplay) {
     }
     if (textEl) textEl.textContent = ambushEffectDescriptions[effectDisplay] || '';
     modal.classList.remove('hidden');
+
+    if (ambushTriggeredTimer) clearTimeout(ambushTriggeredTimer);
+    ambushTriggeredTimer = setTimeout(() => hideAmbushTriggeredModal(), 5000);
 }
 
 function hideAmbushTriggeredModal() {
     const modal = document.getElementById('ambush-triggered-modal');
     if (modal) modal.classList.add('hidden');
+    if (ambushTriggeredTimer) {
+        clearTimeout(ambushTriggeredTimer);
+        ambushTriggeredTimer = null;
+    }
 }
 
 // Ambush card in field — shows the card image (effect hidden until triggered)
@@ -5286,6 +5327,12 @@ function getOpponentByName(name) {
 
 // Target Player Selection Modal
 function showTargetPlayerModal(title, opponents, callback, detailFn) {
+    // Skip modal when there's only one option
+    if (opponents.length === 1) {
+        callback(opponents[0].player_name);
+        return;
+    }
+
     const defaultDetail = (opp) => {
         const castle = opp.castle || {};
         return `Castle: ${castle.value || 0}/${castle.resources_to_win || 25} gold, ${castle.resource_cards || 0} resource cards`;
@@ -5377,6 +5424,12 @@ function showStealModal() {
     const opponent = getOpponentByName(targetName);
     const handCount = opponent?.cards_in_hand || 0;
 
+    // Skip modal — pick a random card position
+    if (handCount > 0) {
+        selectStealPosition(Math.ceil(Math.random() * handCount));
+        return;
+    }
+
     let content = '';
     for (let i = 1; i <= handCount; i++) {
         content += `
@@ -5404,6 +5457,12 @@ function showTreasonModal() {
     if (field.length === 0) {
         updateActionPrompt(`${targetName} has no warriors with 5 HP or less!`);
         resetActionState();
+        return;
+    }
+
+    // Skip modal when there's only one eligible warrior
+    if (field.length === 1) {
+        selectTreasonWarrior(field[0].id);
         return;
     }
 
@@ -5488,18 +5547,7 @@ function showCatapultModal() {
     const resourceCount = opponent?.castle?.resource_cards || 0;
 
     if (isProtected) {
-        const content = `<div style="text-align:center;padding:16px 8px;">
-            <svg style="width:56px;height:68px;filter:drop-shadow(0 0 10px rgba(212,168,37,0.9))" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="shieldGradM" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs>
-                <path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGradM)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/>
-                <line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
-                <line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
-            </svg>
-            <p style="color:#e8c244;font-weight:700;margin:12px 0 4px;">Fortress Wall</p>
-            <p style="color:#a0a0a0;font-size:0.85em;margin:0 0 16px;">The fortress wall will be destroyed instead of gold</p>
-            <button class="btn btn-danger" onclick="confirmCatapultFortress('${targetName}')">Destroy Wall</button>
-        </div>`;
-        showGameModal(`Catapult ${targetName}'s Castle`, 'Castle is fortified', content, true);
+        confirmCatapultFortress(targetName);
         return;
     }
 
@@ -5509,20 +5557,8 @@ function showCatapultModal() {
         return;
     }
 
-    let content = '<div class="catapult-cards-grid">';
-    for (let i = 1; i <= resourceCount; i++) {
-        content += `
-            <div class="card-face-down catapult-target" data-position="${i}" onclick="selectCatapultPosition(${i})">
-                <div class="card-back-design">
-                    <span class="card-back-icon">💰</span>
-                </div>
-                <span class="card-position">#${i}</span>
-            </div>
-        `;
-    }
-    content += '</div>';
-
-    showGameModal(`Catapult ${targetName}'s Castle`, 'Select a resource card to destroy', content, true);
+    // Pick a random resource position — castle resources are face-down to the attacker
+    selectCatapultPosition(Math.ceil(Math.random() * resourceCount));
 }
 
 function selectCatapultPosition(position) {
@@ -5665,6 +5701,9 @@ function showCardsModal(cards, title, subtitle, showPositionIndicators = false) 
     }
 
     showGameModal(title, subtitle, content, true);
+
+    if (cardsModalTimer) clearTimeout(cardsModalTimer);
+    cardsModalTimer = setTimeout(() => hideGameModal(), 5000);
 }
 
 // Game Over Modal

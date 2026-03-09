@@ -5653,7 +5653,7 @@ body {
     background: #f1c40f;
     border-radius: 2px;
     transform-origin: left;
-    animation: bountyTimerShrink 4s linear forwards;
+    animation: bountyTimerShrink 5s linear forwards;
 }
 
 @keyframes bountyTimerShrink {
@@ -5722,7 +5722,7 @@ body {
     background: #c74dff;
     border-radius: 2px;
     transform-origin: left;
-    animation: resurrectionTimerShrink 4s linear forwards;
+    animation: resurrectionTimerShrink 5s linear forwards;
 }
 
 @keyframes resurrectionTimerShrink {

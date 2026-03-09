@@ -1,26 +1,6 @@
-test
-1. Unforge on warrior death (backend)
-Added unforgeObserver in gameaction_forge.go. When a forged weapon is discarded (warrior dies), its observer now discards the original component weapons instead of the combined card. Recursive forging is handled automatically — if component1 is itself a forged weapon with an unforgeObserver, it will recursively unforge too.
-
-2. Bloodlust animation shows +2
-In game.js, showFloatingHeal now shows a floating green +amount (using the existing .floating-heal CSS style) instead of the count-up HP display. Cleaner and more informative.
-
-3. Resurrection modal shows warrior card image
-Added <div id="resurrection-warrior-img"> in index.html and populated it with the warrior's card image in showResurrectionModal. Added CSS for sizing/styling in styles.css.
-
-4. Blood rain popup shows HP per warrior
-Both the target selection modal ("2 warriors on field — 15HP, 8HP") and the confirm modal description now include per-warrior HP. The confirm modal also shows each warrior by name with an HP badge inline.
-
-Champion's Bounty — hit-heal (+3 HP):
-Normal attack (gameaction_attack.go): When the target survives and its player had the highest total field HP among enemies, a random attacker warrior heals +3 HP. This complements the existing kill bonus (draw 2 cards when killing from the top enemy).
-Blood Rain (gameaction_bloodrain.go): The +3 heal always fires when the target player is the top enemy — regardless of how many warriors were killed. Both the kill-card-draw and the hit-heal can trigger on the same blood rain.
-
-
 Fixes:
 flickering cards
 harpoon no tiene tests, events neither
-
-mejorar popups, menos clicks (enter should click when there is only one option).
 
 mover historial a la derecha, y hacerlo collapsible
 Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron

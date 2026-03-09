@@ -199,7 +199,7 @@ var cardConfig = map[string]CardConfigEntry{
 	},
 	"resurrection": {
 		Description: `𝐑𝐞𝐬𝐮𝐫𝐫𝐞𝐜𝐭𝐢𝐨𝐧
-𝐄𝐟𝐟𝐞𝐜𝐭: Return a random warrior from the Cemetery to the field.
+𝐄𝐟𝐟𝐞𝐜𝐭: Return a random warrior from the Cemetery with half HP.
 𝐓𝐚𝐫𝐠𝐞𝐭: Can be used on your field or an ally's.
 𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
 		Image: "resurrection.webp",
