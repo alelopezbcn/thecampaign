@@ -19,16 +19,19 @@ type placeAmbushGame interface {
 }
 
 type placeAmbushAction struct {
-	playerName string
-	cardID     string
+	playerName       string
+	targetPlayerName string // "" = own field
+	cardID           string
 
-	ambushCard cards.Ambush
+	ambushCard  cards.Ambush
+	targetField board.Field
 }
 
-func NewPlaceAmbushAction(playerName, cardID string) *placeAmbushAction {
+func NewPlaceAmbushAction(playerName, targetPlayerName, cardID string) *placeAmbushAction {
 	return &placeAmbushAction{
-		playerName: playerName,
-		cardID:     cardID,
+		playerName:       playerName,
+		targetPlayerName: targetPlayerName,
+		cardID:           cardID,
 	}
 }
 
@@ -51,11 +54,29 @@ func (a *placeAmbushAction) Validate(g Game) error {
 		return errors.New("card is not an ambush card")
 	}
 
-	if board.HasFieldSlotCard[cards.Ambush](p.Field()) {
+	// Resolve target field: own field by default, or an ally's field in 2v2.
+	var targetField board.Field
+	if a.targetPlayerName == "" || a.targetPlayerName == p.Name() {
+		targetField = p.Field()
+	} else {
+		targetPlayer := g.GetPlayer(a.targetPlayerName)
+		if targetPlayer == nil {
+			return fmt.Errorf("target player %s not found", a.targetPlayerName)
+		}
+		pIdx := g.PlayerIndex(a.playerName)
+		tIdx := g.PlayerIndex(a.targetPlayerName)
+		if !g.SameTeam(pIdx, tIdx) {
+			return fmt.Errorf("cannot place ambush on %s's field: not an ally", a.targetPlayerName)
+		}
+		targetField = targetPlayer.Field()
+	}
+
+	if board.HasFieldSlotCard[cards.Ambush](targetField) {
 		return errors.New("field already has an ambush card")
 	}
 
 	a.ambushCard = ambush
+	a.targetField = targetField
 	return nil
 }
 
@@ -67,11 +88,23 @@ func (a *placeAmbushAction) execute(g placeAmbushGame) (*Result, func() gamestat
 	p := g.CurrentPlayer()
 
 	p.RemoveFromHand(a.ambushCard.GetID())
-	p.Field().SetSlotCard(a.ambushCard)
+	a.targetField.SetSlotCard(a.ambushCard)
 
-	g.AddHistory(fmt.Sprintf("%s placed an ambush", p.Name()), types.CategoryAction)
+	placerName := p.Name()
+	targetPlayer := a.targetPlayerName
+	if targetPlayer == "" {
+		targetPlayer = placerName
+	}
 
-	result := &Result{Action: types.LastActionPlaceAmbush}
+	if a.targetPlayerName == "" {
+		g.AddHistory(fmt.Sprintf("%s placed an ambush", placerName), types.CategoryAction)
+	} else {
+		g.AddHistory(fmt.Sprintf("%s placed an ambush on %s's field", placerName, a.targetPlayerName), types.CategoryAction)
+	}
+	result := &Result{
+		Action:      types.LastActionPlaceAmbush,
+		PlaceAmbush: &PlaceAmbushDetails{TargetPlayer: targetPlayer},
+	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.Status(p)
 	}

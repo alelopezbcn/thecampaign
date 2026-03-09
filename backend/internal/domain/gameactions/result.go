@@ -7,12 +7,18 @@ import (
 
 type Result struct {
 	Action         types.LastActionType
-	MovedWarriorID string            // "" = no warrior moved
-	Spy            *types.SpyInfo    // nil = no spy action
-	Attack         *AttackDetails    // nil = no attack
-	Steal          *StealDetails     // nil = no steal
-	Sabotage       *SabotageDetails  // nil = no sabotage
-	Desertion      *DesertionDetails // nil = no desertion
+	MovedWarriorID string               // "" = no warrior moved
+	Spy            *types.SpyInfo       // nil = no spy action
+	Attack         *AttackDetails       // nil = no attack
+	Steal          *StealDetails        // nil = no steal
+	Sabotage       *SabotageDetails     // nil = no sabotage
+	Treason        *TreasonDetails      // nil = no treason
+	Resurrection   *ResurrectionDetails // nil = no resurrection
+	PlaceAmbush    *PlaceAmbushDetails  // nil = not a place ambush action
+}
+
+type PlaceAmbushDetails struct {
+	TargetPlayer string // player whose field received the ambush
 }
 
 type AttackDetails struct {
@@ -23,6 +29,9 @@ type AttackDetails struct {
 	AmbushAttackerName    string
 	ChampionsBountyEarner string // "" = bounty not triggered
 	ChampionsBountyCards  int
+	ChampionsBountyHeal   int // > 0 = hit-heal triggered (HP healed to a random warrior)
+	KillsGranted          int // 1 if a kill was earned this action, 0 otherwise
+	DamageDealt           int // HP damage actually inflicted this action
 }
 
 type StealDetails struct {
@@ -35,7 +44,13 @@ type SabotageDetails struct {
 	Card cards.Card
 }
 
-type DesertionDetails struct {
+type TreasonDetails struct {
 	FromPlayer string
 	Warrior    cards.Warrior
+}
+
+type ResurrectionDetails struct {
+	Warrior      cards.Warrior
+	TargetPlayer string // player whose field received the warrior
+	PlayerName   string // player who played the card
 }

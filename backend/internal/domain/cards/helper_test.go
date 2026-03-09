@@ -51,7 +51,7 @@ func TestDealer_OtherCards_SpecialCardCountsMatchConfig(t *testing.T) {
 		BloodRains:        1,
 		Resurrections:     2,
 		Ambushes:          1,
-		Desertions:        3,
+		Treasons:          3,
 		ConstructionCards: 1,
 	}
 	d := NewDealer(cfg)
@@ -68,7 +68,7 @@ func TestDealer_OtherCards_SpecialCardCountsMatchConfig(t *testing.T) {
 	assert.Equal(t, 1, countType[BloodRain](other), "blood rains")
 	assert.Equal(t, 2, countType[Resurrection](other), "resurrections")
 	assert.Equal(t, 1, countType[Ambush](other), "ambushes")
-	assert.Equal(t, 3, countType[Desertion](other), "desertions")
+	assert.Equal(t, 3, countType[Treason](other), "treasons")
 }
 
 // --- OtherCards — construction cards ---
@@ -113,20 +113,20 @@ func TestDealer_OtherCards_HighValueGoldCards_AddsExtraGold789(t *testing.T) {
 	assert.Equal(t, 17, countType[*gold](other))
 }
 
-// --- Desertion edge cases ---
+// --- Treason edge cases ---
 
-func TestDealer_OtherCards_Desertions_ZeroWhenNotConfigured(t *testing.T) {
-	d := NewDealer(DeckConfig{Desertions: 0, ConstructionCards: 1})
+func TestDealer_OtherCards_Treasons_ZeroWhenNotConfigured(t *testing.T) {
+	d := NewDealer(DeckConfig{Treasons: 0, ConstructionCards: 1})
 	other := d.OtherCards(0)
 
-	assert.Equal(t, 0, countType[Desertion](other))
+	assert.Equal(t, 0, countType[Treason](other))
 }
 
-func TestDealer_OtherCards_Desertions_PresentWhenConfigured(t *testing.T) {
-	d := NewDealer(DeckConfig{Desertions: 2, ConstructionCards: 1})
+func TestDealer_OtherCards_Treasons_PresentWhenConfigured(t *testing.T) {
+	d := NewDealer(DeckConfig{Treasons: 2, ConstructionCards: 1})
 	other := d.OtherCards(0)
 
-	assert.Equal(t, 2, countType[Desertion](other))
+	assert.Equal(t, 2, countType[Treason](other))
 }
 
 // --- ConstructionCards minimum ---

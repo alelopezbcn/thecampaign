@@ -260,11 +260,14 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
 
 		mockHand2 := mocks.NewMockHand(ctrl)
+		mockField2 := mocks.NewMockField(ctrl)
 		mockCastle2 := mocks.NewMockCastle(ctrl)
 		mockPlayer2.EXPECT().Hand().Return(mockHand2)
 		mockHand2.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer2.EXPECT().Field().Return(mockField2)
+		mockField2.EXPECT().SlotCards().Return([]cards.Card{})
 		mockPlayer2.EXPECT().Castle().Return(mockCastle2)
-		mockCastle2.EXPECT().ResourceCards().Return([]cards.Resource{})
+		mockCastle2.EXPECT().Reset().Return([]cards.Card{})
 
 		g := &game{
 			board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2, mockPlayer3}},
@@ -293,11 +296,14 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
 
 		mockHand3 := mocks.NewMockHand(ctrl)
+		mockField3 := mocks.NewMockField(ctrl)
 		mockCastle3 := mocks.NewMockCastle(ctrl)
 		mockPlayer3.EXPECT().Hand().Return(mockHand3)
 		mockHand3.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer3.EXPECT().Field().Return(mockField3)
+		mockField3.EXPECT().SlotCards().Return([]cards.Card{})
 		mockPlayer3.EXPECT().Castle().Return(mockCastle3)
-		mockCastle3.EXPECT().ResourceCards().Return([]cards.Resource{})
+		mockCastle3.EXPECT().Reset().Return([]cards.Card{})
 
 		g := &game{
 			board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2, mockPlayer3}},
@@ -328,13 +334,16 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 			players[i] = mp
 		}
 
-		// Mock Hand/Castle for eliminated player (Player2 = index 1)
+		// Mock Hand/Field/Castle for eliminated player (Player2 = index 1)
 		mockHand := mocks.NewMockHand(ctrl)
+		mockField := mocks.NewMockField(ctrl)
 		mockCastle := mocks.NewMockCastle(ctrl)
 		mockPlayers[1].EXPECT().Hand().Return(mockHand)
 		mockHand.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayers[1].EXPECT().Field().Return(mockField)
+		mockField.EXPECT().SlotCards().Return([]cards.Card{})
 		mockPlayers[1].EXPECT().Castle().Return(mockCastle)
-		mockCastle.EXPECT().ResourceCards().Return([]cards.Resource{})
+		mockCastle.EXPECT().Reset().Return([]cards.Card{})
 
 		g := &game{
 			board:             &testBoardImpl{players: players},
@@ -364,11 +373,14 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
 
 		mockHand2 := mocks.NewMockHand(ctrl)
+		mockField2 := mocks.NewMockField(ctrl)
 		mockCastle2 := mocks.NewMockCastle(ctrl)
 		mockPlayer2.EXPECT().Hand().Return(mockHand2)
 		mockHand2.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer2.EXPECT().Field().Return(mockField2)
+		mockField2.EXPECT().SlotCards().Return([]cards.Card{})
 		mockPlayer2.EXPECT().Castle().Return(mockCastle2)
-		mockCastle2.EXPECT().ResourceCards().Return([]cards.Resource{})
+		mockCastle2.EXPECT().Reset().Return([]cards.Card{})
 
 		g := &game{
 			board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4}},
@@ -401,11 +413,14 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
 
 		mockHand4 := mocks.NewMockHand(ctrl)
+		mockField4 := mocks.NewMockField(ctrl)
 		mockCastle4 := mocks.NewMockCastle(ctrl)
 		mockPlayer4.EXPECT().Hand().Return(mockHand4)
 		mockHand4.EXPECT().ShowCards().Return([]cards.Card{})
+		mockPlayer4.EXPECT().Field().Return(mockField4)
+		mockField4.EXPECT().SlotCards().Return([]cards.Card{})
 		mockPlayer4.EXPECT().Castle().Return(mockCastle4)
-		mockCastle4.EXPECT().ResourceCards().Return([]cards.Resource{})
+		mockCastle4.EXPECT().Reset().Return([]cards.Card{})
 
 		g := &game{
 			board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4}},
@@ -422,6 +437,75 @@ func TestGame_OnFieldWithoutWarriors(t *testing.T) {
 		assert.True(t, g.winState.GameOver)
 		assert.Equal(t, "Player1's team", g.winState.Winner)
 		assert.True(t, g.eliminatedPlayers[3])
+	})
+
+	t.Run("board cleanup: hand cards, slot cards, and castle all moved to discard", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		// Real discard pile so we can assert its contents
+		discardPile := board.NewDiscardPile()
+
+		// Cards that will be in the eliminated player's hand
+		handCard := mocks.NewMockCard(ctrl)
+		handCard.EXPECT().GetID().Return("hand-card-1").AnyTimes()
+
+		// Cards for the castle: initial construction card + one resource
+		initCard := mocks.NewMockResource(ctrl)
+		initCard.EXPECT().Value().Return(1).AnyTimes()
+		goldCard := mocks.NewMockResource(ctrl)
+		goldCard.EXPECT().Value().Return(5).AnyTimes()
+
+		// A slot card sitting on the field (e.g. an ambush)
+		slotCard := mocks.NewMockCard(ctrl)
+		slotCard.EXPECT().GetID().Return("slot-card-1").AnyTimes()
+
+		// Real hand with one card
+		realHand := board.NewHand()
+		_ = realHand.AddCards(handCard)
+
+		// Real field with a slot card (no warriors — that's the elimination trigger)
+		realField := board.NewField("Player2", mocks.NewMockFieldWithoutWarriorsObserver(ctrl))
+		realField.SetSlotCard(slotCard)
+
+		// Real castle: constructed with initCard, then one gold resource added
+		castleObs := mocks.NewMockCastleCompletionObserver(ctrl)
+		mockCastlePlayer := mocks.NewMockPlayer(ctrl)
+		mockCastlePlayer.EXPECT().Name().Return("Player2").AnyTimes()
+		realCastle := board.NewCastle(25, mockCastlePlayer, castleObs)
+		_ = realCastle.Construct(initCard)
+		_ = realCastle.Construct(goldCard)
+
+		// Mock players wired to the real hand/field/castle
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer3 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+		mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
+		mockPlayer2.EXPECT().Hand().Return(realHand)
+		mockPlayer2.EXPECT().Field().Return(realField)
+		mockPlayer2.EXPECT().Castle().Return(realCastle)
+
+		g := &game{
+			board: &testBoardImpl{
+				players:     []board.Player{mockPlayer1, mockPlayer2, mockPlayer3},
+				discardPile: discardPile,
+			},
+			currentTurn:       0,
+			mode:              types.GameModeFFA3,
+			eliminatedPlayers: make(map[int]bool),
+			history:           []types.HistoryLine{},
+		}
+
+		g.OnFieldWithoutWarriors("Player2")
+
+		// hand card + slot card + initCard + goldCard = 4 cards in discard
+		assert.Equal(t, 4, discardPile.Count())
+		assert.Equal(t, 0, realHand.Count())
+		assert.Empty(t, realField.SlotCards())
+		assert.False(t, realCastle.IsConstructed())
+		assert.Equal(t, 0, realCastle.Value())
 	})
 }
 

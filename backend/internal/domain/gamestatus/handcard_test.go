@@ -39,7 +39,7 @@ func TestNewWarriorHandCard(t *testing.T) {
 			assert.Equal(t, "W1", hc.ID)
 			assert.Equal(t, tt.wantType, hc.CardType())
 			assert.Equal(t, 20, hc.Value)
-			assert.True(t, hc.CanBeUsed)
+			assert.False(t, hc.CanBeUsed) // warriors in hand are never directly usable; move_warrior uses CanMoveWarrior
 			assert.Empty(t, hc.CanBeUsedOnIDs)
 		})
 	}
@@ -1115,59 +1115,66 @@ func TestNewBloodRainHandCard(t *testing.T) {
 
 func TestNewAmbushHandCard(t *testing.T) {
 	tests := []struct {
-		name                  string
-		cardID                string
-		fieldAlreadyHasAmbush bool
-		action                types.PhaseType
-		wantUsed              bool
+		name        string
+		cardID      string
+		canBePlaced bool
+		action      types.PhaseType
+		wantUsed    bool
 	}{
 		{
-			name:                  "Not usable in Buy phase",
-			cardID:                "AMB1",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeBuy,
-			wantUsed:              false,
+			name:        "Not usable in Buy phase",
+			cardID:      "AMB1",
+			canBePlaced: true,
+			action:      types.PhaseTypeBuy,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Not usable in Buy phase when field already has ambush",
-			cardID:                "AMB2",
-			fieldAlreadyHasAmbush: true,
-			action:                types.PhaseTypeBuy,
-			wantUsed:              false,
+			name:        "Not usable in Buy phase when cannot be placed",
+			cardID:      "AMB2",
+			canBePlaced: false,
+			action:      types.PhaseTypeBuy,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Usable in Attack phase when field has no ambush",
-			cardID:                "AMB3",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeAttack,
-			wantUsed:              true,
+			name:        "Usable in Attack phase when can be placed",
+			cardID:      "AMB3",
+			canBePlaced: true,
+			action:      types.PhaseTypeAttack,
+			wantUsed:    true,
 		},
 		{
-			name:                  "Not usable in SpySteal phase",
-			cardID:                "AMB4",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeSpySteal,
-			wantUsed:              false,
+			name:        "Not usable in Attack phase when cannot be placed",
+			cardID:      "AMB7",
+			canBePlaced: false,
+			action:      types.PhaseTypeAttack,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Not usable in Construct phase",
-			cardID:                "AMB5",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeConstruct,
-			wantUsed:              false,
+			name:        "Not usable in SpySteal phase",
+			cardID:      "AMB4",
+			canBePlaced: true,
+			action:      types.PhaseTypeSpySteal,
+			wantUsed:    false,
 		},
 		{
-			name:                  "Not usable in DrawCard phase",
-			cardID:                "AMB6",
-			fieldAlreadyHasAmbush: false,
-			action:                types.PhaseTypeDrawCard,
-			wantUsed:              false,
+			name:        "Not usable in Construct phase",
+			cardID:      "AMB5",
+			canBePlaced: true,
+			action:      types.PhaseTypeConstruct,
+			wantUsed:    false,
+		},
+		{
+			name:        "Not usable in DrawCard phase",
+			cardID:      "AMB6",
+			canBePlaced: true,
+			action:      types.PhaseTypeDrawCard,
+			wantUsed:    false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := gamestatus.NewAmbushHandCard(tt.cardID, tt.fieldAlreadyHasAmbush, tt.action)
+			hc := gamestatus.NewAmbushHandCard(tt.cardID, tt.canBePlaced, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.ID)
 			assert.Equal(t, gamestatus.CardTypeAmbush, hc.CardType())
@@ -1178,7 +1185,7 @@ func TestNewAmbushHandCard(t *testing.T) {
 	}
 }
 
-func TestNewDesertionHandCard(t *testing.T) {
+func TestNewTreasonHandCard(t *testing.T) {
 	tests := []struct {
 		name                    string
 		cardID                  string
@@ -1232,10 +1239,10 @@ func TestNewDesertionHandCard(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			hc := gamestatus.NewDesertionHandCard(tt.cardID, tt.anyEnemyHasWeakWarriors, tt.action)
+			hc := gamestatus.NewTreasonHandCard(tt.cardID, tt.anyEnemyHasWeakWarriors, tt.action)
 
 			assert.Equal(t, tt.cardID, hc.ID)
-			assert.Equal(t, gamestatus.CardTypeDesertion, hc.CardType())
+			assert.Equal(t, gamestatus.CardTypeTreason, hc.CardType())
 			assert.Equal(t, tt.wantUsed, hc.CanBeUsed)
 			assert.Equal(t, 0, hc.Value)
 			assert.Empty(t, hc.CanBeUsedOnIDs)

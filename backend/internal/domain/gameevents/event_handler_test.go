@@ -38,7 +38,7 @@ func TestNewHandler_Harvest(t *testing.T) {
 	event := types.ActiveEvent{Type: types.EventTypeHarvest, HarvestModifier: 3}
 	h := gameevents.NewHandler(event)
 	name, _ := h.Display()
-	assert.Equal(t, "Harvest", name)
+	assert.Equal(t, "Bountiful Harvest", name)
 	assert.Equal(t, 3, h.ConstructionValueModifier())
 }
 
@@ -174,7 +174,7 @@ func TestHarvestHandler_Display_NegativeModifier(t *testing.T) {
 	event := types.ActiveEvent{Type: types.EventTypeHarvest, HarvestModifier: -3}
 	h := gameevents.NewHandler(event)
 	name, desc := h.Display()
-	assert.Equal(t, "Harvest", name)
+	assert.Equal(t, "Poor Harvest", name)
 	assert.Contains(t, desc, "-3")
 }
 

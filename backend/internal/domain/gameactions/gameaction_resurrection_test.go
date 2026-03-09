@@ -359,6 +359,36 @@ func TestResurrectionAction_Execute(t *testing.T) {
 		assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 	})
 
+	t.Run("Result.Resurrection is populated with warrior, target, and player name", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer, mockResurrection, mockBoard, mockCemetery := validateResurrectionOwnField(t, ctrl)
+		mockWarrior := mocks.NewMockWarrior(ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockGame.EXPECT().Board().Return(mockBoard)
+		mockBoard.EXPECT().Cemetery().Return(mockCemetery)
+		mockCemetery.EXPECT().RemoveRandom().Return(mockWarrior)
+		mockWarrior.EXPECT().Resurrect()
+		mockPlayer.EXPECT().PlaceWarriorOnField(mockWarrior)
+		mockResurrection.EXPECT().GetID().Return("res1")
+		mockPlayer.EXPECT().RemoveFromHand("res1").Return([]cards.Card{mockResurrection}, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockResurrection)
+		mockPlayer.EXPECT().Name().Return("Player1").Times(2)
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+		// statusFn not called; no Status expectation
+
+		result, _, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result.Resurrection)
+		assert.Equal(t, mockWarrior, result.Resurrection.Warrior)
+		assert.Equal(t, "Player1", result.Resurrection.TargetPlayer)
+		assert.Equal(t, "Player1", result.Resurrection.PlayerName)
+	})
+
 	t.Run("History message for own field resurrection", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()

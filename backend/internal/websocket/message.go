@@ -21,7 +21,7 @@ const (
 	MsgConstruct    MessageType = "construct"
 	MsgSpy          MessageType = "spy"
 	MsgSteal        MessageType = "steal"
-	MsgDesertion    MessageType = "desertion"
+	MsgTreason      MessageType = "treason"
 	MsgCatapult     MessageType = "catapult"
 	MsgFortress     MessageType = "fortress"
 	MsgResurrection MessageType = "resurrection"
@@ -66,7 +66,7 @@ type GameConfig struct {
 	Ambushes           int `json:"ambushes"`
 	BloodRains         int `json:"blood_rains"`
 	Resurrections      int `json:"resurrections"`
-	Desertions         int `json:"desertions"`
+	Treasons           int `json:"treasons"`
 	ConstructionCards  int `json:"construction_cards"`    // copies per value 1-9 for gold/sword/arrow/poison
 	HighValueGoldCards int `json:"high_value_gold_cards"` // extra copies of gold 7, 8, and 9
 	CastleGoal         int `json:"castle_goal"`
@@ -87,7 +87,7 @@ func defaultGameConfig() GameConfig {
 		Ambushes:           1,
 		BloodRains:         2,
 		Resurrections:      1,
-		Desertions:         1,
+		Treasons:           1,
 		ConstructionCards:  1,
 		HighValueGoldCards: 0,
 		CastleGoal:         defaultCastleGoal,
@@ -172,8 +172,8 @@ type StealPayload struct {
 	CardPosition int    `json:"card_position"`
 }
 
-// DesertionPayload for desertion action
-type DesertionPayload struct {
+// TreasonPayload for treason action
+type TreasonPayload struct {
 	CardID       string `json:"card_id"`
 	TargetPlayer string `json:"target_player"`
 	WarriorID    string `json:"warrior_id"`
@@ -206,7 +206,8 @@ type SabotagePayload struct {
 
 // PlaceAmbushPayload for placing an ambush card in the field
 type PlaceAmbushPayload struct {
-	CardID string `json:"card_id"`
+	CardID       string `json:"card_id"`
+	TargetPlayer string `json:"target_player,omitempty"` // "" = own field
 }
 
 // GameStatePayload is sent to update clients with game state

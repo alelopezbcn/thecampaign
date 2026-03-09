@@ -1138,6 +1138,15 @@ body {
     color: #ff6b6b;
 }
 
+.field-hp-badge {
+    font-size: 0.7em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+    background: rgba(255, 107, 107, 0.15);
+    color: #ff6b6b;
+}
+
 .player-board {
     background: linear-gradient(0deg, rgba(76, 217, 100, 0.06) 0%, rgba(76, 217, 100, 0.02) 100%);
     border: 1px solid rgba(76, 217, 100, 0.15);
@@ -3041,8 +3050,41 @@ body {
 .gameover-modal-message {
     font-size: 1.3em;
     color: #c8c8c8;
-    margin-bottom: 30px;
+    margin-bottom: 20px;
     line-height: 1.6;
+}
+
+.gameover-stats {
+    margin-bottom: 24px;
+    width: 100%;
+}
+
+.gameover-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.95em;
+    color: #c8c8c8;
+}
+
+.gameover-stats-table th {
+    text-transform: uppercase;
+    font-size: 0.75em;
+    letter-spacing: 1px;
+    color: #888;
+    padding: 6px 12px;
+    border-bottom: 1px solid #333;
+    text-align: center;
+}
+
+.gameover-stats-table td {
+    padding: 8px 12px;
+    text-align: center;
+    border-bottom: 1px solid #222;
+}
+
+.gameover-stats-table tr.stat-winner td {
+    color: #ffd700;
+    font-weight: bold;
 }
 
 .gameover-modal-decoration {
@@ -4098,17 +4140,17 @@ body {
     }
 }
 
-/* ========== Desertion Animation ========== */
+/* ========== Treason Animation ========== */
 
-.desertion-ghost {
+.treason-ghost {
     position: fixed;
     pointer-events: none;
     z-index: 9999;
-    animation: desertionFly 1.3s ease-in-out forwards;
+    animation: treasonFly 1.3s ease-in-out forwards;
     transform-style: preserve-3d;
 }
 
-@keyframes desertionFly {
+@keyframes treasonFly {
     0% {
         transform: translate(0, 0) rotateY(0deg) scale(1);
         opacity: 1;
@@ -4131,11 +4173,11 @@ body {
 }
 
 /* Flash on the player-field when the warrior lands */
-.desertion-landing-flash {
-    animation: desertionLandingFlash 0.7s ease-out forwards;
+.treason-landing-flash {
+    animation: treasonLandingFlash 0.7s ease-out forwards;
 }
 
-@keyframes desertionLandingFlash {
+@keyframes treasonLandingFlash {
     0%   { box-shadow: inset 0 0 30px 10px rgba(34, 255, 136, 0.6); }
     100% { box-shadow: inset 0 0 0 0 transparent; }
 }
@@ -5097,8 +5139,8 @@ body {
     color: #d1d5db;
 }
 
-/* ===== Desertion Notification Modal (victim) ============================= */
-.desertion-notification-modal {
+/* ===== Treason Notification Modal (victim) ============================= */
+.treason-notification-modal {
     position: fixed;
     top: 0;
     left: 0;
@@ -5112,9 +5154,9 @@ body {
     animation: fadeIn 0.3s ease-out;
 }
 
-.desertion-notification-modal.hidden { display: none; }
+.treason-notification-modal.hidden { display: none; }
 
-.desertion-notification-content {
+.treason-notification-content {
     background: linear-gradient(145deg, #1a0808 0%, #3b0d0d 100%);
     border: 2px solid rgba(220, 38, 38, 0.6);
     border-radius: 16px;
@@ -5126,7 +5168,7 @@ body {
     max-width: 380px;
 }
 
-.desertion-notification-header {
+.treason-notification-header {
     font-size: 1.5rem;
     font-weight: 800;
     color: #f87171;
@@ -5135,7 +5177,7 @@ body {
     letter-spacing: 1px;
 }
 
-.desertion-notification-body {
+.treason-notification-body {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -5143,19 +5185,19 @@ body {
     margin-bottom: 16px;
 }
 
-.desertion-warrior-container {
+.treason-warrior-container {
     display: flex;
     justify-content: center;
 }
 
-.desertion-notification-text {
+.treason-notification-text {
     font-size: 0.95rem;
     color: #fca5a5;
     font-weight: 600;
 }
 
-/* ===== Desertion Modal warrior grid ====================================== */
-.desertion-warrior-grid {
+/* ===== Treason Modal warrior grid ====================================== */
+.treason-warrior-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
@@ -5163,13 +5205,13 @@ body {
     padding: 8px;
 }
 
-.desertion-warrior-option {
+.treason-warrior-option {
     cursor: pointer;
     transition: transform 0.15s ease, box-shadow 0.15s ease;
     border-radius: 8px;
 }
 
-.desertion-warrior-option:hover {
+.treason-warrior-option:hover {
     transform: scale(1.08);
     box-shadow: 0 0 20px rgba(34, 255, 136, 0.5);
 }
@@ -5611,10 +5653,94 @@ body {
     background: #f1c40f;
     border-radius: 2px;
     transform-origin: left;
-    animation: bountyTimerShrink 4s linear forwards;
+    animation: bountyTimerShrink 5s linear forwards;
 }
 
 @keyframes bountyTimerShrink {
     from { transform: scaleX(1); }
     to   { transform: scaleX(0); }
+}
+
+/* Resurrection Notification Modal */
+.resurrection-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.resurrection-modal.hidden {
+    display: none;
+}
+
+.resurrection-content {
+    background: linear-gradient(145deg, #0a0a1a 0%, #1a0028 60%, #0a0a1a 100%);
+    border: 2px solid rgba(199, 77, 255, 0.6);
+    border-radius: 16px;
+    padding: 28px 44px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(199, 77, 255, 0.25), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.4s ease-out;
+    min-width: 300px;
+    max-width: 420px;
+}
+
+.resurrection-header {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #c74dff;
+    margin-bottom: 12px;
+    text-shadow: 0 0 12px rgba(199, 77, 255, 0.5);
+}
+
+.resurrection-text {
+    color: #ddb3ff;
+    font-size: 1rem;
+    margin: 0 0 16px;
+    line-height: 1.5;
+}
+
+.resurrection-timer-bar {
+    width: 100%;
+    height: 4px;
+    background: rgba(199, 77, 255, 0.2);
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+}
+
+.resurrection-timer-fill {
+    height: 100%;
+    width: 100%;
+    background: #c74dff;
+    border-radius: 2px;
+    transform-origin: left;
+    animation: resurrectionTimerShrink 5s linear forwards;
+}
+
+@keyframes resurrectionTimerShrink {
+    from { transform: scaleX(1); }
+    to   { transform: scaleX(0); }
+}
+
+.resurrection-warrior-img {
+    display: flex;
+    justify-content: center;
+    margin: 8px 0 4px;
+}
+
+.resurrection-warrior-card-img {
+    width: 80px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid rgba(199, 77, 255, 0.5);
+    box-shadow: 0 0 12px rgba(199, 77, 255, 0.4);
 }

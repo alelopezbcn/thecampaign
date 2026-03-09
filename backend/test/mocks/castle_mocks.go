@@ -109,6 +109,20 @@ func (mr *MockCastleReaderMockRecorder) ResourceCardsCount() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCardsCount", reflect.TypeOf((*MockCastleReader)(nil).ResourceCardsCount))
 }
 
+// ResourcesToWin mocks base method.
+func (m *MockCastleReader) ResourcesToWin() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourcesToWin")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// ResourcesToWin indicates an expected call of ResourcesToWin.
+func (mr *MockCastleReaderMockRecorder) ResourcesToWin() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourcesToWin", reflect.TypeOf((*MockCastleReader)(nil).ResourcesToWin))
+}
+
 // Value mocks base method.
 func (m *MockCastleReader) Value() int {
 	m.ctrl.T.Helper()
@@ -187,6 +201,20 @@ func (m *MockCastleMutator) RemoveGold(position int) (cards.Resource, error) {
 func (mr *MockCastleMutatorMockRecorder) RemoveGold(position any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGold", reflect.TypeOf((*MockCastleMutator)(nil).RemoveGold), position)
+}
+
+// Reset mocks base method.
+func (m *MockCastleMutator) Reset() []cards.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Reset")
+	ret0, _ := ret[0].([]cards.Card)
+	return ret0
+}
+
+// Reset indicates an expected call of Reset.
+func (mr *MockCastleMutatorMockRecorder) Reset() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockCastleMutator)(nil).Reset))
 }
 
 // SetProtection mocks base method.
@@ -309,6 +337,20 @@ func (mr *MockCastleMockRecorder) RemoveGold(position any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveGold", reflect.TypeOf((*MockCastle)(nil).RemoveGold), position)
 }
 
+// Reset mocks base method.
+func (m *MockCastle) Reset() []cards.Card {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Reset")
+	ret0, _ := ret[0].([]cards.Card)
+	return ret0
+}
+
+// Reset indicates an expected call of Reset.
+func (mr *MockCastleMockRecorder) Reset() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockCastle)(nil).Reset))
+}
+
 // ResourceCards mocks base method.
 func (m *MockCastle) ResourceCards() []cards.Resource {
 	m.ctrl.T.Helper()
@@ -335,6 +377,20 @@ func (m *MockCastle) ResourceCardsCount() int {
 func (mr *MockCastleMockRecorder) ResourceCardsCount() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourceCardsCount", reflect.TypeOf((*MockCastle)(nil).ResourceCardsCount))
+}
+
+// ResourcesToWin mocks base method.
+func (m *MockCastle) ResourcesToWin() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ResourcesToWin")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// ResourcesToWin indicates an expected call of ResourcesToWin.
+func (mr *MockCastleMockRecorder) ResourcesToWin() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ResourcesToWin", reflect.TypeOf((*MockCastle)(nil).ResourcesToWin))
 }
 
 // SetProtection mocks base method.

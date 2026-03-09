@@ -15,7 +15,7 @@
         "ambushes": 1,
         "blood_rains": 2,
         "resurrections": 1,
-        "desertions": 1,
+        "treasons": 1,
         "construction_cards": 1,
         "high_value_gold_cards": 0,
         "castle_goal": 25
@@ -36,7 +36,7 @@
         "ambushes": 1,
         "blood_rains": 1,
         "resurrections": 1,
-        "desertions": 0,
+        "treasons": 0,
         "construction_cards": 1,
         "high_value_gold_cards": 0,
         "castle_goal": 15
@@ -57,7 +57,7 @@
         "ambushes": 1,
         "blood_rains": 4,
         "resurrections": 0,
-        "desertions": 1,
+        "treasons": 1,
         "construction_cards": 1,
         "high_value_gold_cards": 0,
         "castle_goal": 20
@@ -78,7 +78,7 @@
         "ambushes": 4,
         "blood_rains": 4,
         "resurrections": 3,
-        "desertions": 3,
+        "treasons": 3,
         "construction_cards": 1,
         "high_value_gold_cards": 0,
         "castle_goal": 25
@@ -99,7 +99,7 @@
         "ambushes": 1,
         "blood_rains": 2,
         "resurrections": 1,
-        "desertions": 1,
+        "treasons": 1,
         "construction_cards": 1,
         "high_value_gold_cards": 3,
         "castle_goal": 40

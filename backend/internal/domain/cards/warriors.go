@@ -40,6 +40,7 @@ func NewKnight(id string) *knight {
 	k.setSelf(k)
 	return k
 }
+
 func (k *knight) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
@@ -65,6 +66,7 @@ func NewArcher(id string) *archer {
 	a.setSelf(a)
 	return a
 }
+
 func (a *archer) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
@@ -90,6 +92,7 @@ func NewMage(id string) *mage {
 	m.setSelf(m)
 	return m
 }
+
 func (m *mage) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
@@ -117,6 +120,7 @@ func NewDragon(id string) *dragon {
 	d.setSelf(d)
 	return d
 }
+
 func (d *dragon) BeAttacked(w Weapon) error {
 	if w == nil {
 		return errors.New("weapon cannot be nil")
@@ -127,6 +131,7 @@ func (d *dragon) BeAttacked(w Weapon) error {
 
 	return nil
 }
+
 func (d *dragon) InstantKill(sp SpecialPower) {
 	// Dragon cannot be instant killed
 	d.health -= sp.DamageAmount()
@@ -193,7 +198,8 @@ func (m *mercenary) HealBy(amount int) {
 }
 
 func (m *mercenary) Resurrect() {
-	m.health = mercenaryMaxHealth
+	m.health = mercenaryMaxHealth / 2
 	m.attackedBy = []Weapon{}
+	m.kills = 0
 	m.protectedBy = nil
 }

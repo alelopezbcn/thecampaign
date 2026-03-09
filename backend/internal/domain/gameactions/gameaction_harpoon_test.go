@@ -1,0 +1,210 @@
+package gameactions_test
+
+import (
+	"testing"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
+	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
+	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
+	"github.com/alelopezbcn/thecampaign/internal/domain/types"
+	"github.com/alelopezbcn/thecampaign/test/mocks"
+	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
+
+	"github.com/alelopezbcn/thecampaign/internal/domain/gameactions"
+)
+
+// validateHarpoon sets up and runs Validate for a harpoon action, returning the
+// action and mocks needed to exercise Execute.
+func validateHarpoon(
+	t *testing.T, ctrl *gomock.Controller,
+) (gameactions.GameAction, *mocks.MockGame, *mocks.MockPlayer, *mocks.MockPlayer, *mocks.MockWarrior, *mocks.MockHarpoon) {
+	t.Helper()
+
+	mockGame := mocks.NewMockGame(ctrl)
+	mockPlayer := mocks.NewMockPlayer(ctrl)
+	mockTargetPlayer := mocks.NewMockPlayer(ctrl)
+	mockDragon := mocks.NewMockWarrior(ctrl) // Dragon is the same interface as Warrior
+	mockHarpoon := mocks.NewMockHarpoon(ctrl)
+
+	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
+	mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockTargetPlayer, nil)
+	mockTargetPlayer.EXPECT().GetCardFromField("dragon-id").Return(mockDragon, true)
+	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+	mockPlayer.EXPECT().GetCardFromHand("harpoon-id").Return(mockHarpoon, true)
+
+	action := gameactions.NewHarpoonAction("Player1", "Player2", "dragon-id", "harpoon-id")
+	if err := action.Validate(mockGame); err != nil {
+		t.Fatalf("validateHarpoon: unexpected error: %v", err)
+	}
+	return action, mockGame, mockPlayer, mockTargetPlayer, mockDragon, mockHarpoon
+}
+
+func TestHarpoonAction_PlayerName(t *testing.T) {
+	action := gameactions.NewHarpoonAction("Player1", "Player2", "dragon-id", "harpoon-id")
+	assert.Equal(t, "Player1", action.PlayerName())
+}
+
+func TestHarpoonAction_NextPhase(t *testing.T) {
+	action := gameactions.NewHarpoonAction("Player1", "Player2", "dragon-id", "harpoon-id")
+	assert.Equal(t, types.PhaseTypeSpySteal, action.NextPhase())
+}
+
+func TestHarpoonAction_Execute_Bloodlust(t *testing.T) {
+	t.Run("A random field warrior is healed when dragon is killed", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer, _, mockDragon, mockHarpoon := validateHarpoon(t, ctrl)
+		mockField := mocks.NewMockField(ctrl)
+		mockFieldWarrior := mocks.NewMockWarrior(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockHarpoon.EXPECT().Attack(mockDragon).Return(nil)
+		mockDragon.EXPECT().Health().Return(0) // dragon died
+		mockPlayer.EXPECT().Field().Return(mockField)
+		mockField.EXPECT().Warriors().Return([]cards.Warrior{mockFieldWarrior})
+		mockFieldWarrior.EXPECT().HealBy(2)
+		mockHarpoon.EXPECT().GetID().Return("harpoon-id")
+		mockPlayer.EXPECT().RemoveFromHand("harpoon-id").Return(nil, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockHarpoon)
+		mockDragon.EXPECT().String().Return("Dragon (0)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, types.LastActionHarpoon, result.Action)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+
+	t.Run("No healing when dragon survives", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer, _, mockDragon, mockHarpoon := validateHarpoon(t, ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockGame.EXPECT().EventHandler().Return(bloodlustEvent())
+		mockHarpoon.EXPECT().Attack(mockDragon).Return(nil)
+		mockDragon.EXPECT().Health().Return(5) // dragon survived — HealBy must NOT be called
+		mockHarpoon.EXPECT().GetID().Return("harpoon-id")
+		mockPlayer.EXPECT().RemoveFromHand("harpoon-id").Return(nil, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockHarpoon)
+		mockDragon.EXPECT().String().Return("Dragon (5)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+		mockGame.EXPECT().Status(mockPlayer).Return(expectedStatus)
+		result, statusFn, err := action.Execute(mockGame)
+		_ = statusFn()
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionHarpoon, result.Action)
+	})
+
+	t.Run("No healing when no bloodlust event", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer, _, mockDragon, mockHarpoon := validateHarpoon(t, ctrl)
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockGame.EXPECT().EventHandler().Return(calmEvent())
+		// HealBy must NOT be called; Health must NOT be called
+		mockHarpoon.EXPECT().Attack(mockDragon).Return(nil)
+		mockHarpoon.EXPECT().GetID().Return("harpoon-id")
+		mockPlayer.EXPECT().RemoveFromHand("harpoon-id").Return(nil, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockHarpoon)
+		mockDragon.EXPECT().String().Return("Dragon (10)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+		mockGame.EXPECT().Status(mockPlayer).Return(expectedStatus)
+		result, statusFn, err := action.Execute(mockGame)
+		_ = statusFn()
+
+		assert.NoError(t, err)
+		assert.Equal(t, types.LastActionHarpoon, result.Action)
+	})
+}
+
+func TestHarpoonAction_Execute_ChampionsBounty(t *testing.T) {
+	t.Run("Bounty cards drawn when dragon is killed and target is top enemy", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer, mockTargetPlayer, mockDragon, mockHarpoon := validateHarpoon(t, ctrl)
+		mockTargetField := mocks.NewMockField(ctrl)
+		mockBountyCard := mocks.NewMockCard(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		// pre-kill snapshot: targetPlayer has dragon with 5 HP
+		mockTargetPlayer.EXPECT().Field().Return(mockTargetField)
+		mockTargetField.EXPECT().Warriors().Return([]cards.Warrior{mockDragon})
+		mockDragon.EXPECT().Health().Return(5) // pre-kill HP
+		mockHarpoon.EXPECT().Attack(mockDragon).Return(nil)
+		// post-attack: dragon killed
+		mockDragon.EXPECT().Health().Return(0)
+		mockHarpoon.EXPECT().GetID().Return("harpoon-id")
+		mockPlayer.EXPECT().RemoveFromHand("harpoon-id").Return(nil, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockHarpoon)
+		mockDragon.EXPECT().String().Return("Dragon (0)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Times(2) // attack + bounty
+		// isTopEnemy: only enemy is target — trivially top
+		mockGame.EXPECT().PlayerIndex("Player1").Return(0)
+		mockGame.EXPECT().Enemies(0).Return([]board.Player{mockTargetPlayer})
+		mockTargetPlayer.EXPECT().Name().Return("Player2") // matches targetPlayerName → skip
+		mockGame.EXPECT().DrawCards(mockPlayer, 2).Return([]cards.Card{mockBountyCard}, nil)
+		mockPlayer.EXPECT().TakeCards(mockBountyCard)
+		mockPlayer.EXPECT().Name().Return("Player1") // stored once, reused in AddHistory
+		mockGame.EXPECT().Status(mockPlayer, mockBountyCard).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, result)
+		assert.Equal(t, types.LastActionHarpoon, result.Action)
+		assert.Equal(t, "Player1", result.Attack.ChampionsBountyEarner)
+		assert.Equal(t, 1, result.Attack.ChampionsBountyCards)
+		assert.Equal(t, expectedStatus, statusFn())
+	})
+
+	t.Run("No bounty when dragon survives", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		action, mockGame, mockPlayer, mockTargetPlayer, mockDragon, mockHarpoon := validateHarpoon(t, ctrl)
+		mockTargetField := mocks.NewMockField(ctrl)
+		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
+
+		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
+		mockGame.EXPECT().EventHandler().Return(championsBountyEvent())
+		// pre-kill snapshot
+		mockTargetPlayer.EXPECT().Field().Return(mockTargetField)
+		mockTargetField.EXPECT().Warriors().Return([]cards.Warrior{mockDragon})
+		mockDragon.EXPECT().Health().Return(5) // pre-kill HP
+		mockHarpoon.EXPECT().Attack(mockDragon).Return(nil)
+		// dragon survived — no bounty triggered
+		mockDragon.EXPECT().Health().Return(3)
+		mockHarpoon.EXPECT().GetID().Return("harpoon-id")
+		mockPlayer.EXPECT().RemoveFromHand("harpoon-id").Return(nil, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockHarpoon)
+		mockDragon.EXPECT().String().Return("Dragon (3)")
+		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
+		mockGame.EXPECT().Status(mockPlayer).Return(expectedStatus)
+
+		result, statusFn, err := action.Execute(mockGame)
+		_ = statusFn()
+
+		assert.NoError(t, err)
+		assert.Equal(t, "", result.Attack.ChampionsBountyEarner)
+		assert.Equal(t, 0, result.Attack.ChampionsBountyCards)
+	})
+}

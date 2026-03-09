@@ -10,6 +10,7 @@ func (h *calmHandler) ConstructionValueModifier() int              { return 0 }
 func (h *calmHandler) TurnStartWarriorHPModifier() int             { return 0 }
 func (h *calmHandler) OnKillHealAmount() int                       { return 0 }
 func (h *calmHandler) OnKillBountyCards() int                      { return 0 }
+func (h *calmHandler) OnHitBountyHeal() int                        { return 0 }
 func (h *calmHandler) Display() (string, string) {
 	return "Calm", "No special effects this round"
 }

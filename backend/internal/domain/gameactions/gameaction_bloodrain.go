@@ -2,6 +2,7 @@ package gameactions
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -24,6 +25,7 @@ type bloodRainAction struct {
 	weaponID         string
 
 	currentPlayer board.Player
+	targetPlayer  board.Player
 	targets       []cards.Warrior
 	bloodRain     cards.BloodRain
 }
@@ -48,6 +50,7 @@ func (a *bloodRainAction) Validate(g Game) error {
 	if err != nil {
 		return err
 	}
+	a.targetPlayer = targetPlayer
 
 	targets := targetPlayer.Field().Warriors()
 	a.targets = targets
@@ -78,35 +81,116 @@ func (a *bloodRainAction) Execute(g Game) (*Result, func() gamestatus.GameStatus
 }
 
 func (a *bloodRainAction) execute(g bloodRainGame) (*Result, func() gamestatus.GameStatus, error) {
+	handler := g.EventHandler()
+	bountyCards := handler.OnKillBountyCards()
+	healAmount := handler.OnKillHealAmount()
+	hitHeal := handler.OnHitBountyHeal()
+
+	preKillHP := a.snapshotPreKillHP(bountyCards, hitHeal)
+
 	if err := a.bloodRain.Attack(a.targets); err != nil {
-		result := &Result{}
-		return result, nil, fmt.Errorf("blood rain action failed: %w", err)
+		return &Result{}, nil, fmt.Errorf("blood rain action failed: %w", err)
 	}
+
+	kills := a.countKills(healAmount, bountyCards)
+	a.applyBloodlust(healAmount, kills)
 
 	if _, err := a.currentPlayer.RemoveFromHand(a.bloodRain.GetID()); err != nil {
-		result := &Result{}
-		return result, nil, fmt.Errorf("removing blood rain from hand failed: %w", err)
+		return &Result{}, nil, fmt.Errorf("removing blood rain from hand failed: %w", err)
 	}
-
 	g.OnCardMovedToPile(a.bloodRain)
+	g.AddHistory(fmt.Sprintf("%s used blood rain on %s", a.playerName, a.targetPlayerName), types.CategoryAction)
 
-	g.AddHistory(fmt.Sprintf("%s used blood rain on %s",
-		a.playerName, a.targetPlayerName), types.CategoryAction)
+	newCards, earner, drawn := a.applyChampionsBounty(g, bountyCards, preKillHP, kills)
+	hitHealGranted := a.applyChampionsBountyHitHeal(g, hitHeal, preKillHP)
 
 	result := &Result{
 		Action: types.LastActionBloodRain,
 		Attack: &AttackDetails{
-			WeaponID:     a.weaponID,
-			TargetPlayer: a.targetPlayerName,
+			WeaponID:              a.weaponID,
+			TargetPlayer:          a.targetPlayerName,
+			ChampionsBountyEarner: earner,
+			ChampionsBountyCards:  drawn,
+			ChampionsBountyHeal:   hitHealGranted,
 		},
 	}
-	statusFn := func() gamestatus.GameStatus {
-		return g.Status(a.currentPlayer)
-	}
-
-	return result, statusFn, nil
+	return result, func() gamestatus.GameStatus { return g.Status(a.currentPlayer, newCards...) }, nil
 }
 
 func (a *bloodRainAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
+}
+
+// snapshotPreKillHP returns the target player's total field HP before the attack,
+// used for Champion's Bounty kill and hit-heal eligibility. Returns 0 when neither is active.
+func (a *bloodRainAction) snapshotPreKillHP(bountyCards, hitHeal int) int {
+	if bountyCards == 0 && hitHeal == 0 {
+		return 0
+	}
+	return totalFieldHP(a.targetPlayer)
+}
+
+// applyChampionsBountyHitHeal heals a random field warrior when the target player is top enemy.
+// For blood rain this triggers regardless of how many warriors were killed.
+func (a *bloodRainAction) applyChampionsBountyHitHeal(g bloodRainGame, hitHeal, preKillHP int) int {
+	if hitHeal == 0 {
+		return 0
+	}
+	if !isTopEnemy(preKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
+		return 0
+	}
+	warriors := a.currentPlayer.Field().Warriors()
+	if len(warriors) == 0 {
+		return 0
+	}
+	warriors[rand.Intn(len(warriors))].HealBy(hitHeal)
+	g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — warrior healed %d HP",
+		a.currentPlayer.Name(), hitHeal), types.CategoryInfo)
+	return hitHeal
+}
+
+// countKills counts target warriors that were killed by the attack.
+// Skips the count entirely when neither Bloodlust nor Champion's Bounty is active.
+func (a *bloodRainAction) countKills(healAmount, bountyCards int) int {
+	if healAmount == 0 && bountyCards == 0 {
+		return 0
+	}
+	kills := 0
+	for _, t := range a.targets {
+		if t.Health() == 0 {
+			kills++
+		}
+	}
+	return kills
+}
+
+// applyBloodlust heals a random field warrior by healAmount per kill scored.
+func (a *bloodRainAction) applyBloodlust(healAmount, kills int) {
+	if healAmount <= 0 || kills == 0 {
+		return
+	}
+	warriors := a.currentPlayer.Field().Warriors()
+	if len(warriors) == 0 {
+		return
+	}
+	warriors[rand.Intn(len(warriors))].HealBy(healAmount * kills)
+}
+
+// applyChampionsBounty draws bonus cards when any target was killed and the target
+// player had the highest total field HP. Returns the drawn cards, earner name, and count.
+func (a *bloodRainAction) applyChampionsBounty(g bloodRainGame, bountyCards, preKillHP, kills int) ([]cards.Card, string, int) {
+	if bountyCards == 0 || kills == 0 {
+		return nil, "", 0
+	}
+	if !isTopEnemy(preKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
+		return nil, "", 0
+	}
+	drawn, err := g.DrawCards(a.currentPlayer, bountyCards)
+	if err != nil {
+		return nil, "", 0
+	}
+	a.currentPlayer.TakeCards(drawn...)
+	name := a.currentPlayer.Name()
+	g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — drew %d card(s)", name, len(drawn)), types.CategoryInfo)
+	return drawn, name, len(drawn)
 }

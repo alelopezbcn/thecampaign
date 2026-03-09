@@ -11,7 +11,8 @@ import (
 const (
 	warriorMaxHealth   = 20
 	dragonMaxHealth    = 20
-	mercenaryMaxHealth = 15
+	mercenaryMaxHealth = 10
+	MercenaryCost      = 8
 )
 
 type warriorBase struct {
@@ -25,7 +26,8 @@ type warriorBase struct {
 }
 
 func newWarriorBase(cardBase *cardBase, attackableCardBase *attackableBase,
-	warriorType types.WarriorType) *warriorBase {
+	warriorType types.WarriorType,
+) *warriorBase {
 	return &warriorBase{
 		cardBase:       cardBase,
 		attackableBase: attackableCardBase,
@@ -52,6 +54,7 @@ func (w *warriorBase) ReceiveDamage(weaponCard Weapon, multiplier int) (isDefeat
 
 	return false
 }
+
 func (w *warriorBase) BeAttacked(_ Weapon) error {
 	return errors.New("should be implemented by concrete warrior types")
 }
@@ -64,12 +67,14 @@ func (w *warriorBase) Protect(powerCard SpecialPower) error {
 
 	return nil
 }
+
 func (w *warriorBase) IsProtected() (bool, SpecialPower) {
 	if w.protectedBy != nil {
 		return true, w.protectedBy
 	}
 	return false, nil
 }
+
 func (w *warriorBase) Heal(sp SpecialPower) {
 	w.health = warriorMaxHealth
 	w.attackedBy = append(w.attackedBy, sp)
@@ -113,9 +118,11 @@ func (w *warriorBase) InstantKill(sp SpecialPower) {
 	w.attackedBy = append(w.attackedBy, sp)
 	w.dead()
 }
+
 func (w *warriorBase) String() string {
 	return strings.TrimSpace(fmt.Sprintf("%s (%d)", w.warriorType, w.Health()))
 }
+
 func (w *warriorBase) AddWarriorDeadObserver(o WarriorDeadObserver) {
 	w.WarriorDeadObserver = o
 }
@@ -126,6 +133,7 @@ func (w *warriorBase) AddWarriorDeadObserver(o WarriorDeadObserver) {
 func (w *warriorBase) setSelf(self Warrior) {
 	w.self = self
 }
+
 func (w *warriorBase) Type() types.WarriorType {
 	return w.warriorType
 }
@@ -145,13 +153,15 @@ func (w *warriorBase) CanUseWeapon(wep types.WeaponType) bool {
 		return true
 	}
 }
+
 func (w *warriorBase) IsDamaged() bool {
 	return w.health < warriorMaxHealth
 }
 
 func (w *warriorBase) Resurrect() {
-	w.health = warriorMaxHealth
+	w.health = warriorMaxHealth / 2
 	w.attackedBy = []Weapon{}
+	w.kills = 0
 	w.protectedBy = nil
 }
 
@@ -160,6 +170,8 @@ func (w *warriorBase) dead() {
 		a.GetCardMovedToPileObserver().OnCardMovedToPile(a)
 	}
 	w.attackedBy = []Weapon{}
+	w.kills = 0
+	w.protectedBy = nil
 	// Use w.self so the cemetery stores the concrete type (*knight, *archer, etc.)
 	// rather than *warriorBase, preserving BeAttacked dispatch after resurrection.
 	w.WarriorDeadObserver.OnWarriorDead(w.self)

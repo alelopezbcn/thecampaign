@@ -18,10 +18,11 @@ func (h *plagueHandler) ConstructionValueModifier() int              { return 0 
 func (h *plagueHandler) TurnStartWarriorHPModifier() int             { return h.modifier }
 func (h *plagueHandler) OnKillHealAmount() int                       { return 0 }
 func (h *plagueHandler) OnKillBountyCards() int                      { return 0 }
+func (h *plagueHandler) OnHitBountyHeal() int                        { return 0 }
 
 func (h *plagueHandler) Display() (string, string) {
 	if h.modifier > 0 {
-		return "Plague", fmt.Sprintf(
+		return "Prosperity", fmt.Sprintf(
 			"Your warriors gain %d HP at the start of your turn", h.modifier,
 		)
 	}

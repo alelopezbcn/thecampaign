@@ -22,7 +22,7 @@ const DEFAULT_GAME_CONFIG = {
     ambushes: 1,
     blood_rains: 2,
     resurrections: 1,
-    desertions: 1,
+    treasons: 1,
     construction_cards: 1,
     high_value_gold_cards: 0,
     castle_goal: DEFAULT_CASTLE_GOAL
@@ -129,7 +129,7 @@ function applyPreset(config) {
         'cfg-ambushes':            'ambushes',
         'cfg-blood-rains':         'blood_rains',
         'cfg-resurrections':       'resurrections',
-        'cfg-desertions':          'desertions',
+        'cfg-treasons':          'treasons',
         'cfg-construction-cards':  'construction_cards',
         'cfg-high-value-gold':     'high_value_gold_cards',
         'cfg-castle-goal':         'castle_goal'
@@ -155,7 +155,7 @@ function readConfigFromInputs() {
         ambushes:           parseInt(document.getElementById('cfg-ambushes').value) || 0,
         blood_rains:        parseInt(document.getElementById('cfg-blood-rains').value) || 0,
         resurrections:      parseInt(document.getElementById('cfg-resurrections').value) || 0,
-        desertions:         parseInt(document.getElementById('cfg-desertions').value) || 0,
+        treasons:         parseInt(document.getElementById('cfg-treasons').value) || 0,
         construction_cards:    parseInt(document.getElementById('cfg-construction-cards').value) || 1,
         high_value_gold_cards: parseInt(document.getElementById('cfg-high-value-gold').value) || 0,
         castle_goal:           parseInt(document.getElementById('cfg-castle-goal').value) || DEFAULT_CASTLE_GOAL
@@ -230,7 +230,7 @@ function setupEventListeners() {
         'cfg-warriors', 'cfg-dragons', 'cfg-harpoons', 'cfg-special-powers',
         'cfg-spies', 'cfg-thieves', 'cfg-sabotages', 'cfg-catapults',
         'cfg-fortresses', 'cfg-ambushes', 'cfg-blood-rains', 'cfg-resurrections',
-        'cfg-desertions', 'cfg-construction-cards', 'cfg-castle-goal'
+        'cfg-treasons', 'cfg-construction-cards', 'cfg-castle-goal'
     ];
     cfgInputIds.forEach(id => {
         document.getElementById(id).addEventListener('input', markConfigCustom);
@@ -309,8 +309,8 @@ function setupEventListeners() {
     // Spy notification modal close
     document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
 
-    // Desertion notification modal close
-    document.getElementById('desertion-notification-close').addEventListener('click', hideDesertionNotificationModal);
+    // Treason notification modal close
+    document.getElementById('treason-notification-close').addEventListener('click', hideTreasonNotificationModal);
 
     // Ambush triggered modal close
     document.getElementById('ambush-triggered-close').addEventListener('click', hideAmbushTriggeredModal);
@@ -322,6 +322,12 @@ function setupEventListeners() {
     document.getElementById('champions-bounty-close').addEventListener('click', hideChampionsBountyModal);
     document.getElementById('champions-bounty-modal').addEventListener('click', (e) => {
         if (e.target === e.currentTarget) hideChampionsBountyModal();
+    });
+
+    // Resurrection modal close
+    document.getElementById('resurrection-close').addEventListener('click', hideResurrectionModal);
+    document.getElementById('resurrection-modal').addEventListener('click', (e) => {
+        if (e.target === e.currentTarget) hideResurrectionModal();
     });
 
     // Event turn modal close
@@ -345,8 +351,9 @@ function setupEventListeners() {
         { id: 'action-confirm-modal', hide: onActionConfirmNo },
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
-        { id: 'desertion-notification-modal', hide: hideDesertionNotificationModal },
+        { id: 'treason-notification-modal', hide: hideTreasonNotificationModal },
         { id: 'champions-bounty-modal', hide: hideChampionsBountyModal },
+        { id: 'resurrection-modal', hide: hideResurrectionModal },
         { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
@@ -373,9 +380,20 @@ function handleGlobalKeyboard(e) {
     const turnTransitionModal = document.getElementById('turn-transition-modal');
     const stolenCardModal = document.getElementById('stolen-card-modal');
     const spyNotificationModal = document.getElementById('spy-notification-modal');
+    const ambushTriggeredModal = document.getElementById('ambush-triggered-modal');
+    const treasonNotificationModal = document.getElementById('treason-notification-modal');
+    const championsBountyModal = document.getElementById('champions-bounty-modal');
+    const resurrectionModal = document.getElementById('resurrection-modal');
+    const eventTurnModal = document.getElementById('event-turn-modal');
+
     const isTurnTransitionOpen = turnTransitionModal && !turnTransitionModal.classList.contains('hidden');
     const isStolenCardOpen = stolenCardModal && !stolenCardModal.classList.contains('hidden');
     const isSpyNotificationOpen = spyNotificationModal && !spyNotificationModal.classList.contains('hidden');
+    const isAmbushTriggeredOpen = ambushTriggeredModal && !ambushTriggeredModal.classList.contains('hidden');
+    const isTreasonNotificationOpen = treasonNotificationModal && !treasonNotificationModal.classList.contains('hidden');
+    const isChampionsBountyOpen = championsBountyModal && !championsBountyModal.classList.contains('hidden');
+    const isResurrectionOpen = resurrectionModal && !resurrectionModal.classList.contains('hidden');
+    const isEventTurnOpen = eventTurnModal && !eventTurnModal.classList.contains('hidden');
 
     if (e.key === 'Escape') {
         if (isTurnTransitionOpen) {
@@ -384,6 +402,16 @@ function handleGlobalKeyboard(e) {
             hideStolenCardModal();
         } else if (isSpyNotificationOpen) {
             hideSpyNotificationModal();
+        } else if (isAmbushTriggeredOpen) {
+            hideAmbushTriggeredModal();
+        } else if (isTreasonNotificationOpen) {
+            hideTreasonNotificationModal();
+        } else if (isChampionsBountyOpen) {
+            hideChampionsBountyModal();
+        } else if (isResurrectionOpen) {
+            hideResurrectionModal();
+        } else if (isEventTurnOpen) {
+            hideEventTurnModal();
         } else if (isActionConfirmOpen) {
             onActionConfirmNo();
         } else if (isGameModalOpen) {
@@ -392,7 +420,17 @@ function handleGlobalKeyboard(e) {
             cancelAction();
         }
     } else if (e.key === 'Enter') {
-        if (isActionConfirmOpen) {
+        if (isAmbushTriggeredOpen) {
+            hideAmbushTriggeredModal();
+        } else if (isTreasonNotificationOpen) {
+            hideTreasonNotificationModal();
+        } else if (isChampionsBountyOpen) {
+            hideChampionsBountyModal();
+        } else if (isResurrectionOpen) {
+            hideResurrectionModal();
+        } else if (isEventTurnOpen) {
+            hideEventTurnModal();
+        } else if (isActionConfirmOpen) {
             onActionConfirmYes();
         } else if (isGameModalOpen) {
             hideGameModal();
@@ -418,6 +456,17 @@ function handleSkipPhase() {
 function connectWebSocket() {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    // Close any existing connection cleanly before opening a new one.
+    // Nulling out onclose first prevents the stale handler from clobbering
+    // the new ws reference or triggering an unwanted reconnect cycle.
+    if (ws) {
+        ws.onclose = null;
+        ws.onmessage = null;
+        ws.onerror = null;
+        ws.close();
+        ws = null;
+    }
 
     ws = new WebSocket(wsUrl);
 
@@ -649,10 +698,10 @@ function handleGameState(payload) {
         sabotageData = prepareSabotageAnimation(previousState, payload.game_status);
     }
 
-    // Detect desertion (warrior flying from enemy field to own field)
-    let desertionData = null;
+    // Detect treason (warrior flying from enemy field to own field)
+    let treasonData = null;
     if (previousState) {
-        desertionData = prepareDesertionAnimation(previousState, payload.game_status);
+        treasonData = prepareTreasonAnimation(previousState, payload.game_status);
     }
 
     // Detect warrior move for animation (before re-render)
@@ -753,8 +802,8 @@ function handleGameState(payload) {
         if (sabotageData) {
             playSabotageAnimation(sabotageData);
         }
-        if (desertionData) {
-            playDesertionAnimation(desertionData);
+        if (treasonData) {
+            playTreasonAnimation(treasonData);
         }
         if (deckDrawInfo) {
             setTimeout(() => playDeckDrawAnimation(deckDrawInfo), 50);
@@ -827,16 +876,22 @@ function handleGameState(payload) {
         showAmbushTriggeredModal(ambushTriggered.effect_display);
     }
 
-    // Detect desertion notification (victim only)
-    const desertionNotification = payload.game_status.desertion_notification;
-    if (desertionNotification) {
-        showDesertionNotificationModal(desertionNotification);
+    // Detect treason notification (victim only)
+    const treasonNotification = payload.game_status.treason_notification;
+    if (treasonNotification) {
+        showTreasonNotificationModal(treasonNotification);
     }
 
     // Detect Champion's Bounty (shown to all players)
     const championsBounty = payload.game_status.champions_bounty;
     if (championsBounty) {
         showChampionsBountyModal(championsBounty);
+    }
+
+    // Detect Resurrection (shown to all players)
+    const resurrectionNotification = payload.game_status.resurrection_notification;
+    if (resurrectionNotification) {
+        showResurrectionModal(resurrectionNotification);
     }
 
     // Check if we have new cards from a pending action (trade or buy)
@@ -882,7 +937,7 @@ function handleGameState(payload) {
     const gameOverMsg = payload.game_status.game_over_msg;
     if (gameOverMsg && gameOverMsg.length > 0) {
         const isWinner = checkIsWinner(gameOverMsg, payload.game_status);
-        showGameOverModal(isWinner, gameOverMsg);
+        showGameOverModal(isWinner, gameOverMsg, payload.game_status.player_stats);
     }
 
     // Check for error message
@@ -913,7 +968,7 @@ function checkIsWinner(gameOverMsg, status) {
 function handleGameEnded() {
     const gameOverMsg = gameState.currentState?.game_over_msg || 'Game Over!';
     const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
-    showGameOverModal(isWinner, gameOverMsg);
+    showGameOverModal(isWinner, gameOverMsg, gameState.currentState?.player_stats);
 }
 
 // Screen management
@@ -1119,7 +1174,7 @@ function sendAction(actionType, payload = null) {
         'blood_rain': 'attack',
         'place_ambush': 'attack',
         'resurrection': 'attack',
-        'desertion': 'attack',
+        'treason': 'attack',
         'catapult': 'attack',
         'spy': 'spy/steal',
         'steal': 'spy/steal',
@@ -1450,8 +1505,11 @@ function handleAttackPhaseHandClick(cardID, card) {
                 gameState.actionState.targetPlayer = playerName;
                 showBloodRainConfirmModal(card, enemy || { player_name: playerName, field: [] });
             }, (opp) => {
-                const count = (opp.field || []).length;
-                return `${count} warrior${count !== 1 ? 's' : ''} on field`;
+                const field = opp.field || [];
+                const count = field.length;
+                const hpList = field.map(w => `${w.value || '?'}HP`).join(', ');
+                const hpSuffix = hpList ? ` — ${hpList}` : '';
+                return `${count} warrior${count !== 1 ? 's' : ''} on field${hpSuffix}`;
             });
         }
     } else if (cardType === 'resurrection') {
@@ -1468,9 +1526,15 @@ function handleAttackPhaseHandClick(cardID, card) {
         gameState.actionState.type = 'ambush';
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
-        showAmbushPlaceConfirmModal(card, cardID);
-    } else if (cardType === 'desertion') {
-        gameState.actionState.type = 'desertion';
+        const ambushAllies = (gameState.currentState?.opponents || []).filter(o => o.is_ally && !o.is_eliminated && !o.ambush_in_field);
+        const ownHasAmbush = !!gameState.currentState?.current_player_ambush_in_field;
+        if (ambushAllies.length > 0) {
+            showAmbushTargetModal(card, cardID, ambushAllies, !ownHasAmbush);
+        } else {
+            showAmbushPlaceConfirmModal(card, cardID, '');
+        }
+    } else if (cardType === 'treason') {
+        gameState.actionState.type = 'treason';
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
         const enemies = getEnemyOpponents().filter(opp => (opp.field || []).some(w => w.value <= 5));
@@ -1481,13 +1545,13 @@ function handleAttackPhaseHandClick(cardID, card) {
         }
         if (enemies.length === 1) {
             gameState.actionState.targetPlayer = enemies[0].player_name;
-            showDesertionModal();
+            showTreasonModal();
         } else {
             showTargetPlayerModal('Select a player to steal warrior from', enemies,
                 (playerName) => {
                     gameState.actionState.weaponId = cardID;
                     gameState.actionState.targetPlayer = playerName;
-                    showDesertionModal();
+                    showTreasonModal();
                 },
                 (opp) => {
                     const weakCount = (opp.field || []).filter(w => w.value <= 5).length;
@@ -1642,11 +1706,13 @@ function showBloodRainConfirmModal(weapon, targetOpponent) {
     const warriorSummary = warriorCount === 1
         ? `1 warrior (${dmg} DMG)`
         : warriorCount > 1 ? `${warriorCount} warriors (${dmg} DMG each)` : `all warriors (${dmg} DMG each)`;
+    const hpParts = targetField.map(w => `${getCardName(w)} <span class="hp-preview">${w.value || '?'}HP</span>`).join(' · ');
+    const hpSuffix = hpParts ? ` — ${hpParts}` : '';
 
     showActionConfirmModal({
         title: 'Blood Rain',
         cardsHtml: cardsHtml,
-        description: `🩸 Blood Rain hits all of ${targetName}'s warriors — ${warriorSummary}`,
+        description: `🩸 Blood Rain hits all of ${targetName}'s warriors — ${warriorSummary}${hpSuffix}`,
         onConfirm: () => {
             sendAction('blood_rain', {
                 target_player: gameState.actionState.targetPlayer,
@@ -1775,7 +1841,7 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
             break;
         case 'mage':
             title = 'Heal';
-            healedHp = (target?.sub_type || '').toLowerCase() === 'mercenary' ? 15 : 20;
+            healedHp = (target?.sub_type || '').toLowerCase() === 'mercenary' ? 10 : 20;
             description = `${userName} will heal ${targetName} (${targetHp} → ${healedHp} HP)`;
             break;
         default:
@@ -1869,8 +1935,8 @@ function handleSpyStealPhaseHandClick(cardID, card) {
                 (playerName) => sendAction('sabotage', { card_id: cardID, target_player: playerName }),
                 (opp) => `${opp.cards_in_hand} card(s) in hand`);
         }
-    } else if (cardType === 'desertion') {
-        gameState.actionState.type = 'desertion';
+    } else if (cardType === 'treason') {
+        gameState.actionState.type = 'treason';
         const enemies = getEnemyOpponents().filter(opp => (opp.field || []).some(w => w.value <= 5));
         if (enemies.length === 0) {
             updateActionPrompt('No enemies have warriors with 5 HP or less!');
@@ -1879,13 +1945,13 @@ function handleSpyStealPhaseHandClick(cardID, card) {
         }
         if (enemies.length === 1) {
             gameState.actionState.targetPlayer = enemies[0].player_name;
-            showDesertionModal();
+            showTreasonModal();
         } else {
             showTargetPlayerModal('Select a player to steal warrior from', enemies,
                 (playerName) => {
                     gameState.actionState.weaponId = cardID;
                     gameState.actionState.targetPlayer = playerName;
-                    showDesertionModal();
+                    showTreasonModal();
                 },
                 (opp) => {
                     const weakCount = (opp.field || []).filter(w => w.value <= 5).length;
@@ -1920,8 +1986,8 @@ function showBuyConfirmModal(resource, cardID) {
     const resourceValue = resource?.value || 0;
     const cardsToReceive = Math.floor(resourceValue / 2);
 
-    // When gold >= 6, offer a choice: deck cards or mercenary
-    if (resourceValue >= 6) {
+    // When gold >= 8, offer a choice: deck cards or mercenary
+    if (resourceValue >= 8) {
         const content = `
             <div class="target-player-options">
                 <div class="target-player-option" onclick="window._buyChoiceCallback('deck')">
@@ -1935,7 +2001,7 @@ function showBuyConfirmModal(resource, cardID) {
                     <span class="player-icon">⚔️</span>
                     <div class="player-info">
                         <div class="player-name">Hire Mercenary</div>
-                        <div class="player-detail">15 HP · uses any weapon · no special powers</div>
+                        <div class="player-detail">10 HP · uses any weapon · no special powers</div>
                     </div>
                 </div>
             </div>`;
@@ -2177,7 +2243,7 @@ function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
                 <span class="player-icon">🏰</span>
                 <div class="player-info">
                     <div class="player-name">Your Castle</div>
-                    <div class="player-detail">${gameState.currentState?.current_player_castle?.constructed ? 'Value: ' + (gameState.currentState.current_player_castle.value || 0) + '/25' : 'Start construction'}</div>
+                    <div class="player-detail">${gameState.currentState?.current_player_castle?.constructed ? 'Value: ' + (gameState.currentState.current_player_castle.value || 0) + '/' + (gameState.currentState.current_player_castle.resources_to_win || 25) : 'Start construction'}</div>
                 </div>
             </div>
         `;
@@ -2192,7 +2258,7 @@ function showConstructTargetModal(resource, cardID, canConstructOwn, allies) {
                 <span class="player-icon">🤝</span>
                 <div class="player-info">
                     <div class="player-name">${name}'s Castle</div>
-                    <div class="player-detail">Value: ${castleValue}/25</div>
+                    <div class="player-detail">Value: ${castleValue}/${ally.castle?.resources_to_win || 25}</div>
                 </div>
             </div>
         `;
@@ -2244,9 +2310,9 @@ function showConstructConfirmModal(resource, cardID, targetPlayer) {
         description = `${resourceName} (${resourceValue} value) will be added to ${castleLabel}`;
     } else if (harvestMod !== 0) {
         const sign = harvestMod > 0 ? '+' : '';
-        description = `${resourceName} (${resourceValue} ${sign}${harvestMod} Harvest = ${effectiveValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`;
+        description = `${resourceName} (${resourceValue} ${sign}${harvestMod} Harvest = ${effectiveValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/${castle?.resources_to_win || 25}`;
     } else {
-        description = `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/25`;
+        description = `${resourceName} (${resourceValue} gold) → ${castleLabel} value: ${currentValue} → ${newValue}/${castle?.resources_to_win || 25}`;
     }
 
     const payload = { card_id: cardID };
@@ -2746,7 +2812,7 @@ function showFloatingDamage(cardId, damage, skipSlash = false) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display heal animation on a card with green cross and count-up
+// Display heal animation on a card with green cross and floating +amount bonus
 function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
@@ -2762,22 +2828,13 @@ function showFloatingHeal(cardId, fromHp, toHp) {
     cardElement.appendChild(cross);
     setTimeout(() => cross.remove(), 2000);
 
-    // Count-up number
-    const countup = document.createElement('div');
-    countup.className = 'heal-countup';
-    countup.textContent = fromHp;
-    cardElement.appendChild(countup);
-
-    let current = fromHp;
-    const interval = setInterval(() => {
-        current++;
-        countup.textContent = current;
-        if (current >= toHp) {
-            clearInterval(interval);
-        }
-    }, 80);
-
-    setTimeout(() => countup.remove(), 3500);
+    // Floating +amount bonus (shows the heal delta, not the final HP)
+    const amount = toHp - fromHp;
+    const floatingBonus = document.createElement('div');
+    floatingBonus.className = 'floating-heal';
+    floatingBonus.textContent = `+${amount}`;
+    cardElement.appendChild(floatingBonus);
+    setTimeout(() => floatingBonus.remove(), 3000);
 }
 
 // Extract protection state from game status
@@ -3436,15 +3493,14 @@ function playSabotageAnimation(sabotageData) {
     setTimeout(() => ghost.remove(), 1200);
 }
 
-// ── Desertion Animation ──────────────────────────────────────────────────────
+// ── Treason Animation ──────────────────────────────────────────────────────
 
 // Captures the warrior card element in the enemy field before re-render.
-function prepareDesertionAnimation(previousState, newState) {
-    if (newState.last_action !== 'desertion') return null;
+function prepareTreasonAnimation(previousState, newState) {
+    if (newState.last_action !== 'treason') return null;
     // Only animate from the attacker's perspective
     if (newState.turn_player !== newState.current_player) return null;
 
-    const deserterID = newState.last_moved_warrior_id; // not used; search by field change
     const prevOpponents = previousState.opponents || [];
     const newOpponents = newState.opponents || [];
 
@@ -3469,7 +3525,7 @@ function prepareDesertionAnimation(previousState, newState) {
 }
 
 // Warrior ghost flies from the enemy field to the player's own field with a flip + glow.
-function playDesertionAnimation(data) {
+function playTreasonAnimation(data) {
     if (!data) return;
 
     const { clone, rect } = data;
@@ -3481,7 +3537,7 @@ function playDesertionAnimation(data) {
     const dy = (targetRect.top + targetRect.height / 2) - (rect.top + rect.height / 2);
 
     const ghost = document.createElement('div');
-    ghost.className = 'desertion-ghost';
+    ghost.className = 'treason-ghost';
     ghost.style.left = rect.left + 'px';
     ghost.style.top = rect.top + 'px';
     ghost.style.width = rect.width + 'px';
@@ -3498,8 +3554,8 @@ function playDesertionAnimation(data) {
     // After the warrior lands, flash the player-field green
     setTimeout(() => {
         ghost.remove();
-        playerField.classList.add('desertion-landing-flash');
-        setTimeout(() => playerField.classList.remove('desertion-landing-flash'), 700);
+        playerField.classList.add('treason-landing-flash');
+        setTimeout(() => playerField.classList.remove('treason-landing-flash'), 700);
     }, 1300);
 }
 
@@ -3615,6 +3671,14 @@ function renderGameBoard(status) {
     // Render all opponent boards
     renderOpponents(status.opponents || []);
 
+    // Render own board header (name + field HP)
+    const playerHeader = document.getElementById('player-board-header');
+    if (playerHeader) {
+        const fieldHP = status.current_player_field_hp || 0;
+        const hpBadge = fieldHP > 0 ? `<span class="field-hp-badge">${fieldHP} HP</span>` : '';
+        playerHeader.innerHTML = `<span class="opponent-name">${status.current_player || ''}</span>${hpBadge}`;
+    }
+
     // Active player board glow
     const playerBoard = document.querySelector('.player-board');
     if (playerBoard) {
@@ -3720,8 +3784,11 @@ function renderOpponents(opponents) {
             : opponent.is_disconnected
                 ? `<span class="opponent-badge eliminated-badge disconnect-countdown" data-player="${opponent.player_name}">Disconnected${disconnectEntry ? ` (${disconnectEntry.secondsLeft}s)` : ''}</span>`
                 : '';
+        const fieldHP = opponent.field_hp || 0;
+        const hpBadge = fieldHP > 0 ? `<span class="field-hp-badge">${fieldHP} HP</span>` : '';
         header.innerHTML = `
             <span class="opponent-name">${opponent.player_name}</span>
+            ${hpBadge}
             ${opponent.is_ally ? '<span class="opponent-badge ally-badge">Ally</span>' : ''}
             ${badgeHtml}
         `;
@@ -3797,7 +3864,7 @@ function renderCastleInto(container, castle) {
     if (isProtected) container.classList.add('fortified');
 
     if (isConstructed) {
-        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const castleGoal = castle.resources_to_win || (gameState.gameMode === '2v2' ? 30 : 25);
         const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
         const fortressIndicator = isProtected
             ? `<div class="castle-fortress-indicator" title="Protected by a Fortress wall"><svg class="fortress-shield-icon" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shieldGrad" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGrad)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/><line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/><line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/></svg><div class="fortress-badge">Fortified</div></div>`
@@ -4032,7 +4099,7 @@ function renderCastle(containerId, castle) {
     if (isProtected) container.classList.add('fortified');
 
     if (isConstructed) {
-        const castleGoal = gameState.gameMode === '2v2' ? 30 : 25;
+        const castleGoal = castle.resources_to_win || (gameState.gameMode === '2v2' ? 30 : 25);
         const progressPct = Math.min(100, (castleValue / castleGoal) * 100);
         const fortressIndicator = isProtected
             ? `<div class="castle-fortress-indicator" title="Protected by a Fortress wall"><svg class="fortress-shield-icon" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="shieldGrad" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs><path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGrad)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/><line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/><line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/></svg><div class="fortress-badge">Fortified</div></div>`
@@ -4250,7 +4317,7 @@ function getCardType(card) {
     if (type === 'weapon') return 'weapon';
     if (type === 'resource') return 'resource';
     if (type === 'specialpower') return 'special';
-    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage' || type === 'desertion' || type === 'ambush') return 'special';
+    if (type === 'spy' || type === 'thief' || type === 'catapult' || type === 'fortress' || type === 'resurrection' || type === 'sabotage' || type === 'treason' || type === 'ambush') return 'special';
     return 'unknown';
 }
 
@@ -4589,6 +4656,7 @@ function showGameModal(title, subtitle, content, showCloseOnly = true) {
 function hideGameModal() {
     const modal = document.getElementById('game-modal');
     modal.classList.add('hidden');
+    if (cardsModalTimer) { clearTimeout(cardsModalTimer); cardsModalTimer = null; }
     resetActionState();
     updateActionPrompt('');
 
@@ -4783,7 +4851,7 @@ function showStolenCardModal(card, action = 'stolen') {
     if (stolenCardTimer) clearTimeout(stolenCardTimer);
     stolenCardTimer = setTimeout(() => {
         hideStolenCardModal();
-    }, 4000);
+    }, 5000);
 }
 
 function hideStolenCardModal() {
@@ -4810,7 +4878,7 @@ function showSpyNotificationModal(message) {
     if (spyNotificationTimer) clearTimeout(spyNotificationTimer);
     spyNotificationTimer = setTimeout(() => {
         hideSpyNotificationModal();
-    }, 3000);
+    }, 5000);
 }
 
 function hideSpyNotificationModal() {
@@ -4822,34 +4890,37 @@ function hideSpyNotificationModal() {
     }
 }
 
-// Desertion Notification Modal — shown to the player whose warrior was stolen
-let desertionNotificationTimer = null;
+// Treason Notification Modal — shown to the player whose warrior was stolen
+let treasonNotificationTimer = null;
 let championsBountyTimer = null;
+let resurrectionTimer = null;
+let ambushTriggeredTimer = null;
+let cardsModalTimer = null;
 
-function showDesertionNotificationModal(notification) {
-    const modal = document.getElementById('desertion-notification-modal');
-    const container = document.getElementById('desertion-warrior-container');
-    const text = document.getElementById('desertion-notification-text');
+function showTreasonNotificationModal(notification) {
+    const modal = document.getElementById('treason-notification-modal');
+    const container = document.getElementById('treason-warrior-container');
+    const text = document.getElementById('treason-notification-text');
     if (!modal || !container || !text) return;
 
     const warrior = notification.warrior_card;
     const stolenBy = notification.stolen_by;
     container.innerHTML = renderCardForModal(warrior);
     const warriorName = warrior.sub_type || warrior.type || 'Warrior';
-    text.textContent = `${warriorName} (${warrior.value} HP) deserted to ${stolenBy}!`;
+    text.textContent = `${warriorName} (${warrior.value} HP) moved to ${stolenBy} rank!`;
 
     modal.classList.remove('hidden');
 
-    if (desertionNotificationTimer) clearTimeout(desertionNotificationTimer);
-    desertionNotificationTimer = setTimeout(() => hideDesertionNotificationModal(), 5000);
+    if (treasonNotificationTimer) clearTimeout(treasonNotificationTimer);
+    treasonNotificationTimer = setTimeout(() => hideTreasonNotificationModal(), 5000);
 }
 
-function hideDesertionNotificationModal() {
-    const modal = document.getElementById('desertion-notification-modal');
+function hideTreasonNotificationModal() {
+    const modal = document.getElementById('treason-notification-modal');
     if (modal) modal.classList.add('hidden');
-    if (desertionNotificationTimer) {
-        clearTimeout(desertionNotificationTimer);
-        desertionNotificationTimer = null;
+    if (treasonNotificationTimer) {
+        clearTimeout(treasonNotificationTimer);
+        treasonNotificationTimer = null;
     }
 }
 
@@ -4869,13 +4940,13 @@ function showChampionsBountyModal(notification) {
     if (fill) {
         fill.style.animation = 'none';
         fill.offsetHeight; // reflow
-        fill.style.animation = 'bountyTimerShrink 4s linear forwards';
+        fill.style.animation = 'bountyTimerShrink 5s linear forwards';
     }
 
     modal.classList.remove('hidden');
 
     if (championsBountyTimer) clearTimeout(championsBountyTimer);
-    championsBountyTimer = setTimeout(() => hideChampionsBountyModal(), 4000);
+    championsBountyTimer = setTimeout(() => hideChampionsBountyModal(), 5000);
 }
 
 function hideChampionsBountyModal() {
@@ -4887,17 +4958,74 @@ function hideChampionsBountyModal() {
     }
 }
 
+function showResurrectionModal(notification) {
+    const modal = document.getElementById('resurrection-modal');
+    const textEl = document.getElementById('resurrection-text');
+    const fill = document.getElementById('resurrection-timer-fill');
+    if (!modal || !textEl) return;
+
+    const isYou = notification.player_name === gameState.playerName;
+    const warriorName = notification.warrior_card?.sub_type || 'a warrior';
+    const target = notification.target_player;
+    const targetIsYou = target === gameState.playerName;
+
+    const warriorImgEl = document.getElementById('resurrection-warrior-img');
+    if (warriorImgEl) {
+        const imageUrl = notification.warrior_card ? getCardImageUrl(notification.warrior_card) : null;
+        if (imageUrl) {
+            warriorImgEl.innerHTML = `<img src="${imageUrl}" alt="${warriorName}" class="resurrection-warrior-card-img">`;
+        } else {
+            warriorImgEl.innerHTML = '';
+        }
+    }
+
+    let msg;
+    if (isYou) {
+        msg = targetIsYou || !target || target === notification.player_name
+            ? `You resurrected ${warriorName} from the cemetery!`
+            : `You resurrected ${warriorName} to ${target}'s field!`;
+    } else {
+        msg = targetIsYou
+            ? `${notification.player_name} resurrected ${warriorName} to your field!`
+            : target && target !== notification.player_name
+                ? `${notification.player_name} resurrected ${warriorName} to ${target}'s field!`
+                : `${notification.player_name} resurrected ${warriorName} from the cemetery!`;
+    }
+    textEl.textContent = msg;
+
+    if (fill) {
+        fill.style.animation = 'none';
+        fill.offsetHeight;
+        fill.style.animation = 'resurrectionTimerShrink 5s linear forwards';
+    }
+
+    modal.classList.remove('hidden');
+
+    if (resurrectionTimer) clearTimeout(resurrectionTimer);
+    resurrectionTimer = setTimeout(() => hideResurrectionModal(), 5000);
+}
+
+function hideResurrectionModal() {
+    const modal = document.getElementById('resurrection-modal');
+    if (modal) modal.classList.add('hidden');
+    if (resurrectionTimer) {
+        clearTimeout(resurrectionTimer);
+        resurrectionTimer = null;
+    }
+}
+
 // Ambush placed animation — shown to all players when a player places an ambush card
 function showAmbushPlacedAnimation(gameStatus) {
-    const isOwnField = gameStatus.turn_player === gameStatus.current_player;
+    // ambush_placed_on identifies whose field received the ambush (handles ally placement in 2v2)
+    const targetPlayer = gameStatus.ambush_placed_on || gameStatus.turn_player;
 
     let fieldEl;
-    if (isOwnField) {
+    if (targetPlayer === gameStatus.current_player) {
         fieldEl = document.getElementById('player-field');
     } else {
         const opponentFields = document.querySelectorAll('.opponent-field');
         for (const f of opponentFields) {
-            if (f.dataset.opponentName === gameStatus.turn_player) {
+            if (f.dataset.opponentName === targetPlayer) {
                 fieldEl = f;
                 break;
             }
@@ -4925,8 +5053,49 @@ function showAmbushPlacedAnimation(gameStatus) {
     setTimeout(() => text.remove(), 1800);
 }
 
+// Ambush Target Selection Modal (2v2 — own field vs ally field)
+function showAmbushTargetModal(card, cardID, allies, canPlaceOwn) {
+    let content = '<div class="target-player-options">';
+
+    if (canPlaceOwn === false) {
+        // own field already has ambush — don't show own option
+    } else {
+        content += `
+            <div class="target-player-option" onclick="window._ambushTargetCallback('')">
+                <span class="player-icon">⚠</span>
+                <div class="player-info">
+                    <div class="player-name">Your Field</div>
+                    <div class="player-detail">Place ambush on your own field</div>
+                </div>
+            </div>
+        `;
+    }
+
+    allies.forEach(ally => {
+        const name = ally.player_name;
+        content += `
+            <div class="target-player-option" onclick="window._ambushTargetCallback('${name}')">
+                <span class="player-icon">🤝</span>
+                <div class="player-info">
+                    <div class="player-name">${name}'s Field</div>
+                    <div class="player-detail">Place ambush on ally's field</div>
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    window._ambushTargetCallback = (targetPlayer) => {
+        hideGameModal();
+        delete window._ambushTargetCallback;
+        showAmbushPlaceConfirmModal(card, cardID, targetPlayer);
+    };
+
+    showGameModal('Place Ambush', 'Choose which field to protect', content, true);
+}
+
 // Ambush Place Confirmation Modal
-function showAmbushPlaceConfirmModal(card, cardID) {
+function showAmbushPlaceConfirmModal(card, cardID, targetPlayer) {
     const effectRows = [
         { label: 'Reflect Damage', chance: '23%', desc: 'Attacker\'s weapon damage is reflected back at their own warrior.' },
         { label: 'Attack Cancelled', chance: '23%', desc: 'The attack is cancelled and the weapon is discarded.' },
@@ -4955,7 +5124,7 @@ function showAmbushPlaceConfirmModal(card, cardID) {
         cardsHtml: renderCardForModal(card),
         description,
         onConfirm: () => {
-            sendMessage('place_ambush', { card_id: cardID });
+            sendMessage('place_ambush', { card_id: cardID, target_player: targetPlayer || '' });
             resetActionState();
         },
     });
@@ -4989,11 +5158,18 @@ function showAmbushTriggeredModal(effectDisplay) {
     }
     if (textEl) textEl.textContent = ambushEffectDescriptions[effectDisplay] || '';
     modal.classList.remove('hidden');
+
+    if (ambushTriggeredTimer) clearTimeout(ambushTriggeredTimer);
+    ambushTriggeredTimer = setTimeout(() => hideAmbushTriggeredModal(), 5000);
 }
 
 function hideAmbushTriggeredModal() {
     const modal = document.getElementById('ambush-triggered-modal');
     if (modal) modal.classList.add('hidden');
+    if (ambushTriggeredTimer) {
+        clearTimeout(ambushTriggeredTimer);
+        ambushTriggeredTimer = null;
+    }
 }
 
 // Ambush card in field — shows the card image (effect hidden until triggered)
@@ -5151,9 +5327,15 @@ function getOpponentByName(name) {
 
 // Target Player Selection Modal
 function showTargetPlayerModal(title, opponents, callback, detailFn) {
+    // Skip modal when there's only one option
+    if (opponents.length === 1) {
+        callback(opponents[0].player_name);
+        return;
+    }
+
     const defaultDetail = (opp) => {
         const castle = opp.castle || {};
-        return `Castle: ${castle.value || 0}/25 gold, ${castle.resource_cards || 0} resource cards`;
+        return `Castle: ${castle.value || 0}/${castle.resources_to_win || 25} gold, ${castle.resource_cards || 0} resource cards`;
     };
     const getDetail = detailFn || defaultDetail;
 
@@ -5242,6 +5424,12 @@ function showStealModal() {
     const opponent = getOpponentByName(targetName);
     const handCount = opponent?.cards_in_hand || 0;
 
+    // Skip modal — pick a random card position
+    if (handCount > 0) {
+        selectStealPosition(Math.ceil(Math.random() * handCount));
+        return;
+    }
+
     let content = '';
     for (let i = 1; i <= handCount; i++) {
         content += `
@@ -5260,8 +5448,8 @@ function selectStealPosition(position) {
     hideGameModal();
 }
 
-// Desertion Modal — shows eligible warriors (≤5 HP) from the target opponent's field
-function showDesertionModal() {
+// Treason Modal — shows eligible warriors (≤5 HP) from the target opponent's field
+function showTreasonModal() {
     const targetName = gameState.actionState.targetPlayer;
     const opponent = getOpponentByName(targetName);
     const field = (opponent?.field || []).filter(w => w.value <= 5);
@@ -5272,13 +5460,19 @@ function showDesertionModal() {
         return;
     }
 
-    let content = '<div class="desertion-warrior-grid">';
+    // Skip modal when there's only one eligible warrior
+    if (field.length === 1) {
+        selectTreasonWarrior(field[0].id);
+        return;
+    }
+
+    let content = '<div class="treason-warrior-grid">';
     field.forEach(warrior => {
         const subType = warrior.sub_type || warrior.type || 'Warrior';
         const imgKey = subType.toLowerCase();
         const imgSrc = `/static/img/cards/${imgKey}.webp`;
         content += `
-            <div class="desertion-warrior-option" onclick="selectDesertionWarrior('${warrior.id}')">
+            <div class="treason-warrior-option" onclick="selectTreasonWarrior('${warrior.id}')">
                 <div class="card ${imgKey} has-image" style="border-color:${warrior.color};">
                     <div class="card-image"><img src="${imgSrc}" alt="${subType}" draggable="false" onerror="this.parentNode.style.display='none'"></div>
                     <div class="card-info">
@@ -5291,11 +5485,11 @@ function showDesertionModal() {
     });
     content += '</div>';
 
-    showGameModal(`Desertion — ${targetName}`, 'Choose a weakened warrior to convince (≤5 HP)', content, true);
+    showGameModal(`Treason — ${targetName}`, 'Choose a weakened warrior to convince (≤5 HP)', content, true);
 }
 
-function selectDesertionWarrior(warriorID) {
-    sendAction('desertion', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
+function selectTreasonWarrior(warriorID) {
+    sendAction('treason', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, warrior_id: warriorID });
     hideGameModal();
 }
 
@@ -5353,18 +5547,7 @@ function showCatapultModal() {
     const resourceCount = opponent?.castle?.resource_cards || 0;
 
     if (isProtected) {
-        const content = `<div style="text-align:center;padding:16px 8px;">
-            <svg style="width:56px;height:68px;filter:drop-shadow(0 0 10px rgba(212,168,37,0.9))" viewBox="0 0 80 96" xmlns="http://www.w3.org/2000/svg">
-                <defs><linearGradient id="shieldGradM" x1="30%" y1="0%" x2="70%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1e3a8a"/></linearGradient></defs>
-                <path d="M40 4 L76 18 L76 52 Q76 80 40 92 Q4 80 4 52 L4 18 Z" fill="url(#shieldGradM)" stroke="#d4a825" stroke-width="4.5" stroke-linejoin="round"/>
-                <line x1="40" y1="24" x2="40" y2="70" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
-                <line x1="21" y1="47" x2="59" y2="47" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
-            </svg>
-            <p style="color:#e8c244;font-weight:700;margin:12px 0 4px;">Fortress Wall</p>
-            <p style="color:#a0a0a0;font-size:0.85em;margin:0 0 16px;">The fortress wall will be destroyed instead of gold</p>
-            <button class="btn btn-danger" onclick="confirmCatapultFortress('${targetName}')">Destroy Wall</button>
-        </div>`;
-        showGameModal(`Catapult ${targetName}'s Castle`, 'Castle is fortified', content, true);
+        confirmCatapultFortress(targetName);
         return;
     }
 
@@ -5374,20 +5557,8 @@ function showCatapultModal() {
         return;
     }
 
-    let content = '<div class="catapult-cards-grid">';
-    for (let i = 1; i <= resourceCount; i++) {
-        content += `
-            <div class="card-face-down catapult-target" data-position="${i}" onclick="selectCatapultPosition(${i})">
-                <div class="card-back-design">
-                    <span class="card-back-icon">💰</span>
-                </div>
-                <span class="card-position">#${i}</span>
-            </div>
-        `;
-    }
-    content += '</div>';
-
-    showGameModal(`Catapult ${targetName}'s Castle`, 'Select a resource card to destroy', content, true);
+    // Pick a random resource position — castle resources are face-down to the attacker
+    selectCatapultPosition(Math.ceil(Math.random() * resourceCount));
 }
 
 function selectCatapultPosition(position) {
@@ -5530,14 +5701,18 @@ function showCardsModal(cards, title, subtitle, showPositionIndicators = false) 
     }
 
     showGameModal(title, subtitle, content, true);
+
+    if (cardsModalTimer) clearTimeout(cardsModalTimer);
+    cardsModalTimer = setTimeout(() => hideGameModal(), 5000);
 }
 
 // Game Over Modal
-function showGameOverModal(isWinner, message) {
+function showGameOverModal(isWinner, message, playerStats) {
     const modal = document.getElementById('gameover-modal');
     const iconElement = document.getElementById('gameover-modal-icon');
     const titleElement = document.getElementById('gameover-modal-title');
     const messageElement = document.getElementById('gameover-modal-message');
+    const statsEl = document.getElementById('gameover-stats');
 
     if (isWinner) {
         iconElement.textContent = '🏆';
@@ -5550,6 +5725,27 @@ function showGameOverModal(isWinner, message) {
     }
 
     messageElement.textContent = message;
+
+    if (playerStats && playerStats.length > 0) {
+        const rows = playerStats.map(s => {
+            const crown = s.is_winner ? ' 👑' : '';
+            const mvp = s.is_mvp ? ' ⭐' : '';
+            return `<tr class="${s.is_winner ? 'stat-winner' : ''}">
+                <td>${s.name}${crown}${mvp}</td>
+                <td>${s.kills}</td>
+                <td>${s.damage}</td>
+                <td>${s.castle_value}</td>
+            </tr>`;
+        }).join('');
+        statsEl.innerHTML = `<table class="gameover-stats-table">
+            <thead><tr><th>Player</th><th>Kills</th><th>Damage</th><th>Castle</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>`;
+        statsEl.classList.remove('hidden');
+    } else {
+        statsEl.classList.add('hidden');
+    }
+
     modal.classList.remove('hidden');
 }
 

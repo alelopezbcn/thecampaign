@@ -16,6 +16,7 @@ type CastleReader interface {
 	ResourceCardsCount() int
 	ResourceCards() []cards.Resource
 	CanBeAttacked() bool
+	ResourcesToWin() int
 }
 
 // CastleMutator — castle mutation
@@ -24,6 +25,9 @@ type CastleMutator interface {
 	RemoveGold(position int) (cards.Resource, error)
 	SetProtection(f cards.Fortress)
 	ConsumeProtection() cards.Card
+	// Reset clears all castle state and returns every card that was in it
+	// (initial construction card, resources, protection) for the caller to discard.
+	Reset() []cards.Card
 }
 
 // Castle composes read and write access
@@ -157,9 +161,31 @@ func (c *castle) CanBeAttacked() bool {
 	return c.IsConstructed() && (c.ResourceCardsCount() > 0 || c.IsProtected())
 }
 
+func (c *castle) ResourcesToWin() int {
+	return c.resourcesToWin
+}
+
 func (c *castle) String() string {
 	return fmt.Sprintf("Castle: %v Gold coins (%d cards)",
 		c.Value(), c.ResourceCardsCount())
+}
+
+func (c *castle) Reset() []cards.Card {
+	var discarded []cards.Card
+	if c.initialCard != nil {
+		discarded = append(discarded, c.initialCard)
+	}
+	for _, r := range c.resources {
+		discarded = append(discarded, r)
+	}
+	if c.protection != nil {
+		discarded = append(discarded, c.protection)
+	}
+	c.isConstructed = false
+	c.initialCard = nil
+	c.resources = []cards.Resource{}
+	c.protection = nil
+	return discarded
 }
 
 func (c *castle) addResource(card cards.Card) error {

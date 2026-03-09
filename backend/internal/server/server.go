@@ -107,7 +107,7 @@ var cardConfig = map[string]CardConfigEntry{
 	},
 	"mercenary": {
 		Description: `𝐍𝐞𝐮𝐭𝐫𝐚𝐥 𝐖𝐚𝐫𝐫𝐢𝐨𝐫 𝐟𝐨𝐫 𝐇𝐢𝐫𝐞
-𝐑𝐞𝐜𝐫𝐮𝐢𝐭𝐦𝐞𝐧𝐭 𝐂𝐨𝐬𝐭: 6+ 🪙.
+𝐑𝐞𝐜𝐫𝐮𝐢𝐭𝐦𝐞𝐧𝐭 𝐂𝐨𝐬𝐭: 8+ 🪙.
 𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Can be recruited directly to your field.
 𝐂𝐨𝐦𝐛𝐚𝐭 𝐀𝐛𝐢𝐥𝐢𝐭𝐲: Can attack using any weapon.
 𝐋𝐢𝐦𝐢𝐭𝐚𝐭𝐢𝐨𝐧: Cannot use Special Powers.`,
@@ -143,7 +143,7 @@ var cardConfig = map[string]CardConfigEntry{
 	"resource": {
 		Description: `𝐆𝐨𝐥𝐝 𝐑𝐞𝐬𝐨𝐮𝐫𝐜𝐞
 𝐄𝐟𝐟𝐞𝐜𝐭: Spend 2 Coins to buy 1 Card.
-𝐌𝐞𝐫𝐜𝐞𝐧𝐚𝐫𝐲: Spend 6+ Coins to recruit directly to field.
+𝐌𝐞𝐫𝐜𝐞𝐧𝐚𝐫𝐲: Spend 8+ Coins to recruit directly to field.
 𝐔𝐭𝐢𝐥𝐢𝐭𝐲: A value-1 Gold can construct your Castle.
 𝐏𝐡𝐚𝐬𝐞: Buy 💰 / Build 🏰`,
 		Image: "gold.webp",
@@ -199,7 +199,7 @@ var cardConfig = map[string]CardConfigEntry{
 	},
 	"resurrection": {
 		Description: `𝐑𝐞𝐬𝐮𝐫𝐫𝐞𝐜𝐭𝐢𝐨𝐧
-𝐄𝐟𝐟𝐞𝐜𝐭: Return a random warrior from the Cemetery to the field.
+𝐄𝐟𝐟𝐞𝐜𝐭: Return a random warrior from the Cemetery with half HP.
 𝐓𝐚𝐫𝐠𝐞𝐭: Can be used on your field or an ally's.
 𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
 		Image: "resurrection.webp",
@@ -211,17 +211,17 @@ var cardConfig = map[string]CardConfigEntry{
 𝐏𝐡𝐚𝐬𝐞: Spy / Steal / Sabotage 🎭`,
 		Image: "sabotage.webp",
 	},
-	"desertion": {
-		Description: `𝐃𝐞𝐬𝐞𝐫𝐭𝐢𝐨𝐧
-𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to desert.
+	"treason": {
+		Description: `𝐓𝐫𝐞𝐚𝐬𝐨𝐧
+𝐄𝐟𝐟𝐞𝐜𝐭: Convince a weakened enemy warrior to betray their team.
 𝐂𝐨𝐧𝐝𝐢𝐭𝐢𝐨𝐧: Target must have 5 HP or less.
 𝐏𝐡𝐚𝐬𝐞: Attack ⚔️`,
-		Image: "desertion.webp",
+		Image: "treason.webp",
 	},
 	"ambush": {
 		Description: `𝐀𝐦𝐛𝐮𝐬𝐡
-𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Placed face-down. Triggers on weapon attacks.
-𝐍𝐨𝐭𝐞: Does NOT trigger on Special Powers.
+𝐃𝐞𝐩𝐥𝐨𝐲𝐦𝐞𝐧𝐭: Placed face-down. Triggers on regular weapon attacks.
+𝐍𝐨𝐭𝐞: Finishes attack phase when used.
 𝐏𝐨𝐬𝐬𝐢𝐛𝐥𝐞 𝐄𝐟𝐟𝐞𝐜𝐭𝐬:
 • Reflect Damage (23%)
 • Cancel Attack (23%)

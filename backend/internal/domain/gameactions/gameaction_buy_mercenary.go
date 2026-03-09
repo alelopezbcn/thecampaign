@@ -42,8 +42,8 @@ func (a *buyMercenaryAction) Validate(g Game) error {
 		return errors.New("only gold cards can be used to hire a mercenary")
 	}
 
-	if a.resource.Value() < 6 {
-		return errors.New("need at least 6 gold to hire a mercenary")
+	if a.resource.Value() < cards.MercenaryCost {
+		return fmt.Errorf("need at least %d gold to hire a mercenary", cards.MercenaryCost)
 	}
 
 	return nil

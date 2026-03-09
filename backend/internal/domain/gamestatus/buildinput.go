@@ -56,7 +56,22 @@ type BuildInput struct {
 	AmbushAttackerName       string
 	ChampionsBountyEarner    string
 	ChampionsBountyCards     int
-	DeserterFromPlayer       string
-	DeserterWarrior          cards.Warrior
+	TraitorFromPlayer        string
+	TraitorWarrior           cards.Warrior
 	CurrentEvent             types.ActiveEvent
+	ResurrectionWarrior      cards.Warrior
+	ResurrectionTargetPlayer string
+	ResurrectionPlayerName   string
+	AmbushPlacedOn           string // player whose field received the ambush (place_ambush action)
+	PlayerStats              []PlayerStatInput
+}
+
+// PlayerStatInput holds end-of-game statistics for a single player.
+type PlayerStatInput struct {
+	Name        string
+	Kills       int
+	Damage      int
+	CastleValue int
+	IsWinner    bool
+	IsMVP       bool
 }

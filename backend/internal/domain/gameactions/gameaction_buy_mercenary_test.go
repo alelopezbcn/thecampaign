@@ -72,7 +72,7 @@ func TestBuyMercenaryAction_Validate(t *testing.T) {
 		assert.Contains(t, err.Error(), "only gold cards can be used to hire a mercenary")
 	})
 
-	t.Run("Error when resource value is less than 6", func(t *testing.T) {
+	t.Run("Error when resource value is less than 8", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -88,10 +88,10 @@ func TestBuyMercenaryAction_Validate(t *testing.T) {
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "need at least 6 gold")
+		assert.Contains(t, err.Error(), "need at least 8 gold")
 	})
 
-	t.Run("Success with gold value exactly 6", func(t *testing.T) {
+	t.Run("Success with gold value exactly 8", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
@@ -100,10 +100,10 @@ func TestBuyMercenaryAction_Validate(t *testing.T) {
 		mockResource := mocks.NewMockResource(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeBuy)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockPlayer.EXPECT().GetCardFromHand("gold-6").Return(mockResource, true)
-		mockResource.EXPECT().Value().Return(6)
+		mockPlayer.EXPECT().GetCardFromHand("gold-8").Return(mockResource, true)
+		mockResource.EXPECT().Value().Return(8)
 
-		action := gameactions.NewBuyMercenaryAction("Player1", "gold-6")
+		action := gameactions.NewBuyMercenaryAction("Player1", "gold-8")
 		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
@@ -141,11 +141,11 @@ func TestBuyMercenaryAction_Execute(t *testing.T) {
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
-		action, mockGame, mockPlayer, mockResource := validateBuyMercenaryAction(t, ctrl, "gold-6", 6)
+		action, mockGame, mockPlayer, mockResource := validateBuyMercenaryAction(t, ctrl, "gold-8", 8)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer)
-		mockResource.EXPECT().GetID().Return("gold-6")
-		mockPlayer.EXPECT().RemoveFromHand("gold-6").Return(nil, nil)
+		mockResource.EXPECT().GetID().Return("gold-8")
+		mockPlayer.EXPECT().RemoveFromHand("gold-8").Return(nil, nil)
 		mockPlayer.EXPECT().TakeCards(gomock.Any()).Return(true)      // mercenary (any ID)
 		mockPlayer.EXPECT().MoveCardToField(gomock.Any()).Return(nil) // mercenary ID (UUID)
 		mockGame.EXPECT().OnCardMovedToPile(mockResource)

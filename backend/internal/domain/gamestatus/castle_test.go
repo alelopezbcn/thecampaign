@@ -44,3 +44,17 @@ func TestNewCastle_IsProtected(t *testing.T) {
 		assert.False(t, c.IsProtected)
 	})
 }
+
+func TestNewCastle_ResourcesToWin(t *testing.T) {
+	t.Run("Passes through resources_to_win", func(t *testing.T) {
+		c := NewCastle(CastleInput{ResourcesToWin: 30})
+
+		assert.Equal(t, 30, c.ResourcesToWin)
+	})
+
+	t.Run("Zero when not set", func(t *testing.T) {
+		c := NewCastle(CastleInput{})
+
+		assert.Equal(t, 0, c.ResourcesToWin)
+	})
+}

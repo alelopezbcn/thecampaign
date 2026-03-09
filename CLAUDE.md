@@ -12,6 +12,8 @@ After modifying any `.go` file, run `gofmt -w <file>` on it before moving on.
 
 **Never edit mock files manually.** If a mock needs to change (e.g. interface changed, new method added), run `make mocks` to regenerate all mocks.
 
+**Split long functions into smaller, well-named methods.** Keep orchestrating functions (e.g. `execute()`) short and readable by extracting sub-steps into focused methods with doc comments (e.g. `snapshotPreKillHP`, `applyBloodlust`, `applyChampionsBounty`).
+
 ## Commands
 
 ```bash
@@ -22,7 +24,7 @@ cd backend && go build -o ../server.exe ./cmd/server
 ./server.exe
 
 # Run all tests
-cd backend && go test ./...
+make test
 
 # Run a single test
 cd backend && go test ./internal/domain/ -run TestName
@@ -34,6 +36,13 @@ make mocks
 make up        # docker-compose up --build
 make down      # docker-compose down
 ```
+
+## Testing
+
+**Always write tests for new code.** When adding a new function, method, or game action:
+- Add unit tests in the same package (e.g. `gameaction_foo_test.go` alongside `gameaction_foo.go`)
+- Cover the happy path and at least one error/edge case
+- Run `make test` after writing tests to confirm they pass
 
 ## Architecture
 
@@ -84,7 +93,7 @@ Each turn follows a phase sequence: `draw` -> `attack` -> `spy/steal` -> `buy` -
 
 **Keep this file in sync whenever game mechanics change.** It is the single source of truth for the in-game reference modal. Update it when you:
 
-- Add, remove, or change a **card type** (warriors, weapons, ambush effects, spy/steal/sabotage/desertion, catapult, resurrection, gold)
+- Add, remove, or change a **card type** (warriors, weapons, ambush effects, spy/steal/sabotage/treason, catapult, resurrection, gold)
 - Add, remove, or change a **game event** (`domain/gameevents/`)
 - Change a **game limit** (hand limit → `board.MaxCardsInHand`, turn time, trade limit, warrior moves, ambush limit)
 - Change **castle goals** or **win conditions**

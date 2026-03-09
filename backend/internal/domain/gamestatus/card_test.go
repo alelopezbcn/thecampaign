@@ -18,7 +18,7 @@ func TestFromDomainCard_Warrior(t *testing.T) {
 		{"Archer", cards.NewArcher("W1"), CardTypeArcher, 20},
 		{"Mage", cards.NewMage("W1"), CardTypeMage, 20},
 		{"Dragon", cards.NewDragon("W1"), CardTypeDragon, 20},
-		{"Mercenary", cards.NewMercenary("W1"), CardTypeMercenary, 15},
+		{"Mercenary", cards.NewMercenary("W1"), CardTypeMercenary, 10},
 	}
 
 	for _, tt := range tests {
@@ -165,13 +165,13 @@ func TestFromDomainCards_Empty(t *testing.T) {
 	assert.Empty(t, result)
 }
 
-func TestFromDomainCard_Desertion(t *testing.T) {
-	desertion := cards.NewDesertion("DES1")
+func TestFromDomainCard_Treason(t *testing.T) {
+	treason := cards.NewTreason("DES1")
 
-	c := fromDomainCard(desertion)
+	c := fromDomainCard(treason)
 
 	assert.Equal(t, "DES1", c.ID)
-	assert.Equal(t, CardTypeDesertion, c.CardType())
+	assert.Equal(t, CardTypeTreason, c.CardType())
 	assert.Equal(t, 0, c.Value)
 }
 

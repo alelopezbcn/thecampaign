@@ -15,7 +15,7 @@ type AmbushTrigger struct {
 	EffectDisplay string             `json:"effect_display"`
 }
 
-type DesertionNotification struct {
+type TreasonNotification struct {
 	WarriorCard Card   `json:"warrior_card"`
 	StolenBy    string `json:"stolen_by"`
 }
@@ -23,6 +23,21 @@ type DesertionNotification struct {
 type ChampionsBountyNotification struct {
 	EarnedBy string `json:"earned_by"`
 	Cards    int    `json:"cards"`
+}
+
+type PlayerStat struct {
+	Name        string `json:"name"`
+	Kills       int    `json:"kills"`
+	Damage      int    `json:"damage"`
+	CastleValue int    `json:"castle_value"`
+	IsWinner    bool   `json:"is_winner"`
+	IsMVP       bool   `json:"is_mvp"`
+}
+
+type ResurrectionNotification struct {
+	WarriorCard  Card   `json:"warrior_card"`
+	TargetPlayer string `json:"target_player"`
+	PlayerName   string `json:"player_name"`
 }
 
 type GameStatus struct {
@@ -36,6 +51,7 @@ type GameStatus struct {
 	CanForge                     bool                         `json:"can_forge"`
 	CurrentPlayerHand            []HandCard                   `json:"current_player_hand"`
 	CurrentPlayerField           []FieldCard                  `json:"current_player_field"`
+	CurrentPlayerFieldHP         int                          `json:"current_player_field_hp"`
 	CurrentPlayerCastle          Castle                       `json:"current_player_castle"`
 	CurrentPlayerAmbushInField   bool                         `json:"current_player_ambush_in_field"`
 	IsEliminated                 bool                         `json:"is_eliminated"`
@@ -54,13 +70,16 @@ type GameStatus struct {
 	SabotagedFromYouCard         []Card                       `json:"sabotaged_from_you_card,omitempty"`
 	SpyNotification              string                       `json:"spy_notification,omitempty"`
 	AmbushTriggered              *AmbushTrigger               `json:"ambush_triggered,omitempty"`
-	DesertionNotification        *DesertionNotification       `json:"desertion_notification,omitempty"`
+	AmbushPlacedOn               string                       `json:"ambush_placed_on,omitempty"`
+	TreasonNotification          *TreasonNotification         `json:"treason_notification,omitempty"`
 	ChampionsBounty              *ChampionsBountyNotification `json:"champions_bounty,omitempty"`
+	ResurrectionNotification     *ResurrectionNotification    `json:"resurrection_notification,omitempty"`
 	History                      []HistoryLine                `json:"history"`
 	PlayersOrder                 []string                     `json:"players_order"`
 	NextTurnPlayer               string                       `json:"next_turn_player,omitempty"`
 	GameOverMsg                  string                       `json:"game_over_msg,omitempty"`
 	IsWinner                     bool                         `json:"is_winner"`
+	PlayerStats                  []PlayerStat                 `json:"player_stats,omitempty"`
 	GameStartedAt                string                       `json:"game_started_at"`
 	TurnStartedAt                string                       `json:"turn_started_at"`
 	TurnTimeLimitSecs            int                          `json:"turn_time_limit_secs"`
@@ -75,6 +94,7 @@ type GameStatus struct {
 type OpponentStatus struct {
 	PlayerName     string      `json:"player_name"`
 	Field          []FieldCard `json:"field"`
+	FieldHP        int         `json:"field_hp"`
 	Castle         Castle      `json:"castle"`
 	CardsInHand    int         `json:"cards_in_hand"`
 	IsAlly         bool        `json:"is_ally"`
@@ -130,14 +150,17 @@ func NewGameStatus(in BuildInput) GameStatus {
 	applyStealNotification(in, &gs)
 	applySabotageNotification(in, &gs)
 	applySpyNotification(in, &gs)
+	applyPlaceAmbushAnimation(in, &gs)
 	applyAmbushNotification(in, &gs)
-	applyDesertionNotification(in, &gs)
+	applyTreasonNotification(in, &gs)
 	applyChampionsBountyNotification(in, &gs)
+	applyResurrectionNotification(in, &gs)
 
 	processHandCards(in.Viewer, in, &gs)
 
 	for _, warrior := range in.Viewer.Field.Warriors {
 		gs.CurrentPlayerField = append(gs.CurrentPlayerField, NewFieldCard(warrior))
+		gs.CurrentPlayerFieldHP += warrior.Health()
 	}
 	gs.CurrentPlayerAmbushInField = in.Viewer.Field.HasAmbush
 
@@ -146,6 +169,16 @@ func NewGameStatus(in BuildInput) GameStatus {
 	if in.IsGameOver {
 		gs.GameOverMsg = "Game over! The winner is " + in.Winner
 		gs.IsWinner = in.IsPlayerWinner
+		for _, s := range in.PlayerStats {
+			gs.PlayerStats = append(gs.PlayerStats, PlayerStat{
+				Name:        s.Name,
+				Kills:       s.Kills,
+				Damage:      s.Damage,
+				CastleValue: s.CastleValue,
+				IsWinner:    s.IsWinner,
+				IsMVP:       s.IsMVP,
+			})
+		}
 	}
 
 	return gs
@@ -211,6 +244,12 @@ func applySpyNotification(in BuildInput, gs *GameStatus) {
 	}
 }
 
+func applyPlaceAmbushAnimation(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionPlaceAmbush && in.AmbushPlacedOn != "" {
+		gs.AmbushPlacedOn = in.AmbushPlacedOn
+	}
+}
+
 func applyAmbushNotification(in BuildInput, gs *GameStatus) {
 	if in.LastAction == types.LastActionAmbush && in.AmbushAttackerName != "" &&
 		(in.Viewer.Name == in.AmbushAttackerName || in.Viewer.Name == in.LastAttackTargetPlayer) {
@@ -230,11 +269,21 @@ func applyChampionsBountyNotification(in BuildInput, gs *GameStatus) {
 	}
 }
 
-func applyDesertionNotification(in BuildInput, gs *GameStatus) {
-	if in.LastAction == types.LastActionDesertion && in.DeserterFromPlayer != "" &&
-		in.Viewer.Name == in.DeserterFromPlayer && in.DeserterWarrior != nil {
-		gs.DesertionNotification = &DesertionNotification{
-			WarriorCard: fromDomainCard(in.DeserterWarrior),
+func applyResurrectionNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionResurrection && in.ResurrectionWarrior != nil {
+		gs.ResurrectionNotification = &ResurrectionNotification{
+			WarriorCard:  fromDomainCard(in.ResurrectionWarrior),
+			TargetPlayer: in.ResurrectionTargetPlayer,
+			PlayerName:   in.ResurrectionPlayerName,
+		}
+	}
+}
+
+func applyTreasonNotification(in BuildInput, gs *GameStatus) {
+	if in.LastAction == types.LastActionTreason && in.TraitorFromPlayer != "" &&
+		in.Viewer.Name == in.TraitorFromPlayer && in.TraitorWarrior != nil {
+		gs.TreasonNotification = &TreasonNotification{
+			WarriorCard: fromDomainCard(in.TraitorWarrior),
 			StolenBy:    in.CurrentPlayerName,
 		}
 	}
@@ -277,9 +326,9 @@ func processHandCards(viewer ViewerInput, game BuildInput, gs *GameStatus) {
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
 				NewSabotageHandCard(ct.GetID(), game.AnyEnemyHasCards, action))
 
-		case cards.Desertion:
+		case cards.Treason:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewDesertionHandCard(ct.GetID(), game.AnyEnemyHasWeakWarriors, action))
+				NewTreasonHandCard(ct.GetID(), game.AnyEnemyHasWeakWarriors, action))
 
 		case cards.Fortress:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
@@ -291,8 +340,14 @@ func processHandCards(viewer ViewerInput, game BuildInput, gs *GameStatus) {
 				NewResurrectionHandCard(ct.GetID(), game.CemeteryCount, action))
 
 		case cards.Ambush:
+			canBePlaced := !viewer.Field.HasAmbush
+			for _, f := range game.AllyFields {
+				if !f.HasAmbush {
+					canBePlaced = true
+				}
+			}
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
-				NewAmbushHandCard(ct.GetID(), viewer.Field.HasAmbush, action))
+				NewAmbushHandCard(ct.GetID(), canBePlaced, action))
 
 		case cards.Resource:
 			gs.CurrentPlayerHand = append(gs.CurrentPlayerHand,
@@ -315,6 +370,7 @@ func processOpponents(game BuildInput, gs *GameStatus) {
 		}
 		for _, warrior := range opp.Field.Warriors {
 			o.Field = append(o.Field, NewFieldCard(warrior))
+			o.FieldHP += warrior.Health()
 		}
 		gs.Opponents = append(gs.Opponents, o)
 	}

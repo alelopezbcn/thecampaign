@@ -3,6 +3,7 @@ package gameactions
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -12,6 +13,7 @@ import (
 type specialPowerGame interface {
 	GamePlayers
 	GameTurn
+	GameCards
 	GameHistory
 	GameStatusProvider
 }
@@ -25,6 +27,7 @@ type specialPowerAction struct {
 	usedBy       cards.Warrior
 	usedOn       cards.Warrior
 	specialPower cards.SpecialPower
+	targetPlayer board.Player
 }
 
 func NewSpecialPowerAction(playerName, userID, targetID, weaponID string) *specialPowerAction {
@@ -81,6 +84,7 @@ func (a *specialPowerAction) Validate(g Game) error {
 		for _, enemy := range g.Enemies(g.PlayerIndex(a.playerName)) {
 			targetCard, ok = enemy.GetCardFromField(a.targetID)
 			if ok {
+				a.targetPlayer = enemy
 				break
 			}
 		}
@@ -128,22 +132,26 @@ func (a *specialPowerAction) Execute(g Game) (*Result, func() gamestatus.GameSta
 
 func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
+	handler := g.EventHandler()
+	bountyCards := handler.OnKillBountyCards()
+	healAmount := handler.OnKillHealAmount()
+
+	preKillHP := a.snapshotPreKillHP(bountyCards)
+
+	// Snapshot pre-attack HP for damage tracking.
+	targetPreHP := a.usedOn.Health()
 
 	if err := a.specialPower.Use(a.usedBy, a.usedOn); err != nil {
-		result := &Result{}
-		return result, nil, fmt.Errorf("special power action failed: %w", err)
+		return &Result{}, nil, fmt.Errorf("special power action failed: %w", err)
 	}
 
-	// Award kill credit to the archer when the target is instantly killed.
-	if a.usedOn.Health() == 0 {
+	// Post-attack state (single Health() call used for kill detection and damage calculation).
+	postHP := a.usedOn.Health()
+	killed := postHP == 0
+	if killed {
 		a.usedBy.AddKill()
-
-		// Bloodlust: if the target was killed, restore HP to the attacking warrior.
-		handler := g.EventHandler()
-		if healAmount := handler.OnKillHealAmount(); healAmount > 0 && a.usedOn.Health() == 0 {
-			a.usedBy.HealBy(healAmount)
-		}
 	}
+	a.applyBloodlust(healAmount, killed)
 
 	if _, err := p.RemoveFromHand(a.specialPower.GetID()); err != nil {
 		return &Result{}, nil, fmt.Errorf("removing special power from hand failed: %w", err)
@@ -152,16 +160,62 @@ func (a *specialPowerAction) execute(g specialPowerGame) (*Result, func() gamest
 	g.AddHistory(fmt.Sprintf("%s used special power on %s",
 		a.playerName, a.usedOn.String()), types.CategoryAction)
 
+	newCards, earner, drawn := a.applyChampionsBounty(g, p, bountyCards, preKillHP, killed)
+
+	killsGranted := 0
+	if killed {
+		killsGranted = 1
+	}
 	result := &Result{
 		Action: types.LastActionSpecialPower,
+		Attack: &AttackDetails{
+			TargetID:              a.targetID,
+			ChampionsBountyEarner: earner,
+			ChampionsBountyCards:  drawn,
+			KillsGranted:          killsGranted,
+			DamageDealt:           targetPreHP - postHP,
+		},
 	}
-	statusFn := func() gamestatus.GameStatus {
-		return g.Status(p)
-	}
-
-	return result, statusFn, nil
+	return result, func() gamestatus.GameStatus { return g.Status(p, newCards...) }, nil
 }
 
 func (a *specialPowerAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
+}
+
+// snapshotPreKillHP returns the target player's total field HP before the attack,
+// used for Champion's Bounty eligibility. Returns 0 when the event is not active
+// or when the target is not an enemy (ally/self targets cannot earn bounty).
+func (a *specialPowerAction) snapshotPreKillHP(bountyCards int) int {
+	if bountyCards == 0 || a.targetPlayer == nil {
+		return 0
+	}
+	return totalFieldHP(a.targetPlayer)
+}
+
+// applyBloodlust heals the attacking warrior when the target was instantly killed.
+func (a *specialPowerAction) applyBloodlust(healAmount int, killed bool) {
+	if healAmount > 0 && killed {
+		a.usedBy.HealBy(healAmount)
+	}
+}
+
+// applyChampionsBounty draws bonus cards when the target was killed and the target
+// player had the highest total field HP. Returns the drawn cards, earner name, and count.
+func (a *specialPowerAction) applyChampionsBounty(g specialPowerGame, p board.Player, bountyCards, preKillHP int, killed bool) ([]cards.Card, string, int) {
+	if bountyCards == 0 || !killed || a.targetPlayer == nil {
+		return nil, "", 0
+	}
+	targetPlayerName := a.targetPlayer.Name()
+	if !isTopEnemy(preKillHP, targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
+		return nil, "", 0
+	}
+	drawn, err := g.DrawCards(p, bountyCards)
+	if err != nil {
+		return nil, "", 0
+	}
+	p.TakeCards(drawn...)
+	name := p.Name()
+	g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — drew %d card(s)", name, len(drawn)), types.CategoryInfo)
+	return drawn, name, len(drawn)
 }

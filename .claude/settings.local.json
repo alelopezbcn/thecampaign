@@ -32,7 +32,10 @@
       "Bash(powershell -Command \"Set-Location ''c:\\\\temp\\\\projects\\\\TheCampaign\\\\backend''; go test ./internal/... 2>&1 | Select-Object -Last 20\")",
       "Bash(powershell.exe -File:*)",
       "Bash(node --version:*)",
-      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")"
+      "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
+      "Bash(node -e \":*)",
+      "Bash(make test)",
+      "Bash(make -C .. test)"
     ]
   }
 }

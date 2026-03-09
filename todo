@@ -1,29 +1,8 @@
 Fixes:
 flickering cards
-evento bloodlust solo aplica a regular weapons?
-harpoon no tiene tests
-ambush should be placed in allies field as well
-resurrection que muestre en modal a quien resucito, y tambien se lo indique a los demas players
+harpoon no tiene tests, events neither
 
+mover historial a la derecha, y hacerlo collapsible
+Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
 
-Code improvements:
-
-Deseable:
-Add to game settings list of enable events and cards, so players can customize their experience
-
-
-
-Events:
-Blood Price — attacking costs HP
-Cowardice — warriors can't attack unless outnumbered
-
-Cards:
-Medal of Honor — reward card for achieving kills
-War Stories — draw extra cards based on kills this turn
-Veteran's Blade — weapon that gets stronger with kills
-Tribute — enemy must pay gold or lose a warrior
-Grudge — bonus damage against the player who last killed your warrior
-
-Systems:
-Warrior Ranks (Blooded / Veteran / Elite) — warriors gain rank through kills, unlocking passive bonuses
-End-Game Stats — post-game summary screen (kills, damage dealt, etc.)
+make game.js smaller? split in different files?

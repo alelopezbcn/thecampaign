@@ -20,78 +20,78 @@ func minimalDTO(viewerName string) gamestatus.BuildInput {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// DesertionNotification tests
+// TreasonNotification tests
 // ──────────────────────────────────────────────────────────────────────────────
 
-func TestNewGameStatus_DesertionNotification_SetForVictim(t *testing.T) {
+func TestNewGameStatus_TreasonNotification_SetForVictim(t *testing.T) {
 	warrior := cards.NewKnight("K1")
 
 	dto := minimalDTO("Player2") // Player2 is the viewer (victim)
-	dto.LastAction = types.LastActionDesertion
-	dto.DeserterFromPlayer = "Player2" // warrior was stolen FROM Player2
-	dto.DeserterWarrior = warrior
+	dto.LastAction = types.LastActionTreason
+	dto.TraitorFromPlayer = "Player2" // warrior was stolen FROM Player2
+	dto.TraitorWarrior = warrior
 	dto.CurrentPlayerName = "Player1" // Player1 made the move
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.NotNil(t, gs.DesertionNotification, "victim should receive a DesertionNotification")
-	assert.Equal(t, "Player1", gs.DesertionNotification.StolenBy)
-	assert.Equal(t, "K1", gs.DesertionNotification.WarriorCard.ID)
-	assert.Equal(t, gamestatus.CardTypeKnight, gs.DesertionNotification.WarriorCard.CardType())
+	assert.NotNil(t, gs.TreasonNotification, "victim should receive a TreasonNotification")
+	assert.Equal(t, "Player1", gs.TreasonNotification.StolenBy)
+	assert.Equal(t, "K1", gs.TreasonNotification.WarriorCard.ID)
+	assert.Equal(t, gamestatus.CardTypeKnight, gs.TreasonNotification.WarriorCard.CardType())
 }
 
-func TestNewGameStatus_DesertionNotification_NilForAttacker(t *testing.T) {
+func TestNewGameStatus_TreasonNotification_NilForAttacker(t *testing.T) {
 	warrior := cards.NewKnight("K1")
 
-	dto := minimalDTO("Player1") // Player1 is the viewer (attacker/deserted-to)
-	dto.LastAction = types.LastActionDesertion
-	dto.DeserterFromPlayer = "Player2"
-	dto.DeserterWarrior = warrior
+	dto := minimalDTO("Player1") // Player1 is the viewer (attacker/traitor)
+	dto.LastAction = types.LastActionTreason
+	dto.TraitorFromPlayer = "Player2"
+	dto.TraitorWarrior = warrior
 	dto.CurrentPlayerName = "Player1"
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Nil(t, gs.DesertionNotification, "attacker should NOT receive a DesertionNotification")
+	assert.Nil(t, gs.TreasonNotification, "attacker should NOT receive a TreasonNotification")
 }
 
-func TestNewGameStatus_DesertionNotification_NilForThirdPlayer(t *testing.T) {
+func TestNewGameStatus_TreasonNotification_NilForThirdPlayer(t *testing.T) {
 	warrior := cards.NewKnight("K1")
 
 	dto := minimalDTO("Player3") // Player3 is a spectator
-	dto.LastAction = types.LastActionDesertion
-	dto.DeserterFromPlayer = "Player2"
-	dto.DeserterWarrior = warrior
+	dto.LastAction = types.LastActionTreason
+	dto.TraitorFromPlayer = "Player2"
+	dto.TraitorWarrior = warrior
 	dto.CurrentPlayerName = "Player1"
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Nil(t, gs.DesertionNotification, "bystander should NOT receive a DesertionNotification")
+	assert.Nil(t, gs.TreasonNotification, "bystander should NOT receive a TreasonNotification")
 }
 
-func TestNewGameStatus_DesertionNotification_NilWhenLastActionDiffers(t *testing.T) {
+func TestNewGameStatus_TreasonNotification_NilWhenLastActionDiffers(t *testing.T) {
 	warrior := cards.NewKnight("K1")
 
 	dto := minimalDTO("Player2")
 	dto.LastAction = types.LastActionSpy // different last action
-	dto.DeserterFromPlayer = "Player2"
-	dto.DeserterWarrior = warrior
+	dto.TraitorFromPlayer = "Player2"
+	dto.TraitorWarrior = warrior
 	dto.CurrentPlayerName = "Player1"
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Nil(t, gs.DesertionNotification)
+	assert.Nil(t, gs.TreasonNotification)
 }
 
-func TestNewGameStatus_DesertionNotification_NilWhenWarriorIsNil(t *testing.T) {
+func TestNewGameStatus_TreasonNotification_NilWhenWarriorIsNil(t *testing.T) {
 	dto := minimalDTO("Player2")
-	dto.LastAction = types.LastActionDesertion
-	dto.DeserterFromPlayer = "Player2"
-	dto.DeserterWarrior = nil // no warrior set
+	dto.LastAction = types.LastActionTreason
+	dto.TraitorFromPlayer = "Player2"
+	dto.TraitorWarrior = nil // no warrior set
 	dto.CurrentPlayerName = "Player1"
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Nil(t, gs.DesertionNotification)
+	assert.Nil(t, gs.TreasonNotification)
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -620,6 +620,39 @@ func TestNewGameStatus_CurrentPlayerField_EmptyWhenNoWarriors(t *testing.T) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
+// CurrentPlayerFieldHP tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewGameStatus_CurrentPlayerFieldHP_SumsWarriorHP(t *testing.T) {
+	knight := cards.NewKnight("K1") // default HP
+	archer := cards.NewArcher("A1")
+	dto := minimalDTO("Player1")
+	dto.Viewer.Field.Warriors = []cards.Warrior{knight, archer}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health()+archer.Health(), gs.CurrentPlayerFieldHP)
+}
+
+func TestNewGameStatus_CurrentPlayerFieldHP_ZeroWhenNoWarriors(t *testing.T) {
+	dto := minimalDTO("Player1")
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Zero(t, gs.CurrentPlayerFieldHP)
+}
+
+func TestNewGameStatus_CurrentPlayerFieldHP_SingleWarrior(t *testing.T) {
+	knight := cards.NewKnight("K1")
+	dto := minimalDTO("Player1")
+	dto.Viewer.Field.Warriors = []cards.Warrior{knight}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health(), gs.CurrentPlayerFieldHP)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
 // Opponent metadata tests
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -699,6 +732,54 @@ func TestNewGameStatus_OpponentStatus_FieldWarriorsConverted(t *testing.T) {
 	assert.Equal(t, gamestatus.CardTypeArcher, gs.Opponents[0].Field[0].CardType())
 }
 
+func TestNewGameStatus_OpponentStatus_FieldHP_SumsWarriorHP(t *testing.T) {
+	knight := cards.NewKnight("K1")
+	archer := cards.NewArcher("A1")
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name:  "Player2",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{knight, archer}},
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health()+archer.Health(), gs.Opponents[0].FieldHP)
+}
+
+func TestNewGameStatus_OpponentStatus_FieldHP_ZeroWhenNoWarriors(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{Name: "Player2"},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Zero(t, gs.Opponents[0].FieldHP)
+}
+
+func TestNewGameStatus_OpponentStatus_FieldHP_IndependentPerOpponent(t *testing.T) {
+	knight := cards.NewKnight("K1")
+	archer := cards.NewArcher("A1")
+	dto := minimalDTO("Player1")
+	dto.Opponents = []gamestatus.OpponentInput{
+		{
+			Name:  "Player2",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{knight}},
+		},
+		{
+			Name:  "Player3",
+			Field: gamestatus.FieldInput{Warriors: []cards.Warrior{archer}},
+		},
+	}
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Equal(t, knight.Health(), gs.Opponents[0].FieldHP)
+	assert.Equal(t, archer.Health(), gs.Opponents[1].FieldHP)
+}
+
 // ──────────────────────────────────────────────────────────────────────────────
 // CurrentEvent / CurrentEventDisplay / CurrentEventDescription tests
 // ──────────────────────────────────────────────────────────────────────────────
@@ -738,7 +819,7 @@ func TestNewGameStatus_EventInfo_Harvest(t *testing.T) {
 	gs := gamestatus.NewGameStatus(dto)
 
 	assert.Equal(t, "harvest", gs.CurrentEvent)
-	assert.Equal(t, "Harvest", gs.CurrentEventDisplay)
+	assert.Equal(t, "Bountiful Harvest", gs.CurrentEventDisplay)
 	assert.NotEmpty(t, gs.CurrentEventDescription)
 }
 

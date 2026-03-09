@@ -36,6 +36,8 @@ type game struct {
 	historyTracker      int
 	lastResult          gameactions.Result
 	winState            winState
+	playerKills         map[string]int // total kills per player across the game
+	playerDamage        map[string]int // total HP damage dealt per player across the game
 	gameStartedAt       time.Time
 }
 
@@ -58,6 +60,8 @@ func NewGame(playerNames []string, mode types.GameMode, dealer cards.Dealer, cas
 		mode:                mode,
 		eliminatedPlayers:   make(map[int]bool),
 		disconnectedPlayers: make(map[int]bool),
+		playerKills:         make(map[string]int),
+		playerDamage:        make(map[string]int),
 		gameStartedAt:       now,
 		turnState:           types.TurnState{StartedAt: now},
 	}
@@ -285,12 +289,26 @@ func (g *game) OnFieldWithoutWarriors(playerName string) {
 	g.AddHistory(playerName+" has been eliminated!", types.CategoryElimination)
 
 	eliminatedPlayer := g.board.Players()[eliminatedIdx]
-	// Move all cards from the eliminated player's hand to the discard pile
-	for _, c := range eliminatedPlayer.Hand().ShowCards() {
+
+	// Snapshot hand cards (ShowCards returns the live slice) then remove and discard
+	hand := eliminatedPlayer.Hand()
+	rawCards := hand.ShowCards()
+	snapshot := make([]cards.Card, len(rawCards))
+	copy(snapshot, rawCards)
+	for _, c := range snapshot {
+		hand.RemoveCard(c)
 		g.board.DiscardPile().Discard(c)
 	}
-	// Move all castled cards to the discard pile
-	for _, c := range eliminatedPlayer.Castle().ResourceCards() {
+
+	// Clear slot cards from field (SlotCards already returns a copy)
+	field := eliminatedPlayer.Field()
+	for _, c := range field.SlotCards() {
+		field.RemoveSlotCard(c)
+		g.board.DiscardPile().Discard(c)
+	}
+
+	// Reset castle: clears isConstructed, initialCard, resources, protection
+	for _, c := range eliminatedPlayer.Castle().Reset() {
 		g.board.DiscardPile().Discard(c)
 	}
 }
@@ -409,6 +427,11 @@ func (g *game) ExecuteAction(action gameactions.GameAction) (
 	}
 
 	g.lastResult = *result
+	if a := result.Attack; a != nil {
+		name := g.CurrentPlayer().Name()
+		g.playerKills[name] += a.KillsGranted
+		g.playerDamage[name] += a.DamageDealt
+	}
 
 	nextPhase := action.NextPhase()
 
@@ -611,10 +634,10 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 			}
 		}
 
-		if !canPlayPhase && board.HasCardTypeInHand[cards.Desertion](p) {
+		if !canPlayPhase && board.HasCardTypeInHand[cards.Treason](p) {
 			for _, e := range g.Enemies(g.currentTurn) {
 				for _, w := range e.Field().Warriors() {
-					if w.Health() <= cards.DesertionMaxHP {
+					if w.Health() <= cards.TreasonMaxHP {
 						canPlayPhase = true
 						break
 					}
@@ -626,7 +649,17 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 		}
 
 		if !canPlayPhase && board.HasCardTypeInHand[cards.Ambush](p) {
-			canPlayPhase = !board.HasFieldSlotCard[cards.Ambush](p.Field())
+			if !board.HasFieldSlotCard[cards.Ambush](p.Field()) {
+				canPlayPhase = true
+			}
+			if !canPlayPhase {
+				for _, ally := range g.Allies(g.currentTurn) {
+					if !board.HasFieldSlotCard[cards.Ambush](ally.Field()) {
+						canPlayPhase = true
+						break
+					}
+				}
+			}
 		}
 
 		if !canPlayPhase && board.HasCardTypeInHand[cards.Resurrection](p) {
@@ -818,7 +851,7 @@ func (g *game) getStatus(viewer board.Player,
 			anyEnemyHasCards = true
 		}
 		for _, w := range enemy.Field().Warriors() {
-			if w.Health() <= cards.DesertionMaxHP {
+			if w.Health() <= cards.TreasonMaxHP {
 				anyEnemyHasWeakWarriors = true
 			}
 		}
@@ -889,12 +922,44 @@ func (g *game) getStatus(viewer board.Player,
 		gameStatusDTO.SpyTarget = s.Target
 		gameStatusDTO.SpyTargetPlayer = s.TargetPlayer
 	}
-	if d := g.lastResult.Desertion; d != nil {
-		gameStatusDTO.DeserterFromPlayer = d.FromPlayer
-		gameStatusDTO.DeserterWarrior = d.Warrior
+	if d := g.lastResult.Treason; d != nil {
+		gameStatusDTO.TraitorFromPlayer = d.FromPlayer
+		gameStatusDTO.TraitorWarrior = d.Warrior
+	}
+	if r := g.lastResult.Resurrection; r != nil {
+		gameStatusDTO.ResurrectionWarrior = r.Warrior
+		gameStatusDTO.ResurrectionTargetPlayer = r.TargetPlayer
+		gameStatusDTO.ResurrectionPlayerName = r.PlayerName
+	}
+	if pa := g.lastResult.PlaceAmbush; pa != nil {
+		gameStatusDTO.AmbushPlacedOn = pa.TargetPlayer
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
+	if gameStatusDTO.IsGameOver {
+		// Determine MVP: most kills; damage dealt as tiebreaker.
+		mvpName := ""
+		bestKills, bestDamage := -1, -1
+		for _, p := range allPlayers {
+			k := g.playerKills[p.Name()]
+			d := g.playerDamage[p.Name()]
+			if k > bestKills || (k == bestKills && d > bestDamage) {
+				bestKills = k
+				bestDamage = d
+				mvpName = p.Name()
+			}
+		}
+		for i, p := range allPlayers {
+			gameStatusDTO.PlayerStats = append(gameStatusDTO.PlayerStats, gamestatus.PlayerStatInput{
+				Name:        p.Name(),
+				Kills:       g.playerKills[p.Name()],
+				Damage:      g.playerDamage[p.Name()],
+				CastleValue: p.Castle().Value(),
+				IsWinner:    g.isPlayerWinner(i),
+				IsMVP:       p.Name() == mvpName,
+			})
+		}
+	}
 
 	return gamestatus.NewGameStatus(gameStatusDTO)
 }
@@ -917,6 +982,7 @@ func extractCastle(c board.Castle) gamestatus.CastleInput {
 		IsProtected:        c.IsProtected(),
 		ResourceCardsCount: c.ResourceCardsCount(),
 		Value:              c.Value(),
+		ResourcesToWin:     c.ResourcesToWin(),
 	}
 }
 

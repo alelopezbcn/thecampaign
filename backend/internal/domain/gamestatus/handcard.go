@@ -38,8 +38,12 @@ func NewWarriorHandCard(warrior cards.Warrior) HandCard {
 		aCardType = CardTypeMercenary
 	}
 
+	// Warriors in hand are never directly "usable" as a card action — they are only
+	// moved to the field via the move_warrior flow (governed by CanMoveWarrior).
+	// Setting CanBeUsed = false prevents them from being mistakenly selected as
+	// gold in the buy phase or as building material in the construct phase.
 	return newHandCard(warrior.GetID(), aCardType,
-		warrior.Health(), []string{}, true)
+		warrior.Health(), []string{}, false)
 }
 
 func NewWeaponHandCard(weapon cards.Weapon, myField FieldInput,
@@ -220,16 +224,15 @@ func NewResurrectionHandCard(cardID string, cemeteryCount int, action types.Phas
 	return newHandCard(cardID, CardTypeResurrection, 0, []string{}, cemeteryCount > 0)
 }
 
-func NewDesertionHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
-	return newHandCard(cardID, CardTypeDesertion, 0, []string{},
+func NewTreasonHandCard(cardID string, anyEnemyHasWeakWarriors bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeTreason, 0, []string{},
 		anyEnemyHasWeakWarriors && action == types.PhaseTypeAttack)
 }
 
-func NewAmbushHandCard(cardID string, fieldAlreadyHasAmbush bool, action types.PhaseType) HandCard {
-	if action != types.PhaseTypeAttack {
-		return newHandCard(cardID, CardTypeAmbush, 0, []string{}, false)
-	}
-	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, !fieldAlreadyHasAmbush)
+// NewAmbushHandCard returns a hand card for an ambush.
+// canBePlaced is true when at least one valid field (own or ally) is available for placement.
+func NewAmbushHandCard(cardID string, canBePlaced bool, action types.PhaseType) HandCard {
+	return newHandCard(cardID, CardTypeAmbush, 0, []string{}, canBePlaced && action == types.PhaseTypeAttack)
 }
 
 // ---------------

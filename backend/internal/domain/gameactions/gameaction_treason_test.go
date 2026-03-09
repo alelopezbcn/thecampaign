@@ -13,9 +13,9 @@ import (
 	"go.uber.org/mock/gomock"
 )
 
-// validateDesertionAction sets up valid mocks through Validate and returns the action and all mocks.
-// player1 has mockDesertion (looked up by "desertion-id"); player2 has mockWarrior on their field.
-func validateDesertionAction(
+// validateTreasonAction sets up valid mocks through Validate and returns the action and all mocks.
+// player1 has mockTreason (looked up by "treason-id"); player2 has mockWarrior on their field.
+func validateTreasonAction(
 	t *testing.T, ctrl *gomock.Controller,
 ) (
 	gameactions.GameAction,
@@ -24,42 +24,42 @@ func validateDesertionAction(
 	*mocks.MockPlayer, // player2 – target player
 	*mocks.MockField, // player2's field
 	*mocks.MockWarrior, // the weak warrior on player2's field
-	*mocks.MockDesertion, // the desertion card in player1's hand
+	*mocks.MockTreason, // the treason card in player1's hand
 ) {
 	t.Helper()
 	mockGame := mocks.NewMockGame(ctrl)
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
-	mockDesertion := mocks.NewMockDesertion(ctrl)
+	mockTreason := mocks.NewMockTreason(ctrl)
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
 	mockField2 := mocks.NewMockField(ctrl)
 	mockWarrior := mocks.NewMockWarrior(ctrl)
 
 	mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 	mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-	mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
+	mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(mockTreason, true)
 	mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 	mockPlayer2.EXPECT().Field().Return(mockField2)
 	mockField2.EXPECT().GetWarrior("W1").Return(mockWarrior, true)
-	mockWarrior.EXPECT().Health().Return(3) // ≤ DesertionMaxHP (5)
+	mockWarrior.EXPECT().Health().Return(3) // ≤ TreasonMaxHP (5)
 
-	action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+	action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 	if err := action.Validate(mockGame); err != nil {
-		t.Fatalf("validateDesertionAction: unexpected Validate error: %v", err)
+		t.Fatalf("validateTreasonAction: unexpected Validate error: %v", err)
 	}
-	return action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion
+	return action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockTreason
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
 // PlayerName / NextPhase
 // ──────────────────────────────────────────────────────────────────────────────
 
-func TestDesertionAction_PlayerName(t *testing.T) {
-	action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+func TestTreasonAction_PlayerName(t *testing.T) {
+	action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 	assert.Equal(t, "Player1", action.PlayerName())
 }
 
-func TestDesertionAction_NextPhase(t *testing.T) {
-	action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+func TestTreasonAction_NextPhase(t *testing.T) {
+	action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 	assert.Equal(t, types.PhaseTypeBuy, action.NextPhase())
 }
 
@@ -67,7 +67,7 @@ func TestDesertionAction_NextPhase(t *testing.T) {
 // Validate
 // ──────────────────────────────────────────────────────────────────────────────
 
-func TestDesertionAction_Validate(t *testing.T) {
+func TestTreasonAction_Validate(t *testing.T) {
 	t.Run("Error when not in Attack phase", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
@@ -75,11 +75,11 @@ func TestDesertionAction_Validate(t *testing.T) {
 		mockGame := mocks.NewMockGame(ctrl)
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeSpySteal).Times(2)
 
-		action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "cannot use desertion in the")
+		assert.Contains(t, err.Error(), "cannot use treason in the")
 	})
 
 	t.Run("Error when card not found in hand", func(t *testing.T) {
@@ -91,9 +91,9 @@ func TestDesertionAction_Validate(t *testing.T) {
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(nil, false)
+		mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(nil, false)
 
-		action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -110,13 +110,13 @@ func TestDesertionAction_Validate(t *testing.T) {
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockCard, true)
+		mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(mockCard, true)
 
-		action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "not a desertion card")
+		assert.Contains(t, err.Error(), "not a treason card")
 	})
 
 	t.Run("Error when GetTargetPlayer fails", func(t *testing.T) {
@@ -125,14 +125,14 @@ func TestDesertionAction_Validate(t *testing.T) {
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockDesertion := mocks.NewMockDesertion(ctrl)
+		mockTreason := mocks.NewMockTreason(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
+		mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(mockTreason, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Unknown").Return(nil, errors.New("player not found"))
 
-		action := gameactions.NewDesertionAction("Player1", "Unknown", "W1", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Unknown", "W1", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
@@ -145,70 +145,70 @@ func TestDesertionAction_Validate(t *testing.T) {
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockDesertion := mocks.NewMockDesertion(ctrl)
+		mockTreason := mocks.NewMockTreason(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockField2 := mocks.NewMockField(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
+		mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(mockTreason, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().GetWarrior("MISSING").Return(nil, false)
 
-		action := gameactions.NewDesertionAction("Player1", "Player2", "MISSING", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Player2", "MISSING", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "not found")
 	})
 
-	t.Run("Error when warrior HP exceeds DesertionMaxHP", func(t *testing.T) {
+	t.Run("Error when warrior HP exceeds TreasonMaxHP", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockDesertion := mocks.NewMockDesertion(ctrl)
+		mockTreason := mocks.NewMockTreason(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockField2 := mocks.NewMockField(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
+		mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(mockTreason, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().GetWarrior("W1").Return(mockWarrior, true)
-		mockWarrior.EXPECT().Health().Return(cards.DesertionMaxHP + 1) // too healthy
+		mockWarrior.EXPECT().Health().Return(cards.TreasonMaxHP + 1) // too healthy
 
-		action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "HP")
 	})
 
-	t.Run("Success with warrior at exactly DesertionMaxHP", func(t *testing.T) {
+	t.Run("Success with warrior at exactly TreasonMaxHP", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
 		mockGame := mocks.NewMockGame(ctrl)
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockDesertion := mocks.NewMockDesertion(ctrl)
+		mockTreason := mocks.NewMockTreason(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockField2 := mocks.NewMockField(ctrl)
 		mockWarrior := mocks.NewMockWarrior(ctrl)
 
 		mockGame.EXPECT().CurrentAction().Return(types.PhaseTypeAttack)
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
-		mockPlayer1.EXPECT().GetCardFromHand("desertion-id").Return(mockDesertion, true)
+		mockPlayer1.EXPECT().GetCardFromHand("treason-id").Return(mockTreason, true)
 		mockGame.EXPECT().GetTargetPlayer("Player1", "Player2").Return(mockPlayer2, nil)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().GetWarrior("W1").Return(mockWarrior, true)
-		mockWarrior.EXPECT().Health().Return(cards.DesertionMaxHP) // exactly at limit
+		mockWarrior.EXPECT().Health().Return(cards.TreasonMaxHP) // exactly at limit
 
-		action := gameactions.NewDesertionAction("Player1", "Player2", "W1", "desertion-id")
+		action := gameactions.NewTreasonAction("Player1", "Player2", "W1", "treason-id")
 		err := action.Validate(mockGame)
 
 		assert.NoError(t, err)
@@ -219,12 +219,12 @@ func TestDesertionAction_Validate(t *testing.T) {
 // Execute
 // ──────────────────────────────────────────────────────────────────────────────
 
-func TestDesertionAction_Execute(t *testing.T) {
+func TestTreasonAction_Execute(t *testing.T) {
 	t.Run("Error when RemoveWarrior returns false", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, _, mockPlayer2, mockField2, mockWarrior, _ := validateDesertionAction(t, ctrl)
+		action, mockGame, _, mockPlayer2, mockField2, mockWarrior, _ := validateTreasonAction(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mocks.NewMockPlayer(ctrl))
 		mockPlayer2.EXPECT().Field().Return(mockField2)
@@ -242,19 +242,19 @@ func TestDesertionAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion := validateDesertionAction(t, ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockTreason := validateTreasonAction(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().RemoveWarrior(mockWarrior).Return(true)
 		mockPlayer1.EXPECT().PlaceWarriorOnField(mockWarrior)
-		mockDesertion.EXPECT().GetID().Return("DES1")
+		mockTreason.EXPECT().GetID().Return("DES1")
 		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return(nil, errors.New("card not found"))
 
 		result, statusFn, err := action.Execute(mockGame)
 
 		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "removing desertion card from hand failed")
+		assert.Contains(t, err.Error(), "removing treason card from hand failed")
 		assert.NotNil(t, result)
 		assert.Nil(t, statusFn)
 	})
@@ -263,7 +263,7 @@ func TestDesertionAction_Execute(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion := validateDesertionAction(t, ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockTreason := validateTreasonAction(t, ctrl)
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 
@@ -271,9 +271,9 @@ func TestDesertionAction_Execute(t *testing.T) {
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().RemoveWarrior(mockWarrior).Return(true)
 		mockPlayer1.EXPECT().PlaceWarriorOnField(mockWarrior)
-		mockDesertion.EXPECT().GetID().Return("DES1")
-		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockDesertion}, nil)
-		mockGame.EXPECT().OnCardMovedToPile(mockDesertion)
+		mockTreason.EXPECT().GetID().Return("DES1")
+		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockTreason}, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockTreason)
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
@@ -284,30 +284,30 @@ func TestDesertionAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.NotNil(t, statusFn)
-		assert.Equal(t, types.LastActionDesertion, result.Action)
-		assert.NotNil(t, result.Desertion)
-		assert.Equal(t, "Player2", result.Desertion.FromPlayer)
-		assert.Equal(t, mockWarrior, result.Desertion.Warrior)
+		assert.Equal(t, types.LastActionTreason, result.Action)
+		assert.NotNil(t, result.Treason)
+		assert.Equal(t, "Player2", result.Treason.FromPlayer)
+		assert.Equal(t, mockWarrior, result.Treason.Warrior)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
-	t.Run("History is recorded on successful desertion", func(t *testing.T) {
+	t.Run("History is recorded on successful treason", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
 
-		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockDesertion := validateDesertionAction(t, ctrl)
+		action, mockGame, mockPlayer1, mockPlayer2, mockField2, mockWarrior, mockTreason := validateTreasonAction(t, ctrl)
 
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer2.EXPECT().Field().Return(mockField2)
 		mockField2.EXPECT().RemoveWarrior(mockWarrior).Return(true)
 		mockPlayer1.EXPECT().PlaceWarriorOnField(mockWarrior)
-		mockDesertion.EXPECT().GetID().Return("DES1")
-		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockDesertion}, nil)
-		mockGame.EXPECT().OnCardMovedToPile(mockDesertion)
+		mockTreason.EXPECT().GetID().Return("DES1")
+		mockPlayer1.EXPECT().RemoveFromHand("DES1").Return([]cards.Card{mockTreason}, nil)
+		mockGame.EXPECT().OnCardMovedToPile(mockTreason)
 		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
 		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
 		mockGame.EXPECT().AddHistory(
-			gomock.Eq("Player2's warrior deserted to Player1's ranks"),
+			gomock.Eq("Player2's warrior moved to Player1's ranks"),
 			types.CategoryAction,
 		)
 		mockGame.EXPECT().Status(mockPlayer1).Return(gamestatus.GameStatus{}).AnyTimes()

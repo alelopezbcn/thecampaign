@@ -182,7 +182,7 @@ func (p *player) MoveCardToField(cardID string) error {
 
 // PlaceWarriorOnField adds a warrior to this player's field and registers this player
 // as the warrior's death observer. Must be used whenever a warrior is placed on a
-// field that is not its original owner's (desertion, ally move, resurrection).
+// field that is not its original owner's (treason, ally move, resurrection).
 func (p *player) PlaceWarriorOnField(w cards.Warrior) {
 	w.AddWarriorDeadObserver(p)
 	p.field.AddWarriors(w)

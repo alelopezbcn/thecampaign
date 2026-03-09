@@ -18,7 +18,7 @@ type DeckConfig struct {
 	Ambushes           int
 	BloodRains         int
 	Resurrections      int
-	Desertions         int
+	Treasons           int
 	ConstructionCards  int
 	HighValueGoldCards int // extra copies of gold 7, 8, and 9 added on top of defaults
 }
@@ -62,8 +62,8 @@ func (d *dealer) OtherCards(_ int) (other []Card) {
 	for i := 0; i < d.cfg.Sabotages; i++ {
 		other = append(other, NewSabotage(fmt.Sprintf("sab%d", i+1)))
 	}
-	for i := 0; i < d.cfg.Desertions; i++ {
-		other = append(other, NewDesertion(fmt.Sprintf("des%d", i+1)))
+	for i := 0; i < d.cfg.Treasons; i++ {
+		other = append(other, NewTreason(fmt.Sprintf("des%d", i+1)))
 	}
 	for i := 0; i < d.cfg.Catapults; i++ {
 		other = append(other, NewCatapultCard(fmt.Sprintf("c%d", i+1)))
