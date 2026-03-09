@@ -35,7 +35,8 @@
       "Bash(export PATH=\"$PATH:/c/Program Files/GitHub CLI\")",
       "Bash(node -e \":*)",
       "Bash(make test)",
-      "Bash(make -C .. test)"
+      "Bash(make -C .. test)",
+      "Bash(python3 -c \":*)"
     ]
   }
 }
