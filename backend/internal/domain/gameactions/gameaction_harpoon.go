@@ -3,6 +3,7 @@ package gameactions
 import (
 	"fmt"
 
+	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
 	"github.com/alelopezbcn/thecampaign/internal/domain/gamestatus"
 	"github.com/alelopezbcn/thecampaign/internal/domain/types"
@@ -23,8 +24,9 @@ type harpoonAction struct {
 	targetID         string
 	weaponID         string
 
-	dragon  cards.Dragon
-	harpoon cards.Harpoon
+	targetPlayer board.Player
+	dragon       cards.Dragon
+	harpoon      cards.Harpoon
 }
 
 func NewHarpoonAction(playerName, targetPlayerName, targetID, weaponID string) *harpoonAction {
@@ -48,6 +50,7 @@ func (a *harpoonAction) Validate(g Game) error {
 	if err != nil {
 		return err
 	}
+	a.targetPlayer = targetPlayer
 
 	targetCard, ok := targetPlayer.GetCardFromField(a.targetID)
 	if !ok {
@@ -82,44 +85,76 @@ func (a *harpoonAction) Execute(g Game) (*Result, func() gamestatus.GameStatus, 
 
 func (a *harpoonAction) execute(g harpoonGame) (*Result, func() gamestatus.GameStatus, error) {
 	p := g.CurrentPlayer()
+	handler := g.EventHandler()
+	bountyCards := handler.OnKillBountyCards()
+	healAmount := handler.OnKillHealAmount()
+
+	preKillHP := a.snapshotPreKillHP(bountyCards)
 
 	if err := a.harpoon.Attack(a.dragon); err != nil {
-		result := &Result{}
-		return result, nil, fmt.Errorf("harpoon action failed: %w", err)
+		return &Result{}, nil, fmt.Errorf("harpoon action failed: %w", err)
 	}
 
-	// Bloodlust: if the dragon was killed, heal all of the player's field warriors.
-	if healAmount := g.EventHandler().OnKillHealAmount(); healAmount > 0 && a.dragon.Health() == 0 {
-		for _, w := range p.Field().Warriors() {
-			w.HealBy(healAmount)
-		}
-	}
+	a.applyBloodlust(healAmount, p)
 
 	if _, err := p.RemoveFromHand(a.harpoon.GetID()); err != nil {
-		result := &Result{}
-		return result, nil, fmt.Errorf("removing harpoon from hand failed: %w", err)
+		return &Result{}, nil, fmt.Errorf("removing harpoon from hand failed: %w", err)
 	}
-
 	g.OnCardMovedToPile(a.harpoon)
+	g.AddHistory(fmt.Sprintf("%s used harpoon on %s", a.playerName, a.dragon.String()), types.CategoryAction)
 
-	g.AddHistory(fmt.Sprintf("%s used harpoon on %s",
-		a.playerName, a.dragon.String()), types.CategoryAction)
+	newCards, earner, drawn := a.applyChampionsBounty(g, p, bountyCards, preKillHP)
 
 	result := &Result{
 		Action: types.LastActionHarpoon,
 		Attack: &AttackDetails{
-			WeaponID:     a.weaponID,
-			TargetID:     a.targetID,
-			TargetPlayer: a.targetPlayerName,
+			WeaponID:              a.weaponID,
+			TargetID:              a.targetID,
+			TargetPlayer:          a.targetPlayerName,
+			ChampionsBountyEarner: earner,
+			ChampionsBountyCards:  drawn,
 		},
 	}
-	statusFn := func() gamestatus.GameStatus {
-		return g.Status(p)
-	}
-
-	return result, statusFn, nil
+	return result, func() gamestatus.GameStatus { return g.Status(p, newCards...) }, nil
 }
 
 func (a *harpoonAction) NextPhase() types.PhaseType {
 	return types.PhaseTypeSpySteal
+}
+
+// snapshotPreKillHP returns the target player's total field HP before the attack,
+// used for Champion's Bounty eligibility. Returns 0 when the event is not active.
+func (a *harpoonAction) snapshotPreKillHP(bountyCards int) int {
+	if bountyCards == 0 {
+		return 0
+	}
+	return totalFieldHP(a.targetPlayer)
+}
+
+// applyBloodlust heals all of the player's field warriors if the dragon was killed.
+func (a *harpoonAction) applyBloodlust(healAmount int, p board.Player) {
+	if healAmount > 0 && a.dragon.Health() == 0 {
+		for _, w := range p.Field().Warriors() {
+			w.HealBy(healAmount)
+		}
+	}
+}
+
+// applyChampionsBounty draws bonus cards when the dragon was killed and its player
+// had the highest total field HP. Returns the drawn cards, earner name, and count.
+func (a *harpoonAction) applyChampionsBounty(g harpoonGame, p board.Player, bountyCards, preKillHP int) ([]cards.Card, string, int) {
+	if bountyCards == 0 || a.dragon.Health() != 0 {
+		return nil, "", 0
+	}
+	if !isTopEnemy(preKillHP, a.targetPlayerName, g.Enemies(g.PlayerIndex(a.playerName))) {
+		return nil, "", 0
+	}
+	drawn, err := g.DrawCards(p, bountyCards)
+	if err != nil {
+		return nil, "", 0
+	}
+	p.TakeCards(drawn...)
+	name := p.Name()
+	g.AddHistory(fmt.Sprintf("%s earned Champion's Bounty — drew %d card(s)", name, len(drawn)), types.CategoryInfo)
+	return drawn, name, len(drawn)
 }
