@@ -2,6 +2,4 @@ Fixes:
 flickering cards
 
 mover historial a la derecha, y hacerlo collapsible
-Mover las acciones de abajo a la izquierda, dejarlas visibles, y quitar las primeras que se hicieron
-
-make game.js smaller? split in different files?
+move timer into board

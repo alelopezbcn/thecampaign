@@ -616,190 +616,10 @@ body {
     50% { opacity: 0.5; }
 }
 
-/* Phase Tracker */
-.phase-tracker {
-    position: fixed;
-    top: 60px;
-    left: 10px;
-    background: rgba(20, 20, 35, 0.95);
-    border: 1px solid rgba(102, 126, 234, 0.3);
-    border-radius: 12px;
-    padding: 12px 16px;
-    z-index: 50;
-    width: 200px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    transition: background 0.3s ease, border-color 0.3s ease;
-}
-
-.phase-tracker.your-turn {
-    background: rgba(20, 35, 25, 0.95);
-    border-color: rgba(76, 217, 100, 0.3);
-}
-
-.phase-tracker.enemy-turn {
-    background: rgba(35, 20, 20, 0.95);
-    border-color: rgba(255, 107, 107, 0.3);
-}
-
-.phase-turn-status {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.phase-turn-status .turn-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: #666;
-}
-
-.phase-turn-status.your-turn .turn-dot {
-    background: #4cd964;
-    box-shadow: 0 0 8px rgba(76, 217, 100, 0.6);
-    animation: dotPulse 1.5s ease-in-out infinite;
-}
-
-.phase-turn-status.enemy-turn .turn-dot {
-    background: #ff6b6b;
-}
-
-.phase-turn-status .turn-text {
-    font-size: 0.85em;
-    font-weight: 600;
-    color: #ddd;
-}
-
-.phase-turn-status.your-turn .turn-text {
-    color: #4cd964;
-}
-
-.phase-turn-status.enemy-turn .turn-text {
-    color: #ff6b6b;
-}
-
-@keyframes dotPulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
-}
-
-.phase-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-}
-
-.phase-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 0;
-    font-size: 0.8em;
-    color: #aaa;
-    transition: all 0.3s ease;
-}
-
-.phase-item .phase-icon {
-    font-size: 1em;
-    width: 20px;
-    text-align: center;
-    filter: grayscale(100%);
-    opacity: 0.5;
-    transition: all 0.3s ease;
-}
-
-.phase-item .phase-name {
-    flex: 1;
-    transition: all 0.3s ease;
-}
-
-.phase-item .phase-check {
-    opacity: 0;
-    color: #4cd964;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-/* Current phase */
-.phase-item.current {
-    color: #fff;
-    background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, transparent 100%);
-    margin: 0 -16px;
-    padding: 6px 16px;
-    border-left: 2px solid #667eea;
-}
-
-.phase-item.current .phase-icon {
-    filter: grayscale(0%);
-    opacity: 1;
-    animation: iconPulse 2s ease-in-out infinite;
-}
-
-.phase-item.current .phase-name {
-    font-weight: 600;
-    color: #667eea;
-}
-
-@keyframes iconPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.15); }
-}
-
-/* Completed phase */
-.phase-item.completed {
-    color: #4cd964;
-}
-
-.phase-item.completed .phase-name {
-    opacity: 0.7;
-}
-
-.phase-item.completed .phase-icon {
-    filter: grayscale(30%);
-    opacity: 0.6;
-}
-
-.phase-item.completed .phase-check {
-    opacity: 1;
-}
-
-/* Skipped phase */
-.phase-item.skipped {
-    color: #f0ad4e;
-}
-
-.phase-item.skipped .phase-name {
-    opacity: 0.8;
-}
-
-.phase-item.skipped .phase-icon {
-    filter: sepia(100%) saturate(300%) hue-rotate(350deg);
-    opacity: 0.7;
-}
-
-.phase-item.skipped .phase-check {
-    opacity: 1;
-    color: #f0ad4e;
-}
-
-@keyframes phasePulse {
-    0%, 100% {
-        transform: scale(1);
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-    }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    }
-}
-
 /* Player List Panel */
 .player-list-panel {
     position: fixed;
-    top: 330px; /* repositioned dynamically by JS */
+    top: 60px;
     left: 10px;
     background: rgba(20, 20, 35, 0.95);
     border: 1px solid rgba(102, 126, 234, 0.3);
@@ -2333,17 +2153,33 @@ body {
     justify-content: center;
 }
 
-/* Phase badge strip — centered above the action buttons */
+/* Top row inside player board: name/HP on the left, phase badge on the right */
+.player-board-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.player-board-top-row .opponent-header {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+/* Phase badge strip — sits in the player board header row */
 .phase-badge {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 2px;
-    padding: 6px 16px;
+    padding: 4px 12px;
     background: rgba(14, 14, 30, 0.55);
     border: 1px solid rgba(102, 126, 234, 0.18);
     border-radius: 28px;
-    margin: 0 auto 10px;
+    margin: 0;
     width: fit-content;
 }
 .phase-badge.hidden { display: none !important; }

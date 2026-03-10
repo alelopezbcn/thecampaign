@@ -9,9 +9,23 @@ Vanilla HTML/CSS/JS. No build step, no frameworks, no dependencies. Single-page 
 ## File Overview
 
 - `index.html` — all screens (join, waiting, game, game-over) and modal markup
-- `static/js/game.js` (~2,800 lines) — all game logic, WebSocket handling, rendering
 - `static/css/styles.css` (~3,000 lines) — all styling
 - `static/img/cards/` — card artwork (webp format)
+
+### JavaScript files (load order matters — all globals, no ES modules)
+
+| File | Purpose |
+|------|---------|
+| `static/js/state.js` | All global variables and constants (`gameState`, `cardConfig`, timer handles, etc.) |
+| `static/js/card-utils.js` | Pure card utility functions (`getCardType`, `getCardName`, `getCardImageUrl`, etc.) and card constants |
+| `static/js/animations.js` | All animation functions (damage, death, warrior move, steal, castle, deck draw, etc.) |
+| `static/js/modals.js` | All modal show/hide functions + event banner/toast functions |
+| `static/js/render.js` | Board rendering (`renderGameBoard`, `createCardElement`, `renderCastle`, `renderHistory`, etc.) |
+| `static/js/hud.js` | HUD, phase tracker, timers, `updateActionButtons`, `showStatus`, `updateActionPrompt` |
+| `static/js/actions.js` | Action state machine, all phase click handlers, target/confirmation modals |
+| `static/js/websocket.js` | WebSocket connection, `sendMessage`, `sendAction`, `handleMessage`, `handleGameState` |
+| `static/js/lobby.js` | Lobby screens, presets, `setupEventListeners`, `DOMContentLoaded` handler |
+| `static/js/help.js` | In-game help modal content |
 
 ## CSS Section Map (`styles.css`)
 
@@ -44,7 +58,7 @@ Vanilla HTML/CSS/JS. No build step, no frameworks, no dependencies. Single-page 
 - Success/usable: `#4cd964` (green)
 - Constructed castle border: `rgba(76, 217, 100, 0.4)`
 
-## JavaScript Architecture (`game.js`)
+## JavaScript Architecture
 
 ### Global State
 
