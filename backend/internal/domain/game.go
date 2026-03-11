@@ -576,8 +576,9 @@ func (g *game) SwitchTurn() {
 	g.lastResult = gameactions.Result{}
 	g.currentAction = types.PhaseTypeDrawCard
 
-	for {
-		g.currentTurn = (g.currentTurn + 1) % len(g.board.Players())
+	n := len(g.board.Players())
+	for i := 0; i < n; i++ {
+		g.currentTurn = (g.currentTurn + 1) % n
 		if !g.eliminatedPlayers[g.currentTurn] && !g.disconnectedPlayers[g.currentTurn] {
 			break
 		}
