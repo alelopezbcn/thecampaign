@@ -393,7 +393,7 @@ function createCardElement(card, context) {
         }
         // During trade action, only cards that can be traded are usable
         else if (currentAction === 'trade') {
-            if (card.can_be_traded === false) {
+            if (!card.can_be_traded) {
                 div.classList.add('unusable');
             } else {
                 div.classList.add('usable');
@@ -457,11 +457,19 @@ function createCardElement(card, context) {
         ? `<div class="kills-badge" title="${cardKills} kill${cardKills !== 1 ? 's' : ''} — each kill adds +1 damage to this warrior's attacks">💀 ${cardKills}</div>`
         : '';
 
+    // Trade icon — shown on hand cards that are usable in the current phase AND tradeable,
+    // giving the player a way to trade instead of using the card's phase action
+    const showTradeBtn = context === 'player-hand' && gameState.isYourTurn
+        && card.can_be_traded && card.can_be_used
+        && status?.can_trade && !currentAction;
+    const tradeBtnHtml = showTradeBtn ? `<div class="card-trade-btn" title="Trade this card">⇄</div>` : '';
+
     // Create card HTML
     if (imageUrl) {
         div.innerHTML = `
             ${shieldHtml}
             ${killsBadgeHtml}
+            ${tradeBtnHtml}
             <div class="card-image">
                 <img src="${imageUrl}" alt="${getCardName(card)}" draggable="false">
             </div>
@@ -474,6 +482,7 @@ function createCardElement(card, context) {
         div.innerHTML = `
             ${shieldHtml}
             ${killsBadgeHtml}
+            ${tradeBtnHtml}
             <div class="card-header">
                 <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
                 <span class="card-type ${cardType}">${card.type || cardType}</span>
@@ -501,6 +510,14 @@ function createCardElement(card, context) {
     if (context === 'player-hand' || context.startsWith('opponent-field:') || context === 'player-field') {
         div.addEventListener('click', () => {
             handleCardClick(div.dataset.cardId, cardType, context, card);
+        });
+    }
+
+    // Trade button: stops propagation so the card's attack handler doesn't fire
+    if (showTradeBtn) {
+        div.querySelector('.card-trade-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startTradeFromCard(div.dataset.cardId, card);
         });
     }
 

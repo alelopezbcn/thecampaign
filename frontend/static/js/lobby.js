@@ -187,7 +187,6 @@ function setupEventListeners() {
     });
 
     // Game screen actions
-    document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
     document.getElementById('forge-btn').addEventListener('click', () => startForgeMode());
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
@@ -218,6 +217,9 @@ function setupEventListeners() {
 
     // Spy notification modal close
     document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
+
+    // Resurrection notification modal close
+    document.getElementById('resurrection-notification-close').addEventListener('click', hideResurrectionModal);
 
     // Treason notification modal close
     document.getElementById('treason-notification-close').addEventListener('click', hideTreasonNotificationModal);

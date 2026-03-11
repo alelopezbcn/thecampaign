@@ -3,12 +3,7 @@ function startAction(actionType) {
     gameState.currentAction = actionType;
     gameState.actionState.type = actionType;
 
-    let prompt = '';
-    if (actionType === 'trade') {
-        prompt = 'Select 3 cards to trade';
-    }
-
-    updateActionPrompt(prompt);
+    updateActionPrompt('');
     showConfirmButtons(); // Show cancel button
 
     // Re-render board to apply action-specific styles
@@ -64,6 +59,7 @@ function handleCardClick(cardID, cardType, context, card = null) {
 
     // Handle trade action
     if (action === 'trade' && context === 'player-hand') {
+        if (!card?.can_be_traded) return;
         toggleCardSelection(cardID, 'player-hand');
         if (gameState.selectedCards.length === 3) {
             // Show trade confirmation popup with 3 selected cards + 1 card back
@@ -77,6 +73,12 @@ function handleCardClick(cardID, cardType, context, card = null) {
     // Handle forge action
     if (action === 'forge' && context === 'player-hand') {
         handleForgeCardClick(cardID, card);
+        return;
+    }
+
+    // Handle trade: clicking a tradeable non-usable card in hand starts trade mode
+    if (context === 'player-hand' && card?.can_be_traded && !card?.can_be_used && !action && status?.can_trade) {
+        startTradeFromCard(cardID);
         return;
     }
 
@@ -1587,6 +1589,17 @@ function selectCatapultPosition(position) {
 function confirmCatapultFortress(targetName) {
     sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: targetName, card_position: 1 });
     hideGameModal();
+}
+
+// Enter trade mode with a card pre-selected (called from card click or trade icon)
+function startTradeFromCard(cardID) {
+    gameState.currentAction = 'trade';
+    gameState.actionState.type = 'trade';
+    gameState.selectedCards = [cardID];
+    updateActionPrompt('Selected 1/3 cards for trade');
+    showConfirmButtons();
+    renderGameBoard(gameState.currentState);
+    document.querySelector(`[data-card-id="${cardID}"]`)?.classList.add('selected');
 }
 
 // Forge Mode — enter weapon selection for forging

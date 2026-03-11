@@ -33,9 +33,6 @@ function updateActionButtons() {
     // Left endturn phase while still our turn (shouldn't normally happen)
     clearEndTurnCountdown();
 
-    // Trade - enabled if can_trade is true (from backend)
-    document.getElementById('trade-btn').disabled = !status.can_trade;
-
     // Forge - enabled if can_forge is true (from backend)
     document.getElementById('forge-btn').disabled = !status.can_forge;
 

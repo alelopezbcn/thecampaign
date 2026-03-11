@@ -18,6 +18,9 @@ function hideGameModal() {
     if (cardsModalTimer) { clearTimeout(cardsModalTimer); cardsModalTimer = null; }
     resetActionState();
     updateActionPrompt('');
+    if (gameState.currentState) {
+        renderGameBoard(gameState.currentState);
+    }
 
     // Play deferred animations that were waiting for modal close
     if (pendingAnimationsCallback) {
@@ -59,7 +62,9 @@ function onActionConfirmNo() {
     hideActionConfirmModal();
     resetActionState();
     updateActionPrompt('');
-    // resetActionState already clears visual selections
+    if (gameState.currentState) {
+        renderGameBoard(gameState.currentState);
+    }
 }
 
 // Render a card for the action confirm modal
@@ -292,26 +297,44 @@ function showChampionsBountyModal(notification) {
 
 function hideChampionsBountyModal() {}
 
-function showResurrectionModal(notification) {
-    const container = document.getElementById('error-toast-container');
-    if (!container) return;
+let resurrectionNotificationTimer = null;
 
+function showResurrectionModal(notification) {
     const isYou = notification.player_name === gameState.playerName;
     const warriorName = notification.warrior_card?.sub_type || 'a warrior';
     const target = notification.target_player;
     const targetIsYou = target === gameState.playerName;
 
-    let msg;
     if (isYou) {
-        msg = targetIsYou || !target || target === notification.player_name
-            ? `You resurrected ${warriorName} from the cemetery!`
-            : `You resurrected ${warriorName} to ${target}'s field!`;
+        // Active player: show card reveal popup
+        const modal = document.getElementById('resurrection-notification-modal');
+        const container = document.getElementById('resurrection-warrior-container');
+        const text = document.getElementById('resurrection-notification-text');
+        if (!modal || !container || !text) return;
+
+        container.innerHTML = renderCardForModal(notification.warrior_card);
+        text.textContent = targetIsYou || !target || target === notification.player_name
+            ? `${warriorName} returned from the cemetery to your field!`
+            : `${warriorName} returned from the cemetery to ${target}'s field!`;
+
+        modal.classList.remove('hidden');
+
+        if (resurrectionNotificationTimer) clearTimeout(resurrectionNotificationTimer);
+        resurrectionNotificationTimer = setTimeout(() => hideResurrectionModal(), 6000);
+        return;
+    }
+
+    // Other players: toast notification
+    const toastContainer = document.getElementById('error-toast-container');
+    if (!toastContainer) return;
+
+    let msg;
+    if (targetIsYou) {
+        msg = `${notification.player_name} resurrected ${warriorName} to your field!`;
+    } else if (target && target !== notification.player_name) {
+        msg = `${notification.player_name} resurrected ${warriorName} to ${target}'s field!`;
     } else {
-        msg = targetIsYou
-            ? `${notification.player_name} resurrected ${warriorName} to your field!`
-            : target && target !== notification.player_name
-                ? `${notification.player_name} resurrected ${warriorName} to ${target}'s field!`
-                : `${notification.player_name} resurrected ${warriorName} from the cemetery!`;
+        msg = `${notification.player_name} resurrected ${warriorName} from the cemetery!`;
     }
 
     const toast = document.createElement('div');
@@ -323,7 +346,7 @@ function showResurrectionModal(notification) {
             '<div class="error-toast-message">' + msg + '</div>' +
         '</div>' +
         '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
-    container.appendChild(toast);
+    toastContainer.appendChild(toast);
 
     setTimeout(() => {
         toast.classList.add('hiding');
@@ -331,7 +354,14 @@ function showResurrectionModal(notification) {
     }, 5000);
 }
 
-function hideResurrectionModal() {}
+function hideResurrectionModal() {
+    const modal = document.getElementById('resurrection-notification-modal');
+    if (modal) modal.classList.add('hidden');
+    if (resurrectionNotificationTimer) {
+        clearTimeout(resurrectionNotificationTimer);
+        resurrectionNotificationTimer = null;
+    }
+}
 
 function showAmbushTriggeredModal(effectDisplay) {
     const container = document.getElementById('error-toast-container');
