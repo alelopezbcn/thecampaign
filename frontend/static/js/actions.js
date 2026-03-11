@@ -3,17 +3,7 @@ function startAction(actionType) {
     gameState.currentAction = actionType;
     gameState.actionState.type = actionType;
 
-    let prompt = '';
-    switch (actionType) {
-        case 'move_warrior':
-            prompt = 'Select a warrior from your hand';
-            break;
-        case 'trade':
-            prompt = 'Select 3 cards to trade';
-            break;
-    }
-
-    updateActionPrompt(prompt);
+    updateActionPrompt('');
     showConfirmButtons(); // Show cancel button
 
     // Re-render board to apply action-specific styles
@@ -40,9 +30,8 @@ function handleCardClick(cardID, cardType, context, card = null) {
     const action = gameState.currentAction;
     const status = gameState.currentState;
 
-    // Handle move_warrior action
-    if (action === 'move_warrior' && context === 'player-hand') {
-        if (cardType !== 'warrior') return; // Only warriors can be moved
+    // Handle move_warrior: clicking a warrior in hand when move is available
+    if (context === 'player-hand' && cardType === 'warrior' && status?.can_move_warrior && !action) {
         clearSelections();
         gameState.actionState.warriorId = cardID;
         highlightSelectedCard(cardID);
@@ -70,6 +59,7 @@ function handleCardClick(cardID, cardType, context, card = null) {
 
     // Handle trade action
     if (action === 'trade' && context === 'player-hand') {
+        if (!card?.can_be_traded) return;
         toggleCardSelection(cardID, 'player-hand');
         if (gameState.selectedCards.length === 3) {
             // Show trade confirmation popup with 3 selected cards + 1 card back
@@ -83,6 +73,12 @@ function handleCardClick(cardID, cardType, context, card = null) {
     // Handle forge action
     if (action === 'forge' && context === 'player-hand') {
         handleForgeCardClick(cardID, card);
+        return;
+    }
+
+    // Handle trade: clicking a tradeable non-usable card in hand starts trade mode
+    if (context === 'player-hand' && card?.can_be_traded && !card?.can_be_used && !action && status?.can_trade) {
+        startTradeFromCard(cardID);
         return;
     }
 
@@ -1595,18 +1591,33 @@ function confirmCatapultFortress(targetName) {
     hideGameModal();
 }
 
-// Forge Mode — enter weapon selection for forging
-function startForgeMode() {
-    resetActionState();
-    gameState.currentAction = 'forge';
-    gameState.selectedCards = [];
-    updateActionPrompt('Select 2 weapons of the same type to forge (0/2)');
+// Enter trade mode with a card pre-selected (called from card click or trade icon)
+function startTradeFromCard(cardID) {
+    gameState.currentAction = 'trade';
+    gameState.actionState.type = 'trade';
+    gameState.selectedCards = [cardID];
+    updateActionPrompt('Selected 1/3 cards for trade');
     showConfirmButtons();
     renderGameBoard(gameState.currentState);
+    document.querySelector(`[data-card-id="${cardID}"]`)?.classList.add('selected');
+}
+
+// Forge Mode — enter weapon selection for forging (called from badge click)
+function startForgeFromCard(cardID, card) {
+    resetActionState();
+    gameState.currentAction = 'forge';
+    gameState.selectedCards = [cardID];
+    showConfirmButtons();
+    renderGameBoard(gameState.currentState);
+    document.querySelector(`[data-card-id="${cardID}"]`)?.classList.add('selected');
+    updateActionPrompt(`Select another ${card.sub_type} to forge with (1/2)`);
 }
 
 // Handle card click during forge mode
 function handleForgeCardClick(cardID, card) {
+    const forgeableTypes = ['Sword', 'Arrow', 'Poison'];
+    if (!forgeableTypes.includes(card.sub_type)) return;
+
     const selected = gameState.selectedCards;
 
     // Deselect if already selected

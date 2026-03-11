@@ -2834,6 +2834,78 @@ body {
     50% { transform: scale(1.1); }
 }
 
+/* Trade icon overlay on hand cards that are both usable and tradeable */
+.card-trade-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    background: rgba(255, 180, 0, 0.92);
+    color: #1a1a1a;
+    font-size: 20px;
+    font-weight: 800;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 20;
+    cursor: pointer;
+    border: 2px solid rgba(255, 220, 80, 0.9);
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 8px rgba(255, 200, 0, 0.4);
+    user-select: none;
+    text-shadow: none;
+    animation: pulseTradeBtn 1.8s ease-in-out infinite;
+}
+
+.card-trade-btn:hover {
+    background: rgba(255, 210, 0, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 12px rgba(255, 210, 0, 0.6);
+    transform: scale(1.08);
+}
+
+@keyframes pulseTradeBtn {
+    0%, 100% { box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 6px rgba(255,200,0,0.3); }
+    50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 14px rgba(255,200,0,0.7); }
+}
+
+/* Forge icon badge — top-left of forgeable weapon cards */
+.card-forge-btn {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: rgba(0, 180, 220, 0.92);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 20;
+    cursor: pointer;
+    border: 2px solid rgba(100, 220, 255, 0.9);
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 200, 255, 0.4);
+    user-select: none;
+    text-shadow: none;
+    animation: pulseForgeBtnAnim 1.8s ease-in-out infinite;
+}
+
+.card-forge-btn:hover {
+    background: rgba(0, 210, 255, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 210, 255, 0.6);
+    transform: scale(1.08);
+}
+
+@keyframes pulseForgeBtnAnim {
+    0%, 100% { box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 6px rgba(0,200,255,0.3); }
+    50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 14px rgba(0,200,255,0.7); }
+}
+
 /* Kill counter badge on warrior field cards */
 .kills-badge {
     position: absolute;
@@ -5064,6 +5136,63 @@ body {
 }
 .ambush-confirm-desc {
     color: #d1d5db;
+}
+
+/* ===== Resurrection Notification Modal (active player) ================= */
+.resurrection-notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.resurrection-notification-modal.hidden { display: none; }
+
+.resurrection-notification-content {
+    background: linear-gradient(145deg, #0d0820 0%, #1e0a3b 100%);
+    border: 2px solid rgba(163, 74, 255, 0.6);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(163, 74, 255, 0.35), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.35s ease-out;
+    min-width: 280px;
+    max-width: 380px;
+}
+
+.resurrection-notification-header {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #c084fc;
+    margin-bottom: 14px;
+    text-shadow: 0 0 12px rgba(192, 132, 252, 0.5);
+    letter-spacing: 1px;
+}
+
+.resurrection-notification-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.resurrection-warrior-container {
+    display: flex;
+    justify-content: center;
+}
+
+.resurrection-notification-text {
+    font-size: 0.95rem;
+    color: #d8b4fe;
+    font-weight: 600;
 }
 
 /* ===== Treason Notification Modal (victim) ============================= */

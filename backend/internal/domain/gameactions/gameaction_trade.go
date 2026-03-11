@@ -59,7 +59,7 @@ func (a *tradeAction) execute(g tradeGame) (*Result, func() gamestatus.GameStatu
 		return result, nil, fmt.Errorf("giving cards for trading failed: %w", err)
 	}
 	for _, c := range tradedCards {
-		g.OnCardMovedToPile(c)
+		c.GetCardMovedToPileObserver().OnCardMovedToPile(c)
 	}
 
 	cards, err := g.DrawCards(p, 1)

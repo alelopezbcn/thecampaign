@@ -61,6 +61,13 @@ func TestTradeAction_Validate(t *testing.T) {
 	})
 }
 
+func setupCardPileObs(ctrl *gomock.Controller, c *mocks.MockCard) *mocks.MockCardMovedToPileObserver {
+	obs := mocks.NewMockCardMovedToPileObserver(ctrl)
+	c.EXPECT().GetCardMovedToPileObserver().Return(obs)
+	obs.EXPECT().OnCardMovedToPile(c)
+	return obs
+}
+
 func TestTradeAction_Execute(t *testing.T) {
 	t.Run("Error when DrawCards fails", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
@@ -75,9 +82,9 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard1)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard2)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard3)
+		setupCardPileObs(ctrl, mockCard1)
+		setupCardPileObs(ctrl, mockCard2)
+		setupCardPileObs(ctrl, mockCard3)
 		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return(nil, errors.New("deck empty"))
 
 		action := gameactions.NewTradeAction("Player1", []string{"C1", "C2", "C3"})
@@ -121,9 +128,9 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard1)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard2)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard3)
+		setupCardPileObs(ctrl, mockCard1)
+		setupCardPileObs(ctrl, mockCard2)
+		setupCardPileObs(ctrl, mockCard3)
 		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 		mockPlayer1.EXPECT().Name().Return("Player1")
@@ -158,9 +165,9 @@ func TestTradeAction_Execute(t *testing.T) {
 		mockGame.EXPECT().CurrentPlayer().Return(mockPlayer1)
 		mockPlayer1.EXPECT().RemoveFromHand("C1", "C2", "C3").Return(
 			[]cards.Card{mockCard1, mockCard2, mockCard3}, nil)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard1)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard2)
-		mockGame.EXPECT().OnCardMovedToPile(mockCard3)
+		setupCardPileObs(ctrl, mockCard1)
+		setupCardPileObs(ctrl, mockCard2)
+		setupCardPileObs(ctrl, mockCard3)
 		mockGame.EXPECT().DrawCards(mockPlayer1, 1).Return([]cards.Card{mockDrawnCard}, nil)
 		mockPlayer1.EXPECT().TakeCards(mockDrawnCard)
 		mockPlayer1.EXPECT().Name().Return("Player1")

@@ -186,10 +186,7 @@ function setupEventListeners() {
         });
     });
 
-    // Game screen actions - only 4 buttons
-    document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
-    document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
-    document.getElementById('forge-btn').addEventListener('click', () => startForgeMode());
+    // Game screen actions
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
     document.getElementById('endturn-popup-btn').addEventListener('click', () => {
@@ -219,6 +216,9 @@ function setupEventListeners() {
 
     // Spy notification modal close
     document.getElementById('spy-notification-close').addEventListener('click', hideSpyNotificationModal);
+
+    // Resurrection notification modal close
+    document.getElementById('resurrection-notification-close').addEventListener('click', hideResurrectionModal);
 
     // Treason notification modal close
     document.getElementById('treason-notification-close').addEventListener('click', hideTreasonNotificationModal);

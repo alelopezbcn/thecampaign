@@ -393,7 +393,7 @@ function createCardElement(card, context) {
         }
         // During trade action, only cards that can be traded are usable
         else if (currentAction === 'trade') {
-            if (card.can_be_traded === false) {
+            if (!card.can_be_traded) {
                 div.classList.add('unusable');
             } else {
                 div.classList.add('usable');
@@ -457,11 +457,29 @@ function createCardElement(card, context) {
         ? `<div class="kills-badge" title="${cardKills} kill${cardKills !== 1 ? 's' : ''} — each kill adds +1 damage to this warrior's attacks">💀 ${cardKills}</div>`
         : '';
 
+    // Trade icon — shown on all tradeable hand cards when trade is available this turn
+    const showTradeBtn = context === 'player-hand' && gameState.isYourTurn
+        && card.can_be_traded && status?.can_trade && !currentAction;
+    const tradeBtnHtml = showTradeBtn ? `<div class="card-trade-btn" title="Trade this card">⇄</div>` : '';
+
+    // Forge icon — shown on forgeable weapons (Sword/Arrow/Poison) when a matching
+    // partner exists in hand and forge is available this turn
+    const forgeableSubTypes = ['Sword', 'Arrow', 'Poison'];
+    const isForgeableWeapon = cardType === 'weapon' && forgeableSubTypes.includes(card.sub_type);
+    const handCards = status?.current_player_hand || [];
+    const matchingPartnerExists = isForgeableWeapon
+        && handCards.filter(c => c.sub_type === card.sub_type && c.id !== card.id).length > 0;
+    const showForgeBtn = context === 'player-hand' && gameState.isYourTurn
+        && status?.can_forge && matchingPartnerExists && !currentAction;
+    const forgeBtnHtml = showForgeBtn ? `<div class="card-forge-btn" title="Forge this weapon">⚒</div>` : '';
+
     // Create card HTML
     if (imageUrl) {
         div.innerHTML = `
             ${shieldHtml}
             ${killsBadgeHtml}
+            ${tradeBtnHtml}
+            ${forgeBtnHtml}
             <div class="card-image">
                 <img src="${imageUrl}" alt="${getCardName(card)}" draggable="false">
             </div>
@@ -474,6 +492,8 @@ function createCardElement(card, context) {
         div.innerHTML = `
             ${shieldHtml}
             ${killsBadgeHtml}
+            ${tradeBtnHtml}
+            ${forgeBtnHtml}
             <div class="card-header">
                 <span class="card-id">${div.dataset.cardId.substring(0, 6)}</span>
                 <span class="card-type ${cardType}">${card.type || cardType}</span>
@@ -501,6 +521,22 @@ function createCardElement(card, context) {
     if (context === 'player-hand' || context.startsWith('opponent-field:') || context === 'player-field') {
         div.addEventListener('click', () => {
             handleCardClick(div.dataset.cardId, cardType, context, card);
+        });
+    }
+
+    // Trade button: stops propagation so the card's attack handler doesn't fire
+    if (showTradeBtn) {
+        div.querySelector('.card-trade-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startTradeFromCard(div.dataset.cardId, card);
+        });
+    }
+
+    // Forge button: stops propagation so the card's normal phase handler doesn't fire
+    if (showForgeBtn) {
+        div.querySelector('.card-forge-btn')?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            startForgeFromCard(div.dataset.cardId, card);
         });
     }
 

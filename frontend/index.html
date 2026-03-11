@@ -227,9 +227,6 @@
                     <button id="cancel-action-btn" class="btn btn-cancel-inline">Cancel</button>
                 </div>
                 <div class="action-buttons">
-                    <button id="move-warrior-btn" class="btn btn-action" disabled>Move Warrior</button>
-                    <button id="trade-btn" class="btn btn-action" disabled>Trade</button>
-                    <button id="forge-btn" class="btn btn-action" disabled>Forge</button>
                     <button id="skip-phase-btn" class="btn btn-skip" disabled>Skip Phase</button>
                     <button id="end-turn-btn" class="btn btn-danger" disabled>End Turn</button>
                 </div>
@@ -322,6 +319,20 @@
             </div>
         </div>
 
+
+        <!-- Resurrection Notification Modal (active player only) -->
+        <div id="resurrection-notification-modal" class="resurrection-notification-modal hidden">
+            <div class="resurrection-notification-content">
+                <div class="resurrection-notification-header">&#129503; Resurrection!</div>
+                <div class="resurrection-notification-body">
+                    <div id="resurrection-warrior-container" class="resurrection-warrior-container"></div>
+                    <div class="resurrection-notification-info">
+                        <p id="resurrection-notification-text" class="resurrection-notification-text"></p>
+                    </div>
+                </div>
+                <button id="resurrection-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
 
         <!-- Treason Notification Modal (victim) -->
         <div id="treason-notification-modal" class="treason-notification-modal hidden">
