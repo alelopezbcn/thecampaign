@@ -267,14 +267,24 @@ function initSidePanelToggles() {
 
     if (historyBtn && historyPanel) {
         historyPanel.classList.add('collapsed');
-        historyBtn.addEventListener('click', () => {
-            historyPanel.classList.toggle('collapsed');
+        historyPanel.addEventListener('click', (e) => {
+            if (historyPanel.classList.contains('collapsed')) {
+                historyPanel.classList.remove('collapsed');
+            } else if (e.target === historyBtn || historyBtn.contains(e.target)) {
+                historyPanel.classList.add('collapsed');
+            }
+            repositionLeftPanels();
         });
     }
 
     if (playersBtn && playersPanel) {
-        playersBtn.addEventListener('click', () => {
-            playersPanel.classList.toggle('collapsed');
+        playersPanel.addEventListener('click', (e) => {
+            if (playersPanel.classList.contains('collapsed')) {
+                playersPanel.classList.remove('collapsed');
+            } else if (e.target === playersBtn || playersBtn.contains(e.target)) {
+                playersPanel.classList.add('collapsed');
+            }
+            repositionLeftPanels();
         });
     }
 }
