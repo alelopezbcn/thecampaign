@@ -33,9 +33,6 @@ function updateActionButtons() {
     // Left endturn phase while still our turn (shouldn't normally happen)
     clearEndTurnCountdown();
 
-    // Move Warrior - enabled if can_move_warrior is true
-    document.getElementById('move-warrior-btn').disabled = !status.can_move_warrior;
-
     // Trade - enabled if can_trade is true (from backend)
     document.getElementById('trade-btn').disabled = !status.can_trade;
 

@@ -186,8 +186,7 @@ function setupEventListeners() {
         });
     });
 
-    // Game screen actions - only 4 buttons
-    document.getElementById('move-warrior-btn').addEventListener('click', () => startAction('move_warrior'));
+    // Game screen actions
     document.getElementById('trade-btn').addEventListener('click', () => startAction('trade'));
     document.getElementById('forge-btn').addEventListener('click', () => startForgeMode());
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);

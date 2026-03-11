@@ -4,13 +4,8 @@ function startAction(actionType) {
     gameState.actionState.type = actionType;
 
     let prompt = '';
-    switch (actionType) {
-        case 'move_warrior':
-            prompt = 'Select a warrior from your hand';
-            break;
-        case 'trade':
-            prompt = 'Select 3 cards to trade';
-            break;
+    if (actionType === 'trade') {
+        prompt = 'Select 3 cards to trade';
     }
 
     updateActionPrompt(prompt);
@@ -40,9 +35,8 @@ function handleCardClick(cardID, cardType, context, card = null) {
     const action = gameState.currentAction;
     const status = gameState.currentState;
 
-    // Handle move_warrior action
-    if (action === 'move_warrior' && context === 'player-hand') {
-        if (cardType !== 'warrior') return; // Only warriors can be moved
+    // Handle move_warrior: clicking a warrior in hand when move is available
+    if (context === 'player-hand' && cardType === 'warrior' && status?.can_move_warrior && !action) {
         clearSelections();
         gameState.actionState.warriorId = cardID;
         highlightSelectedCard(cardID);
