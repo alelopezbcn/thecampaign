@@ -82,10 +82,44 @@ function updatePlayerEliminatedState(isEliminated) {
     });
 }
 
+// Tracks which opponent boards are collapsed (persists across re-renders)
+const collapsedOpponents = new Set();
+
+// Auto-collapse inactive boards setting (persisted to localStorage)
+let autoCollapseInactive = localStorage.getItem('autoCollapseInactive') === 'true';
+
+function initAutoCollapseCheckbox() {
+    const checkbox = document.getElementById('auto-collapse-inactive');
+    if (!checkbox) return;
+    checkbox.checked = autoCollapseInactive;
+    checkbox.addEventListener('change', () => {
+        autoCollapseInactive = checkbox.checked;
+        localStorage.setItem('autoCollapseInactive', autoCollapseInactive);
+        if (!autoCollapseInactive) {
+            collapsedOpponents.clear();
+        }
+        if (gameState.currentState) {
+            renderOpponents(gameState.currentState.opponents || []);
+        }
+    });
+}
+
 function renderOpponents(opponents) {
     const container = document.getElementById('opponents-container');
     container.innerHTML = '';
     container.setAttribute('data-count', opponents.length);
+
+    // Auto-collapse inactive boards if the setting is on
+    if (autoCollapseInactive) {
+        const turnPlayer = gameState.currentState && gameState.currentState.turn_player;
+        opponents.forEach(o => {
+            if (o.player_name !== turnPlayer) {
+                collapsedOpponents.add(o.player_name);
+            } else {
+                collapsedOpponents.delete(o.player_name);
+            }
+        });
+    }
 
     // In 2v2, place ally in center with enemies on left and right
     if (gameState.gameMode === '2v2' && opponents.length === 3) {
@@ -105,10 +139,47 @@ function renderOpponents(opponents) {
         if (gameState.currentState && opponent.player_name === gameState.currentState.turn_player) {
             board.classList.add('active-turn');
         }
+        if (collapsedOpponents.has(opponent.player_name)) {
+            board.classList.add('collapsed');
+        }
 
         // Header
         const header = document.createElement('div');
         header.className = 'opponent-header';
+
+        // Collapse toggle — header collapses; clicking anywhere on a collapsed board expands it
+        const isCollapsed = collapsedOpponents.has(opponent.player_name);
+        const collapseBtn = document.createElement('span');
+        collapseBtn.className = 'opponent-collapse-btn';
+        collapseBtn.textContent = isCollapsed ? '▶' : '◀';
+
+        const toggleCollapse = (name) => {
+            if (collapsedOpponents.has(name)) {
+                collapsedOpponents.delete(name);
+                board.classList.remove('collapsed');
+                collapseBtn.textContent = '◀';
+            } else {
+                collapsedOpponents.add(name);
+                board.classList.add('collapsed');
+                collapseBtn.textContent = '▶';
+            }
+            container.classList.toggle('has-collapsed', container.querySelector('.opponent-board.collapsed') !== null);
+        };
+
+        // Header click: collapse (stop propagation so board handler doesn't also fire)
+        header.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleCollapse(opponent.player_name);
+        });
+
+        // Board click: expand only (ignored when already expanded)
+        board.addEventListener('click', () => {
+            if (collapsedOpponents.has(opponent.player_name)) {
+                toggleCollapse(opponent.player_name);
+            }
+        });
+        header.appendChild(collapseBtn);
+
         const disconnectEntry = disconnectCountdowns[opponent.player_name];
         const badgeHtml = opponent.is_eliminated
             ? '<span class="opponent-badge eliminated-badge">Eliminated</span>'
@@ -117,12 +188,15 @@ function renderOpponents(opponents) {
                 : '';
         const fieldHP = opponent.field_hp || 0;
         const hpBadge = fieldHP > 0 ? `<span class="field-hp-badge">${fieldHP} HP</span>` : '';
-        header.innerHTML = `
+        const headerContent = document.createElement('div');
+        headerContent.className = 'opponent-header-content';
+        headerContent.innerHTML = `
             <span class="opponent-name">${opponent.player_name}</span>
             ${hpBadge}
             ${opponent.is_ally ? '<span class="opponent-badge ally-badge">Ally</span>' : ''}
             ${badgeHtml}
         `;
+        header.appendChild(headerContent);
         board.appendChild(header);
 
         // Internal layout
@@ -175,8 +249,29 @@ function renderOpponents(opponents) {
         handArea.appendChild(handDiv);
         board.appendChild(handArea);
 
+        // Collapsed summary — shown when board is collapsed
+        const castleGoal = (opponent.castle && opponent.castle.resources_to_win) || (gameState.gameMode === '2v2' ? 30 : 25);
+        const castleStr = (opponent.castle && opponent.castle.constructed)
+            ? `${opponent.castle.value}/${castleGoal}`
+            : '—';
+        const warriorStr = fieldCards.length > 0
+            ? `${fieldCards.length} (${fieldHP}HP)`
+            : '0';
+        const collapsedSummary = document.createElement('div');
+        collapsedSummary.className = 'opponent-collapsed-summary';
+        collapsedSummary.innerHTML = `
+            <div class="collapsed-player-name">${opponent.player_name}</div>
+            <div class="collapsed-stat" title="Castle value">🏰 ${castleStr}</div>
+            <div class="collapsed-stat" title="Warriors / total HP">⚔ ${warriorStr}</div>
+            <div class="collapsed-stat" title="Cards in hand">🃏 ${opponent.cards_in_hand || 0}</div>
+        `;
+        board.appendChild(collapsedSummary);
+
         container.appendChild(board);
     });
+
+    // Sync container flex layout when any board is collapsed
+    container.classList.toggle('has-collapsed', container.querySelector('.opponent-board.collapsed') !== null);
 }
 
 function renderCastleInto(container, castle) {
