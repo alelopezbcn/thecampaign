@@ -1602,18 +1602,22 @@ function startTradeFromCard(cardID) {
     document.querySelector(`[data-card-id="${cardID}"]`)?.classList.add('selected');
 }
 
-// Forge Mode — enter weapon selection for forging
-function startForgeMode() {
+// Forge Mode — enter weapon selection for forging (called from badge click)
+function startForgeFromCard(cardID, card) {
     resetActionState();
     gameState.currentAction = 'forge';
-    gameState.selectedCards = [];
-    updateActionPrompt('Select 2 weapons of the same type to forge (0/2)');
+    gameState.selectedCards = [cardID];
     showConfirmButtons();
     renderGameBoard(gameState.currentState);
+    document.querySelector(`[data-card-id="${cardID}"]`)?.classList.add('selected');
+    updateActionPrompt(`Select another ${card.sub_type} to forge with (1/2)`);
 }
 
 // Handle card click during forge mode
 function handleForgeCardClick(cardID, card) {
+    const forgeableTypes = ['Sword', 'Arrow', 'Poison'];
+    if (!forgeableTypes.includes(card.sub_type)) return;
+
     const selected = gameState.selectedCards;
 
     // Deselect if already selected

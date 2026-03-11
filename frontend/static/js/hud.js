@@ -33,9 +33,6 @@ function updateActionButtons() {
     // Left endturn phase while still our turn (shouldn't normally happen)
     clearEndTurnCountdown();
 
-    // Forge - enabled if can_forge is true (from backend)
-    document.getElementById('forge-btn').disabled = !status.can_forge;
-
     // Skip Phase and End Turn - always enabled during your turn
     document.getElementById('skip-phase-btn').disabled = false;
     document.getElementById('end-turn-btn').disabled = false;

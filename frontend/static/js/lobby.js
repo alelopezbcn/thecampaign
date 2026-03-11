@@ -187,7 +187,6 @@ function setupEventListeners() {
     });
 
     // Game screen actions
-    document.getElementById('forge-btn').addEventListener('click', () => startForgeMode());
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
     document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
     document.getElementById('endturn-popup-btn').addEventListener('click', () => {

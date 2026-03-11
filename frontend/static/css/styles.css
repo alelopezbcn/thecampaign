@@ -2870,6 +2870,42 @@ body {
     50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 14px rgba(255,200,0,0.7); }
 }
 
+/* Forge icon badge — top-left of forgeable weapon cards */
+.card-forge-btn {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    background: rgba(0, 180, 220, 0.92);
+    color: #fff;
+    font-size: 20px;
+    font-weight: 800;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    z-index: 20;
+    cursor: pointer;
+    border: 2px solid rgba(100, 220, 255, 0.9);
+    pointer-events: auto;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5), 0 0 8px rgba(0, 200, 255, 0.4);
+    user-select: none;
+    text-shadow: none;
+    animation: pulseForgeBtnAnim 1.8s ease-in-out infinite;
+}
+
+.card-forge-btn:hover {
+    background: rgba(0, 210, 255, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 12px rgba(0, 210, 255, 0.6);
+    transform: scale(1.08);
+}
+
+@keyframes pulseForgeBtnAnim {
+    0%, 100% { box-shadow: 0 2px 6px rgba(0,0,0,0.5), 0 0 6px rgba(0,200,255,0.3); }
+    50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 14px rgba(0,200,255,0.7); }
+}
+
 /* Kill counter badge on warrior field cards */
 .kills-badge {
     position: absolute;
