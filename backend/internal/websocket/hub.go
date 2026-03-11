@@ -849,6 +849,11 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 		return
 	}
 
+	// After disconnecting, check if any active player remains to take a turn.
+	// If SwitchTurn found nobody (all disconnected/eliminated), currentPlayer is
+	// unchanged or still points at a disconnected player — skip auto-draw.
+	activePlayerRemains := wasTheirTurn && room.Game.CurrentPlayer().Name() != playerName
+
 	// Start grace period: player has disconnectGracePeriod to reconnect before win conditions are checked.
 	if room.disconnectTimers == nil {
 		room.disconnectTimers = make(map[string]*time.Timer)
@@ -869,10 +874,10 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 		GracePeriodSecs: int(disconnectGracePeriod.Seconds()),
 	})
 
-	if wasTheirTurn {
+	if activePlayerRemains {
 		h.autoDrawAndBroadcast(gameID)
 		h.startTurnTimer(gameID)
-	} else {
+	} else if !wasTheirTurn {
 		h.broadcastGameStateToAll(gameID)
 	}
 }

@@ -2,6 +2,7 @@ package domain
 
 import (
 	"testing"
+	"time"
 
 	"github.com/alelopezbcn/thecampaign/internal/domain/board"
 	"github.com/alelopezbcn/thecampaign/internal/domain/cards"
@@ -385,6 +386,47 @@ func TestGame_DisconnectPlayer(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, g.disconnectedPlayers[0])
 		assert.Equal(t, 1, g.currentTurn) // advanced to Player2
+	})
+
+	// Regression: when all players disconnect in a 1v1, SwitchTurn must not
+	// loop forever. Previously this caused the hub goroutine to deadlock.
+	t.Run("Does not infinite-loop when all players are disconnected (1v1)", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+
+		mockPlayer1 := mocks.NewMockPlayer(ctrl)
+		mockPlayer2 := mocks.NewMockPlayer(ctrl)
+		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
+		mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
+
+		g := &game{
+			board:               &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
+			currentTurn:         0, // Player1's turn
+			eliminatedPlayers:   make(map[int]bool),
+			disconnectedPlayers: map[int]bool{0: true}, // Player1 already disconnected
+			history:             []types.HistoryLine{},
+		}
+
+		// Player2 disconnects while it is Player1's turn (which was already skipped to P2).
+		// Pretend currentTurn is now 1 (Player2's turn after Player1 disconnected earlier).
+		g.currentTurn = 1
+		g.disconnectedPlayers[0] = true
+
+		// This must return without hanging.
+		done := make(chan struct{})
+		go func() {
+			_ = g.DisconnectPlayer("Player2")
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			// success
+		case <-time.After(2 * time.Second):
+			t.Fatal("DisconnectPlayer deadlocked: SwitchTurn did not exit when all players disconnected")
+		}
+
+		assert.True(t, g.disconnectedPlayers[1])
 	})
 }
 

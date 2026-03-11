@@ -1,3 +1,9 @@
 Fixes:
 flickering cards
 
+
+I would like to get rid of the action buttons (move warrior, trade, forge). Instead, act when the player click on the suitable card.
+Move warrior: if canMove, when a warrior is clicked, fire confirmation.
+Forge: if canForge, when a weapon is clicked, the player can select a warriorto attack, or anothe weapon of same type to forge.
+Trade: Similar to forge
+What do you think?
