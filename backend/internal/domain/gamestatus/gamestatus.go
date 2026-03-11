@@ -13,6 +13,8 @@ const timeFormat = "2006-01-02T15:04:05Z"
 type AmbushTrigger struct {
 	Effect        types.AmbushEffect `json:"effect"`
 	EffectDisplay string             `json:"effect_display"`
+	AttackerName  string             `json:"attacker_name"`
+	DefenderName  string             `json:"defender_name"`
 }
 
 type TreasonNotification struct {
@@ -251,11 +253,12 @@ func applyPlaceAmbushAnimation(in BuildInput, gs *GameStatus) {
 }
 
 func applyAmbushNotification(in BuildInput, gs *GameStatus) {
-	if in.LastAction == types.LastActionAmbush && in.AmbushAttackerName != "" &&
-		(in.Viewer.Name == in.AmbushAttackerName || in.Viewer.Name == in.LastAttackTargetPlayer) {
+	if in.LastAction == types.LastActionAmbush && in.AmbushAttackerName != "" {
 		gs.AmbushTriggered = &AmbushTrigger{
 			Effect:        in.AmbushEffect,
 			EffectDisplay: in.AmbushEffect.DisplayName(),
+			AttackerName:  in.AmbushAttackerName,
+			DefenderName:  in.LastAttackTargetPlayer,
 		}
 	}
 }

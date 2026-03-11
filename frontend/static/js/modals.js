@@ -196,9 +196,18 @@ function showStolenCardModal(card, action = 'stolen') {
     // Render the stolen card
     const cardName = card.sub_type || card.type;
     container.innerHTML = renderCardForModal(card);
-    text.textContent = action === 'sabotaged'
-        ? `${cardName} was sabotaged from you!`
-        : `${cardName} was stolen from you!`;
+
+    const title = modal.querySelector('.stolen-card-title');
+    const icon = modal.querySelector('.stolen-card-icon');
+    if (action === 'sabotaged') {
+        if (title) title.textContent = 'You were sabotaged!';
+        if (icon) icon.textContent = '💣';
+        text.textContent = `${cardName} was sabotaged from you!`;
+    } else {
+        if (title) title.textContent = 'You were robbed!';
+        if (icon) icon.innerHTML = '&#128163;';
+        text.textContent = `${cardName} was stolen from you!`;
+    }
 
     modal.classList.remove('hidden');
 
@@ -363,7 +372,36 @@ function hideResurrectionModal() {
     }
 }
 
-function showAmbushTriggeredModal(effectDisplay) {
+let ambushNotificationTimer = null;
+
+function showAmbushTriggeredModal(ambushTriggered) {
+    const effectDisplay = ambushTriggered.effect_display;
+    const isInvolved = gameState.playerName === ambushTriggered.attacker_name ||
+                       gameState.playerName === ambushTriggered.defender_name;
+
+    if (isInvolved) {
+        const modal = document.getElementById('ambush-notification-modal');
+        const textEl = document.getElementById('ambush-notification-text');
+        const effectEl = document.getElementById('ambush-notification-effect');
+        if (!modal || !textEl || !effectEl) return;
+
+        const isAttacker = gameState.playerName === ambushTriggered.attacker_name;
+        textEl.textContent = isAttacker
+            ? `${ambushTriggered.defender_name}'s ambush triggered on your attack!`
+            : `Your ambush triggered against ${ambushTriggered.attacker_name}!`;
+
+        const colorClass = ambushEffectColorClass[effectDisplay] || '';
+        effectEl.className = 'ambush-notification-effect ambush-toast-effect ' + colorClass;
+        effectEl.textContent = effectDisplay;
+
+        modal.classList.remove('hidden');
+
+        if (ambushNotificationTimer) clearTimeout(ambushNotificationTimer);
+        ambushNotificationTimer = setTimeout(() => hideAmbushNotificationModal(), 6000);
+        return;
+    }
+
+    // Spectators: toast
     const container = document.getElementById('error-toast-container');
     if (!container) return;
 
@@ -387,7 +425,14 @@ function showAmbushTriggeredModal(effectDisplay) {
     }, 5000);
 }
 
-function hideAmbushTriggeredModal() {}
+function hideAmbushNotificationModal() {
+    const modal = document.getElementById('ambush-notification-modal');
+    if (modal) modal.classList.add('hidden');
+    if (ambushNotificationTimer) {
+        clearTimeout(ambushNotificationTimer);
+        ambushNotificationTimer = null;
+    }
+}
 
 // Generic Cards Modal
 function showCardsModal(cards, title, subtitle, showPositionIndicators = false) {
@@ -616,4 +661,38 @@ function showEventChangeToast(gs) {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
     }, 4000);
+}
+
+// Waiting for Reconnect Modal
+let waitingReconnectCountdownId = null;
+
+function showWaitingForReconnectModal(disconnectedPlayers, secsUntilGameEnds) {
+    const modal = document.getElementById('waiting-reconnect-modal');
+    const playersEl = document.getElementById('waiting-reconnect-players');
+    const countdownEl = document.getElementById('waiting-reconnect-countdown');
+    if (!modal || !playersEl || !countdownEl) return;
+
+    playersEl.innerHTML = disconnectedPlayers
+        .map(name => `<div class="waiting-reconnect-player">${name} disconnected&hellip;</div>`)
+        .join('');
+
+    let secsLeft = secsUntilGameEnds;
+    const fmt = s => s > 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`;
+    countdownEl.textContent = fmt(secsLeft);
+
+    clearInterval(waitingReconnectCountdownId);
+    waitingReconnectCountdownId = setInterval(() => {
+        secsLeft = Math.max(0, secsLeft - 1);
+        countdownEl.textContent = fmt(secsLeft);
+        if (secsLeft === 0) clearInterval(waitingReconnectCountdownId);
+    }, 1000);
+
+    modal.classList.remove('hidden');
+}
+
+function hideWaitingForReconnectModal() {
+    clearInterval(waitingReconnectCountdownId);
+    waitingReconnectCountdownId = null;
+    const modal = document.getElementById('waiting-reconnect-modal');
+    if (modal) modal.classList.add('hidden');
 }

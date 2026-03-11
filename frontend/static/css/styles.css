@@ -5272,6 +5272,126 @@ body {
     box-shadow: 0 0 20px rgba(34, 255, 136, 0.5);
 }
 
+/* ===== Ambush Notification Modal (attacker + defender) ================= */
+.ambush-notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.ambush-notification-modal.hidden { display: none; }
+
+.ambush-notification-content {
+    background: linear-gradient(145deg, #0d0820 0%, #1e0a3b 100%);
+    border: 2px solid rgba(167, 139, 250, 0.6);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(167, 139, 250, 0.35), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.35s ease-out;
+    min-width: 280px;
+    max-width: 380px;
+}
+
+.ambush-notification-header {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #a78bfa;
+    margin-bottom: 14px;
+    text-shadow: 0 0 12px rgba(167, 139, 250, 0.5);
+    letter-spacing: 1px;
+}
+
+.ambush-notification-body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+.ambush-notification-text {
+    font-size: 0.95rem;
+    color: #c4b5fd;
+    font-weight: 600;
+}
+
+.ambush-notification-effect {
+    font-size: 1rem;
+    font-weight: 800;
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+
+/* ===== Waiting for Reconnect Overlay =================================== */
+.waiting-reconnect-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.7);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.waiting-reconnect-modal.hidden { display: none; }
+
+.waiting-reconnect-content {
+    background: linear-gradient(145deg, #0d1a2e 0%, #0a2540 100%);
+    border: 2px solid rgba(100, 180, 255, 0.5);
+    border-radius: 16px;
+    padding: 28px 36px;
+    text-align: center;
+    max-width: 380px;
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.waiting-reconnect-header {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #93c5fd;
+    letter-spacing: 0.5px;
+}
+
+.waiting-reconnect-players {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.waiting-reconnect-player {
+    font-size: 0.95rem;
+    color: #cbd5e1;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 6px 12px;
+}
+
+.waiting-reconnect-timer {
+    font-size: 0.9rem;
+    color: #94a3b8;
+}
+
+.waiting-reconnect-timer span {
+    font-weight: 700;
+    color: #f87171;
+}
+
 /* ── Game Settings Modal ─────────────────────────────────────────── */
 
 .settings-modal-content {

@@ -110,6 +110,8 @@ func TestNewGameStatus_AmbushTriggered_SetForAttacker(t *testing.T) {
 	assert.NotNil(t, gs.AmbushTriggered, "attacker should receive AmbushTriggered notification")
 	assert.Equal(t, types.AmbushEffectCancelAttack, gs.AmbushTriggered.Effect)
 	assert.Equal(t, "Attack Cancelled", gs.AmbushTriggered.EffectDisplay)
+	assert.Equal(t, "Player1", gs.AmbushTriggered.AttackerName)
+	assert.Equal(t, "Player2", gs.AmbushTriggered.DefenderName)
 }
 
 func TestNewGameStatus_AmbushTriggered_SetForDefender(t *testing.T) {
@@ -124,10 +126,12 @@ func TestNewGameStatus_AmbushTriggered_SetForDefender(t *testing.T) {
 	assert.NotNil(t, gs.AmbushTriggered, "defender should receive AmbushTriggered notification")
 	assert.Equal(t, types.AmbushEffectStealWeapon, gs.AmbushTriggered.Effect)
 	assert.Equal(t, "Weapon Stolen", gs.AmbushTriggered.EffectDisplay)
+	assert.Equal(t, "Player1", gs.AmbushTriggered.AttackerName)
+	assert.Equal(t, "Player2", gs.AmbushTriggered.DefenderName)
 }
 
-func TestNewGameStatus_AmbushTriggered_NilForThirdPlayer(t *testing.T) {
-	dto := minimalDTO("Player3") // Player3 is a bystander
+func TestNewGameStatus_AmbushTriggered_SetForThirdPlayer(t *testing.T) {
+	dto := minimalDTO("Player3") // Player3 is a bystander/spectator
 	dto.LastAction = types.LastActionAmbush
 	dto.AmbushAttackerName = "Player1"
 	dto.LastAttackTargetPlayer = "Player2"
@@ -135,7 +139,10 @@ func TestNewGameStatus_AmbushTriggered_NilForThirdPlayer(t *testing.T) {
 
 	gs := gamestatus.NewGameStatus(dto)
 
-	assert.Nil(t, gs.AmbushTriggered, "bystander should NOT receive AmbushTriggered notification")
+	// All players receive the notification; frontend distinguishes modal vs toast
+	assert.NotNil(t, gs.AmbushTriggered, "spectator should receive AmbushTriggered notification")
+	assert.Equal(t, "Player1", gs.AmbushTriggered.AttackerName)
+	assert.Equal(t, "Player2", gs.AmbushTriggered.DefenderName)
 }
 
 func TestNewGameStatus_AmbushTriggered_NilWhenLastActionDiffers(t *testing.T) {

@@ -113,6 +113,10 @@ function handleMessage(message) {
             break;
         case 'player_reconnected':
             clearDisconnectCountdown(message.payload.player_name);
+            hideWaitingForReconnectModal();
+            break;
+        case 'waiting_for_reconnect':
+            showWaitingForReconnectModal(message.payload.disconnected_players, message.payload.secs_until_game_ends);
             break;
         default:
             console.log('Unknown message type:', message.type);
@@ -419,7 +423,7 @@ function handleGameState(payload) {
     // Detect ambush triggered
     const ambushTriggered = payload.game_status.ambush_triggered;
     if (ambushTriggered) {
-        showAmbushTriggeredModal(ambushTriggered.effect_display);
+        showAmbushTriggeredModal(ambushTriggered);
     }
 
     // Detect treason notification (victim only)
@@ -512,6 +516,7 @@ function checkIsWinner(gameOverMsg, status) {
 }
 
 function handleGameEnded() {
+    hideWaitingForReconnectModal();
     const gameOverMsg = gameState.currentState?.game_over_msg || 'Game Over!';
     const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
     showGameOverModal(isWinner, gameOverMsg, gameState.currentState?.player_stats, gameState.currentState?.game_started_at);
