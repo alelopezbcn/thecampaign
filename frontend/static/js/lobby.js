@@ -214,9 +214,6 @@ function setupEventListeners() {
         document.getElementById('start-game-btn').textContent = 'Starting...';
     });
 
-    // Turn transition modal close
-    document.getElementById('turn-transition-close').addEventListener('click', hideTurnTransitionModal);
-
     // Stolen card modal close
     document.getElementById('stolen-card-close').addEventListener('click', hideStolenCardModal);
 
@@ -225,24 +222,6 @@ function setupEventListeners() {
 
     // Treason notification modal close
     document.getElementById('treason-notification-close').addEventListener('click', hideTreasonNotificationModal);
-
-    // Ambush triggered modal close
-    document.getElementById('ambush-triggered-close').addEventListener('click', hideAmbushTriggeredModal);
-    document.getElementById('ambush-triggered-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) hideAmbushTriggeredModal();
-    });
-
-    // Champion's Bounty modal close
-    document.getElementById('champions-bounty-close').addEventListener('click', hideChampionsBountyModal);
-    document.getElementById('champions-bounty-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) hideChampionsBountyModal();
-    });
-
-    // Resurrection modal close
-    document.getElementById('resurrection-close').addEventListener('click', hideResurrectionModal);
-    document.getElementById('resurrection-modal').addEventListener('click', (e) => {
-        if (e.target === e.currentTarget) hideResurrectionModal();
-    });
 
     // Event turn modal close
     document.getElementById('event-turn-modal-close').addEventListener('click', hideEventTurnModal);
@@ -266,8 +245,6 @@ function setupEventListeners() {
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
         { id: 'treason-notification-modal', hide: hideTreasonNotificationModal },
-        { id: 'champions-bounty-modal', hide: hideChampionsBountyModal },
-        { id: 'resurrection-modal', hide: hideResurrectionModal },
         { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
@@ -291,39 +268,23 @@ function handleGlobalKeyboard(e) {
     const isEndturnPopupOpen = endturnPopup && !endturnPopup.classList.contains('hidden');
     const isActionPromptOpen = actionPrompt && !actionPrompt.classList.contains('hidden');
 
-    const turnTransitionModal = document.getElementById('turn-transition-modal');
     const stolenCardModal = document.getElementById('stolen-card-modal');
     const spyNotificationModal = document.getElementById('spy-notification-modal');
-    const ambushTriggeredModal = document.getElementById('ambush-triggered-modal');
     const treasonNotificationModal = document.getElementById('treason-notification-modal');
-    const championsBountyModal = document.getElementById('champions-bounty-modal');
-    const resurrectionModal = document.getElementById('resurrection-modal');
     const eventTurnModal = document.getElementById('event-turn-modal');
 
-    const isTurnTransitionOpen = turnTransitionModal && !turnTransitionModal.classList.contains('hidden');
     const isStolenCardOpen = stolenCardModal && !stolenCardModal.classList.contains('hidden');
     const isSpyNotificationOpen = spyNotificationModal && !spyNotificationModal.classList.contains('hidden');
-    const isAmbushTriggeredOpen = ambushTriggeredModal && !ambushTriggeredModal.classList.contains('hidden');
     const isTreasonNotificationOpen = treasonNotificationModal && !treasonNotificationModal.classList.contains('hidden');
-    const isChampionsBountyOpen = championsBountyModal && !championsBountyModal.classList.contains('hidden');
-    const isResurrectionOpen = resurrectionModal && !resurrectionModal.classList.contains('hidden');
     const isEventTurnOpen = eventTurnModal && !eventTurnModal.classList.contains('hidden');
 
     if (e.key === 'Escape') {
-        if (isTurnTransitionOpen) {
-            hideTurnTransitionModal();
-        } else if (isStolenCardOpen) {
+        if (isStolenCardOpen) {
             hideStolenCardModal();
         } else if (isSpyNotificationOpen) {
             hideSpyNotificationModal();
-        } else if (isAmbushTriggeredOpen) {
-            hideAmbushTriggeredModal();
         } else if (isTreasonNotificationOpen) {
             hideTreasonNotificationModal();
-        } else if (isChampionsBountyOpen) {
-            hideChampionsBountyModal();
-        } else if (isResurrectionOpen) {
-            hideResurrectionModal();
         } else if (isEventTurnOpen) {
             hideEventTurnModal();
         } else if (isActionConfirmOpen) {
@@ -334,14 +295,8 @@ function handleGlobalKeyboard(e) {
             cancelAction();
         }
     } else if (e.key === 'Enter') {
-        if (isAmbushTriggeredOpen) {
-            hideAmbushTriggeredModal();
-        } else if (isTreasonNotificationOpen) {
+        if (isTreasonNotificationOpen) {
             hideTreasonNotificationModal();
-        } else if (isChampionsBountyOpen) {
-            hideChampionsBountyModal();
-        } else if (isResurrectionOpen) {
-            hideResurrectionModal();
         } else if (isEventTurnOpen) {
             hideEventTurnModal();
         } else if (isActionConfirmOpen) {
@@ -559,6 +514,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
     checkUrlParams();
     loadPresets();
+    initSidePanelToggles();
     fetch('/api/version')
         .then(r => r.json())
         .then(data => {

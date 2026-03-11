@@ -102,17 +102,6 @@
 
         <!-- Game Screen -->
         <div id="game-screen" class="screen hidden">
-            <!-- Game Timers -->
-            <div id="game-timers" class="game-timers">
-                <div class="timer-item">
-                    <span class="timer-label">Game</span>
-                    <span id="game-timer" class="timer-value">00:00</span>
-                </div>
-                <div class="timer-item">
-                    <span class="timer-label">Turn</span>
-                    <span id="turn-timer" class="timer-value">1:00</span>
-                </div>
-            </div>
 
 
             <!-- Player List Panel (below Phase Tracker, hidden in 1v1) -->
@@ -120,15 +109,17 @@
                 <div class="player-list-header">
                     <span class="player-list-icon">&#9876;</span>
                     <span class="player-list-title">Players</span>
+                    <button class="side-panel-toggle-btn" id="player-list-toggle-btn" title="Toggle players">&#9664;</button>
                 </div>
                 <ul id="player-list" class="player-list"></ul>
             </div>
 
             <!-- History Panel (Below Player List) -->
-            <div class="history-panel">
+            <div class="history-panel" id="history-panel">
                 <div class="history-header">
                     <span class="history-icon">📜</span>
                     <span class="history-title">History</span>
+                    <button class="history-toggle-btn" id="history-toggle-btn" title="Toggle history">&#9664;</button>
                 </div>
                 <div id="history-list" class="history-list"></div>
             </div>
@@ -190,6 +181,7 @@
             <div class="board player-board">
                 <div class="player-board-top-row">
                     <div id="player-board-header" class="opponent-header"></div>
+                    <span id="turn-timer" class="board-turn-timer">--</span>
                     <div id="phase-badge" class="phase-badge hidden">
                         <span class="pb-phase" data-phase="attack" data-tip="• Regular Weapons&#10;• Special Powers&#10;• Catapult&#10;• Resurrection&#10;• Move Warrior">⚔️ Attack</span>
                         <span class="pb-sep">›</span>
@@ -246,20 +238,6 @@
                             <div id="endturn-countdown-bar" class="endturn-countdown-bar"></div>
                         </div>
                         <button id="endturn-popup-btn" class="btn btn-danger">End Now</button>
-                    </div>
-                </div>
-                <!-- Turn Transition Notification -->
-                <div id="turn-transition-modal" class="turn-transition-modal hidden">
-                    <div class="turn-transition-content">
-                        <div class="turn-transition-icon">&#9876;</div>
-                        <div class="turn-transition-text">
-                            <h2 class="turn-transition-title">Next Turn</h2>
-                            <p id="turn-transition-player" class="turn-transition-player"></p>
-                        </div>
-                        <div class="turn-transition-countdown-wrap">
-                            <div id="turn-transition-bar" class="turn-transition-bar"></div>
-                        </div>
-                        <button id="turn-transition-close" class="btn btn-secondary btn-small">Got it</button>
                     </div>
                 </div>
             </div>
@@ -336,20 +314,6 @@
             </div>
         </div>
 
-        <!-- Ambush Triggered Modal -->
-        <div id="ambush-triggered-modal" class="spy-notification-modal hidden">
-            <div class="ambush-triggered-content">
-                <div class="ambush-triggered-header">&#9888; Ambush!</div>
-                <div class="ambush-triggered-body">
-                    <img src="/static/img/cards/ambush.webp" alt="Ambush" class="ambush-triggered-card-img" />
-                    <div class="ambush-triggered-info">
-                        <p id="ambush-triggered-effect" class="ambush-triggered-effect-label"></p>
-                        <p id="ambush-triggered-text" class="ambush-triggered-desc"></p>
-                    </div>
-                </div>
-                <button id="ambush-triggered-close" class="btn btn-secondary btn-small">Dismiss</button>
-            </div>
-        </div>
 
         <!-- Treason Notification Modal (victim) -->
         <div id="treason-notification-modal" class="treason-notification-modal hidden">
@@ -365,26 +329,6 @@
             </div>
         </div>
 
-        <!-- Champion's Bounty Notification Modal -->
-        <div id="champions-bounty-modal" class="champions-bounty-modal hidden">
-            <div class="champions-bounty-content">
-                <div class="champions-bounty-header">&#127942; Champion's Bounty!</div>
-                <p id="champions-bounty-text" class="champions-bounty-text"></p>
-                <div class="champions-bounty-timer-bar"><div id="champions-bounty-timer-fill" class="champions-bounty-timer-fill"></div></div>
-                <button id="champions-bounty-close" class="btn btn-secondary btn-small">Dismiss</button>
-            </div>
-        </div>
-
-        <!-- Resurrection Notification Modal (shown to all players) -->
-        <div id="resurrection-modal" class="resurrection-modal hidden">
-            <div class="resurrection-content">
-                <div class="resurrection-header">&#129503; Resurrection!</div>
-                <div id="resurrection-warrior-img" class="resurrection-warrior-img"></div>
-                <p id="resurrection-text" class="resurrection-text"></p>
-                <div class="resurrection-timer-bar"><div id="resurrection-timer-fill" class="resurrection-timer-fill"></div></div>
-                <button id="resurrection-close" class="btn btn-secondary btn-small">Dismiss</button>
-            </div>
-        </div>
 
         <!-- Game Settings Modal -->
         <div id="game-settings-modal" class="modal hidden">

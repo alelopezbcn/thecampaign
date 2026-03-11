@@ -146,7 +146,7 @@ function updatePlayerListPanel() {
 function repositionLeftPanels() {
     const TOP = 60;
     const playerPanel = document.getElementById('player-list-panel');
-    const historyPanel = document.querySelector('.history-panel');
+    const historyPanel = document.getElementById('history-panel');
 
     if (playerPanel && !playerPanel.classList.contains('hidden')) {
         playerPanel.style.top = TOP + 'px';
@@ -188,13 +188,12 @@ function startTimers(status) {
         clearInterval(timerInterval);
     }
 
-    const gameStartedAt = new Date(status.game_started_at);
     const turnStartedAt = new Date(status.turn_started_at);
     const turnLimit = status.turn_time_limit_secs || 60;
     const isGameOver = status.game_over_msg && status.game_over_msg.length > 0;
+    const turnTimerEl = document.getElementById('turn-timer');
 
     if (isGameOver) {
-        const turnTimerEl = document.getElementById('turn-timer');
         if (turnTimerEl) {
             turnTimerEl.textContent = '--';
             turnTimerEl.classList.remove('warning');
@@ -202,34 +201,20 @@ function startTimers(status) {
         return;
     }
 
-    function updateTimers() {
-        const now = new Date();
-
-        // Game timer (counting up)
-        const gameElapsed = Math.floor((now - gameStartedAt) / 1000);
-        const gameTimerEl = document.getElementById('game-timer');
-        if (gameTimerEl) {
-            gameTimerEl.textContent = formatTime(gameElapsed);
-        }
-
-        // Turn timer (counting down)
-        const turnElapsed = Math.floor((now - turnStartedAt) / 1000);
+    function updateTurnTimer() {
+        const turnElapsed = Math.floor((new Date() - turnStartedAt) / 1000);
         const turnRemaining = Math.max(0, turnLimit - turnElapsed);
-        const turnTimerEl = document.getElementById('turn-timer');
         if (turnTimerEl) {
             turnTimerEl.textContent = formatCountdown(turnRemaining);
-            if (turnRemaining <= 10) {
-                turnTimerEl.classList.add('warning');
-            } else {
-                turnTimerEl.classList.remove('warning');
-            }
+            turnTimerEl.classList.toggle('warning', turnRemaining <= 10);
         }
     }
 
-    updateTimers();
-    timerInterval = setInterval(updateTimers, 1000);
+    updateTurnTimer();
+    timerInterval = setInterval(updateTurnTimer, 1000);
 }
 
+// Format mm:ss or h:mm:ss — used by game-over stats for total duration
 function formatTime(totalSeconds) {
     const hours = Math.floor(totalSeconds / 3600);
     const mins = Math.floor((totalSeconds % 3600) / 60);
@@ -272,4 +257,24 @@ function clearEndTurnCountdown() {
     }
     const bar = document.getElementById('endturn-countdown-bar');
     if (bar) bar.style.animation = 'none';
+}
+
+function initSidePanelToggles() {
+    const historyPanel = document.getElementById('history-panel');
+    const historyBtn   = document.getElementById('history-toggle-btn');
+    const playersPanel = document.getElementById('player-list-panel');
+    const playersBtn   = document.getElementById('player-list-toggle-btn');
+
+    if (historyBtn && historyPanel) {
+        historyPanel.classList.add('collapsed');
+        historyBtn.addEventListener('click', () => {
+            historyPanel.classList.toggle('collapsed');
+        });
+    }
+
+    if (playersBtn && playersPanel) {
+        playersBtn.addEventListener('click', () => {
+            playersPanel.classList.toggle('collapsed');
+        });
+    }
 }

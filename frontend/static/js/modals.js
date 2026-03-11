@@ -154,46 +154,32 @@ function renderArrow() {
     return '<span class="action-confirm-arrow">→</span>';
 }
 
-// Turn Transition Modal
+// Turn Transition Toast
 function showTurnTransitionModal(playerName, duration = 3000, overrideText = null) {
-    // Don't show on the very first state (game just started)
     if (!gameState.currentState) return;
+    const container = document.getElementById('error-toast-container');
+    if (!container) return;
 
-    const modal = document.getElementById('turn-transition-modal');
-    const playerEl = document.getElementById('turn-transition-player');
-    const bar = document.getElementById('turn-transition-bar');
+    const text = overrideText || (playerName === gameState.playerName ? 'Your Turn!' : `${playerName}'s Turn`);
+    const isYou = text.startsWith('Your Turn');
 
-    if (!modal || !playerEl || !bar) return;
+    const toast = document.createElement('div');
+    toast.className = 'error-toast turn-transition-toast' + (isYou ? ' turn-transition-toast-you' : '');
+    toast.innerHTML =
+        '<span class="error-toast-icon">&#9876;</span>' +
+        '<div class="error-toast-content">' +
+            '<div class="error-toast-title">' + text + '</div>' +
+        '</div>' +
+        '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
+    container.appendChild(toast);
 
-    if (overrideText) {
-        playerEl.textContent = overrideText;
-    } else {
-        const isYou = playerName === gameState.playerName;
-        playerEl.textContent = isYou ? 'Your Turn!' : `${playerName}'s Turn`;
-    }
-
-    // Reset and start countdown bar animation
-    bar.style.animation = 'none';
-    bar.offsetHeight; // force reflow
-    bar.style.animation = `countdown ${duration / 1000}s linear forwards`;
-
-    modal.classList.remove('hidden');
-
-    // Clear any existing timer
-    if (turnTransitionTimer) clearTimeout(turnTransitionTimer);
-    turnTransitionTimer = setTimeout(() => {
-        hideTurnTransitionModal();
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
     }, duration);
 }
 
-function hideTurnTransitionModal() {
-    const modal = document.getElementById('turn-transition-modal');
-    modal.classList.add('hidden');
-    if (turnTransitionTimer) {
-        clearTimeout(turnTransitionTimer);
-        turnTransitionTimer = null;
-    }
-}
+function hideTurnTransitionModal() {}
 
 function showStolenCardModal(card, action = 'stolen') {
     const modal = document.getElementById('stolen-card-modal');
@@ -278,59 +264,42 @@ function hideTreasonNotificationModal() {
 }
 
 function showChampionsBountyModal(notification) {
-    const modal = document.getElementById('champions-bounty-modal');
-    const textEl = document.getElementById('champions-bounty-text');
-    const fill = document.getElementById('champions-bounty-timer-fill');
-    if (!modal || !textEl) return;
+    const container = document.getElementById('error-toast-container');
+    if (!container) return;
 
     const isYou = notification.earned_by === gameState.playerName;
     const cardWord = notification.cards === 1 ? 'card' : 'cards';
-    textEl.textContent = isYou
+    const msg = isYou
         ? `You slew the champion's warrior and drew ${notification.cards} ${cardWord}!`
         : `${notification.earned_by} slew the champion's warrior and drew ${notification.cards} ${cardWord}!`;
 
-    // Restart the timer bar animation
-    if (fill) {
-        fill.style.animation = 'none';
-        fill.offsetHeight; // reflow
-        fill.style.animation = 'bountyTimerShrink 5s linear forwards';
-    }
+    const toast = document.createElement('div');
+    toast.className = 'error-toast champions-bounty-toast';
+    toast.innerHTML =
+        '<span class="error-toast-icon">&#127942;</span>' +
+        '<div class="error-toast-content">' +
+            '<div class="error-toast-title">Champion\'s Bounty!</div>' +
+            '<div class="error-toast-message">' + msg + '</div>' +
+        '</div>' +
+        '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
+    container.appendChild(toast);
 
-    modal.classList.remove('hidden');
-
-    if (championsBountyTimer) clearTimeout(championsBountyTimer);
-    championsBountyTimer = setTimeout(() => hideChampionsBountyModal(), 5000);
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
 
-function hideChampionsBountyModal() {
-    const modal = document.getElementById('champions-bounty-modal');
-    if (modal) modal.classList.add('hidden');
-    if (championsBountyTimer) {
-        clearTimeout(championsBountyTimer);
-        championsBountyTimer = null;
-    }
-}
+function hideChampionsBountyModal() {}
 
 function showResurrectionModal(notification) {
-    const modal = document.getElementById('resurrection-modal');
-    const textEl = document.getElementById('resurrection-text');
-    const fill = document.getElementById('resurrection-timer-fill');
-    if (!modal || !textEl) return;
+    const container = document.getElementById('error-toast-container');
+    if (!container) return;
 
     const isYou = notification.player_name === gameState.playerName;
     const warriorName = notification.warrior_card?.sub_type || 'a warrior';
     const target = notification.target_player;
     const targetIsYou = target === gameState.playerName;
-
-    const warriorImgEl = document.getElementById('resurrection-warrior-img');
-    if (warriorImgEl) {
-        const imageUrl = notification.warrior_card ? getCardImageUrl(notification.warrior_card) : null;
-        if (imageUrl) {
-            warriorImgEl.innerHTML = `<img src="${imageUrl}" alt="${warriorName}" class="resurrection-warrior-card-img">`;
-        } else {
-            warriorImgEl.innerHTML = '';
-        }
-    }
 
     let msg;
     if (isYou) {
@@ -344,53 +313,51 @@ function showResurrectionModal(notification) {
                 ? `${notification.player_name} resurrected ${warriorName} to ${target}'s field!`
                 : `${notification.player_name} resurrected ${warriorName} from the cemetery!`;
     }
-    textEl.textContent = msg;
 
-    if (fill) {
-        fill.style.animation = 'none';
-        fill.offsetHeight;
-        fill.style.animation = 'resurrectionTimerShrink 5s linear forwards';
-    }
+    const toast = document.createElement('div');
+    toast.className = 'error-toast resurrection-toast';
+    toast.innerHTML =
+        '<span class="error-toast-icon">&#129503;</span>' +
+        '<div class="error-toast-content">' +
+            '<div class="error-toast-title">Resurrection!</div>' +
+            '<div class="error-toast-message">' + msg + '</div>' +
+        '</div>' +
+        '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
+    container.appendChild(toast);
 
-    modal.classList.remove('hidden');
-
-    if (resurrectionTimer) clearTimeout(resurrectionTimer);
-    resurrectionTimer = setTimeout(() => hideResurrectionModal(), 5000);
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
 
-function hideResurrectionModal() {
-    const modal = document.getElementById('resurrection-modal');
-    if (modal) modal.classList.add('hidden');
-    if (resurrectionTimer) {
-        clearTimeout(resurrectionTimer);
-        resurrectionTimer = null;
-    }
-}
+function hideResurrectionModal() {}
 
 function showAmbushTriggeredModal(effectDisplay) {
-    const modal = document.getElementById('ambush-triggered-modal');
-    const effectEl = document.getElementById('ambush-triggered-effect');
-    const textEl = document.getElementById('ambush-triggered-text');
-    if (!modal) return;
-    if (effectEl) {
-        effectEl.textContent = effectDisplay;
-        effectEl.className = 'ambush-triggered-effect-label ' + (ambushEffectColorClass[effectDisplay] || '');
-    }
-    if (textEl) textEl.textContent = ambushEffectDescriptions[effectDisplay] || '';
-    modal.classList.remove('hidden');
+    const container = document.getElementById('error-toast-container');
+    if (!container) return;
 
-    if (ambushTriggeredTimer) clearTimeout(ambushTriggeredTimer);
-    ambushTriggeredTimer = setTimeout(() => hideAmbushTriggeredModal(), 5000);
+    const colorClass = ambushEffectColorClass[effectDisplay] || '';
+    const desc = ambushEffectDescriptions[effectDisplay] || '';
+
+    const toast = document.createElement('div');
+    toast.className = 'error-toast ambush-toast';
+    toast.innerHTML =
+        '<span class="error-toast-icon">&#9888;</span>' +
+        '<div class="error-toast-content">' +
+            '<div class="error-toast-title">Ambush! &#8212; <span class="ambush-toast-effect ' + colorClass + '">' + effectDisplay + '</span></div>' +
+            '<div class="error-toast-message">' + desc + '</div>' +
+        '</div>' +
+        '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
 }
 
-function hideAmbushTriggeredModal() {
-    const modal = document.getElementById('ambush-triggered-modal');
-    if (modal) modal.classList.add('hidden');
-    if (ambushTriggeredTimer) {
-        clearTimeout(ambushTriggeredTimer);
-        ambushTriggeredTimer = null;
-    }
-}
+function hideAmbushTriggeredModal() {}
 
 // Generic Cards Modal
 function showCardsModal(cards, title, subtitle, showPositionIndicators = false) {
@@ -441,7 +408,7 @@ function showForgeResultModal(cards) {
 }
 
 // Game Over Modal
-function showGameOverModal(isWinner, message, playerStats) {
+function showGameOverModal(isWinner, message, playerStats, gameStartedAt) {
     const modal = document.getElementById('gameover-modal');
     const iconElement = document.getElementById('gameover-modal-icon');
     const titleElement = document.getElementById('gameover-modal-title');
@@ -471,9 +438,14 @@ function showGameOverModal(isWinner, message, playerStats) {
                 <td>${s.castle_value}</td>
             </tr>`;
         }).join('');
+        let durationRow = '';
+        if (gameStartedAt) {
+            const elapsed = Math.floor((Date.now() - new Date(gameStartedAt)) / 1000);
+            durationRow = `<tr class="stat-duration"><td colspan="4">⏱ Game duration: ${formatTime(elapsed)}</td></tr>`;
+        }
         statsEl.innerHTML = `<table class="gameover-stats-table">
             <thead><tr><th>Player</th><th>Kills</th><th>Damage</th><th>Castle</th></tr></thead>
-            <tbody>${rows}</tbody>
+            <tbody>${rows}${durationRow}</tbody>
         </table>`;
         statsEl.classList.remove('hidden');
     } else {

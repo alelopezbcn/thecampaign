@@ -483,7 +483,7 @@ function handleGameState(payload) {
     const gameOverMsg = payload.game_status.game_over_msg;
     if (gameOverMsg && gameOverMsg.length > 0) {
         const isWinner = checkIsWinner(gameOverMsg, payload.game_status);
-        showGameOverModal(isWinner, gameOverMsg, payload.game_status.player_stats);
+        showGameOverModal(isWinner, gameOverMsg, payload.game_status.player_stats, payload.game_status.game_started_at);
     }
 
     // Check for error message
@@ -514,7 +514,7 @@ function checkIsWinner(gameOverMsg, status) {
 function handleGameEnded() {
     const gameOverMsg = gameState.currentState?.game_over_msg || 'Game Over!';
     const isWinner = checkIsWinner(gameOverMsg, gameState.currentState || {});
-    showGameOverModal(isWinner, gameOverMsg, gameState.currentState?.player_stats);
+    showGameOverModal(isWinner, gameOverMsg, gameState.currentState?.player_stats, gameState.currentState?.game_started_at);
 }
 
 function sendAction(actionType, payload = null) {
