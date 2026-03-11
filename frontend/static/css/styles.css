@@ -896,6 +896,32 @@ body {
     opacity: 0.4;
 }
 
+/* Opponents toolbar (auto-collapse checkbox) */
+.opponents-toolbar {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px 0;
+}
+
+.auto-collapse-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78em;
+    color: rgba(255, 255, 255, 0.45);
+    cursor: pointer;
+    user-select: none;
+}
+
+.auto-collapse-label:hover {
+    color: rgba(255, 255, 255, 0.75);
+}
+
+.auto-collapse-label input[type="checkbox"] {
+    accent-color: #ff6b6b;
+    cursor: pointer;
+}
+
 /* Opponents Container */
 .opponents-container {
     display: grid;
@@ -949,6 +975,123 @@ body {
 .opponent-board.eliminated {
     opacity: 0.4;
     pointer-events: none;
+}
+
+/* Opponent board collapse — whole header is clickable */
+.opponent-header {
+    cursor: pointer;
+}
+
+.opponent-header:hover {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+}
+
+.opponent-collapse-btn {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.8em;
+    flex-shrink: 0;
+    line-height: 1;
+    user-select: none;
+}
+
+.opponent-header:hover .opponent-collapse-btn {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Header content wrapper (everything except the collapse button) */
+.opponent-header-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+}
+
+/* Collapsed board is fully clickable to expand */
+.opponent-board.collapsed {
+    cursor: pointer;
+    border-color: rgba(255, 80, 80, 0.5);
+    border-width: 2px;
+}
+
+.opponent-board.collapsed.ally {
+    border-color: rgba(102, 126, 234, 0.55);
+}
+
+/* Collapsed board: hide main content, show summary strip */
+.opponent-board.collapsed .opponent-header-content,
+.opponent-board.collapsed .opponent-area,
+.opponent-board.collapsed .opponent-hand-area {
+    display: none;
+}
+
+.opponent-board.collapsed .opponent-header {
+    justify-content: center;
+    margin-bottom: 4px;
+    padding-bottom: 4px;
+}
+
+.opponent-collapsed-summary {
+    display: none;
+}
+
+.opponent-board.collapsed .opponent-collapsed-summary {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 6px 0;
+    overflow: hidden;
+}
+
+.collapsed-player-name {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    font-size: 2.2em;
+    font-weight: 600;
+    color: #ff6b6b;
+    max-height: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.opponent-board.ally .collapsed-player-name {
+    color: #a8b8ff;
+}
+
+.collapsed-stat {
+    font-size: 2em;
+    color: rgba(255, 255, 255, 0.75);
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Container switches to flex layout when any board is collapsed,
+   so collapsed boards take a fixed narrow width and others fill the rest */
+.opponents-container.has-collapsed {
+    display: flex;
+    align-items: stretch;
+}
+
+.opponents-container.has-collapsed .opponent-board {
+    flex: 1;
+    min-width: 0;
+}
+
+.opponents-container.has-collapsed .opponent-board.collapsed {
+    flex: 0 0 90px;
+    min-width: 90px;
+}
+
+/* Compensate for zoom: 0.7 on scaled boards so collapsed width stays ~90px rendered */
+.opponents-container[data-count="4"] .opponent-board.collapsed,
+.opponents-container[data-count="3"] .opponent-board:not(.ally).collapsed {
+    flex: 0 0 128px;
+    min-width: 128px;
 }
 
 /* Player board eliminated state */

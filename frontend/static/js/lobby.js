@@ -515,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
     checkUrlParams();
     loadPresets();
     initSidePanelToggles();
+    initAutoCollapseCheckbox();
     fetch('/api/version')
         .then(r => r.json())
         .then(data => {
