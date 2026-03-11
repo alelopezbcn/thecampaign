@@ -278,3 +278,41 @@ func TestBloodlustHandler_Display(t *testing.T) {
 	assert.Equal(t, "Bloodlust", name)
 	assert.NotEmpty(t, desc)
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// championsBountyHandler
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewHandler_ChampionsBounty(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeChampionsBounty})
+	name, _ := h.Display()
+	assert.Equal(t, "Champion's Bounty", name)
+	assert.Equal(t, 2, h.OnKillBountyCards())
+	assert.Equal(t, 3, h.OnHitBountyHeal())
+}
+
+func TestChampionsBountyHandler_OnKillBountyCards(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeChampionsBounty})
+	assert.Equal(t, 2, h.OnKillBountyCards())
+}
+
+func TestChampionsBountyHandler_OnHitBountyHeal(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeChampionsBounty})
+	assert.Equal(t, 3, h.OnHitBountyHeal())
+}
+
+func TestChampionsBountyHandler_OtherMethodsReturnZero(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeChampionsBounty})
+	assert.Equal(t, 0, h.ExtraDrawCards())
+	assert.Equal(t, 0, h.WeaponDamageModifier(types.SwordWeaponType))
+	assert.Equal(t, 0, h.ConstructionValueModifier())
+	assert.Equal(t, 0, h.TurnStartWarriorHPModifier())
+	assert.Equal(t, 0, h.OnKillHealAmount())
+}
+
+func TestChampionsBountyHandler_Display(t *testing.T) {
+	h := gameevents.NewHandler(types.ActiveEvent{Type: types.EventTypeChampionsBounty})
+	name, desc := h.Display()
+	assert.Equal(t, "Champion's Bounty", name)
+	assert.NotEmpty(t, desc)
+}

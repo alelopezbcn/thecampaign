@@ -16,5 +16,5 @@ func (h *championsBountyHandler) OnKillHealAmount() int                       { 
 func (h *championsBountyHandler) OnKillBountyCards() int                      { return championsBountyCards }
 func (h *championsBountyHandler) OnHitBountyHeal() int                        { return 3 }
 func (h *championsBountyHandler) Display() (string, string) {
-	return "Champion's Bounty", "Draw 2 cards when killing a warrior from the enemy with the highest HP"
+	return "Champion's Bounty", "Get 2HP when attacking the leader. Draw 2 cards when killing a warrior from the leader."
 }
