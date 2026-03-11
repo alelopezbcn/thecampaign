@@ -60,7 +60,9 @@ Three layers inside `internal/`:
 
 ### Frontend (`frontend/`)
 
-Single-page app: `index.html` + `static/js/game.js` + `static/css/styles.css`. No build step, no frameworks.
+Single-page app: `index.html` + `static/css/styles.css` + multiple JS files (see `frontend/CLAUDE.md`). No build step, no frameworks.
+
+Key JS files (load order matters): `state.js`, `card-utils.js`, `animations.js`, `modals.js`, `render.js`, `hud.js`, `actions.js`, `websocket.js`, `lobby.js`, `help.js`.
 
 - `gameState` global object holds all client state
 - WebSocket connection with auto-reconnect (max 20 attempts)

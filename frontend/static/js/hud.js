@@ -1,6 +1,5 @@
 function updateTurnIndicator() {
-    // Update the phase tracker turn status
-    updatePhaseTracker();
+    updatePhaseBadge();
 }
 
 function updateActionButtons() {
@@ -48,98 +47,41 @@ function updateActionButtons() {
     document.getElementById('end-turn-btn').disabled = false;
 }
 
-function updatePhaseTracker() {
+function updatePhaseBadge() {
     const status = gameState.currentState;
-    const phaseTracker = document.getElementById('phase-tracker');
-    const turnStatusElement = document.getElementById('phase-turn-status');
-    const turnTextElement = turnStatusElement?.querySelector('.turn-text');
     const gameScreen = document.getElementById('game-screen');
 
-    // Update turn status
-    if (turnStatusElement && turnTextElement) {
-        turnStatusElement.classList.remove('your-turn', 'enemy-turn');
-        phaseTracker?.classList.remove('your-turn', 'enemy-turn');
-        gameScreen?.classList.remove('your-turn', 'enemy-turn');
-        if (gameState.isYourTurn) {
-            turnStatusElement.classList.add('your-turn');
-            phaseTracker?.classList.add('your-turn');
-            gameScreen?.classList.add('your-turn');
-            turnTextElement.textContent = 'Your Turn';
-        } else {
-            turnStatusElement.classList.add('enemy-turn');
-            phaseTracker?.classList.add('enemy-turn');
-            gameScreen?.classList.add('enemy-turn');
-            const turnPlayer = gameState.currentState?.turn_player || 'Enemy';
-            turnTextElement.textContent = `${turnPlayer}'s Turn`;
-        }
-    }
+    // Update your-turn/enemy-turn class on game screen (drives card hover styles)
+    gameScreen?.classList.remove('your-turn', 'enemy-turn');
+    gameScreen?.classList.add(gameState.isYourTurn ? 'your-turn' : 'enemy-turn');
 
-    // Update phase badge strip in action bar
+    // Update phase badge strip inside the player board header
     const badge = document.getElementById('phase-badge');
-    if (badge) {
-        const badgePhaseOrder = ['attack', 'spy/steal', 'buy', 'construct'];
-        const currentPhase = status?.current_action;
-        if (gameState.isYourTurn && currentPhase && currentPhase !== 'endturn') {
-            badge.classList.remove('hidden');
-            const currentIdx = badgePhaseOrder.indexOf(currentPhase);
-            badge.querySelectorAll('.pb-phase').forEach(el => {
-                const phase = el.dataset.phase;
-                const idx = badgePhaseOrder.indexOf(phase);
-                el.classList.remove('active', 'done', 'skipped');
-                if (idx === currentIdx) {
-                    el.classList.add('active');
-                } else if (idx < currentIdx) {
-                    if (gameState.executedPhases.includes(phase)) {
-                        el.classList.add('done');
-                    } else {
-                        el.classList.add('skipped');
-                    }
-                }
-            });
-        } else {
-            badge.classList.add('hidden');
-        }
-    }
+    if (!badge) return;
 
-    // Phase order
-    const phaseOrder = ['draw', 'attack', 'spy/steal', 'buy', 'construct', 'endturn'];
-    const currentAction = status?.current_action || '';
-
-    // Find the index of the current action
-    let currentIndex = phaseOrder.indexOf(currentAction);
-
-    // Update each phase item
-    phaseOrder.forEach((phase, index) => {
-        const phaseItem = document.querySelector(`.phase-item[data-phase="${phase}"]`);
-        if (!phaseItem) return;
-
-        phaseItem.classList.remove('completed', 'current', 'skipped');
-
-        if (currentIndex === -1) {
-            // No current action, reset all
-            return;
-        }
-
-        if (index < currentIndex) {
-            // If it's enemy's turn, show all past phases as green
-            // If it's your turn, check if phase was actually executed
-            if (!gameState.isYourTurn || gameState.executedPhases.includes(phase)) {
-                phaseItem.classList.add('completed');
-            } else {
-                phaseItem.classList.add('skipped');
+    const badgePhaseOrder = ['attack', 'spy/steal', 'buy', 'construct'];
+    const currentPhase = status?.current_action;
+    if (gameState.isYourTurn && currentPhase && currentPhase !== 'endturn') {
+        badge.classList.remove('hidden');
+        const currentIdx = badgePhaseOrder.indexOf(currentPhase);
+        badge.querySelectorAll('.pb-phase').forEach(el => {
+            const phase = el.dataset.phase;
+            const idx = badgePhaseOrder.indexOf(phase);
+            el.classList.remove('active', 'done', 'skipped');
+            if (idx === currentIdx) {
+                el.classList.add('active');
+            } else if (idx < currentIdx) {
+                el.classList.add(gameState.executedPhases.includes(phase) ? 'done' : 'skipped');
             }
-        } else if (index === currentIndex) {
-            // This is the current phase
-            phaseItem.classList.add('current');
-        }
-        // Phases after current index remain in default (pending) state
-    });
+        });
+    } else {
+        badge.classList.add('hidden');
+    }
 }
 
-// Keep old function name for compatibility
-function updatePhaseIndicator() {
-    updatePhaseTracker();
-}
+// Keep old function names for compatibility
+function updatePhaseTracker() { updatePhaseBadge(); }
+function updatePhaseIndicator() { updatePhaseBadge(); }
 
 function updatePlayerListPanel() {
     const panel = document.getElementById('player-list-panel');
@@ -202,24 +144,16 @@ function updatePlayerListPanel() {
 }
 
 function repositionLeftPanels() {
-    const phaseTracker = document.getElementById('phase-tracker');
+    const TOP = 60;
     const playerPanel = document.getElementById('player-list-panel');
     const historyPanel = document.querySelector('.history-panel');
 
-    if (!phaseTracker) return;
-
-    const phaseBottom = phaseTracker.offsetTop + phaseTracker.offsetHeight + 10;
-
     if (playerPanel && !playerPanel.classList.contains('hidden')) {
-        playerPanel.style.top = phaseBottom + 'px';
-        const playerBottom = phaseBottom + playerPanel.offsetHeight + 10;
-        if (historyPanel) {
-            historyPanel.style.top = playerBottom + 'px';
-        }
+        playerPanel.style.top = TOP + 'px';
+        const playerBottom = TOP + playerPanel.offsetHeight + 10;
+        if (historyPanel) historyPanel.style.top = playerBottom + 'px';
     } else {
-        if (historyPanel) {
-            historyPanel.style.top = phaseBottom + 'px';
-        }
+        if (historyPanel) historyPanel.style.top = TOP + 'px';
     }
 }
 

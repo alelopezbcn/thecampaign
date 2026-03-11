@@ -717,7 +717,7 @@ body {
 /* History Panel */
 .history-panel {
     position: fixed;
-    top: 330px;
+    top: 60px;
     left: 10px;
     background: rgba(20, 20, 35, 0.95);
     border: 1px solid rgba(102, 126, 234, 0.3);

@@ -372,7 +372,7 @@
                     <span class="help-phase-icon">💰</span>
                     <div>
                         <div class="help-phase-name">Buy / Trade</div>
-                        <div class="help-phase-desc">Spend Gold cards to draw new cards (value &divide; 2, rounded down). Trade 3 cards for 1 (once per turn). Place an Ambush trap in your field (max 1 per field). Skip when done.</div>
+                        <div class="help-phase-desc">Spend Gold cards to draw new cards (value &divide; 2, rounded down). Trade 3 cards for 1 (once per turn). Place an Ambush trap in your field or, in 2v2, on an ally&apos;s field (max 1 per field). Skip when done.</div>
                     </div>
                 </li>
                 <li class="help-phase-item">
@@ -522,7 +522,7 @@
     const CARDS_HTML = `
         <div class="help-section">
             <div class="help-section-title">Ambush</div>
-            <p class="help-note" style="margin-bottom:10px">Play an Ambush card face-down in your field during the Buy phase. When any enemy attacks a warrior in your field the Ambush triggers automatically. Only one Ambush per field at a time.</p>
+            <p class="help-note" style="margin-bottom:10px">Play an Ambush card face-down in your field (or an ally&apos;s field in 2v2) during the Buy phase. When any enemy attacks a warrior in that field the Ambush triggers automatically. Only one Ambush per field at a time.</p>
             <table class="help-table">
                 <tr><th>Effect</th><th>What Happens When Triggered</th></tr>
                 <tr>
@@ -623,12 +623,12 @@
         <div class="help-event-item" data-event="bloodlust">
             <span class="help-event-name">Bloodlust</span>
             <span class="help-event-sep">&#8212;</span>
-            <span class="help-event-desc">Whenever one of your warriors kills an enemy, that warrior is immediately restored <span class="hp">2&nbsp;HP</span>. Killing multiple enemies in one turn stacks the healing.</span>
+            <span class="help-event-desc">Each kill you score during your turn restores <span class="hp">2&nbsp;HP</span> to a random warrior on your field. Blood Rain stacks: 2 kills = 4 HP healed to one warrior. Special Power (Archer instant kill) heals the Archer itself instead.</span>
         </div>
         <div class="help-event-item" data-event="champions_bounty">
             <span class="help-event-name">Champion's Bounty</span>
             <span class="help-event-sep">&#8212;</span>
-            <span class="help-event-desc"><em>(FFA3 / FFA5 only)</em> When kills any warrior belonging to the enemy whose warriors have the <span class="hp">highest combined HP</span> on the field, you immediately draw <span class="hp">2&nbsp;cards</span>. Ties count — if multiple enemies share the top HP total, killing any of their warriors grants the reward.</span>
+            <span class="help-event-desc"><em>(FFA3 / FFA5 only)</em> The enemy with the <span class="hp">highest combined field HP</span> is the leader (ties count). <strong>Kill</strong> one of their warriors: draw <span class="hp">2&nbsp;cards</span>. <strong>Hit</strong> one of their warriors without killing: a random warrior on your field heals <span class="hp">+3&nbsp;HP</span>. Applies to normal attacks, Harpoon, Blood Rain, and Archer&apos;s Special Power.</span>
         </div>
     `;
 
