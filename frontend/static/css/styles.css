@@ -735,7 +735,7 @@ body {
     transition: transform 0.3s ease;
 }
 .history-panel.collapsed {
-    transform: translateX(calc(-100% + 36px));
+    transform: translateX(calc(-100% + 58px));
 }
 
 .history-header {
@@ -755,6 +755,23 @@ body {
     font-size: 0.85em;
     font-weight: 600;
     color: #ddd;
+}
+
+.history-collapsed-label {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 0.72em;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    flex-shrink: 0;
+    transition: opacity 0.2s;
+}
+.history-panel.collapsed .history-collapsed-label {
+    opacity: 1;
 }
 
 .history-list {
