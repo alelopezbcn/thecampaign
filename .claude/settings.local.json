@@ -40,7 +40,9 @@
       "Bash(for f in actions.js animations.js card-utils.js hud.js lobby.js modals.js render.js websocket.js)",
       "Bash(do grep -c \"^function\\\\|^const\\\\|^let\\\\|^var\" $f)",
       "Bash(done)",
-      "Read(//c/temp/projects/TheCampaign/**)"
+      "Read(//c/temp/projects/TheCampaign/**)",
+      "Bash(powershell.exe -Command \"echo test\")",
+      "Bash(echo \"EXIT: $?\")"
     ]
   }
 }

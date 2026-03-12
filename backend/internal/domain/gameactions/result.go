@@ -32,6 +32,17 @@ type AttackDetails struct {
 	ChampionsBountyHeal   int // > 0 = hit-heal triggered (HP healed to a random warrior)
 	KillsGranted          int // 1 if a kill was earned this action, 0 otherwise
 	DamageDealt           int // HP damage actually inflicted this action
+
+	// Ambush detail fields — populated only when AmbushEffect != 0.
+	AmbushAttackerWarriorType string // e.g. "Knight"
+	AmbushAttackerHPBefore    int
+	AmbushAttackerHPAfter     int
+	AmbushAttackerDied        bool
+	AmbushTargetWarriorType   string // e.g. "Archer"
+	AmbushTargetHPBefore      int
+	AmbushTargetHPAfter       int
+	AmbushWeaponType          string // e.g. "Sword"
+	AmbushDamageAmount        int    // effective damage/heal (after event modifier + multiplier)
 }
 
 type StealDetails struct {

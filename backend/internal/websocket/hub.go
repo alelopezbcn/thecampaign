@@ -41,18 +41,19 @@ type ClientMessage struct {
 
 // GameRoom represents a game room with players
 type GameRoom struct {
-	ID               string
-	GameMode         types.GameMode
-	MaxPlayers       int
-	Config           GameConfig
-	Game             HubGame
-	Players          map[string]*Client // playerName -> client
-	TeamAssignments  map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
-	mutex            sync.RWMutex
-	turnTimer        *time.Timer
-	turnTimerStop    chan struct{}
-	cleanupTimer     *time.Timer
-	disconnectTimers map[string]*time.Timer // playerName -> reconnect grace period timer
+	ID                  string
+	GameMode            types.GameMode
+	MaxPlayers          int
+	Config              GameConfig
+	Game                HubGame
+	Players             map[string]*Client // playerName -> client
+	TeamAssignments     map[string]int     // playerName -> teamNumber (1 or 2), 2v2 only
+	mutex               sync.RWMutex
+	turnTimer           *time.Timer
+	turnTimerStop       chan struct{}
+	cleanupTimer        *time.Timer
+	disconnectTimers    map[string]*time.Timer // playerName -> reconnect grace period timer
+	disconnectDeadlines map[string]time.Time   // playerName -> when grace period expires
 }
 
 // Hub maintains active clients and game rooms
@@ -285,8 +286,21 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 
 	// Reconnection: player name already exists in this game (includes nil = disconnected)
 	if oldClient, exists := room.Players[playerName]; exists {
-		room.Players[playerName] = client
 		gameInProgress := room.Game != nil
+
+		// Detect if the game was paused (only 1 connected player before this reconnect).
+		wasGamePaused := false
+		if gameInProgress {
+			connectedBefore := 0
+			for name, c := range room.Players {
+				if name != playerName && c != nil {
+					connectedBefore++
+				}
+			}
+			wasGamePaused = connectedBefore == 1
+		}
+
+		room.Players[playerName] = client
 
 		// Cancel any pending disconnect grace period timer.
 		if room.disconnectTimers != nil {
@@ -294,6 +308,9 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 				t.Stop()
 				delete(room.disconnectTimers, playerName)
 			}
+		}
+		if room.disconnectDeadlines != nil {
+			delete(room.disconnectDeadlines, playerName)
 		}
 
 		// Collect waiting-room payload data while still holding room.mutex.
@@ -341,6 +358,11 @@ func (h *Hub) handleJoinGame(client *Client, payload interface{}) {
 			h.sendReconnectState(gameID, playerName)
 			// Broadcast updated state to all so opponents see player is back
 			h.broadcastGameStateToAll(gameID)
+			// If the game was paused (sole player waiting), resume turns now.
+			if wasGamePaused {
+				h.autoDrawAndBroadcast(gameID)
+				h.startTurnTimer(gameID)
+			}
 		} else {
 			client.SendMessage(MsgPlayerJoined, waitingPayload)
 		}
@@ -858,12 +880,43 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 	if room.disconnectTimers == nil {
 		room.disconnectTimers = make(map[string]*time.Timer)
 	}
+	if room.disconnectDeadlines == nil {
+		room.disconnectDeadlines = make(map[string]time.Time)
+	}
 	if t, ok := room.disconnectTimers[playerName]; ok {
 		t.Stop()
 	}
+	deadline := time.Now().Add(disconnectGracePeriod)
 	room.disconnectTimers[playerName] = time.AfterFunc(disconnectGracePeriod, func() {
 		h.finalizePlayerDisconnection(gameID, playerName)
 	})
+	room.disconnectDeadlines[playerName] = deadline
+
+	// Count connected (non-nil) players to detect if only 1 remains and the game should pause.
+	connectedCount := 0
+	for _, c := range room.Players {
+		if c != nil {
+			connectedCount++
+		}
+	}
+
+	// Collect waiting payload while still holding the lock.
+	var waitingPayload *WaitingForReconnectPayload
+	if connectedCount == 1 {
+		disconnectedNames := make([]string, 0, len(room.disconnectDeadlines))
+		minRemaining := disconnectGracePeriod
+		for name, dl := range room.disconnectDeadlines {
+			disconnectedNames = append(disconnectedNames, name)
+			if r := time.Until(dl); r < minRemaining {
+				minRemaining = r
+			}
+		}
+		waitingPayload = &WaitingForReconnectPayload{
+			DisconnectedPlayers: disconnectedNames,
+			SecsUntilGameEnds:   max(0, int(minRemaining.Seconds())),
+		}
+	}
+
 	room.mutex.Unlock()
 
 	h.broadcastToGame(gameID, MsgError, ErrorPayload{
@@ -874,7 +927,11 @@ func (h *Hub) handlePlayerDisconnection(gameID, playerName string) {
 		GracePeriodSecs: int(disconnectGracePeriod.Seconds()),
 	})
 
-	if activePlayerRemains {
+	if waitingPayload != nil {
+		// Only 1 player remains connected — pause the game and notify them.
+		h.stopTurnTimer(gameID)
+		h.broadcastToGame(gameID, MsgWaitingForReconnect, *waitingPayload)
+	} else if activePlayerRemains {
 		h.autoDrawAndBroadcast(gameID)
 		h.startTurnTimer(gameID)
 	} else if !wasTheirTurn {

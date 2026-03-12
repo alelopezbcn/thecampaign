@@ -320,6 +320,15 @@
         </div>
 
 
+        <!-- Waiting for Reconnect Overlay (shown to sole connected player) -->
+        <div id="waiting-reconnect-modal" class="waiting-reconnect-modal hidden">
+            <div class="waiting-reconnect-content">
+                <div class="waiting-reconnect-header">&#9203; Waiting for Opponents</div>
+                <div id="waiting-reconnect-players" class="waiting-reconnect-players"></div>
+                <div class="waiting-reconnect-timer">Game ends in <span id="waiting-reconnect-countdown">--</span></div>
+            </div>
+        </div>
+
         <!-- Resurrection Notification Modal (active player only) -->
         <div id="resurrection-notification-modal" class="resurrection-notification-modal hidden">
             <div class="resurrection-notification-content">
@@ -348,6 +357,15 @@
             </div>
         </div>
 
+
+        <!-- Ambush Notification Modal (attacker + defender only) -->
+        <div id="ambush-notification-modal" class="ambush-notification-modal hidden">
+            <div class="ambush-notification-content">
+                <div class="ambush-notification-header">&#9888; Ambush!</div>
+                <div id="ambush-notification-body" class="ambush-notification-body"></div>
+                <button id="ambush-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
 
         <!-- Game Settings Modal -->
         <div id="game-settings-modal" class="modal hidden">
