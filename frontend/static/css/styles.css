@@ -2386,6 +2386,13 @@ body {
     border-bottom: none;
 }
 
+/* Wrapper that groups the phase badge and skip button on the right side of the header row */
+.phase-badge-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Phase badge strip — sits in the player board header row */
 .phase-badge {
     display: flex;

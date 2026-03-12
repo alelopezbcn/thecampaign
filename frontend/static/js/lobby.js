@@ -188,7 +188,6 @@ function setupEventListeners() {
 
     // Game screen actions
     document.getElementById('skip-phase-btn').addEventListener('click', handleSkipPhase);
-    document.getElementById('end-turn-btn').addEventListener('click', () => sendAction('end_turn'));
     document.getElementById('endturn-popup-btn').addEventListener('click', () => {
         clearEndTurnCountdown();
         sendAction('end_turn');
@@ -314,14 +313,7 @@ function handleGlobalKeyboard(e) {
 }
 
 function handleSkipPhase() {
-    const status = gameState.currentState;
-    // If we're in the last phase (endturn), end the turn instead
-    if (status && status.current_action === 'endturn') {
-        clearEndTurnCountdown();
-        sendAction('end_turn');
-    } else {
-        sendAction('skip_phase');
-    }
+    sendAction('skip_phase');
 }
 
 // Screen management

@@ -107,7 +107,6 @@ func TestGame_ExecuteAction(t *testing.T) {
 		mockPlayer1 := mocks.NewMockPlayer(ctrl)
 		mockPlayer2 := mocks.NewMockPlayer(ctrl)
 		mockAction := mocks.NewMockGameAction(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
 
 		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 		actionResult := &gameactions.Result{Action: types.LastActionDraw}
@@ -120,14 +119,10 @@ func TestGame_ExecuteAction(t *testing.T) {
 		}, nil)
 		mockAction.EXPECT().NextPhase().Return(types.PhaseTypeAttack)
 
-		// nextAction expectations for PhaseTypeAttack
+		// nextAction expectations
 		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
 		mockPlayer1.EXPECT().CanTradeCards().Return(false)
 		mockPlayer1.EXPECT().CanForgeWeapons().Return(false)
-		// HasCardTypeInHand[Catapult/BloodRain/Harpoon] each call Hand().ShowCards()
-		mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()
-		mockPlayer1.EXPECT().CanAttack().Return(true)
 
 		g := &game{
 			board:       &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
@@ -140,49 +135,6 @@ func TestGame_ExecuteAction(t *testing.T) {
 		assert.Equal(t, expectedStatus, status)
 		assert.Equal(t, types.LastActionDraw, g.lastResult.Action)
 		assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-	})
-
-	t.Run("Success skips phases when player has no capabilities", func(t *testing.T) {
-		ctrl := gomock.NewController(t)
-		defer ctrl.Finish()
-
-		mockPlayer1 := mocks.NewMockPlayer(ctrl)
-		mockPlayer2 := mocks.NewMockPlayer(ctrl)
-		mockAction := mocks.NewMockGameAction(ctrl)
-		mockHand := mocks.NewMockHand(ctrl)
-
-		expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
-		actionResult := &gameactions.Result{Action: types.LastActionDraw}
-
-		mockPlayer1.EXPECT().Name().Return("Player1").AnyTimes()
-		mockAction.EXPECT().PlayerName().Return("Player1").AnyTimes()
-		mockAction.EXPECT().Validate(gomock.Any()).Return(nil)
-		mockAction.EXPECT().Execute(gomock.Any()).Return(actionResult, func() gamestatus.GameStatus {
-			return expectedStatus
-		}, nil)
-		mockAction.EXPECT().NextPhase().Return(types.PhaseTypeAttack)
-
-		// nextAction: no attack, no spy/steal, no buy -> skips to construct
-		mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
-		mockPlayer1.EXPECT().CanTradeCards().Return(false)
-		mockPlayer1.EXPECT().CanForgeWeapons().Return(false)
-		// HasCardTypeInHand[Catapult/BloodRain/Harpoon/Spy/Thief] each call Hand().ShowCards()
-		mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
-		mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()
-		mockPlayer1.EXPECT().CanAttack().Return(false)
-		mockPlayer1.EXPECT().CanBuy().Return(false)
-		mockPlayer1.EXPECT().CanConstruct().Return(true)
-
-		g := &game{
-			board:       &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-			currentTurn: 0,
-		}
-
-		status, err := g.ExecuteAction(mockAction)
-
-		assert.NoError(t, err)
-		assert.Equal(t, expectedStatus, status)
-		assert.Equal(t, types.PhaseTypeConstruct, g.currentAction)
 	})
 }
 

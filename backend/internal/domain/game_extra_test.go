@@ -224,7 +224,6 @@ func TestGame_ExecuteAction_TracksKillsAndDamage(t *testing.T) {
 	mockPlayer1 := mocks.NewMockPlayer(ctrl)
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
 	mockAction := mocks.NewMockGameAction(ctrl)
-	mockHand := mocks.NewMockHand(ctrl)
 
 	expectedStatus := gamestatus.GameStatus{CurrentPlayer: "Player1"}
 	actionResult := &gameactions.Result{
@@ -246,9 +245,6 @@ func TestGame_ExecuteAction_TracksKillsAndDamage(t *testing.T) {
 	mockPlayer1.EXPECT().HasWarriorsInHand().Return(false)
 	mockPlayer1.EXPECT().CanTradeCards().Return(false)
 	mockPlayer1.EXPECT().CanForgeWeapons().Return(false)
-	mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()
-	mockPlayer1.EXPECT().CanAttack().Return(true)
 
 	g := &game{
 		board:        &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
@@ -815,46 +811,52 @@ func TestGame_AutoMoveWarriorsToField_StopsAfterThree(t *testing.T) {
 // ──────────────────────────────────────────────────────────────────────────────
 
 // setupNextActionPlayer creates a mock player with the 3 always-called expectations.
-func setupNextActionPlayer(ctrl *gomock.Controller, name string) (*mocks.MockPlayer, *mocks.MockHand) {
+func setupNextActionPlayer(ctrl *gomock.Controller, name string) *mocks.MockPlayer {
 	p := mocks.NewMockPlayer(ctrl)
 	p.EXPECT().Name().Return(name).AnyTimes()
 	p.EXPECT().HasWarriorsInHand().Return(false)
 	p.EXPECT().CanTradeCards().Return(false)
 	p.EXPECT().CanForgeWeapons().Return(false)
-	h := mocks.NewMockHand(ctrl)
-	p.EXPECT().Hand().Return(h).AnyTimes()
-	return p, h
+	return p
 }
 
-func TestGame_nextAction_Attack_CanAttack(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-	// Empty hand → all HasCardTypeInHand checks return false
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()
-	mockPlayer1.EXPECT().CanAttack().Return(true)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
+func TestGame_nextAction_SetsExpectedPhase(t *testing.T) {
+	phases := []types.PhaseType{
+		types.PhaseTypeAttack,
+		types.PhaseTypeBuy,
+		types.PhaseTypeConstruct,
+		types.PhaseTypeEndTurn,
 	}
+	for _, phase := range phases {
+		t.Run(string(phase), func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
 
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
+			mockPlayer1 := setupNextActionPlayer(ctrl, "Player1")
+			mockPlayer2 := mocks.NewMockPlayer(ctrl)
+
+			expected := gamestatus.GameStatus{}
+			g := &game{
+				board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
+				currentTurn:       0,
+				eliminatedPlayers: make(map[int]bool),
+			}
+
+			g.nextAction(phase, func() gamestatus.GameStatus { return expected })
+			assert.Equal(t, phase, g.currentAction)
+		})
+	}
 }
 
 func TestGame_nextAction_SpySteal_HasSpy(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
+	mockPlayer1 := setupNextActionPlayer(ctrl, "Player1")
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockHand := mocks.NewMockHand(ctrl)
 	mockSpy := mocks.NewMockSpy(ctrl)
-	// Spy card in hand: HasCardTypeInHand[Spy] returns true
+	mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
 	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockSpy}).AnyTimes()
 
 	expected := gamestatus.GameStatus{}
@@ -868,84 +870,25 @@ func TestGame_nextAction_SpySteal_HasSpy(t *testing.T) {
 	assert.Equal(t, types.PhaseTypeSpySteal, g.currentAction)
 }
 
-func TestGame_nextAction_Buy_CanBuy(t *testing.T) {
+func TestGame_nextAction_SpySteal_AutoSkipsToByWhenNoCards(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	mockPlayer1, _ := setupNextActionPlayer(ctrl, "Player1")
+	mockPlayer1 := setupNextActionPlayer(ctrl, "Player1")
 	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-	mockPlayer1.EXPECT().CanBuy().Return(true)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-	}
-
-	g.nextAction(types.PhaseTypeBuy, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeBuy, g.currentAction)
-}
-
-func TestGame_nextAction_Construct_CanConstruct(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, _ := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-	mockPlayer1.EXPECT().CanConstruct().Return(true)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1, // no allies, so ally castle check skipped
-	}
-
-	g.nextAction(types.PhaseTypeConstruct, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeConstruct, g.currentAction)
-}
-
-func TestGame_nextAction_EndTurn(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, _ := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-	}
-
-	g.nextAction(types.PhaseTypeEndTurn, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeEndTurn, g.currentAction)
-}
-
-func TestGame_nextAction_SkipToEndTurn_NothingAvailable(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
+	mockHand := mocks.NewMockHand(ctrl)
+	mockPlayer1.EXPECT().Hand().Return(mockHand).AnyTimes()
 	mockHand.EXPECT().ShowCards().Return([]cards.Card{}).AnyTimes()
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-	mockPlayer1.EXPECT().CanBuy().Return(false)
-	mockPlayer1.EXPECT().CanConstruct().Return(false)
 
 	expected := gamestatus.GameStatus{}
 	g := &game{
 		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
 		currentTurn:       0,
 		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
 	}
 
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeEndTurn, g.currentAction)
+	g.nextAction(types.PhaseTypeSpySteal, func() gamestatus.GameStatus { return expected })
+	assert.Equal(t, types.PhaseTypeBuy, g.currentAction)
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -1018,226 +961,6 @@ func TestGame_Status_2v2_CoversAllyFields(t *testing.T) {
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
-// nextAction — special card branches (Catapult, BloodRain, Resurrection)
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGame_nextAction_Attack_CatapultCanBombCastle(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockCatapult := mocks.NewMockCatapult(ctrl)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockCatapult}).AnyTimes()
-
-	mockCastle := mocks.NewMockCastle(ctrl)
-	mockCastle.EXPECT().CanBeAttacked().Return(true)
-	mockPlayer2.EXPECT().Castle().Return(mockCastle)
-
-	// canPlayPhase becomes true via catapult before CanAttack is reached in the condition
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
-	}
-
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-}
-
-func TestGame_nextAction_Attack_BloodRainWithEnemyWarriors(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockBloodRain := mocks.NewMockBloodRain(ctrl)
-	// MockBloodRain won't type-assert as Catapult → catapult check false
-	// MockBloodRain will type-assert as BloodRain → bloodrain check true
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockBloodRain}).AnyTimes()
-
-	// Enemy has warriors on field
-	mockWarrior := mocks.NewMockWarrior(ctrl)
-	mockField := mocks.NewMockField(ctrl)
-	mockField.EXPECT().Warriors().Return([]cards.Warrior{mockWarrior})
-	mockPlayer2.EXPECT().Field().Return(mockField)
-
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
-	}
-
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-}
-
-func TestGame_nextAction_Attack_ResurrectionWithCemetery(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockResurrection := mocks.NewMockResurrection(ctrl)
-	// MockResurrection won't match Catapult/BloodRain/Harpoon/Treason/Ambush checks
-	// MockResurrection will match Resurrection check
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockResurrection}).AnyTimes()
-
-	mockCemetery := mocks.NewMockCemetery(ctrl)
-	mockCemetery.EXPECT().Count().Return(1)
-
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}, cemetery: mockCemetery},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
-	}
-
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-}
-
-func TestGame_nextAction_Attack_HarpoonWithEnemyDragon(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockHarpoon := mocks.NewMockHarpoon(ctrl)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockHarpoon}).AnyTimes()
-
-	mockDragon := mocks.NewMockWarrior(ctrl)
-	mockDragon.EXPECT().Type().Return(types.DragonWarriorType)
-
-	mockField := mocks.NewMockField(ctrl)
-	mockField.EXPECT().Warriors().Return([]cards.Warrior{mockDragon})
-	mockPlayer2.EXPECT().Field().Return(mockField)
-
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
-	}
-
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-}
-
-func TestGame_nextAction_Attack_TreasonWithWeakWarrior(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockTreason := mocks.NewMockTreason(ctrl)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockTreason}).AnyTimes()
-
-	mockWeakWarrior := mocks.NewMockWarrior(ctrl)
-	mockWeakWarrior.EXPECT().Health().Return(cards.TreasonMaxHP) // exactly at limit
-
-	mockField := mocks.NewMockField(ctrl)
-	mockField.EXPECT().Warriors().Return([]cards.Warrior{mockWeakWarrior})
-	mockPlayer2.EXPECT().Field().Return(mockField)
-
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
-	}
-
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-}
-
-func TestGame_nextAction_Attack_AmbushNoSlotOnField(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockAmbush := mocks.NewMockAmbush(ctrl)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockAmbush}).AnyTimes()
-
-	// Player's field has no ambush slot card → canPlayPhase = true
-	mockField := mocks.NewMockField(ctrl)
-	mockField.EXPECT().SlotCards().Return(nil)
-	mockPlayer1.EXPECT().Field().Return(mockField)
-
-	mockPlayer1.EXPECT().CanAttack().Return(false)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1,
-	}
-
-	g.nextAction(types.PhaseTypeAttack, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeAttack, g.currentAction)
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// nextAction — Construct fallback paths
-// ──────────────────────────────────────────────────────────────────────────────
-
-func TestGame_nextAction_Construct_FortressOnOwnConstructedCastle(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-
-	mockFortress := mocks.NewMockFortress(ctrl)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockFortress}).AnyTimes()
-
-	mockPlayer1.EXPECT().CanConstruct().Return(false)
-
-	// Own castle: constructed and not protected → fortress can be played
-	// Castle() is called twice: once for IsConstructed(), once for IsProtected()
-	mockCastle := mocks.NewMockCastle(ctrl)
-	mockCastle.EXPECT().IsConstructed().Return(true)
-	mockCastle.EXPECT().IsProtected().Return(false)
-	mockPlayer1.EXPECT().Castle().Return(mockCastle).Times(2)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode1v1, // no allies
-	}
-
-	g.nextAction(types.PhaseTypeConstruct, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeConstruct, g.currentAction)
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
 // nextActiveTurnPlayer — return "" when all players are out
 // ──────────────────────────────────────────────────────────────────────────────
 
@@ -1282,40 +1005,4 @@ func TestGame_getStatus_LastResult_AllBranches(t *testing.T) {
 	// Must not panic; all nil-check branches in getStatus are exercised
 	status := g.Status(alice)
 	assert.NotEmpty(t, status.CurrentPlayer)
-}
-
-func TestGame_nextAction_Construct_AllyHasConstructedCastle_PlayerHasResource(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	// 2v2: player1 (idx 0) and player3 (idx 2) are allies
-	mockPlayer1, mockHand := setupNextActionPlayer(ctrl, "Player1")
-	mockPlayer2 := mocks.NewMockPlayer(ctrl)
-	mockPlayer3 := mocks.NewMockPlayer(ctrl)
-	mockPlayer4 := mocks.NewMockPlayer(ctrl)
-	mockPlayer2.EXPECT().Name().Return("Player2").AnyTimes()
-	mockPlayer3.EXPECT().Name().Return("Player3").AnyTimes()
-	mockPlayer4.EXPECT().Name().Return("Player4").AnyTimes()
-
-	mockResource := mocks.NewMockResource(ctrl)
-	mockHand.EXPECT().ShowCards().Return([]cards.Card{mockResource}).AnyTimes()
-
-	mockPlayer1.EXPECT().CanConstruct().Return(false)
-
-	// Ally (Player3 at idx 2) has a constructed castle
-	mockAllyCastle := mocks.NewMockCastle(ctrl)
-	mockAllyCastle.EXPECT().IsConstructed().Return(true)
-	mockPlayer3.EXPECT().Castle().Return(mockAllyCastle)
-
-	expected := gamestatus.GameStatus{}
-	g := &game{
-		board:             &testBoardImpl{players: []board.Player{mockPlayer1, mockPlayer2, mockPlayer3, mockPlayer4}},
-		currentTurn:       0,
-		eliminatedPlayers: make(map[int]bool),
-		mode:              types.GameMode2v2,
-		teams:             map[int][]int{1: {0, 2}, 2: {1, 3}},
-	}
-
-	g.nextAction(types.PhaseTypeConstruct, func() gamestatus.GameStatus { return expected })
-	assert.Equal(t, types.PhaseTypeConstruct, g.currentAction)
 }

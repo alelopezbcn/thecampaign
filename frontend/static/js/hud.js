@@ -5,15 +5,18 @@ function updateTurnIndicator() {
 function updateActionButtons() {
     const isYourTurn = gameState.isYourTurn;
     const status = gameState.currentState;
+    const skipBtn = document.getElementById('skip-phase-btn');
 
     // Disable all action buttons first
-    document.querySelectorAll('.btn-action, #skip-phase-btn, #end-turn-btn').forEach(btn => {
+    document.querySelectorAll('.btn-action').forEach(btn => {
         btn.disabled = true;
     });
 
-    // Hide endturn popup by default
+    // Hide endturn popup and skip button by default
     const endturnPopup = document.getElementById('endturn-popup');
     endturnPopup.classList.add('hidden');
+    skipBtn.classList.add('hidden');
+    skipBtn.disabled = true;
 
     if (!isYourTurn || !status) {
         clearEndTurnCountdown();
@@ -22,7 +25,6 @@ function updateActionButtons() {
 
     // In endturn phase, show the popup and start auto-countdown
     if (status.current_action === 'endturn') {
-        document.getElementById('end-turn-btn').disabled = false;
         endturnPopup.classList.remove('hidden');
         if (!endTurnCountdownTimer) {
             startEndTurnCountdown(status.next_turn_player);
@@ -33,9 +35,18 @@ function updateActionButtons() {
     // Left endturn phase while still our turn (shouldn't normally happen)
     clearEndTurnCountdown();
 
-    // Skip Phase and End Turn - always enabled during your turn
-    document.getElementById('skip-phase-btn').disabled = false;
-    document.getElementById('end-turn-btn').disabled = false;
+    // Show and style the skip button for the current phase
+    skipBtn.classList.remove('hidden');
+    skipBtn.disabled = false;
+    if (status.current_action === 'construct') {
+        skipBtn.textContent = 'End';
+        skipBtn.classList.remove('btn-skip');
+        skipBtn.classList.add('btn-danger');
+    } else {
+        skipBtn.textContent = 'Skip';
+        skipBtn.classList.remove('btn-danger');
+        skipBtn.classList.add('btn-skip');
+    }
 }
 
 function updatePhaseBadge() {
