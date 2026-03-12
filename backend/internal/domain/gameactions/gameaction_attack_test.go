@@ -427,6 +427,12 @@ func setupAmbushAttack(t *testing.T, ctrl *gomock.Controller, effect types.Ambus
 	mockCardObs.EXPECT().OnCardMovedToPile(ambush)
 	ambush.EXPECT().Effect().Return(effect)
 
+	// snapshotPreAmbush reads warrior types and HP before any mutation.
+	mockAttackerWarrior.EXPECT().Type().Return(types.KnightWarriorType).AnyTimes()
+	mockAttackerWarrior.EXPECT().Health().Return(15).AnyTimes()
+	mockTargetWarrior.EXPECT().Type().Return(types.ArcherWarriorType).AnyTimes()
+	mockTargetWarrior.EXPECT().Health().Return(20).AnyTimes()
+
 	return action, mockGame, mockPlayer1, mockPlayer2, mockDefenderField, mockWeapon, ambush, mockAttackerWarrior
 }
 
@@ -465,6 +471,7 @@ func TestAttackAction_Execute_AmbushStealWeapon(t *testing.T) {
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
 	mockAttackerWarrior.EXPECT().Kills().Return(0)
+	mockWeapon.EXPECT().DamageAmount().Return(3)
 	mockPlayer1.EXPECT().Name().Return("Player1")
 	mockPlayer1.EXPECT().RemoveFromHand("weaponID").Return([]cards.Card{mockWeapon}, nil)
 	mockPlayer2.EXPECT().ForceAddCard(mockWeapon)
@@ -488,6 +495,7 @@ func TestAttackAction_Execute_AmbushReflectDamage(t *testing.T) {
 	mockAttackerWarrior.EXPECT().Kills().Return(0)
 	// MultiplierFactor is called with the ORIGINAL target (mockTargetWarrior from setupAmbushAttack)
 	mockWeapon.EXPECT().MultiplierFactor(gomock.Any()).Return(2)
+	mockWeapon.EXPECT().DamageAmount().Return(3)
 	mockAttackerWarrior.EXPECT().ReceiveDamage(mockWeapon, 2)
 	mockAttackerWarrior.EXPECT().String().Return("Knight (10)")
 	mockPlayer1.EXPECT().Name().Return("Player1")
@@ -598,6 +606,12 @@ func TestAttackAction_Execute_AmbushDrainLife(t *testing.T) {
 	mockGame.EXPECT().EventHandler().Return(calmEvent())
 	mockWeapon.EXPECT().Type().Return(types.SwordWeaponType)
 	mockAttackerWarrior.EXPECT().Kills().Return(0)
+
+	// snapshotPreAmbush reads warrior types and HP before any mutation.
+	mockAttackerWarrior.EXPECT().Type().Return(types.KnightWarriorType).AnyTimes()
+	mockAttackerWarrior.EXPECT().Health().Return(15).AnyTimes()
+	mockTargetWarrior.EXPECT().Type().Return(types.ArcherWarriorType).AnyTimes()
+	mockTargetWarrior.EXPECT().Health().Return(20).AnyTimes()
 
 	// DrainLife heals the target equal to weapon damage × multiplier
 	mockWeapon.EXPECT().MultiplierFactor(mockTargetWarrior).Return(1)

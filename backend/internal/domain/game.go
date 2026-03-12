@@ -908,6 +908,15 @@ func (g *game) getStatus(viewer board.Player,
 		gameStatusDTO.LastAttackTargetPlayer = a.TargetPlayer
 		gameStatusDTO.AmbushEffect = a.AmbushEffect
 		gameStatusDTO.AmbushAttackerName = a.AmbushAttackerName
+		gameStatusDTO.AmbushAttackerWarriorType = a.AmbushAttackerWarriorType
+		gameStatusDTO.AmbushAttackerHPBefore = a.AmbushAttackerHPBefore
+		gameStatusDTO.AmbushAttackerHPAfter = a.AmbushAttackerHPAfter
+		gameStatusDTO.AmbushAttackerDied = a.AmbushAttackerDied
+		gameStatusDTO.AmbushTargetWarriorType = a.AmbushTargetWarriorType
+		gameStatusDTO.AmbushTargetHPBefore = a.AmbushTargetHPBefore
+		gameStatusDTO.AmbushTargetHPAfter = a.AmbushTargetHPAfter
+		gameStatusDTO.AmbushWeaponType = a.AmbushWeaponType
+		gameStatusDTO.AmbushDamageAmount = a.AmbushDamageAmount
 		gameStatusDTO.ChampionsBountyEarner = a.ChampionsBountyEarner
 		gameStatusDTO.ChampionsBountyCards = a.ChampionsBountyCards
 	}

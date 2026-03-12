@@ -145,6 +145,36 @@ func TestNewGameStatus_AmbushTriggered_SetForThirdPlayer(t *testing.T) {
 	assert.Equal(t, "Player2", gs.AmbushTriggered.DefenderName)
 }
 
+func TestNewGameStatus_AmbushTriggered_DetailFieldsPassedThrough(t *testing.T) {
+	dto := minimalDTO("Player1")
+	dto.LastAction = types.LastActionAmbush
+	dto.AmbushAttackerName = "Player1"
+	dto.LastAttackTargetPlayer = "Player2"
+	dto.AmbushEffect = types.AmbushEffectReflectDamage
+	dto.AmbushAttackerWarriorType = "Knight"
+	dto.AmbushAttackerHPBefore = 15
+	dto.AmbushAttackerHPAfter = 8
+	dto.AmbushAttackerDied = false
+	dto.AmbushTargetWarriorType = "Archer"
+	dto.AmbushTargetHPBefore = 20
+	dto.AmbushTargetHPAfter = 20
+	dto.AmbushWeaponType = "Sword"
+	dto.AmbushDamageAmount = 7
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.NotNil(t, gs.AmbushTriggered)
+	assert.Equal(t, "Knight", gs.AmbushTriggered.AttackerWarriorType)
+	assert.Equal(t, 15, gs.AmbushTriggered.AttackerHPBefore)
+	assert.Equal(t, 8, gs.AmbushTriggered.AttackerHPAfter)
+	assert.False(t, gs.AmbushTriggered.AttackerDied)
+	assert.Equal(t, "Archer", gs.AmbushTriggered.TargetWarriorType)
+	assert.Equal(t, 20, gs.AmbushTriggered.TargetHPBefore)
+	assert.Equal(t, 20, gs.AmbushTriggered.TargetHPAfter)
+	assert.Equal(t, "Sword", gs.AmbushTriggered.WeaponType)
+	assert.Equal(t, 7, gs.AmbushTriggered.DamageAmount)
+}
+
 func TestNewGameStatus_AmbushTriggered_NilWhenLastActionDiffers(t *testing.T) {
 	dto := minimalDTO("Player1")
 	dto.LastAction = types.LastActionAttack // different last action

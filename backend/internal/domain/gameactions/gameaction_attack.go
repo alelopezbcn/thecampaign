@@ -296,6 +296,9 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 		},
 	}
 
+	// Snapshot pre-mutation state for the notification.
+	a.snapshotPreAmbush(result.Attack, effectiveWeapon, weaponType)
+
 	switch effect {
 	case types.AmbushEffectReflectDamage:
 		// Reflected damage equals the exact amount the original target would have received.
@@ -304,13 +307,22 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 		if targetWarrior, ok := a.target.(cards.Warrior); ok {
 			multiplier = effectiveWeapon.MultiplierFactor(targetWarrior)
 		}
+		result.Attack.AmbushDamageAmount = effectiveWeapon.DamageAmount() * multiplier
 		a.attacker.ReceiveDamage(effectiveWeapon, multiplier)
+		result.Attack.AmbushAttackerHPAfter = a.attacker.Health()
+		result.Attack.AmbushAttackerDied = a.attacker.Health() == 0
+		if tw, ok := a.target.(cards.Warrior); ok {
+			result.Attack.AmbushTargetHPAfter = tw.Health()
+		}
 		g.AddHistory(fmt.Sprintf("%s's attack was reflected — %s takes damage",
 			a.currentPlayer.Name(), a.attacker.String()), types.CategoryAction)
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 
 	case types.AmbushEffectCancelAttack:
 		// Attack cancelled; weapon discarded.
+		if tw, ok := a.target.(cards.Warrior); ok {
+			result.Attack.AmbushTargetHPAfter = tw.Health()
+		}
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
 		g.AddHistory(fmt.Sprintf("%s's attack was cancelled by an ambush",
@@ -318,6 +330,10 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 
 	case types.AmbushEffectStealWeapon:
 		// Weapon transferred to the defender's hand (bypasses hand limit — forced effect).
+		result.Attack.AmbushDamageAmount = effectiveWeapon.DamageAmount()
+		if tw, ok := a.target.(cards.Warrior); ok {
+			result.Attack.AmbushTargetHPAfter = tw.Health()
+		}
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 		a.targetPlayer.ForceAddCard(a.weapon)
 		g.AddHistory(fmt.Sprintf("%s's weapon was stolen by an ambush",
@@ -329,7 +345,10 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 		// dead()) before the heal can run, and the net behaviour is the same as absorbing the hit.
 		if warrior, ok := a.target.(cards.Warrior); ok {
 			multiplier := effectiveWeapon.MultiplierFactor(warrior)
-			warrior.HealBy(effectiveWeapon.DamageAmount() * multiplier)
+			healAmount := effectiveWeapon.DamageAmount() * multiplier
+			result.Attack.AmbushDamageAmount = healAmount
+			warrior.HealBy(healAmount)
+			result.Attack.AmbushTargetHPAfter = warrior.Health()
 		}
 		a.currentPlayer.RemoveFromHand(a.weaponID)
 		a.weapon.GetCardMovedToPileObserver().OnCardMovedToPile(a.weapon)
@@ -339,6 +358,11 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 	case types.AmbushEffectInstantKill:
 		// The warrior who performed the attack is instantly killed.
 		a.attacker.KillByAmbush()
+		result.Attack.AmbushAttackerHPAfter = a.attacker.Health()
+		result.Attack.AmbushAttackerDied = a.attacker.Health() == 0
+		if tw, ok := a.target.(cards.Warrior); ok {
+			result.Attack.AmbushTargetHPAfter = tw.Health()
+		}
 		g.AddHistory(fmt.Sprintf("%s triggered an ambush — %s was instantly killed!",
 			a.currentPlayer.Name(), a.attacker.String()), types.CategoryAction)
 		a.currentPlayer.RemoveFromHand(a.weaponID)
@@ -346,4 +370,15 @@ func (a *attackAction) applyAmbushEffect(effect types.AmbushEffect, effectiveWea
 	}
 
 	return result
+}
+
+// snapshotPreAmbush captures warrior names and HP before any ambush mutation runs.
+func (a *attackAction) snapshotPreAmbush(d *AttackDetails, effectiveWeapon cards.Weapon, weaponType types.WeaponType) {
+	d.AmbushAttackerWarriorType = string(a.attacker.Type())
+	d.AmbushAttackerHPBefore = a.attacker.Health()
+	d.AmbushWeaponType = string(weaponType)
+	if tw, ok := a.target.(cards.Warrior); ok {
+		d.AmbushTargetWarriorType = string(tw.Type())
+		d.AmbushTargetHPBefore = tw.Health()
+	}
 }

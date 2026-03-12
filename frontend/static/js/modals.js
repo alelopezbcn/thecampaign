@@ -301,7 +301,7 @@ function showChampionsBountyModal(notification) {
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    }, 7000);
 }
 
 function hideChampionsBountyModal() {}
@@ -360,7 +360,7 @@ function showResurrectionModal(notification) {
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    }, 7000);
 }
 
 function hideResurrectionModal() {
@@ -374,47 +374,107 @@ function hideResurrectionModal() {
 
 let ambushNotificationTimer = null;
 
+// Returns HTML detail rows for the ambush modal, per effect type.
+function buildAmbushDetailRows(a) {
+    const effect = a.effect_display;
+    const weaponStr = a.weapon_type ? `${a.weapon_type} (${a.damage_amount} dmg)` : '';
+
+    function hpChange(before, after, died) {
+        if (died) return `<span class="ambush-detail-value died">${before} HP &#8594; DEAD</span>`;
+        if (after > before) return `<span class="ambush-detail-value healed">${before} HP &#8594; ${after} HP (+${after - before})</span>`;
+        if (after < before) return `<span class="ambush-detail-value">${before} HP &#8594; ${after} HP</span>`;
+        return `<span class="ambush-detail-value">${before} HP (unchanged)</span>`;
+    }
+
+    function row(label, valueHtml) {
+        return `<div class="ambush-detail-row"><span class="ambush-detail-label">${label}</span>${valueHtml}</div>`;
+    }
+
+    let rows = '';
+
+    if (effect === 'Reflect Damage') {
+        if (weaponStr)               rows += row('Weapon', `<span class="ambush-detail-value">${weaponStr}</span>`);
+        if (a.attacker_warrior_type) rows += row(`${a.attacker_warrior_type} (attacker)`, hpChange(a.attacker_hp_before, a.attacker_hp_after, a.attacker_died));
+        if (a.target_warrior_type)   rows += row(`${a.target_warrior_type} (target)`, `<span class="ambush-detail-value">${a.target_hp_before} HP (unchanged)</span>`);
+
+    } else if (effect === 'Attack Cancelled') {
+        if (weaponStr)               rows += row('Weapon discarded', `<span class="ambush-detail-value">${weaponStr}</span>`);
+        if (a.attacker_warrior_type) rows += row('Attacker', `<span class="ambush-detail-value">${a.attacker_warrior_type} (${a.attacker_hp_before} HP)</span>`);
+        if (a.target_warrior_type)   rows += row('Target',   `<span class="ambush-detail-value">${a.target_warrior_type} (${a.target_hp_before} HP)</span>`);
+
+    } else if (effect === 'Weapon Stolen') {
+        if (weaponStr)               rows += row('Weapon stolen', `<span class="ambush-detail-value">${weaponStr}</span>`);
+        rows += row('Now in hand of', `<span class="ambush-detail-value">${a.defender_name}</span>`);
+        if (a.attacker_warrior_type) rows += row('Attacker', `<span class="ambush-detail-value">${a.attacker_warrior_type} (${a.attacker_hp_before} HP)</span>`);
+
+    } else if (effect === 'Drain Life') {
+        if (weaponStr)             rows += row('Attack absorbed', `<span class="ambush-detail-value">${weaponStr}</span>`);
+        if (a.target_warrior_type) rows += row(`${a.target_warrior_type} (target)`, hpChange(a.target_hp_before, a.target_hp_after, false));
+
+    } else if (effect === 'Instant Kill') {
+        if (a.attacker_warrior_type) rows += row('Warrior killed', `<span class="ambush-detail-value died">${a.attacker_warrior_type} &#8594; DEAD</span>`);
+        if (weaponStr)               rows += row('Weapon discarded', `<span class="ambush-detail-value">${weaponStr}</span>`);
+    }
+
+    return rows ? `<div class="ambush-notification-details">${rows}</div>` : '';
+}
+
+// Returns a one-line summary for spectator toasts.
+function buildAmbushSpectatorMessage(a) {
+    const effect = a.effect_display;
+    const attWarrior = a.attacker_warrior_type || 'warrior';
+    const defWarrior = a.target_warrior_type   || 'warrior';
+    const dmg = a.damage_amount;
+
+    if (effect === 'Reflect Damage')   return a.attacker_died
+        ? `${a.attacker_name}'s ${attWarrior} was killed by the reflection`
+        : `${a.attacker_name}'s ${attWarrior} took ${dmg} reflected damage`;
+    if (effect === 'Attack Cancelled') return `${a.attacker_name}'s ${attWarrior} attack on ${a.defender_name}'s ${defWarrior} was cancelled`;
+    if (effect === 'Weapon Stolen')    return `${a.attacker_name}'s weapon was stolen and added to ${a.defender_name}'s hand`;
+    if (effect === 'Drain Life')       return `${a.defender_name}'s ${defWarrior} absorbed ${dmg} damage and healed`;
+    if (effect === 'Instant Kill')     return `${a.attacker_name}'s ${attWarrior} was instantly killed`;
+    return ambushEffectDescriptions[effect] || '';
+}
+
 function showAmbushTriggeredModal(ambushTriggered) {
     const effectDisplay = ambushTriggered.effect_display;
+    const colorClass = ambushEffectColorClass[effectDisplay] || '';
     const isInvolved = gameState.playerName === ambushTriggered.attacker_name ||
                        gameState.playerName === ambushTriggered.defender_name;
 
     if (isInvolved) {
         const modal = document.getElementById('ambush-notification-modal');
-        const textEl = document.getElementById('ambush-notification-text');
-        const effectEl = document.getElementById('ambush-notification-effect');
-        if (!modal || !textEl || !effectEl) return;
+        const body  = document.getElementById('ambush-notification-body');
+        if (!modal || !body) return;
 
         const isAttacker = gameState.playerName === ambushTriggered.attacker_name;
-        textEl.textContent = isAttacker
+        const roleText = isAttacker
             ? `${ambushTriggered.defender_name}'s ambush triggered on your attack!`
             : `Your ambush triggered against ${ambushTriggered.attacker_name}!`;
 
-        const colorClass = ambushEffectColorClass[effectDisplay] || '';
-        effectEl.className = 'ambush-notification-effect ambush-toast-effect ' + colorClass;
-        effectEl.textContent = effectDisplay;
+        body.innerHTML =
+            `<p class="ambush-notification-text">${roleText}</p>` +
+            `<p class="ambush-notification-effect ambush-toast-effect ${colorClass}">${effectDisplay}</p>` +
+            buildAmbushDetailRows(ambushTriggered);
 
         modal.classList.remove('hidden');
 
         if (ambushNotificationTimer) clearTimeout(ambushNotificationTimer);
-        ambushNotificationTimer = setTimeout(() => hideAmbushNotificationModal(), 6000);
+        ambushNotificationTimer = setTimeout(() => hideAmbushNotificationModal(), 8000);
         return;
     }
 
-    // Spectators: toast
+    // Spectators: enriched toast
     const container = document.getElementById('error-toast-container');
     if (!container) return;
-
-    const colorClass = ambushEffectColorClass[effectDisplay] || '';
-    const desc = ambushEffectDescriptions[effectDisplay] || '';
 
     const toast = document.createElement('div');
     toast.className = 'error-toast ambush-toast';
     toast.innerHTML =
         '<span class="error-toast-icon">&#9888;</span>' +
         '<div class="error-toast-content">' +
-            '<div class="error-toast-title">Ambush! &#8212; <span class="ambush-toast-effect ' + colorClass + '">' + effectDisplay + '</span></div>' +
-            '<div class="error-toast-message">' + desc + '</div>' +
+            `<div class="error-toast-title">Ambush! &#8212; <span class="ambush-toast-effect ${colorClass}">${effectDisplay}</span></div>` +
+            `<div class="error-toast-message">${buildAmbushSpectatorMessage(ambushTriggered)}</div>` +
         '</div>' +
         '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
     container.appendChild(toast);
@@ -422,7 +482,7 @@ function showAmbushTriggeredModal(ambushTriggered) {
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    }, 7000);
 }
 
 function hideAmbushNotificationModal() {
@@ -569,11 +629,11 @@ function showErrorToast(message) {
 
     container.appendChild(toast);
 
-    // Auto-remove after 5 seconds
+    // Auto-remove after 7 seconds
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-    }, 5000);
+    }, 7000);
 }
 
 // ===================== Event Banner + Notifications =====================
@@ -660,7 +720,7 @@ function showEventChangeToast(gs) {
     setTimeout(() => {
         toast.classList.add('hiding');
         setTimeout(() => toast.remove(), 300);
-    }, 4000);
+    }, 7000);
 }
 
 // Waiting for Reconnect Modal

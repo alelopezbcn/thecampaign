@@ -1,4 +1,4 @@
-name: Auto Tag and Deploy
+name: Deploy
 
 on:
   push:
