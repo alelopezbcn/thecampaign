@@ -5204,6 +5204,54 @@ body {
     font-weight: 600;
 }
 
+/* ===== Catapult Notification Modal (target player) ==================== */
+.catapult-notification-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10001;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.55);
+    animation: fadeIn 0.3s ease-out;
+}
+
+.catapult-notification-modal.hidden { display: none; }
+
+.catapult-notification-content {
+    background: linear-gradient(145deg, #1a0f00 0%, #3b2200 100%);
+    border: 2px solid rgba(255, 140, 0, 0.6);
+    border-radius: 16px;
+    padding: 24px 32px;
+    text-align: center;
+    box-shadow: 0 0 40px rgba(255, 140, 0, 0.35), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.35s ease-out;
+    min-width: 280px;
+    max-width: 380px;
+}
+
+.catapult-notification-header {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #fb923c;
+    margin-bottom: 14px;
+    text-shadow: 0 0 12px rgba(251, 146, 60, 0.5);
+    letter-spacing: 1px;
+}
+
+.catapult-notification-body {
+    margin-bottom: 16px;
+}
+
+.catapult-notification-text {
+    font-size: 0.95rem;
+    color: #fed7aa;
+    font-weight: 600;
+}
+
 /* ===== Treason Notification Modal (victim) ============================= */
 .treason-notification-modal {
     position: fixed;

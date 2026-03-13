@@ -222,6 +222,9 @@ function setupEventListeners() {
     // Treason notification modal close
     document.getElementById('treason-notification-close').addEventListener('click', hideTreasonNotificationModal);
 
+    // Catapult notification modal close
+    document.getElementById('catapult-notification-close').addEventListener('click', hideCatapultNotificationModal);
+
     // Ambush notification modal close
     document.getElementById('ambush-notification-close').addEventListener('click', hideAmbushNotificationModal);
 

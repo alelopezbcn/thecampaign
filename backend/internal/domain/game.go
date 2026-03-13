@@ -807,6 +807,12 @@ func (g *game) getStatus(viewer board.Player,
 	if pa := g.lastResult.PlaceAmbush; pa != nil {
 		gameStatusDTO.AmbushPlacedOn = pa.TargetPlayer
 	}
+	if c := g.lastResult.Catapult; c != nil {
+		gameStatusDTO.CatapultAttacker = c.AttackerName
+		gameStatusDTO.CatapultTarget = c.TargetPlayer
+		gameStatusDTO.CatapultGoldStolen = c.GoldStolen
+		gameStatusDTO.CatapultBlocked = c.Blocked
+	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()
 	if gameStatusDTO.IsGameOver {

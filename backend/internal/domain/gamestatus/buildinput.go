@@ -72,6 +72,10 @@ type BuildInput struct {
 	ResurrectionTargetPlayer  string
 	ResurrectionPlayerName    string
 	AmbushPlacedOn            string // player whose field received the ambush (place_ambush action)
+	CatapultAttacker          string
+	CatapultTarget            string
+	CatapultGoldStolen        int
+	CatapultBlocked           bool
 	PlayerStats               []PlayerStatInput
 }
 

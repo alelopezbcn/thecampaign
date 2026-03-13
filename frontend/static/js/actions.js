@@ -1567,7 +1567,12 @@ function showCatapultModal() {
     const resourceCount = opponent?.castle?.resource_cards || 0;
 
     if (isProtected) {
-        confirmCatapultFortress(targetName);
+        showActionConfirmModal({
+            title: 'Launch Catapult',
+            cardsHtml: renderCastleIcon(),
+            description: `<strong>${targetName}'s</strong> castle has a <strong>Fortress wall</strong>.<br>The wall will absorb the hit and be destroyed.`,
+            onConfirm: () => confirmCatapultFortress(targetName)
+        });
         return;
     }
 
@@ -1578,7 +1583,13 @@ function showCatapultModal() {
     }
 
     // Pick a random resource position — castle resources are face-down to the attacker
-    selectCatapultPosition(Math.ceil(Math.random() * resourceCount));
+    const position = Math.ceil(Math.random() * resourceCount);
+    showActionConfirmModal({
+        title: 'Launch Catapult',
+        cardsHtml: renderCastleIcon(),
+        description: `Remove 1 gold from <strong>${targetName}'s</strong> castle?`,
+        onConfirm: () => selectCatapultPosition(position)
+    });
 }
 
 function selectCatapultPosition(position) {

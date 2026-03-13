@@ -272,6 +272,8 @@ function initSidePanelToggles() {
         historyPanel.addEventListener('click', (e) => {
             if (historyPanel.classList.contains('collapsed')) {
                 historyPanel.classList.remove('collapsed');
+                const list = document.getElementById('history-list');
+                if (list) list.scrollTop = list.scrollHeight;
             } else if (e.target === historyBtn || historyBtn.contains(e.target)) {
                 historyPanel.classList.add('collapsed');
             }

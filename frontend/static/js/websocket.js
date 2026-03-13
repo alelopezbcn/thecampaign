@@ -444,6 +444,12 @@ function handleGameState(payload) {
         showResurrectionModal(resurrectionNotification);
     }
 
+    // Detect Catapult (target gets modal, others get toast)
+    const catapultNotification = payload.game_status.catapult_notification;
+    if (catapultNotification) {
+        showCatapultNotificationModal(catapultNotification);
+    }
+
     // Check if we have new cards from a pending action (trade or buy)
     const newCards = _newCards;
     if (newCards.length > 0 && payload.is_your_turn && gameState.pendingAction) {

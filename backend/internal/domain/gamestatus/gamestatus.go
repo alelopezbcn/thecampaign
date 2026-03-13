@@ -51,6 +51,13 @@ type ResurrectionNotification struct {
 	PlayerName   string `json:"player_name"`
 }
 
+type CatapultNotification struct {
+	AttackerName string `json:"attacker_name"`
+	TargetPlayer string `json:"target_player"`
+	GoldStolen   int    `json:"gold_stolen"`
+	Blocked      bool   `json:"blocked"`
+}
+
 type GameStatus struct {
 	CurrentPlayer                string                       `json:"current_player"`
 	TurnPlayer                   string                       `json:"turn_player"`
@@ -85,6 +92,7 @@ type GameStatus struct {
 	TreasonNotification          *TreasonNotification         `json:"treason_notification,omitempty"`
 	ChampionsBounty              *ChampionsBountyNotification `json:"champions_bounty,omitempty"`
 	ResurrectionNotification     *ResurrectionNotification    `json:"resurrection_notification,omitempty"`
+	CatapultNotification         *CatapultNotification        `json:"catapult_notification,omitempty"`
 	History                      []HistoryLine                `json:"history"`
 	PlayersOrder                 []string                     `json:"players_order"`
 	NextTurnPlayer               string                       `json:"next_turn_player,omitempty"`
@@ -166,6 +174,7 @@ func NewGameStatus(in BuildInput) GameStatus {
 	applyTreasonNotification(in, &gs)
 	applyChampionsBountyNotification(in, &gs)
 	applyResurrectionNotification(in, &gs)
+	applyCatapultNotification(in, &gs)
 
 	processHandCards(in.Viewer, in, &gs)
 
@@ -307,6 +316,24 @@ func applyTreasonNotification(in BuildInput, gs *GameStatus) {
 			WarriorCard: fromDomainCard(in.TraitorWarrior),
 			StolenBy:    in.CurrentPlayerName,
 		}
+	}
+}
+
+// applyCatapultNotification sends the catapult result to every player except the attacker.
+// The target player receives it so they can show a detailed modal; others see a toast.
+func applyCatapultNotification(in BuildInput, gs *GameStatus) {
+	if in.CatapultAttacker == "" {
+		return
+	}
+	// Attacker already knows the outcome — skip for them.
+	if in.Viewer.Name == in.CatapultAttacker {
+		return
+	}
+	gs.CatapultNotification = &CatapultNotification{
+		AttackerName: in.CatapultAttacker,
+		TargetPlayer: in.CatapultTarget,
+		GoldStolen:   in.CatapultGoldStolen,
+		Blocked:      in.CatapultBlocked,
 	}
 }
 

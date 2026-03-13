@@ -940,3 +940,67 @@ func TestNewGameStatus_CurseFields_ZeroForNonCurseEvents(t *testing.T) {
 		})
 	}
 }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// CatapultNotification tests
+// ──────────────────────────────────────────────────────────────────────────────
+
+func TestNewGameStatus_CatapultNotification_SetForTarget(t *testing.T) {
+	dto := minimalDTO("Player2") // Player2 is the target (viewer)
+	dto.CatapultAttacker = "Player1"
+	dto.CatapultTarget = "Player2"
+	dto.CatapultGoldStolen = 3
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.NotNil(t, gs.CatapultNotification)
+	assert.Equal(t, "Player1", gs.CatapultNotification.AttackerName)
+	assert.Equal(t, "Player2", gs.CatapultNotification.TargetPlayer)
+	assert.Equal(t, 3, gs.CatapultNotification.GoldStolen)
+	assert.False(t, gs.CatapultNotification.Blocked)
+}
+
+func TestNewGameStatus_CatapultNotification_SetForSpectator(t *testing.T) {
+	dto := minimalDTO("Player3") // Player3 is a spectator
+	dto.CatapultAttacker = "Player1"
+	dto.CatapultTarget = "Player2"
+	dto.CatapultGoldStolen = 2
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.NotNil(t, gs.CatapultNotification)
+	assert.Equal(t, "Player1", gs.CatapultNotification.AttackerName)
+}
+
+func TestNewGameStatus_CatapultNotification_NilForAttacker(t *testing.T) {
+	dto := minimalDTO("Player1") // Player1 is the attacker — should not receive notification
+	dto.CatapultAttacker = "Player1"
+	dto.CatapultTarget = "Player2"
+	dto.CatapultGoldStolen = 3
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Nil(t, gs.CatapultNotification, "attacker should NOT receive catapult notification")
+}
+
+func TestNewGameStatus_CatapultNotification_BlockedFlag(t *testing.T) {
+	dto := minimalDTO("Player2") // target
+	dto.CatapultAttacker = "Player1"
+	dto.CatapultTarget = "Player2"
+	dto.CatapultBlocked = true
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.NotNil(t, gs.CatapultNotification)
+	assert.True(t, gs.CatapultNotification.Blocked)
+	assert.Equal(t, 0, gs.CatapultNotification.GoldStolen)
+}
+
+func TestNewGameStatus_CatapultNotification_NilWhenNoCatapult(t *testing.T) {
+	dto := minimalDTO("Player2")
+	// CatapultAttacker is empty — no catapult this turn
+
+	gs := gamestatus.NewGameStatus(dto)
+
+	assert.Nil(t, gs.CatapultNotification)
+}
