@@ -2,6 +2,19 @@ function updateTurnIndicator() {
     updatePhaseBadge();
 }
 
+function showNoCardsNotice(phaseLabel) {
+    const notice = document.getElementById('no-cards-notice');
+    if (!notice) return;
+    const text = notice.querySelector('.ncn-text');
+    if (text) text.textContent = 'No cards to play in the ' + phaseLabel + ' phase';
+    notice.classList.remove('hidden');
+}
+
+function hideNoCardsNotice() {
+    const notice = document.getElementById('no-cards-notice');
+    if (notice) notice.classList.add('hidden');
+}
+
 function updateActionButtons() {
     const isYourTurn = gameState.isYourTurn;
     const status = gameState.currentState;
@@ -16,10 +29,12 @@ function updateActionButtons() {
     const endturnPopup = document.getElementById('endturn-popup');
     endturnPopup.classList.add('hidden');
     skipBtn.classList.add('hidden');
+    skipBtn.classList.remove('btn-skip-nudge');
     skipBtn.disabled = true;
 
     if (!isYourTurn || !status) {
         clearEndTurnCountdown();
+        hideNoCardsNotice();
         return;
     }
 
@@ -29,6 +44,7 @@ function updateActionButtons() {
         if (!endTurnCountdownTimer) {
             startEndTurnCountdown(status.next_turn_player);
         }
+        hideNoCardsNotice();
         return;
     }
 
@@ -47,6 +63,21 @@ function updateActionButtons() {
         skipBtn.classList.remove('btn-danger');
         skipBtn.classList.add('btn-skip');
     }
+
+    // Nudge the skip button and show in-board notice when no cards are playable this phase
+    const actionPhases = ['attack', 'spy/steal', 'buy', 'build'];
+    if (actionPhases.includes(status.current_action)) {
+        const hand = status.current_player_hand || [];
+        const hasUsable = hand.some(function(card) { return card.can_be_used === true; });
+        if (!hasUsable) {
+            skipBtn.classList.add('btn-skip-nudge');
+            const phaseLabel = status.current_action === 'spy/steal' ? 'Spy / Steal' :
+                               status.current_action.charAt(0).toUpperCase() + status.current_action.slice(1);
+            showNoCardsNotice(phaseLabel);
+            return;
+        }
+    }
+    hideNoCardsNotice();
 }
 
 function updatePhaseBadge() {

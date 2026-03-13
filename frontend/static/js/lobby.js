@@ -312,6 +312,21 @@ function handleGlobalKeyboard(e) {
             clearEndTurnCountdown();
             sendAction('end_turn');
         }
+    } else if (e.key === ' ') {
+        // Space bar: skip phase or confirm end turn (only when no modal is blocking)
+        if (!isActionConfirmOpen && !isGameModalOpen && !isStolenCardOpen &&
+            !isSpyNotificationOpen && !isTreasonNotificationOpen && !isEventTurnOpen) {
+            e.preventDefault();
+            if (gameState.isYourTurn && gameState.currentState) {
+                if (isEndturnPopupOpen) {
+                    clearEndTurnCountdown();
+                    sendAction('end_turn');
+                } else if (!gameState.currentAction) {
+                    // Only skip when not mid-way through a multi-step action
+                    handleSkipPhase();
+                }
+            }
+        }
     }
 }
 

@@ -5193,6 +5193,64 @@ body {
     margin-bottom: 16px;
 }
 
+/* No-cards-in-phase notice — inline banner inside the player board */
+#no-cards-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 6px 0 8px;
+    padding: 9px 14px;
+    border-radius: 8px;
+    background: rgba(250, 190, 40, 0.08);
+    border: 1px solid rgba(250, 190, 40, 0.35);
+    color: #f5d97a;
+    font-size: 13px;
+    font-weight: 500;
+    animation: noCardsNoticePulse 2.6s ease-in-out infinite;
+    transition: opacity 0.3s ease;
+}
+
+#no-cards-notice.hidden {
+    display: none;
+}
+
+#no-cards-notice .ncn-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+#no-cards-notice .ncn-hint {
+    margin-left: auto;
+    font-size: 11px;
+    color: rgba(245, 217, 122, 0.6);
+    white-space: nowrap;
+}
+
+@keyframes noCardsNoticePulse {
+    0%, 100% { border-color: rgba(250, 190, 40, 0.30); box-shadow: none; }
+    50%       { border-color: rgba(250, 190, 40, 0.65); box-shadow: 0 0 10px rgba(250, 190, 40, 0.18); }
+}
+
+/* Skip/End button nudge when no usable cards in phase — very noticeable */
+.btn-skip-nudge {
+    background: rgba(250, 190, 40, 0.22) !important;
+    border-color: rgba(250, 190, 40, 0.85) !important;
+    color: #ffe480 !important;
+    animation: skipNudgePulse 1.4s ease-in-out infinite;
+    transform: scale(1.08) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.5px !important;
+}
+
+@keyframes skipNudgePulse {
+    0%, 100% {
+        box-shadow: 0 0 8px rgba(250, 190, 40, 0.45), 0 0 0 2px rgba(250, 190, 40, 0.18);
+    }
+    50% {
+        box-shadow: 0 0 22px rgba(250, 190, 40, 0.80), 0 0 0 3px rgba(250, 190, 40, 0.35);
+    }
+}
+
 .resurrection-warrior-container {
     display: flex;
     justify-content: center;

@@ -1,2 +1,4 @@
 Fixes:
 flickering cards
+
+I used the treason card, should show popup to affected players, and a toast notification to spectators. Same as Ambush
