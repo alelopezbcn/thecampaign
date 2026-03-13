@@ -145,9 +145,9 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockCatapult.EXPECT().GetID().Return("catapult-id")
 		mockPlayer1.EXPECT().RemoveFromHand("catapult-id").Return([]cards.Card{mockCatapult}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockCatapult)
-		mockStolenGold.EXPECT().Value().Return(3)
-		mockPlayer1.EXPECT().Name().Return("Player1")
-		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockStolenGold.EXPECT().Value().Return(3).Times(2)
+		mockPlayer1.EXPECT().Name().Return("Player1").Times(2)
+		mockPlayer2.EXPECT().Name().Return("Player2").Times(2)
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
 		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
@@ -156,6 +156,11 @@ func TestCatapultAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionCatapult, result.Action)
+		assert.NotNil(t, result.Catapult)
+		assert.Equal(t, "Player1", result.Catapult.AttackerName)
+		assert.Equal(t, "Player2", result.Catapult.TargetPlayer)
+		assert.Equal(t, 3, result.Catapult.GoldStolen)
+		assert.False(t, result.Catapult.Blocked)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 
@@ -175,9 +180,9 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockCatapult.EXPECT().GetID().Return("catapult-id")
 		mockPlayer1.EXPECT().RemoveFromHand("catapult-id").Return([]cards.Card{mockCatapult}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockCatapult)
-		mockStolenGold.EXPECT().Value().Return(5)
-		mockPlayer1.EXPECT().Name().Return("Player1")
-		mockPlayer2.EXPECT().Name().Return("Player2")
+		mockStolenGold.EXPECT().Value().Return(5).Times(2)
+		mockPlayer1.EXPECT().Name().Return("Player1").Times(2)
+		mockPlayer2.EXPECT().Name().Return("Player2").Times(2)
 
 		var capturedMsg string
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any()).Do(func(msg string, _ types.Category) {
@@ -210,8 +215,8 @@ func TestCatapultAction_Execute(t *testing.T) {
 		mockCatapult.EXPECT().GetID().Return("catapult-id")
 		mockPlayer1.EXPECT().RemoveFromHand("catapult-id").Return([]cards.Card{mockCatapult}, nil)
 		mockGame.EXPECT().OnCardMovedToPile(mockCatapult)
-		mockPlayer2.EXPECT().Name().Return("Player2")
-		mockPlayer1.EXPECT().Name().Return("Player1")
+		mockPlayer2.EXPECT().Name().Return("Player2").Times(2)
+		mockPlayer1.EXPECT().Name().Return("Player1").Times(2)
 		mockGame.EXPECT().AddHistory(gomock.Any(), gomock.Any())
 		mockGame.EXPECT().Status(mockPlayer1).Return(expectedStatus)
 
@@ -220,6 +225,10 @@ func TestCatapultAction_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 		assert.Equal(t, types.LastActionCatapultBlocked, result.Action)
+		assert.NotNil(t, result.Catapult)
+		assert.Equal(t, "Player1", result.Catapult.AttackerName)
+		assert.Equal(t, "Player2", result.Catapult.TargetPlayer)
+		assert.True(t, result.Catapult.Blocked)
 		assert.Equal(t, expectedStatus, statusFn())
 	})
 }

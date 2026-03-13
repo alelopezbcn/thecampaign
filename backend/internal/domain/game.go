@@ -600,154 +600,17 @@ func (g *game) nextAction(expectedAction types.PhaseType,
 	g.turnState.CanTrade = !g.turnState.HasTraded && p.CanTradeCards()
 	g.turnState.CanForge = !g.turnState.HasForged && p.CanForgeWeapons()
 
-	if expectedAction == types.PhaseTypeAttack {
-		canPlayPhase := false
-
-		if board.HasCardTypeInHand[cards.Catapult](p) {
-			for _, e := range g.Enemies(g.currentTurn) {
-				if e.Castle().CanBeAttacked() {
-					canPlayPhase = true
-					break
-				}
-			}
-		}
-
-		if !canPlayPhase && board.HasCardTypeInHand[cards.BloodRain](p) {
-			for _, e := range g.Enemies(g.currentTurn) {
-				if len(e.Field().Warriors()) > 0 {
-					canPlayPhase = true
-					break
-				}
-			}
-		}
-
-		if !canPlayPhase && board.HasCardTypeInHand[cards.Harpoon](p) {
-			for _, e := range g.Enemies(g.currentTurn) {
-				for _, w := range e.Field().Warriors() {
-					if w.Type() == types.DragonWarriorType {
-						canPlayPhase = true
-						break
-					}
-				}
-				if canPlayPhase {
-					break
-				}
-			}
-		}
-
-		if !canPlayPhase && board.HasCardTypeInHand[cards.Treason](p) {
-			for _, e := range g.Enemies(g.currentTurn) {
-				for _, w := range e.Field().Warriors() {
-					if w.Health() <= cards.TreasonMaxHP {
-						canPlayPhase = true
-						break
-					}
-				}
-				if canPlayPhase {
-					break
-				}
-			}
-		}
-
-		if !canPlayPhase && board.HasCardTypeInHand[cards.Ambush](p) {
-			if !board.HasFieldSlotCard[cards.Ambush](p.Field()) {
-				canPlayPhase = true
-			}
-			if !canPlayPhase {
-				for _, ally := range g.Allies(g.currentTurn) {
-					if !board.HasFieldSlotCard[cards.Ambush](ally.Field()) {
-						canPlayPhase = true
-						break
-					}
-				}
-			}
-		}
-
-		if !canPlayPhase && board.HasCardTypeInHand[cards.Resurrection](p) {
-			canPlayPhase = g.board.Cemetery().Count() > 0
-		}
-
-		if p.CanAttack() || canPlayPhase || g.turnState.CanMoveWarrior {
-			g.currentAction = types.PhaseTypeAttack
-
-			return gameStatusFn()
-		}
-
-		expectedAction = types.PhaseTypeSpySteal
-	}
-
+	// Auto-skip spy/steal phase if the player has no usable cards for it
 	if expectedAction == types.PhaseTypeSpySteal {
 		hasSpy := board.HasCardTypeInHand[cards.Spy](p)
 		hasThief := board.HasCardTypeInHand[cards.Thief](p)
 		hasSabotage := board.HasCardTypeInHand[cards.Sabotage](p)
-
-		if hasSpy || hasThief || hasSabotage {
-			g.currentAction = types.PhaseTypeSpySteal
-
-			return gameStatusFn()
+		if !hasSpy && !hasThief && !hasSabotage {
+			expectedAction = types.PhaseTypeBuy
 		}
-
-		expectedAction = types.PhaseTypeBuy
 	}
 
-	if expectedAction == types.PhaseTypeBuy {
-		if p.CanBuy() || g.turnState.CanTrade {
-			g.currentAction = types.PhaseTypeBuy
-
-			return gameStatusFn()
-		}
-
-		expectedAction = types.PhaseTypeConstruct
-	}
-
-	if expectedAction == types.PhaseTypeConstruct {
-		canConstruct := p.CanConstruct()
-		if !canConstruct {
-			// In 2v2, check if player has resources and any ally has a constructed castle
-			for _, ally := range g.Allies(g.PlayerIndex(p.Name())) {
-				if ally.Castle().IsConstructed() {
-					for _, c := range p.Hand().ShowCards() {
-						if _, ok := c.(cards.Resource); ok {
-							canConstruct = true
-							break
-						}
-					}
-					break
-				}
-			}
-		}
-		if !canConstruct {
-			// Check if player has a Fortress card and a valid target castle
-			if board.HasCardTypeInHand[cards.Fortress](p) {
-				if p.Castle().IsConstructed() && !p.Castle().IsProtected() {
-					canConstruct = true
-				}
-				if !canConstruct {
-					for _, ally := range g.Allies(g.PlayerIndex(p.Name())) {
-						if ally.Castle().IsConstructed() && !ally.Castle().IsProtected() {
-							canConstruct = true
-							break
-						}
-					}
-				}
-			}
-		}
-		if canConstruct {
-			g.currentAction = types.PhaseTypeConstruct
-
-			return gameStatusFn()
-		}
-
-		expectedAction = types.PhaseTypeEndTurn
-	}
-
-	if expectedAction == types.PhaseTypeEndTurn {
-		g.currentAction = types.PhaseTypeEndTurn
-
-		return gameStatusFn()
-	}
-
-	g.currentAction = types.PhaseTypeDrawCard
+	g.currentAction = expectedAction
 
 	return gameStatusFn()
 }
@@ -943,6 +806,12 @@ func (g *game) getStatus(viewer board.Player,
 	}
 	if pa := g.lastResult.PlaceAmbush; pa != nil {
 		gameStatusDTO.AmbushPlacedOn = pa.TargetPlayer
+	}
+	if c := g.lastResult.Catapult; c != nil {
+		gameStatusDTO.CatapultAttacker = c.AttackerName
+		gameStatusDTO.CatapultTarget = c.TargetPlayer
+		gameStatusDTO.CatapultGoldStolen = c.GoldStolen
+		gameStatusDTO.CatapultBlocked = c.Blocked
 	}
 
 	gameStatusDTO.IsGameOver, gameStatusDTO.Winner = g.IsGameOver()

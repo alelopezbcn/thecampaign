@@ -15,6 +15,7 @@ type Result struct {
 	Treason        *TreasonDetails      // nil = no treason
 	Resurrection   *ResurrectionDetails // nil = no resurrection
 	PlaceAmbush    *PlaceAmbushDetails  // nil = not a place ambush action
+	Catapult       *CatapultDetails     // nil = no catapult action
 }
 
 type PlaceAmbushDetails struct {
@@ -64,4 +65,11 @@ type ResurrectionDetails struct {
 	Warrior      cards.Warrior
 	TargetPlayer string // player whose field received the warrior
 	PlayerName   string // player who played the card
+}
+
+type CatapultDetails struct {
+	AttackerName string
+	TargetPlayer string
+	GoldStolen   int  // 0 when Blocked is true
+	Blocked      bool // fortress absorbed the hit
 }

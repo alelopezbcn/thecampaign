@@ -250,6 +250,66 @@ function hideSpyNotificationModal() {
     }
 }
 
+let catapultNotificationTimer = null;
+
+function showCatapultNotificationModal(notification) {
+    const isTarget = notification.target_player === gameState.playerName;
+
+    if (isTarget) {
+        const modal = document.getElementById('catapult-notification-modal');
+        const text = document.getElementById('catapult-notification-text');
+        if (!modal || !text) return;
+
+        if (notification.blocked) {
+            text.textContent = `${notification.attacker_name} launched a catapult at your castle, but your Fortress wall absorbed the hit and was destroyed!`;
+        } else {
+            text.textContent = `${notification.attacker_name} launched a catapult and removed ${notification.gold_stolen} gold from your castle!`;
+        }
+
+        modal.classList.remove('hidden');
+
+        if (catapultNotificationTimer) clearTimeout(catapultNotificationTimer);
+        catapultNotificationTimer = setTimeout(() => hideCatapultNotificationModal(), 6000);
+        return;
+    }
+
+    // Spectators and the attacker: toast
+    const container = document.getElementById('error-toast-container');
+    if (!container) return;
+
+    let msg;
+    if (notification.blocked) {
+        msg = `${notification.attacker_name} catapulted ${notification.target_player}'s castle — Fortress wall absorbed the hit!`;
+    } else {
+        msg = `${notification.attacker_name} catapulted ${notification.target_player}'s castle and removed ${notification.gold_stolen} gold!`;
+    }
+
+    const toast = document.createElement('div');
+    toast.className = 'error-toast catapult-toast';
+    toast.innerHTML =
+        '<span class="error-toast-icon">&#128163;</span>' +
+        '<div class="error-toast-content">' +
+            '<div class="error-toast-title">Catapult Attack!</div>' +
+            '<div class="error-toast-message">' + msg + '</div>' +
+        '</div>' +
+        '<button class="error-toast-close" onclick="this.closest(\'.error-toast\').remove()">&#x2715;</button>';
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('hiding');
+        setTimeout(() => toast.remove(), 300);
+    }, 7000);
+}
+
+function hideCatapultNotificationModal() {
+    const modal = document.getElementById('catapult-notification-modal');
+    if (modal) modal.classList.add('hidden');
+    if (catapultNotificationTimer) {
+        clearTimeout(catapultNotificationTimer);
+        catapultNotificationTimer = null;
+    }
+}
+
 function showTreasonNotificationModal(notification) {
     const modal = document.getElementById('treason-notification-modal');
     const container = document.getElementById('treason-warrior-container');

@@ -190,14 +190,17 @@
                 <div class="player-board-top-row">
                     <div id="player-board-header" class="opponent-header"></div>
                     <span id="turn-timer" class="board-turn-timer">--</span>
-                    <div id="phase-badge" class="phase-badge hidden">
-                        <span class="pb-phase" data-phase="attack" data-tip="• Regular Weapons&#10;• Special Powers&#10;• Catapult&#10;• Resurrection&#10;• Move Warrior">⚔️ Attack</span>
-                        <span class="pb-sep">›</span>
-                        <span class="pb-phase" data-phase="spy/steal" data-tip="• Spy&#10;• Steal&#10;• Sabotage&#10;• Treason">🎭 Spy / Steal</span>
-                        <span class="pb-sep">›</span>
-                        <span class="pb-phase" data-phase="buy" data-tip="• Gold (spend to draw cards)&#10;• Trade (3 cards → 1)&#10;• Mercenary (hire a warrior)&#10;• Ambush (place trap in field)">💰 Buy</span>
-                        <span class="pb-sep">›</span>
-                        <span class="pb-phase" data-phase="construct" data-tip="• Resource cards&#10;• Gold cards&#10;(add face value to your castle)">🏰 Build</span>
+                    <div class="phase-badge-group">
+                        <div id="phase-badge" class="phase-badge hidden">
+                            <span class="pb-phase" data-phase="attack" data-tip="• Regular Weapons&#10;• Special Powers&#10;• Catapult&#10;• Resurrection&#10;• Move Warrior">⚔️ Attack</span>
+                            <span class="pb-sep">›</span>
+                            <span class="pb-phase" data-phase="spy/steal" data-tip="• Spy&#10;• Steal&#10;• Sabotage&#10;• Treason">🎭 Spy / Steal</span>
+                            <span class="pb-sep">›</span>
+                            <span class="pb-phase" data-phase="buy" data-tip="• Gold (spend to draw cards)&#10;• Trade (3 cards → 1)&#10;• Mercenary (hire a warrior)&#10;• Ambush (place trap in field)">💰 Buy</span>
+                            <span class="pb-sep">›</span>
+                            <span class="pb-phase" data-phase="construct" data-tip="• Resource cards&#10;• Gold cards&#10;(add face value to your castle)">🏰 Build</span>
+                        </div>
+                        <button id="skip-phase-btn" class="btn btn-skip hidden" disabled>Skip</button>
                     </div>
                 </div>
                 <div class="player-area">
@@ -220,30 +223,23 @@
                 </div>
             </div>
 
-            <!-- Action Panel -->
-            <div class="action-panel">
-                <div id="action-prompt-container" class="action-prompt-container hidden">
-                    <span id="action-prompt" class="action-prompt"></span>
-                    <button id="cancel-action-btn" class="btn btn-cancel-inline">Cancel</button>
-                </div>
-                <div class="action-buttons">
-                    <button id="skip-phase-btn" class="btn btn-skip" disabled>Skip Phase</button>
-                    <button id="end-turn-btn" class="btn btn-danger" disabled>End Turn</button>
-                </div>
-                <!-- End Turn Popup -->
-                <div id="endturn-popup" class="endturn-popup hidden">
-                    <div class="endturn-popup-content">
-                        <div class="endturn-icon">⏳</div>
-                        <div class="endturn-popup-text">
-                            <h2>End of Turn</h2>
-                            <p>All phases completed</p>
-                            <p class="endturn-next-player">Next: <strong id="endturn-next-player-name"></strong></p>
-                        </div>
-                        <div class="endturn-countdown-wrap">
-                            <div id="endturn-countdown-bar" class="endturn-countdown-bar"></div>
-                        </div>
-                        <button id="endturn-popup-btn" class="btn btn-danger">End Now</button>
+            <div id="action-prompt-container" class="action-prompt-container hidden">
+                <span id="action-prompt" class="action-prompt"></span>
+                <button id="cancel-action-btn" class="btn btn-cancel-inline">Cancel</button>
+            </div>
+            <!-- End Turn Popup -->
+            <div id="endturn-popup" class="endturn-popup hidden">
+                <div class="endturn-popup-content">
+                    <div class="endturn-icon">⏳</div>
+                    <div class="endturn-popup-text">
+                        <h2>End of Turn</h2>
+                        <p>All phases completed</p>
+                        <p class="endturn-next-player">Next: <strong id="endturn-next-player-name"></strong></p>
                     </div>
+                    <div class="endturn-countdown-wrap">
+                        <div id="endturn-countdown-bar" class="endturn-countdown-bar"></div>
+                    </div>
+                    <button id="endturn-popup-btn" class="btn btn-danger">End Now</button>
                 </div>
             </div>
         </div>
@@ -357,6 +353,17 @@
             </div>
         </div>
 
+
+        <!-- Catapult Notification Modal (target player only; spectators get a toast) -->
+        <div id="catapult-notification-modal" class="catapult-notification-modal hidden">
+            <div class="catapult-notification-content">
+                <div class="catapult-notification-header">&#128163; Catapult Attack!</div>
+                <div class="catapult-notification-body">
+                    <p id="catapult-notification-text" class="catapult-notification-text"></p>
+                </div>
+                <button id="catapult-notification-close" class="btn btn-secondary btn-small">Dismiss</button>
+            </div>
+        </div>
 
         <!-- Ambush Notification Modal (attacker + defender only) -->
         <div id="ambush-notification-modal" class="ambush-notification-modal hidden">

@@ -94,7 +94,14 @@ func (a *catapultAction) execute(g catapultGame) (*Result, func() gamestatus.Gam
 		g.AddHistory(fmt.Sprintf("%s's castle wall blocked %s's catapult attack",
 			a.targetPlayer.Name(), p.Name()),
 			types.CategoryAction)
-		result := &Result{Action: types.LastActionCatapultBlocked}
+		result := &Result{
+			Action: types.LastActionCatapultBlocked,
+			Catapult: &CatapultDetails{
+				AttackerName: p.Name(),
+				TargetPlayer: a.targetPlayer.Name(),
+				Blocked:      true,
+			},
+		}
 		statusFn := func() gamestatus.GameStatus {
 			return g.Status(p)
 		}
@@ -120,6 +127,11 @@ func (a *catapultAction) execute(g catapultGame) (*Result, func() gamestatus.Gam
 
 	result := &Result{
 		Action: types.LastActionCatapult,
+		Catapult: &CatapultDetails{
+			AttackerName: p.Name(),
+			TargetPlayer: a.targetPlayer.Name(),
+			GoldStolen:   stolenGold.Value(),
+		},
 	}
 	statusFn := func() gamestatus.GameStatus {
 		return g.Status(p)
