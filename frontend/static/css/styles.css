@@ -1290,6 +1290,98 @@ body {
     color: #c8c8c8;
 }
 
+/* Catapult target options */
+.catapult-target-option {
+    border-color: rgba(255, 200, 0, 0.35);
+    background: rgba(255, 185, 0, 0.07);
+}
+
+.catapult-target-option:hover {
+    border-color: rgba(255, 200, 0, 0.65);
+    background: rgba(255, 185, 0, 0.14);
+}
+
+.catapult-option-protected {
+    border-color: rgba(100, 200, 255, 0.4);
+    background: rgba(100, 200, 255, 0.07);
+}
+
+.catapult-option-protected:hover {
+    border-color: rgba(100, 200, 255, 0.7);
+    background: rgba(100, 200, 255, 0.13);
+}
+
+.catapult-castle-visual {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex-shrink: 0;
+}
+
+.catapult-cm {
+    width: 58px;
+    height: 58px;
+    padding: 6px;
+    margin-bottom: 0;
+}
+
+.catapult-cm .castle-icon {
+    margin-bottom: 0;
+}
+
+.catapult-option-protected .catapult-cm {
+    border-color: rgba(100, 200, 255, 0.5);
+    background: rgba(100, 200, 255, 0.08);
+}
+
+.catapult-option-protected .catapult-cm .castle-icon::before {
+    background: rgba(100, 200, 255, 0.7);
+}
+
+.catapult-option-protected .catapult-cm .castle-icon::after {
+    background: linear-gradient(to right,
+        rgba(100, 200, 255, 0.7) 8px, transparent 8px, transparent 12px,
+        rgba(100, 200, 255, 0.7) 12px, rgba(100, 200, 255, 0.7) 22px, transparent 22px, transparent 28px,
+        rgba(100, 200, 255, 0.7) 28px, rgba(100, 200, 255, 0.7) 38px, transparent 38px, transparent 42px,
+        rgba(100, 200, 255, 0.7) 42px);
+}
+
+.catapult-gold-bar {
+    width: 58px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.catapult-gold-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700, #ff9500);
+    border-radius: 3px;
+}
+
+.catapult-gold-label {
+    font-size: 0.72em;
+    color: #ffd700;
+    font-weight: 600;
+}
+
+.catapult-consequence {
+    display: block;
+    font-size: 0.78em;
+    margin-top: 4px;
+    font-weight: 500;
+}
+
+.catapult-consequence-gold {
+    color: #ffd700;
+}
+
+.catapult-consequence-fortress {
+    color: #64c8ff;
+}
+
 .card-back-mini {
     width: 35px;
     height: 50px;
@@ -2539,6 +2631,11 @@ body {
         grid-template-columns: 1fr;
     }
 
+    .castle.constructed {
+        height: auto;
+        min-height: 150px;
+    }
+
     .card {
         width: 110px;
         font-size: 0.9em;
@@ -2761,7 +2858,7 @@ body {
 .action-confirm-content {
     background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
     border: 2px solid #667eea;
-    border-radius: 16px;
+    border-radius: 20px;
     padding: 30px 40px;
     text-align: center;
     max-width: 700px;
@@ -4773,7 +4870,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.65);
+    background: rgba(0, 0, 0, 0.6);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -4783,12 +4880,12 @@ body {
 
 .stolen-card-content {
     background: linear-gradient(145deg, #2a1a1a 0%, #3e1616 100%);
-    border: 1px solid rgba(255, 80, 80, 0.4);
+    border: 2px solid rgba(255, 80, 80, 0.6);
     border-radius: 16px;
-    padding: 30px 40px;
+    padding: 24px 32px;
     text-align: center;
-    box-shadow: 0 0 30px rgba(255, 80, 80, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
-    animation: modalPopIn 0.4s ease-out;
+    box-shadow: 0 0 40px rgba(255, 80, 80, 0.35), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.35s ease-out;
     min-width: 280px;
 }
 
@@ -5016,7 +5113,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.6);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -5026,13 +5123,13 @@ body {
 
 .spy-notification-content {
     background: linear-gradient(145deg, #1a1a2e 0%, #2d1b4e 100%);
-    border: 1px solid rgba(167, 139, 250, 0.4);
+    border: 2px solid rgba(167, 139, 250, 0.6);
     border-radius: 16px;
-    padding: 25px 40px;
+    padding: 24px 32px;
     text-align: center;
-    box-shadow: 0 0 30px rgba(167, 139, 250, 0.2), 0 8px 32px rgba(0, 0, 0, 0.4);
-    animation: modalPopIn 0.4s ease-out;
-    min-width: 260px;
+    box-shadow: 0 0 40px rgba(167, 139, 250, 0.35), 0 8px 32px rgba(0, 0, 0, 0.5);
+    animation: modalPopIn 0.35s ease-out;
+    min-width: 280px;
 }
 
 .spy-notification-icon {
@@ -5158,7 +5255,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.6);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -5273,7 +5370,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.6);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -5321,7 +5418,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.6);
     animation: fadeIn 0.3s ease-out;
 }
 
@@ -5398,7 +5495,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(0, 0, 0, 0.6);
     animation: fadeIn 0.3s ease-out;
 }
 

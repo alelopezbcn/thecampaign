@@ -309,22 +309,14 @@ function handleAttackPhaseHandClick(cardID, card) {
         gameState.actionState.weaponId = cardID;
         highlightSelectedCard(cardID);
         const enemies = getEnemyOpponents().filter(e => e.castle?.constructed && (e.castle?.resource_cards > 0 || e.castle?.is_protected));
-        if (enemies.length === 1) {
-            gameState.actionState.targetPlayer = enemies[0].player_name;
-            showCatapultModal();
-        } else if (enemies.length > 1) {
-            showTargetPlayerModal('Select a castle to attack', enemies, (playerName) => {
-                gameState.actionState.weaponId = cardID;
-                gameState.actionState.targetPlayer = playerName;
-                showCatapultModal();
-            }, (opp) => {
-                const castle = opp.castle || {};
-                const fortress = castle.is_protected ? ' 🏰 Fortress' : '';
-                return `Castle: ${castle.value || 0}/${castle.resources_to_win || 25} gold, ${castle.resource_cards || 0} resource cards${fortress}`;
-            });
-        } else {
+        if (enemies.length === 0) {
             updateActionPrompt('No enemy castles to attack!');
             resetActionState();
+        } else if (enemies.length === 1) {
+            gameState.actionState.targetPlayer = enemies[0].player_name;
+            fireCatapultAtTarget(enemies[0].player_name);
+        } else {
+            showCatapultTargetModal(enemies);
         }
     } else if (cardType === 'weapon') {
         gameState.actionState.type = 'attack';
@@ -1574,20 +1566,59 @@ function selectSpyOption(option) {
     }
 }
 
-// Catapult Modal
-function showCatapultModal() {
-    const targetName = gameState.actionState.targetPlayer;
+// Catapult target selection modal — richer UI, fires action directly (no second confirm)
+function showCatapultTargetModal(enemies) {
+    let content = '<div class="target-player-options">';
+    enemies.forEach(opp => {
+        const name = opp.player_name;
+        const castle = opp.castle || {};
+        const isProtected = castle.is_protected || false;
+        const goldValue = castle.value || 0;
+        const goldGoal = castle.resources_to_win || 25;
+        const resourceCards = castle.resource_cards || 0;
+        const goldPct = Math.min(100, Math.round(goldValue / goldGoal * 100));
+        const protectedClass = isProtected ? ' catapult-option-protected' : '';
+        const consequence = isProtected
+            ? '<span class="catapult-consequence catapult-consequence-fortress">🛡 Fortress wall absorbs the hit</span>'
+            : `<span class="catapult-consequence catapult-consequence-gold">Removes 1 gold · ${resourceCards} resource card${resourceCards !== 1 ? 's' : ''}</span>`;
+
+        content += `
+            <div class="target-player-option catapult-target-option${protectedClass}" onclick="window._catapultTargetCallback('${name}')">
+                <div class="catapult-castle-visual">
+                    <div class="castle-modal catapult-cm">
+                        <div class="castle-icon"></div>
+                    </div>
+                    <div class="catapult-gold-bar"><div class="catapult-gold-bar-fill" style="width:${goldPct}%"></div></div>
+                    <div class="catapult-gold-label">${goldValue}/${goldGoal}</div>
+                </div>
+                <div class="player-info">
+                    <div class="player-name">${name}</div>
+                    ${consequence}
+                </div>
+            </div>
+        `;
+    });
+    content += '</div>';
+
+    const weaponId = gameState.actionState.weaponId;
+    window._catapultTargetCallback = (playerName) => {
+        hideGameModal();
+        delete window._catapultTargetCallback;
+        gameState.actionState.weaponId = weaponId;
+        gameState.actionState.targetPlayer = playerName;
+        fireCatapultAtTarget(playerName);
+    };
+
+    showGameModal('Launch Catapult', 'Select a castle to attack', content, true);
+}
+
+function fireCatapultAtTarget(targetName) {
     const opponent = getOpponentByName(targetName);
     const isProtected = opponent?.castle?.is_protected || false;
     const resourceCount = opponent?.castle?.resource_cards || 0;
 
     if (isProtected) {
-        showActionConfirmModal({
-            title: 'Launch Catapult',
-            cardsHtml: renderCastleIcon(),
-            description: `<strong>${targetName}'s</strong> castle has a <strong>Fortress wall</strong>.<br>The wall will absorb the hit and be destroyed.`,
-            onConfirm: () => confirmCatapultFortress(targetName)
-        });
+        sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: targetName, card_position: 1 });
         return;
     }
 
@@ -1599,22 +1630,7 @@ function showCatapultModal() {
 
     // Pick a random resource position — castle resources are face-down to the attacker
     const position = Math.ceil(Math.random() * resourceCount);
-    showActionConfirmModal({
-        title: 'Launch Catapult',
-        cardsHtml: renderCastleIcon(),
-        description: `Remove 1 gold from <strong>${targetName}'s</strong> castle?`,
-        onConfirm: () => selectCatapultPosition(position)
-    });
-}
-
-function selectCatapultPosition(position) {
-    sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: gameState.actionState.targetPlayer, card_position: position });
-    hideGameModal();
-}
-
-function confirmCatapultFortress(targetName) {
-    sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: targetName, card_position: 1 });
-    hideGameModal();
+    sendAction('catapult', { card_id: gameState.actionState.weaponId, target_player: targetName, card_position: position });
 }
 
 // Enter trade mode with a card pre-selected (called from card click or trade icon)

@@ -65,7 +65,7 @@ function updateActionButtons() {
     }
 
     // Nudge the skip button and show in-board notice when no cards are playable this phase
-    const actionPhases = ['attack', 'spy/steal', 'buy', 'build'];
+    const actionPhases = ['attack', 'spy/steal', 'buy', 'construct'];
     if (actionPhases.includes(status.current_action)) {
         const hand = status.current_player_hand || [];
         const hasUsable = hand.some(function(card) { return card.can_be_used === true; });

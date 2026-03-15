@@ -201,7 +201,7 @@ function showFloatingDamage(cardId, damage, skipSlash = false) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display heal animation on a card with green cross and floating +amount bonus
+// Display heal animation on a card with green cross and HP badge count-up
 function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
@@ -217,18 +217,10 @@ function showFloatingHeal(cardId, fromHp, toHp) {
     cardElement.appendChild(cross);
     setTimeout(() => cross.remove(), 2000);
 
-    // Floating +amount bonus (shows the heal delta, not the final HP)
-    const amount = toHp - fromHp;
-    const floatingBonus = document.createElement('div');
-    floatingBonus.className = 'floating-heal';
-    floatingBonus.textContent = `+${amount}`;
-    cardElement.appendChild(floatingBonus);
-    setTimeout(() => floatingBonus.remove(), 3000);
-
     // HP stat badge count-up animation
     const badge = cardElement.querySelector('.card-stat-badge.warrior');
     if (badge) {
-        const duration = 600;
+        const duration = 1200;
         const startTime = performance.now();
         badge.textContent = `HP ${fromHp}`;
         const step = (now) => {
