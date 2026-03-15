@@ -684,12 +684,23 @@ function showSpecialPowerConfirmModal(specialPower, user, target) {
 
     switch (userType) {
         case 'archer':
-            title = 'Instant Kill';
-            if (isProtected) {
-                description = `${userName} targets ${targetName}<br>` +
-                    `<span class="shield-info">🛡️ Shield blocks the kill — Shield destroyed, warrior survives</span>`;
+            if ((target?.sub_type || '').toLowerCase() === 'dragon') {
+                const spDmg = 10;
+                const resultHp = Math.max(0, targetHp - spDmg);
+                const willDie = resultHp <= 0;
+                const hpPreview = willDie
+                    ? `<span class="hp-preview hp-fatal">💀 FATAL</span>`
+                    : `<span class="hp-preview">${targetHp} → ${resultHp} HP</span>`;
+                title = 'Special Power';
+                description = `${userName} deals ${spDmg} DMG to ${targetName} ${hpPreview}`;
             } else {
-                description = `${userName} will instantly kill ${targetName}`;
+                title = 'Instant Kill';
+                if (isProtected) {
+                    description = `${userName} targets ${targetName}<br>` +
+                        `<span class="shield-info">🛡️ Shield blocks the kill — Shield destroyed, warrior survives</span>`;
+                } else {
+                    description = `${userName} will instantly kill ${targetName}`;
+                }
             }
             break;
         case 'knight':
