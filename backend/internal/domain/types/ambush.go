@@ -9,7 +9,7 @@ const (
 	AmbushEffectReflectDamage AmbushEffect = iota // 23% — full weapon damage reflected to attacker warrior
 	AmbushEffectCancelAttack                      // 23% — attack cancelled, weapon discarded
 	AmbushEffectStealWeapon                       // 23% — weapon added to defender's hand
-	AmbushEffectDrainLife                         // 23% — attack lands but target heals to full HP
+	AmbushEffectDrainLife                         // 23% — attack absorbed; target heals HP equal to weapon damage
 	AmbushEffectInstantKill                       //  8% — random attacker warrior is killed
 )
 

@@ -317,6 +317,10 @@ function handleAttackPhaseHandClick(cardID, card) {
                 gameState.actionState.weaponId = cardID;
                 gameState.actionState.targetPlayer = playerName;
                 showCatapultModal();
+            }, (opp) => {
+                const castle = opp.castle || {};
+                const fortress = castle.is_protected ? ' 🏰 Fortress' : '';
+                return `Castle: ${castle.value || 0}/${castle.resources_to_win || 25} gold, ${castle.resource_cards || 0} resource cards${fortress}`;
             });
         } else {
             updateActionPrompt('No enemy castles to attack!');
