@@ -3845,6 +3845,41 @@ body {
     animation: healCountFloat 3.5s ease-out forwards;
 }
 
+/* Castle value badge — centered inside the castle element (avoids overflow:hidden on .castle-area) */
+.castle-value-countup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-size: 1.5em;
+    font-weight: bold;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 100;
+    padding: 6px 14px;
+    border-radius: 20px;
+    animation: castleValuePop 3.5s ease-out forwards;
+}
+.castle-value-countup.green {
+    background: linear-gradient(135deg, #44ff44, #00aa00);
+    text-shadow: 0 0 8px rgba(0, 255, 0, 0.8);
+    box-shadow: 0 4px 15px rgba(0, 255, 0, 0.5);
+}
+.castle-value-countup.red {
+    background: linear-gradient(135deg, #ff4444, #cc0000);
+    text-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+    box-shadow: 0 4px 15px rgba(255, 0, 0, 0.5);
+}
+@keyframes castleValuePop {
+    0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    10%  { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    20%  { transform: translate(-50%, -50%) scale(1); }
+    75%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+
 .damage-countup {
     position: absolute;
     bottom: 100%;

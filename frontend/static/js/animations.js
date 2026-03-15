@@ -522,17 +522,17 @@ function showCastleGoldAnimation(change) {
     floatingGold.textContent = `+${change.amount}`;
     container.appendChild(floatingGold);
 
-    // Green value count-up badge
+    // Green value count-up badge (centered inside castle to avoid overflow: hidden clip)
     if (change.fromValue !== undefined) {
         const badge = document.createElement('div');
-        badge.className = 'heal-countup';
-        badge.textContent = `🏰 ${change.fromValue}`;
+        badge.className = 'castle-value-countup green';
+        badge.textContent = `${change.fromValue}`;
         container.appendChild(badge);
         const duration = 1200;
         const startTime = performance.now();
         const step = (now) => {
             const t = Math.min((now - startTime) / duration, 1);
-            badge.textContent = `🏰 ${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
+            badge.textContent = `${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
             if (t < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
@@ -564,17 +564,17 @@ function showCastleAttackAnimation(change) {
     flash.className = 'castle-attack-flash';
     container.appendChild(flash);
 
-    // Red value count-down badge
+    // Red value count-down badge (centered inside castle to avoid overflow: hidden clip)
     if (change.fromValue !== undefined) {
         const badge = document.createElement('div');
-        badge.className = 'damage-countup';
-        badge.textContent = `🏰 ${change.fromValue}`;
+        badge.className = 'castle-value-countup red';
+        badge.textContent = `${change.fromValue}`;
         container.appendChild(badge);
         const duration = 1200;
         const startTime = performance.now();
         const step = (now) => {
             const t = Math.min((now - startTime) / duration, 1);
-            badge.textContent = `🏰 ${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
+            badge.textContent = `${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
             if (t < 1) requestAnimationFrame(step);
         };
         requestAnimationFrame(step);
