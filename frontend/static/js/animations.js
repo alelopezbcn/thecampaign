@@ -27,6 +27,7 @@ function showDamageFeedback(previousState, newState) {
         if (newHP[cardId] !== undefined && newHP[cardId] < previousHP[cardId]) {
             const damage = previousHP[cardId] - newHP[cardId];
             showFloatingDamage(cardId, damage, skipSlash);
+            showHPCountdown(cardId, previousHP[cardId], newHP[cardId]);
         }
     }
 
@@ -201,7 +202,28 @@ function showFloatingDamage(cardId, damage, skipSlash = false) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display heal animation on a card with green cross and HP badge count-up
+// Display red floating HP count-down badge on a damaged (surviving) warrior
+function showHPCountdown(cardId, fromHp, toHp) {
+    const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+    if (!cardElement) return;
+
+    const badge = document.createElement('div');
+    badge.className = 'damage-countup';
+    badge.textContent = `HP ${fromHp}`;
+    cardElement.appendChild(badge);
+
+    const duration = 1200;
+    const startTime = performance.now();
+    const step = (now) => {
+        const t = Math.min((now - startTime) / duration, 1);
+        badge.textContent = `HP ${Math.round(fromHp + (toHp - fromHp) * t)}`;
+        if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => badge.remove(), 3500);
+}
+
+// Display heal animation on a card with green cross and floating HP count-up badge
 function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
@@ -217,19 +239,21 @@ function showFloatingHeal(cardId, fromHp, toHp) {
     cardElement.appendChild(cross);
     setTimeout(() => cross.remove(), 2000);
 
-    // HP stat badge count-up animation
-    const badge = cardElement.querySelector('.card-stat-badge.warrior');
-    if (badge) {
-        const duration = 1200;
-        const startTime = performance.now();
-        badge.textContent = `HP ${fromHp}`;
-        const step = (now) => {
-            const t = Math.min((now - startTime) / duration, 1);
-            badge.textContent = `HP ${Math.round(fromHp + (toHp - fromHp) * t)}`;
-            if (t < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-    }
+    // Floating green badge with HP count-up animation
+    const badge = document.createElement('div');
+    badge.className = 'heal-countup';
+    badge.textContent = `HP ${fromHp}`;
+    cardElement.appendChild(badge);
+
+    const duration = 1200;
+    const startTime = performance.now();
+    const step = (now) => {
+        const t = Math.min((now - startTime) / duration, 1);
+        badge.textContent = `HP ${Math.round(fromHp + (toHp - fromHp) * t)}`;
+        if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => badge.remove(), 3500);
 }
 
 // Extract protection state from game status
