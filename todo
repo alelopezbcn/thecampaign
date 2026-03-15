@@ -1,6 +1,9 @@
 Fixes:
 flickering cards
 
-I used the treason card, should show popup to affected players, and a toast notification to spectators. Same as Ambush
+count hp up when healing with super power - test
 
 Instant kill on Dragons popup says Dragon will be killed, instead of DMG 10
+
+Revisar el Drain life del ambush que parece que devuelve la vida a 20 en vez de sumar lo que corresponde
+

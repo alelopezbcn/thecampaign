@@ -1505,7 +1505,7 @@ function showTreasonModal() {
     });
     content += '</div>';
 
-    showGameModal(`Treason — ${targetName}`, 'Choose a weakened warrior to convince (≤5 HP)', content, true);
+    showGameModal(`Treason — ${targetName}`, 'Click a warrior to recruit them (≤5 HP)', content, false);
 }
 
 function selectTreasonWarrior(warriorID) {

@@ -224,6 +224,20 @@ function showFloatingHeal(cardId, fromHp, toHp) {
     floatingBonus.textContent = `+${amount}`;
     cardElement.appendChild(floatingBonus);
     setTimeout(() => floatingBonus.remove(), 3000);
+
+    // HP stat badge count-up animation
+    const badge = cardElement.querySelector('.card-stat-badge.warrior');
+    if (badge) {
+        const duration = 600;
+        const startTime = performance.now();
+        badge.textContent = `HP ${fromHp}`;
+        const step = (now) => {
+            const t = Math.min((now - startTime) / duration, 1);
+            badge.textContent = `HP ${Math.round(fromHp + (toHp - fromHp) * t)}`;
+            if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+    }
 }
 
 // Extract protection state from game status

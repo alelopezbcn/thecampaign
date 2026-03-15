@@ -250,7 +250,6 @@ function setupEventListeners() {
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
         { id: 'treason-notification-modal', hide: hideTreasonNotificationModal },
-        { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
         document.getElementById(id).addEventListener('click', (e) => {

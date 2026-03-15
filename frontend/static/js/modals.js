@@ -5,8 +5,9 @@ function showGameModal(title, subtitle, content, showCloseOnly = true) {
     document.getElementById('modal-subtitle').textContent = subtitle;
     document.getElementById('modal-cards-container').innerHTML = content;
 
-    // Show/hide close button based on context
+    // Show/hide close button based on context; always reset text to avoid bleed-over from other modals
     const closeBtn = document.getElementById('modal-close-btn');
+    closeBtn.textContent = 'Close';
     closeBtn.style.display = showCloseOnly ? 'block' : 'none';
 
     modal.classList.remove('hidden');
