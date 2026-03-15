@@ -416,7 +416,7 @@ function detectCastleChanges(previousState, newState) {
     if (!prevCastle.constructed && newCastle.constructed) {
         constructions.push({ containerId: 'player-castle' });
     } else if (newCastle.constructed && (newCastle.value || 0) > (prevCastle.value || 0)) {
-        goldAdded.push({ containerId: 'player-castle', amount: (newCastle.value || 0) - (prevCastle.value || 0) });
+        goldAdded.push({ containerId: 'player-castle', amount: (newCastle.value || 0) - (prevCastle.value || 0), fromValue: prevCastle.value || 0, toValue: newCastle.value || 0 });
     }
 
     // Opponent castles
@@ -439,7 +439,7 @@ function detectCastleChanges(previousState, newState) {
         if (!prevC.constructed && newC.constructed) {
             constructions.push({ container: castleContainer });
         } else if (newC.constructed && (newC.value || 0) > (prevC.value || 0)) {
-            goldAdded.push({ container: castleContainer, amount: (newC.value || 0) - (prevC.value || 0) });
+            goldAdded.push({ container: castleContainer, amount: (newC.value || 0) - (prevC.value || 0), fromValue: prevC.value || 0, toValue: newC.value || 0 });
         }
     });
 
@@ -448,7 +448,7 @@ function detectCastleChanges(previousState, newState) {
 
     // Player's own castle attacked
     if (newCastle.constructed && (newCastle.value || 0) < (prevCastle.value || 0)) {
-        goldRemoved.push({ containerId: 'player-castle', amount: (prevCastle.value || 0) - (newCastle.value || 0) });
+        goldRemoved.push({ containerId: 'player-castle', amount: (prevCastle.value || 0) - (newCastle.value || 0), fromValue: prevCastle.value || 0, toValue: newCastle.value || 0 });
     }
 
     // Opponent castles attacked
@@ -462,7 +462,7 @@ function detectCastleChanges(previousState, newState) {
             if (!oppArea) return;
             const castleContainer = oppArea.querySelector('.castle');
             if (!castleContainer) return;
-            goldRemoved.push({ container: castleContainer, amount: (prevC.value || 0) - (newC.value || 0) });
+            goldRemoved.push({ container: castleContainer, amount: (prevC.value || 0) - (newC.value || 0), fromValue: prevC.value || 0, toValue: newC.value || 0 });
         }
     });
 
@@ -522,6 +522,23 @@ function showCastleGoldAnimation(change) {
     floatingGold.textContent = `+${change.amount}`;
     container.appendChild(floatingGold);
 
+    // Green value count-up badge
+    if (change.fromValue !== undefined) {
+        const badge = document.createElement('div');
+        badge.className = 'heal-countup';
+        badge.textContent = `🏰 ${change.fromValue}`;
+        container.appendChild(badge);
+        const duration = 1200;
+        const startTime = performance.now();
+        const step = (now) => {
+            const t = Math.min((now - startTime) / duration, 1);
+            badge.textContent = `🏰 ${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
+            if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        setTimeout(() => badge.remove(), 3500);
+    }
+
     setTimeout(() => {
         container.classList.remove('castle-gold-added');
         floatingGold.remove();
@@ -546,6 +563,23 @@ function showCastleAttackAnimation(change) {
     const flash = document.createElement('div');
     flash.className = 'castle-attack-flash';
     container.appendChild(flash);
+
+    // Red value count-down badge
+    if (change.fromValue !== undefined) {
+        const badge = document.createElement('div');
+        badge.className = 'damage-countup';
+        badge.textContent = `🏰 ${change.fromValue}`;
+        container.appendChild(badge);
+        const duration = 1200;
+        const startTime = performance.now();
+        const step = (now) => {
+            const t = Math.min((now - startTime) / duration, 1);
+            badge.textContent = `🏰 ${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
+            if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        setTimeout(() => badge.remove(), 3500);
+    }
 
     setTimeout(() => {
         container.classList.remove('castle-attacked');
