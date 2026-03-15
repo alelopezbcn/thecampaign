@@ -27,6 +27,7 @@ function showDamageFeedback(previousState, newState) {
         if (newHP[cardId] !== undefined && newHP[cardId] < previousHP[cardId]) {
             const damage = previousHP[cardId] - newHP[cardId];
             showFloatingDamage(cardId, damage, skipSlash);
+            showHPCountdown(cardId, previousHP[cardId], newHP[cardId]);
         }
     }
 
@@ -201,7 +202,28 @@ function showFloatingDamage(cardId, damage, skipSlash = false) {
     setTimeout(() => floatingNum.remove(), 3500);
 }
 
-// Display heal animation on a card with green cross and floating +amount bonus
+// Display red floating HP count-down badge on a damaged (surviving) warrior
+function showHPCountdown(cardId, fromHp, toHp) {
+    const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
+    if (!cardElement) return;
+
+    const badge = document.createElement('div');
+    badge.className = 'damage-countup';
+    badge.textContent = `HP ${fromHp}`;
+    cardElement.appendChild(badge);
+
+    const duration = 1200;
+    const startTime = performance.now();
+    const step = (now) => {
+        const t = Math.min((now - startTime) / duration, 1);
+        badge.textContent = `HP ${Math.round(fromHp + (toHp - fromHp) * t)}`;
+        if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => badge.remove(), 3500);
+}
+
+// Display heal animation on a card with green cross and floating HP count-up badge
 function showFloatingHeal(cardId, fromHp, toHp) {
     const cardElement = document.querySelector(`.card[data-card-id="${cardId}"]`);
     if (!cardElement) return;
@@ -217,13 +239,21 @@ function showFloatingHeal(cardId, fromHp, toHp) {
     cardElement.appendChild(cross);
     setTimeout(() => cross.remove(), 2000);
 
-    // Floating +amount bonus (shows the heal delta, not the final HP)
-    const amount = toHp - fromHp;
-    const floatingBonus = document.createElement('div');
-    floatingBonus.className = 'floating-heal';
-    floatingBonus.textContent = `+${amount}`;
-    cardElement.appendChild(floatingBonus);
-    setTimeout(() => floatingBonus.remove(), 3000);
+    // Floating green badge with HP count-up animation
+    const badge = document.createElement('div');
+    badge.className = 'heal-countup';
+    badge.textContent = `HP ${fromHp}`;
+    cardElement.appendChild(badge);
+
+    const duration = 1200;
+    const startTime = performance.now();
+    const step = (now) => {
+        const t = Math.min((now - startTime) / duration, 1);
+        badge.textContent = `HP ${Math.round(fromHp + (toHp - fromHp) * t)}`;
+        if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+    setTimeout(() => badge.remove(), 3500);
 }
 
 // Extract protection state from game status
@@ -386,7 +416,7 @@ function detectCastleChanges(previousState, newState) {
     if (!prevCastle.constructed && newCastle.constructed) {
         constructions.push({ containerId: 'player-castle' });
     } else if (newCastle.constructed && (newCastle.value || 0) > (prevCastle.value || 0)) {
-        goldAdded.push({ containerId: 'player-castle', amount: (newCastle.value || 0) - (prevCastle.value || 0) });
+        goldAdded.push({ containerId: 'player-castle', amount: (newCastle.value || 0) - (prevCastle.value || 0), fromValue: prevCastle.value || 0, toValue: newCastle.value || 0 });
     }
 
     // Opponent castles
@@ -409,7 +439,7 @@ function detectCastleChanges(previousState, newState) {
         if (!prevC.constructed && newC.constructed) {
             constructions.push({ container: castleContainer });
         } else if (newC.constructed && (newC.value || 0) > (prevC.value || 0)) {
-            goldAdded.push({ container: castleContainer, amount: (newC.value || 0) - (prevC.value || 0) });
+            goldAdded.push({ container: castleContainer, amount: (newC.value || 0) - (prevC.value || 0), fromValue: prevC.value || 0, toValue: newC.value || 0 });
         }
     });
 
@@ -418,7 +448,7 @@ function detectCastleChanges(previousState, newState) {
 
     // Player's own castle attacked
     if (newCastle.constructed && (newCastle.value || 0) < (prevCastle.value || 0)) {
-        goldRemoved.push({ containerId: 'player-castle', amount: (prevCastle.value || 0) - (newCastle.value || 0) });
+        goldRemoved.push({ containerId: 'player-castle', amount: (prevCastle.value || 0) - (newCastle.value || 0), fromValue: prevCastle.value || 0, toValue: newCastle.value || 0 });
     }
 
     // Opponent castles attacked
@@ -432,7 +462,7 @@ function detectCastleChanges(previousState, newState) {
             if (!oppArea) return;
             const castleContainer = oppArea.querySelector('.castle');
             if (!castleContainer) return;
-            goldRemoved.push({ container: castleContainer, amount: (prevC.value || 0) - (newC.value || 0) });
+            goldRemoved.push({ container: castleContainer, amount: (prevC.value || 0) - (newC.value || 0), fromValue: prevC.value || 0, toValue: newC.value || 0 });
         }
     });
 
@@ -492,6 +522,23 @@ function showCastleGoldAnimation(change) {
     floatingGold.textContent = `+${change.amount}`;
     container.appendChild(floatingGold);
 
+    // Green value count-up badge (centered inside castle to avoid overflow: hidden clip)
+    if (change.fromValue !== undefined) {
+        const badge = document.createElement('div');
+        badge.className = 'castle-value-countup green';
+        badge.textContent = `${change.fromValue}`;
+        container.appendChild(badge);
+        const duration = 1200;
+        const startTime = performance.now();
+        const step = (now) => {
+            const t = Math.min((now - startTime) / duration, 1);
+            badge.textContent = `${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
+            if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        setTimeout(() => badge.remove(), 3500);
+    }
+
     setTimeout(() => {
         container.classList.remove('castle-gold-added');
         floatingGold.remove();
@@ -516,6 +563,23 @@ function showCastleAttackAnimation(change) {
     const flash = document.createElement('div');
     flash.className = 'castle-attack-flash';
     container.appendChild(flash);
+
+    // Red value count-down badge (centered inside castle to avoid overflow: hidden clip)
+    if (change.fromValue !== undefined) {
+        const badge = document.createElement('div');
+        badge.className = 'castle-value-countup red';
+        badge.textContent = `${change.fromValue}`;
+        container.appendChild(badge);
+        const duration = 1200;
+        const startTime = performance.now();
+        const step = (now) => {
+            const t = Math.min((now - startTime) / duration, 1);
+            badge.textContent = `${Math.round(change.fromValue + (change.toValue - change.fromValue) * t)}`;
+            if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+        setTimeout(() => badge.remove(), 3500);
+    }
 
     setTimeout(() => {
         container.classList.remove('castle-attacked');

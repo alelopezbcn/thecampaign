@@ -250,7 +250,6 @@ function setupEventListeners() {
         { id: 'stolen-card-modal', hide: hideStolenCardModal },
         { id: 'spy-notification-modal', hide: hideSpyNotificationModal },
         { id: 'treason-notification-modal', hide: hideTreasonNotificationModal },
-        { id: 'gameover-modal', hide: () => location.reload() },
     ];
     modalOverlays.forEach(({ id, hide }) => {
         document.getElementById(id).addEventListener('click', (e) => {
@@ -311,6 +310,21 @@ function handleGlobalKeyboard(e) {
         } else if (isEndturnPopupOpen) {
             clearEndTurnCountdown();
             sendAction('end_turn');
+        }
+    } else if (e.key === ' ') {
+        // Space bar: skip phase or confirm end turn (only when no modal is blocking)
+        if (!isActionConfirmOpen && !isGameModalOpen && !isStolenCardOpen &&
+            !isSpyNotificationOpen && !isTreasonNotificationOpen && !isEventTurnOpen) {
+            e.preventDefault();
+            if (gameState.isYourTurn && gameState.currentState) {
+                if (isEndturnPopupOpen) {
+                    clearEndTurnCountdown();
+                    sendAction('end_turn');
+                } else if (!gameState.currentAction) {
+                    // Only skip when not mid-way through a multi-step action
+                    handleSkipPhase();
+                }
+            }
         }
     }
 }

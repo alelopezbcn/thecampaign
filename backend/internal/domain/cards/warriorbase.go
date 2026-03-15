@@ -85,7 +85,7 @@ func (w *warriorBase) Heal(sp SpecialPower) {
 }
 
 // HealToMax restores the warrior to full health without requiring a SpecialPower card.
-// Used by the Ambush Drain Life effect. Mercenary overrides this.
+// Mercenary overrides this to cap at mercenaryMaxHealth.
 func (w *warriorBase) HealToMax() {
 	w.health = warriorMaxHealth
 }
